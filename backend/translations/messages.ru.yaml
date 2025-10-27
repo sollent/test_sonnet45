@@ -1,0 +1,71 @@
+# Общие сообщения API
+api:
+  error:
+    unauthorized: "Не авторизован. Пожалуйста, войдите в систему."
+    forbidden: "Доступ запрещен."
+    not_found: "Ресурс не найден."
+    bad_request: "Неверный запрос."
+    internal_server_error: "Внутренняя ошибка сервера. Пожалуйста, попробуйте позже."
+    validation_failed: "Ошибка валидации."
+  success:
+    user_registered: "Пользователь успешно зарегистрирован."
+    user_updated: "Пользователь успешно обновлен."
+    user_deleted: "Пользователь успешно удален."
+    login_successful: "Вход выполнен успешно."
+    logout_successful: "Выход выполнен успешно."
+    token_refreshed: "Токен успешно обновлен."
+
+# Сообщения аутентификации
+auth:
+  error:
+    invalid_credentials: "Неверный email или пароль."
+    email_already_exists: "Пользователь с таким email уже существует."
+    token_expired: "Ваша сессия истекла. Пожалуйста, войдите снова."
+    token_invalid: "Недействительный токен аутентификации."
+    refresh_token_not_found: "Refresh token не найден."
+    refresh_token_invalid: "Недействительный refresh token."
+  google:
+    error:
+      no_code: "Отсутствует код авторизации."
+      invalid_token: "Не удалось авторизоваться через Google."
+      user_data_failed: "Не удалось получить данные пользователя от Google."
+
+# Сообщения регистрации пользователя
+user_registration:
+  messages:
+    exists_with_such_email: "Пользователь с таким email уже существует."
+
+# Сообщения о пользователе
+user:
+  profile: "Профиль пользователя"
+  email: "Email"
+  name: "Имя"
+  roles: "Роли"
+  created_at: "Дата создания"
+  updated_at: "Дата обновления"
+
+# Меню админ-панели
+menu:
+  dashboard: "Панель управления"
+  user_management: "Управление пользователями"
+  users: "Пользователи"
+  back_to_frontend: "На главный сайт"
+  logout: "Выход"
+
+# Поля для админ-панели
+field:
+  email: "Email"
+  email_help: "Адрес электронной почты пользователя (уникальный)"
+  password: "Пароль"
+  password_help_new: "Минимум 8 символов. Оставьте пустым, чтобы не менять пароль."
+  password_help_edit: "Оставьте пустым, если не хотите менять пароль"
+  roles: "Роли"
+  roles_help: "Выберите роли для пользователя"
+  google_id: "Google ID"
+  google_id_help: "Уникальный ID пользователя в Google (если авторизован через Google)"
+  google_name: "Имя в Google"
+  google_name_help: "Имя из Google аккаунта (если авторизован через Google)"
+  google_auth: "Google авторизация"
+  google_auth_help: "Авторизован через Google"
+  created_at: "Дата создания"
+  created_at_help: "Дата и время создания пользователя"

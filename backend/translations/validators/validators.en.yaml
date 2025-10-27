@@ -1,0 +1,2 @@
+user_registration_request_dto.password.min_length: Your password must contain a minimum of {{ limit }} characters.
+user_registration_request_dto.password.max_length: Your password cannot be longer than {{ limit }} characters.

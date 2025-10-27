@@ -1,0 +1,71 @@
+# General API messages
+api:
+  error:
+    unauthorized: "Unauthorized. Please log in."
+    forbidden: "Access denied."
+    not_found: "Resource not found."
+    bad_request: "Bad request."
+    internal_server_error: "Internal server error. Please try again later."
+    validation_failed: "Validation failed."
+  success:
+    user_registered: "User successfully registered."
+    user_updated: "User successfully updated."
+    user_deleted: "User successfully deleted."
+    login_successful: "Login successful."
+    logout_successful: "Logout successful."
+    token_refreshed: "Token successfully refreshed."
+
+# Authentication messages
+auth:
+  error:
+    invalid_credentials: "Invalid email or password."
+    email_already_exists: "A user with this email already exists."
+    token_expired: "Your session has expired. Please log in again."
+    token_invalid: "Invalid authentication token."
+    refresh_token_not_found: "Refresh token not found."
+    refresh_token_invalid: "Invalid refresh token."
+  google:
+    error:
+      no_code: "Authorization code is missing."
+      invalid_token: "Failed to authenticate via Google."
+      user_data_failed: "Failed to retrieve user data from Google."
+
+# User registration messages
+user_registration:
+  messages:
+    exists_with_such_email: "A user with this email already exists."
+
+# User messages
+user:
+  profile: "User profile"
+  email: "Email"
+  name: "Name"
+  roles: "Roles"
+  created_at: "Created at"
+  updated_at: "Updated at"
+
+# Admin panel menu
+menu:
+  dashboard: "Dashboard"
+  user_management: "User Management"
+  users: "Users"
+  back_to_frontend: "Back to Website"
+  logout: "Logout"
+
+# Admin panel fields
+field:
+  email: "Email"
+  email_help: "User email address (unique)"
+  password: "Password"
+  password_help_new: "Minimum 8 characters. Leave blank to keep unchanged."
+  password_help_edit: "Leave blank if you don't want to change the password"
+  roles: "Roles"
+  roles_help: "Select roles for the user"
+  google_id: "Google ID"
+  google_id_help: "Unique Google user ID (if authenticated via Google)"
+  google_name: "Google Name"
+  google_name_help: "Name from Google account (if authenticated via Google)"
+  google_auth: "Google Authentication"
+  google_auth_help: "Authenticated via Google"
+  created_at: "Created At"
+  created_at_help: "User creation date and time"

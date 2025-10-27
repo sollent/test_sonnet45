@@ -1,0 +1,28 @@
+# Стандартные сообщения валидации Symfony
+This value should not be blank.: "Это поле не может быть пустым."
+This value is not a valid email address.: "Пожалуйста, введите корректный email адрес."
+This value is too short. It should have {{ limit }} character or more.|This value is too short. It should have {{ limit }} characters or more.: "Значение слишком короткое. Минимальная длина - {{ limit }} символ.|Значение слишком короткое. Минимальная длина - {{ limit }} символа.|Значение слишком короткое. Минимальная длина - {{ limit }} символов."
+This value is too long. It should have {{ limit }} character or less.|This value is too long. It should have {{ limit }} characters or less.: "Значение слишком длинное. Максимальная длина - {{ limit }} символ.|Значение слишком длинное. Максимальная длина - {{ limit }} символа.|Значение слишком длинное. Максимальная длина - {{ limit }} символов."
+
+# Дополнительные стандартные сообщения
+"Email is required": "Email обязателен"
+"Password is required": "Пароль обязателен"
+"Email must be a valid email address": "Email должен быть корректным адресом электронной почты"
+"Password must be at least {{ limit }} characters": "Пароль должен содержать минимум {{ limit }} символов"
+
+# Кастомные сообщения валидации
+email:
+  blank: "Email не может быть пустым."
+  invalid: "Пожалуйста, введите корректный email адрес."
+  unique: "Пользователь с таким email уже существует."
+  
+password:
+  blank: "Пароль не может быть пустым."
+  too_short: "Пароль должен содержать минимум {{ limit }} символов."
+  too_long: "Пароль не может быть длиннее {{ limit }} символов."
+  weak: "Пароль слишком простой. Используйте комбинацию букв, цифр и специальных символов."
+
+code:
+  blank: "Код авторизации не может быть пустым."
+  invalid: "Неверный код авторизации."
+

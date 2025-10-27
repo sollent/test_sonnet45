@@ -1,0 +1,110 @@
+nelmio_api_doc:
+    documentation:
+        info:
+            title: Nesty API Gateway
+            description: API documentation for Nesty API Gateway with details description
+            version: 0.0.1
+        components:
+            securitySchemes:
+                Bearer:
+                    type: http
+                    scheme: bearer
+                    bearerFormat: JWT
+                ApiKeyAuth:
+                    type: apiKey
+                    in: header
+                    name: X-API-Key
+
+
+            # Custom SCHEMAS for uncontrolled routes
+
+            schemas:
+                UserAuthResult:
+                    title: 'Schema for User Classic Authentication Response'
+                    properties:
+                        token:
+                            type: string
+                        refreshToken:
+                            type: string
+                        refreshTokenExpiration:
+                            type: int
+                    type: object
+        security:
+            - Bearer: [ ]
+
+
+        # Custom PATHS for uncontrolled routes
+
+        paths:
+            /api/auth:
+                post:
+                    tags:
+                        - Authentication
+                    summary: 'User Authentication classic way'
+                    description: 'Endpoint for classic user authentication using email/password'
+                    requestBody:
+                        content:
+                            application/json:
+                                schema:
+                                    properties:
+                                        email:
+                                            type: string
+                                        password:
+                                            type: string
+                                    type: object
+                                    example:
+                                        email: 'user@gmail.com'
+                                        password: 'User1234$$$'
+                    responses:
+                        '200':
+                            description: OK
+                            content:
+                                application/json:
+                                    schema:
+                                        oneOf:
+                                            - { $ref: '#/components/schemas/UserAuthResult' }
+                                    examples:
+                                        result:
+                                            summary: 'Success Authentication Response'
+                                            value: {
+                                                token: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQ',
+                                                refreshToken: '214a68187f1ce4b6ffec8d6e8c4795b19894bc',
+                                                refreshTokenExpiration: 1726826054
+                                            }
+            /api/token/refresh:
+                post:
+                    tags:
+                        - Authentication
+                    summary: 'Update JWT Token using Refresh Token'
+                    description: 'Endpoint for update current access jwt token using refresh token'
+                    requestBody:
+                        content:
+                            application/json:
+                                schema:
+                                    properties:
+                                        refreshToken:
+                                            type: string
+                                    type: object
+                                    example:
+                                        refreshToken: '214a68187f1ce4b6ffec8d6e8c4795b19894bc'
+                    responses:
+                        '200':
+                            description: OK
+                            content:
+                                application/json:
+                                    schema:
+                                        oneOf:
+                                            - { $ref: '#/components/schemas/UserAuthResult' }
+                                    examples:
+                                        result:
+                                            summary: 'Success Update JWT Response'
+                                            value: {
+                                                token: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQ',
+                                                refreshToken: '214a68187f1ce4b6ffec8d6e8c4795b19894bc',
+                                                refreshTokenExpiration: 1726826054
+                                            }
+
+    areas: # to filter documented areas
+        path_patterns:
+            - ^/api(?!/doc$) # Accepts routes under /api except /api/doc
+

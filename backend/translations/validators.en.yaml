@@ -1,0 +1,22 @@
+# Validation messages
+This value should not be blank.: "This field cannot be blank."
+This value is not a valid email address.: "Please enter a valid email address."
+This value is too short. It should have {{ limit }} character or more.|This value is too short. It should have {{ limit }} characters or more.: "This value is too short. It should have {{ limit }} character or more.|This value is too short. It should have {{ limit }} characters or more."
+This value is too long. It should have {{ limit }} character or less.|This value is too long. It should have {{ limit }} characters or less.: "This value is too long. It should have {{ limit }} character or less.|This value is too long. It should have {{ limit }} characters or less."
+
+# Custom validation messages
+email:
+  blank: "Email cannot be blank."
+  invalid: "Please enter a valid email address."
+  unique: "A user with this email already exists."
+  
+password:
+  blank: "Password cannot be blank."
+  too_short: "Password must be at least {{ limit }} characters long."
+  too_long: "Password cannot be longer than {{ limit }} characters."
+  weak: "Password is too weak. Use a combination of letters, numbers, and special characters."
+
+code:
+  blank: "Authorization code cannot be blank."
+  invalid: "Invalid authorization code."
+

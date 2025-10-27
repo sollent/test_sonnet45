@@ -1,0 +1,2 @@
+user_registration_request_dto.password.min_length: Ваш пароль должен содержать минимум {{ limit }} символов
+user_registration_request_dto.password.max_length: Ваш пароль не может быть длинее {{ limit }} символов
