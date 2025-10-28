@@ -15,6 +15,7 @@ import Divider from 'primevue/divider'
 import ConfirmDialog from 'primevue/confirmdialog'
 import { useConfirm } from 'primevue/useconfirm'
 import { TaskStatus, TaskPriority, TASK_PRIORITY_CONFIG, TASK_STATUS_CONFIG, type Task, type UpdateTaskRequest } from '@/types/task.types'
+import { taskService } from '@/services/task.service'
 
 interface Props {
   visible: boolean
@@ -42,6 +43,12 @@ const newSubtaskTitle = ref('')
 const isAddingSubtask = ref(false)
 const editingSubtaskId = ref<number | null>(null)
 const editingSubtaskTitle = ref('')
+
+// Full subtask editor state
+const isSubtaskView = ref(false)
+const currentSubtask = ref<Task | null>(null)
+const subtaskEditData = ref<UpdateTaskRequest>({})
+const isSubtaskSubmitting = ref(false)
 
 // Edit form data
 const editData = ref<UpdateTaskRequest>({})
@@ -107,6 +114,49 @@ function toggleEditMode() {
     resetEditData()
   }
   editMode.value = !editMode.value
+}
+
+async function openSubtaskEditor(subtaskId: number) {
+  try {
+    const st = await taskService.getTask(subtaskId)
+    currentSubtask.value = st
+    subtaskEditData.value = {
+      title: st.title,
+      description: st.description,
+      status: st.status,
+      priority: st.priority,
+      startDate: st.startDate,
+      dueDate: st.dueDate,
+      tags: st.tags.map(t => t.name)
+    }
+    isSubtaskView.value = true
+    editMode.value = true
+  } catch (e: any) {
+    showError(e.message || t('errors.unknown_error'))
+  }
+}
+
+function closeSubtaskEditor() {
+  isSubtaskView.value = false
+  currentSubtask.value = null
+  editMode.value = false
+}
+
+async function handleSaveSubtask() {
+  if (!currentSubtask.value) return
+  isSubtaskSubmitting.value = true
+  try {
+    await taskStore.updateTask(currentSubtask.value.id, subtaskEditData.value)
+    showSuccess(t('tasks.task_updated'))
+    // refresh parent task to reflect changes
+    if (props.task) await taskStore.fetchTask(props.task.id)
+    emit('task-updated')
+    closeSubtaskEditor()
+  } catch (e: any) {
+    showError(e.message || t('errors.unknown_error'))
+  } finally {
+    isSubtaskSubmitting.value = false
+  }
 }
 
 async function handleSave() {
@@ -275,7 +325,10 @@ function handleClose() {
   >
     <template #header>
       <div class="drawer-header">
-        <h3 class="drawer-title">{{ t('tasks.task_details') }}</h3>
+        <div class="drawer-title" style="display:flex;align-items:center;gap:.5rem;">
+          <Button v-if="isSubtaskView" icon="pi pi-arrow-left" text rounded severity="secondary" @click="closeSubtaskEditor" :aria-label="t('common.back')" />
+          <h3 class="drawer-title">{{ isSubtaskView ? t('tasks.edit_task') : t('tasks.task_details') }}</h3>
+        </div>
         <div class="drawer-actions">
           <Button
             v-if="!editMode"
@@ -298,7 +351,8 @@ function handleClose() {
       </div>
     </template>
 
-    <div v-if="task" class="task-details">
+    <!-- Parent task details -->
+    <div v-if="task && !isSubtaskView" class="task-details">
       <!-- Priority and Status Badges -->
       <div class="badges-row">
         <Chip
@@ -426,7 +480,7 @@ function handleClose() {
           <Chips
             v-model="editData.tags"
             :placeholder="t('tasks.add_tag_placeholder')"
-            separator=","
+            separator="," 
             class="w-full"
           />
         </div>
@@ -494,6 +548,7 @@ function handleClose() {
               </template>
               <template v-else>
                 <Button icon="pi pi-pencil" rounded text severity="secondary" @click="startEditSubtask(subtask)" :aria-label="t('tasks.edit_task')" />
+                <Button icon="pi pi-external-link" rounded text severity="secondary" @click="openSubtaskEditor(subtask.id)" :aria-label="t('tasks.edit_task')" />
                 <Button icon="pi pi-trash" rounded text severity="danger" @click="handleDeleteSubtask(subtask.id)" :aria-label="t('tasks.delete_task')" />
               </template>
             </div>
@@ -567,6 +622,72 @@ function handleClose() {
             class="w-full"
           />
         </template>
+      </div>
+    </div>
+
+    <!-- Subtask full edit view -->
+    <div v-else-if="currentSubtask && isSubtaskView" class="task-details">
+      <!-- Title -->
+      <div class="detail-section">
+        <label class="detail-label">{{ t('tasks.task_title') }}</label>
+        <InputText v-model="subtaskEditData.title" class="w-full" :placeholder="t('tasks.title_placeholder')" />
+      </div>
+
+      <!-- Description -->
+      <div class="detail-section">
+        <label class="detail-label">{{ t('tasks.task_description') }}</label>
+        <Textarea v-model="subtaskEditData.description" class="w-full" rows="4" autoResize :placeholder="t('tasks.description_placeholder')" />
+      </div>
+
+      <Divider />
+
+      <!-- Dates -->
+      <div class="detail-section">
+        <div class="date-row">
+          <div class="date-item">
+            <i class="pi pi-calendar-plus" />
+            <div>
+              <label class="detail-label-small">{{ t('tasks.start_date') }}</label>
+              <Calendar v-model="subtaskEditData.startDate" showTime hourFormat="24" :placeholder="t('common.select_date')" class="w-full" dateFormat="dd.mm.yy" />
+            </div>
+          </div>
+          <div class="date-item">
+            <i class="pi pi-calendar-minus" />
+            <div>
+              <label class="detail-label-small">{{ t('tasks.due_date') }}</label>
+              <Calendar v-model="subtaskEditData.dueDate" showTime hourFormat="24" :placeholder="t('common.select_date')" class="w-full" dateFormat="dd.mm.yy" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status and Priority -->
+      <div class="detail-section">
+        <div class="form-row">
+          <div>
+            <label class="detail-label-small">{{ t('tasks.task_status') }}</label>
+            <Dropdown v-model="subtaskEditData.status" :options="statusOptions" optionLabel="label" optionValue="value" class="w-full" />
+          </div>
+          <div>
+            <label class="detail-label-small">{{ t('tasks.task_priority') }}</label>
+            <Dropdown v-model="subtaskEditData.priority" :options="priorityOptions" optionLabel="label" optionValue="value" class="w-full" />
+          </div>
+        </div>
+      </div>
+
+      <Divider />
+
+      <!-- Tags -->
+      <div class="detail-section">
+        <label class="detail-label">{{ t('tasks.tags') }}</label>
+        <Chips v-model="subtaskEditData.tags" :placeholder="t('tasks.add_tag_placeholder')" separator="," class="w-full" />
+      </div>
+
+      <Divider />
+
+      <div class="action-buttons">
+        <Button :label="t('common.cancel')" severity="secondary" outlined class="w-full" @click="closeSubtaskEditor" />
+        <Button :label="t('common.save')" class="w-full" :loading="isSubtaskSubmitting" @click="handleSaveSubtask" />
       </div>
     </div>
 
