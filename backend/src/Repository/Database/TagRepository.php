@@ -103,6 +103,9 @@ class TagRepository extends ServiceEntityRepository
                 $newTags[] = $tag;
                 $colorIndex++;
             }
+
+            // Flush newly created tags so subsequent calls can find them
+            $this->getEntityManager()->flush();
         }
 
         return array_merge($existingTags, $newTags);

@@ -16,6 +16,8 @@ export default {
     loading: 'Загрузка...',
     error: 'Ошибка',
     success: 'Успешно',
+    info: 'Информация',
+    warning: 'Предупреждение',
     back: 'Назад',
     continue: 'Продолжить',
     or: 'ИЛИ',

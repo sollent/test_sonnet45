@@ -414,5 +414,43 @@ function handleToggleComplete(event: Event) {
     font-size: 0.75rem;
   }
 }
+
+@media (max-width: 768px) {
+  .task-card {
+    padding: 0.75rem 1rem;
+    flex-direction: row;
+    align-items: center;
+  }
+  .task-card__content {
+    gap: 0.375rem;
+    padding-left: 0.75rem;
+  }
+  .task-card__header {
+    gap: 0.75rem;
+    align-items: center;
+  }
+  .task-card__title {
+    font-size: 0.9375rem;
+    margin-bottom: 0.125rem;
+  }
+  .task-card__description {
+    display: none;
+  }
+  .task-card__footer {
+    padding-left: 0;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .task-card__priority-indicator {
+    display: none;
+  }
+  .task-card__checkbox {
+    margin-top: 0;
+  }
+  .task-card__tags {
+    display: none; /* Hide tags on smallest view to save space */
+  }
+}
 </style>
 

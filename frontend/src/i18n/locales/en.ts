@@ -16,6 +16,8 @@ export default {
     loading: 'Loading...',
     error: 'Error',
     success: 'Success',
+    info: 'Info',
+    warning: 'Warning',
     back: 'Back',
     continue: 'Continue',
     or: 'OR',

@@ -40,6 +40,8 @@ const editMode = ref(false)
 const isSubmitting = ref(false)
 const newSubtaskTitle = ref('')
 const isAddingSubtask = ref(false)
+const editingSubtaskId = ref<number | null>(null)
+const editingSubtaskTitle = ref('')
 
 // Edit form data
 const editData = ref<UpdateTaskRequest>({})
@@ -195,6 +197,53 @@ async function handleToggleSubtask(subtaskId: number) {
   } catch (error: any) {
     showError(error.message || t('errors.unknown_error'))
   }
+}
+
+// Subtask inline editing
+function startEditSubtask(subtask: Task) {
+  editingSubtaskId.value = subtask.id
+  editingSubtaskTitle.value = subtask.title
+}
+
+function cancelEditSubtask() {
+  editingSubtaskId.value = null
+  editingSubtaskTitle.value = ''
+}
+
+async function saveEditSubtask() {
+  if (!editingSubtaskId.value || !editingSubtaskTitle.value.trim()) {
+    cancelEditSubtask()
+    return
+  }
+  try {
+    await taskStore.updateTask(editingSubtaskId.value, { title: editingSubtaskTitle.value.trim() })
+    if (props.task) await taskStore.fetchTask(props.task.id)
+    showSuccess(t('tasks.task_updated'))
+    emit('task-updated')
+  } catch (error: any) {
+    showError(error.message || t('errors.unknown_error'))
+  } finally {
+    cancelEditSubtask()
+  }
+}
+
+async function handleDeleteSubtask(subtaskId: number) {
+  confirm.require({
+    message: t('tasks.delete_task'),
+    header: t('common.confirm'),
+    icon: 'pi pi-exclamation-triangle',
+    acceptClass: 'p-button-danger',
+    accept: async () => {
+      try {
+        await taskStore.deleteTask(subtaskId)
+        if (props.task) await taskStore.fetchTask(props.task.id)
+        showSuccess(t('tasks.task_deleted'))
+        emit('task-updated')
+      } catch (error: any) {
+        showError(error.message || t('errors.unknown_error'))
+      }
+    }
+  })
 }
 
 function formatDate(dateString: string | null): string {
@@ -425,9 +474,29 @@ function handleClose() {
             >
               <i v-if="subtask.isCompleted" class="pi pi-check" />
             </button>
-            <span class="subtask-title" :class="{ 'completed': subtask.isCompleted }">
-              {{ subtask.title }}
-            </span>
+            <template v-if="editingSubtaskId === subtask.id">
+              <InputText
+                v-model="editingSubtaskTitle"
+                class="subtask-edit-input"
+                @keyup.enter="saveEditSubtask"
+                @keyup.esc="cancelEditSubtask"
+              />
+            </template>
+            <template v-else>
+              <span class="subtask-title" :class="{ 'completed': subtask.isCompleted }">
+                {{ subtask.title }}
+              </span>
+            </template>
+            <div class="subtask-actions">
+              <template v-if="editingSubtaskId === subtask.id">
+                <Button icon="pi pi-check" rounded text severity="success" @click="saveEditSubtask" :aria-label="t('common.save')" />
+                <Button icon="pi pi-times" rounded text severity="secondary" @click="cancelEditSubtask" :aria-label="t('common.cancel')" />
+              </template>
+              <template v-else>
+                <Button icon="pi pi-pencil" rounded text severity="secondary" @click="startEditSubtask(subtask)" :aria-label="t('tasks.edit_task')" />
+                <Button icon="pi pi-trash" rounded text severity="danger" @click="handleDeleteSubtask(subtask.id)" :aria-label="t('tasks.delete_task')" />
+              </template>
+            </div>
           </div>
         </div>
 
@@ -501,7 +570,7 @@ function handleClose() {
       </div>
     </div>
 
-    <ConfirmDialog />
+    <ConfirmDialog :style="{ width: '520px' }" :breakpoints="{ '960px': '75vw', '640px': '90vw' }" />
   </Sidebar>
 </template>
 
@@ -661,7 +730,7 @@ function handleClose() {
 
 .subtask-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.75rem;
   padding: 0.75rem;
   background: #f7fafc;
@@ -698,15 +767,30 @@ function handleClose() {
 }
 
 .subtask-title {
-  flex: 1;
+  flex: 1 1 auto;
+  min-width: 0;
   font-size: 0.9375rem;
   color: #2d3748;
   font-weight: 500;
+  overflow-wrap: anywhere;
 }
 
 .subtask-title.completed {
   text-decoration: line-through;
   color: #a0aec0;
+}
+
+.subtask-actions {
+  display: flex;
+  gap: 0.25rem;
+  margin-left: auto;
+  flex-shrink: 0;
+  align-self: flex-start;
+}
+
+.subtask-edit-input {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .add-subtask-form {
@@ -769,6 +853,13 @@ function handleClose() {
 :deep(.p-chips .p-chips-input-token input),
 :deep(.p-button) {
   outline: none !important;
+}
+
+/* Make chips input full width */
+:deep(.p-chips .p-chips-multiple-container) {
+  width: 100%;
+  padding: 0.5rem;
+  gap: 0.5rem;
 }
 
 :deep(.p-inputtext:focus),

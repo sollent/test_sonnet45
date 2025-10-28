@@ -69,19 +69,21 @@ class TaskRepository extends ServiceEntityRepository
      */
     public function findTodayTasks(User $user): array
     {
-        $today = new \DateTimeImmutable('today');
-        $tomorrow = new \DateTimeImmutable('tomorrow');
+        $todayStart = new \DateTimeImmutable('today');
+        $todayEnd = new \DateTimeImmutable('today 23:59:59');
 
         return $this->createQueryBuilder('t')
             ->where('t.user = :user')
             ->andWhere('t.parentTask IS NULL')
             ->andWhere('t.isArchived = false')
-            ->andWhere('t.status != :completed')
-            ->andWhere('(t.startDate >= :today AND t.startDate < :tomorrow) OR (t.dueDate >= :today AND t.dueDate < :tomorrow)')
+            ->andWhere('t.status != :completedStatus')
+            ->andWhere(
+                '(t.dueDate BETWEEN :todayStart AND :todayEnd) OR (t.startDate BETWEEN :todayStart AND :todayEnd)'
+            )
             ->setParameter('user', $user)
-            ->setParameter('completed', TaskStatus::COMPLETED)
-            ->setParameter('today', $today)
-            ->setParameter('tomorrow', $tomorrow)
+            ->setParameter('completedStatus', TaskStatus::COMPLETED)
+            ->setParameter('todayStart', $todayStart)
+            ->setParameter('todayEnd', $todayEnd)
             ->orderBy('t.priority', 'DESC')
             ->addOrderBy('t.dueDate', 'ASC')
             ->getQuery()

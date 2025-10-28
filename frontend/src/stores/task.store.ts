@@ -43,11 +43,22 @@ export const useTaskStore = defineStore('task', () => {
   )
 
   const todayTasks = computed(() => {
-    const today = new Date().toISOString().split('T')[0]
+    const today = new Date()
+    const todayStart = new Date(today.setHours(0, 0, 0, 0))
+    const todayEnd = new Date(today.setHours(23, 59, 59, 999))
+
     return tasks.value.filter(t => {
-      if (t.isArchived || t.isCompleted) return false
-      const taskDate = t.dueDate?.split('T')[0] || t.startDate?.split('T')[0]
-      return taskDate === today
+      if (t.isArchived || t.status === 'completed') {
+        return false
+      }
+      
+      const dueDate = t.dueDate ? new Date(t.dueDate) : null
+      const startDate = t.startDate ? new Date(t.startDate) : null
+
+      const isDueToday = dueDate && dueDate >= todayStart && dueDate <= todayEnd
+      const isStartingToday = startDate && startDate >= todayStart && startDate <= todayEnd
+
+      return isDueToday || isStartingToday
     })
   })
 
