@@ -1,4 +1,27 @@
 # Validation messages
+
+# Task validation
+task:
+  title:
+    not_blank: "Task title is required"
+    min_length: "Task title must be at least 1 character long"
+    max_length: "Task title must not exceed 255 characters"
+  description:
+    max_length: "Task description must not exceed 5000 characters"
+  due_date:
+    must_be_after_start: "Due date must be after start date"
+
+# Tag validation
+tag:
+  name:
+    not_blank: "Tag name is required"
+    min_length: "Tag name must be at least 1 character long"
+    max_length: "Tag name must not exceed 50 characters"
+    invalid_format: "Tag name contains invalid characters"
+    already_exists: "A tag with this name already exists"
+  color:
+    not_blank: "Tag color is required"
+    invalid_format: "Invalid color format. Use hex format like #3B82F6"
 This value should not be blank.: "This field cannot be blank."
 This value is not a valid email address.: "Please enter a valid email address."
 This value is too short. It should have {{ limit }} character or more.|This value is too short. It should have {{ limit }} characters or more.: "This value is too short. It should have {{ limit }} character or more.|This value is too short. It should have {{ limit }} characters or more."

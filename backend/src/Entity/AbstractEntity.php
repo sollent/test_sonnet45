@@ -14,18 +14,18 @@ abstract class AbstractEntity
     #[ORM\Column(type: 'integer')]
     protected ?int $id = null;
 
-    #[ORM\Column(type: 'datetime', nullable: true)]
-    protected ?\DateTimeInterface $createdAt = null;
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
+    protected ?\DateTimeImmutable $createdAt = null;
 
-    #[ORM\Column(type: 'datetime', nullable: true)]
-    protected ?\DateTimeInterface $updatedAt = null;
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
+    protected ?\DateTimeImmutable $updatedAt = null;
 
     /**
      * AbstractEntity constructor.
      */
     public function __construct()
     {
-        $this->createdAt = new \DateTime();
+        $this->createdAt = new \DateTimeImmutable();
         $this->setUpdatedAtValue();
     }
 
@@ -41,12 +41,12 @@ abstract class AbstractEntity
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeInterface
+    public function getCreatedAt(): ?\DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    public function getUpdatedAt(): ?\DateTimeInterface
+    public function getUpdatedAt(): ?\DateTimeImmutable
     {
         return $this->updatedAt;
     }
@@ -54,6 +54,6 @@ abstract class AbstractEntity
     #[ORM\PreUpdate]
     public function setUpdatedAtValue(): void
     {
-        $this->updatedAt = new \DateTime();
+        $this->updatedAt = new \DateTimeImmutable();
     }
 }

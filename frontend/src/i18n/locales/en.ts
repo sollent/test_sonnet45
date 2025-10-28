@@ -20,6 +20,11 @@ export default {
     continue: 'Continue',
     or: 'OR',
     language: 'Language',
+    select_date: 'Select date',
+    confirm: 'Confirm',
+    delete: 'Delete',
+    edit: 'Edit',
+    add: 'Add',
   },
 
   auth: {
@@ -95,6 +100,10 @@ export default {
     password_min_length: 'Password must be at least 6 characters',
     password_max_length: 'Password cannot be longer than 128 characters',
     name_required: 'Name is required',
+    task_title_required: 'Task title is required',
+    task_title_max_length: 'Task title must not exceed 255 characters',
+    task_description_max_length: 'Description must not exceed 5000 characters',
+    due_date_after_start: 'Due date must be after start date',
   },
 
   errors: {
@@ -125,6 +134,112 @@ export default {
     requirements: 'Password requirements:',
     min_length: 'At least 6 characters',
     max_length: 'No more than 128 characters',
+  },
+
+  tasks: {
+    title: 'Tasks',
+    my_tasks: 'My Tasks',
+    create_task: 'Create Task',
+    new_task: 'New Task',
+    edit_task: 'Edit Task',
+    delete_task: 'Delete Task',
+    task_details: 'Task Details',
+    no_tasks: 'No tasks yet',
+    no_tasks_description: 'Create your first task to get started',
+    
+    // Task fields
+    title: 'Tasks',
+    task_title: 'Title',
+    task_description: 'Description',
+    task_status: 'Status',
+    task_priority: 'Priority',
+    priority: 'Priority',
+    status: 'Status',
+    start_date: 'Start Date',
+    due_date: 'Due Date',
+    tags: 'Tags',
+    subtasks: 'Subtasks',
+    add_subtask: 'Add Subtask',
+    
+    // Statuses
+    status_pending: 'Pending',
+    status_in_progress: 'In Progress',
+    status_completed: 'Completed',
+    status_cancelled: 'Cancelled',
+    
+    // Priorities
+    priority_low: 'Low',
+    priority_medium: 'Medium',
+    priority_high: 'High',
+    priority_urgent: 'Urgent',
+    
+    // Actions
+    mark_complete: 'Mark as Complete',
+    mark_incomplete: 'Mark as Incomplete',
+    archive: 'Archive',
+    unarchive: 'Unarchive',
+    duplicate: 'Duplicate',
+    
+    // Views
+    all_tasks: 'All Tasks',
+    today_tasks: 'Today',
+    tomorrow_tasks: 'Tomorrow',
+    overdue_tasks: 'Overdue',
+    upcoming_tasks: 'Upcoming',
+    completed_tasks: 'Completed',
+    this_week: 'This Week',
+    cards_view: 'Cards View',
+    table_view: 'Table View',
+    tasks: 'tasks',
+    
+    // Statistics
+    total_tasks: 'Total Tasks',
+    pending_tasks: 'Pending',
+    in_progress_tasks: 'In Progress',
+    completed_tasks_count: 'Completed',
+    overdue_tasks_count: 'Overdue',
+    
+    // Messages
+    task_created: 'Task created successfully',
+    task_updated: 'Task updated successfully',
+    task_deleted: 'Task deleted successfully',
+    task_completed: 'Task marked as completed',
+    task_archived: 'Task archived',
+    
+    // Placeholders
+    search_placeholder: 'Search tasks...',
+    title_placeholder: 'What needs to be done?',
+    description_placeholder: 'Add description...',
+    add_tag_placeholder: 'Add tags (press Enter)',
+    tags_hint: 'Press Enter or comma to add tags',
+    
+    // Empty states
+    no_results: 'No tasks found',
+    no_overdue: 'No overdue tasks',
+    no_today: 'No tasks for today',
+    no_upcoming: 'No upcoming tasks',
+    no_due_date: 'No due date',
+    
+    // Filters
+    filter_by: 'Filter by',
+    sort_by: 'Sort by',
+    group_by_date: 'Group by date',
+    show_completed: 'Show completed',
+    show_archived: 'Show archived',
+  },
+
+  tags: {
+    title: 'Tags',
+    create_tag: 'Create Tag',
+    edit_tag: 'Edit Tag',
+    delete_tag: 'Delete Tag',
+    no_tags: 'No tags',
+    tag_name: 'Name',
+    tag_color: 'Color',
+    most_used: 'Most Used',
+    tag_created: 'Tag created successfully',
+    tag_updated: 'Tag updated successfully',
+    tag_deleted: 'Tag deleted successfully',
   },
 }
 

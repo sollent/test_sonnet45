@@ -20,6 +20,11 @@ export default {
     continue: 'Продолжить',
     or: 'ИЛИ',
     language: 'Язык',
+    select_date: 'Выберите дату',
+    confirm: 'Подтверждение',
+    delete: 'Удалить',
+    edit: 'Редактировать',
+    add: 'Добавить',
   },
 
   auth: {
@@ -95,6 +100,10 @@ export default {
     password_min_length: 'Пароль должен содержать минимум 6 символов',
     password_max_length: 'Пароль не может быть длиннее 128 символов',
     name_required: 'Имя обязательно',
+    task_title_required: 'Название задачи обязательно',
+    task_title_max_length: 'Название задачи не должно превышать 255 символов',
+    task_description_max_length: 'Описание не должно превышать 5000 символов',
+    due_date_after_start: 'Дата завершения должна быть после даты начала',
   },
 
   errors: {
@@ -125,6 +134,112 @@ export default {
     requirements: 'Требования к паролю:',
     min_length: 'Минимум 6 символов',
     max_length: 'Не более 128 символов',
+  },
+
+  tasks: {
+    title: 'Задачи',
+    my_tasks: 'Мои задачи',
+    create_task: 'Создать задачу',
+    new_task: 'Новая задача',
+    edit_task: 'Редактировать задачу',
+    delete_task: 'Удалить задачу',
+    task_details: 'Детали задачи',
+    no_tasks: 'Пока нет задач',
+    no_tasks_description: 'Создайте свою первую задачу, чтобы начать',
+    
+    // Task fields
+    title: 'Задачи',
+    task_title: 'Название',
+    task_description: 'Описание',
+    task_status: 'Статус',
+    task_priority: 'Приоритет',
+    priority: 'Приоритет',
+    status: 'Статус',
+    start_date: 'Дата начала',
+    due_date: 'Дата завершения',
+    tags: 'Теги',
+    subtasks: 'Подзадачи',
+    add_subtask: 'Добавить подзадачу',
+    
+    // Statuses
+    status_pending: 'В ожидании',
+    status_in_progress: 'В процессе',
+    status_completed: 'Завершена',
+    status_cancelled: 'Отменена',
+    
+    // Priorities
+    priority_low: 'Низкий',
+    priority_medium: 'Средний',
+    priority_high: 'Высокий',
+    priority_urgent: 'Срочный',
+    
+    // Actions
+    mark_complete: 'Отметить как завершенную',
+    mark_incomplete: 'Отметить как незавершенную',
+    archive: 'Архивировать',
+    unarchive: 'Разархивировать',
+    duplicate: 'Дублировать',
+    
+    // Views
+    all_tasks: 'Все задачи',
+    today_tasks: 'Сегодня',
+    tomorrow_tasks: 'Завтра',
+    overdue_tasks: 'Просроченные',
+    upcoming_tasks: 'Предстоящие',
+    completed_tasks: 'Завершенные',
+    this_week: 'На этой неделе',
+    cards_view: 'Вид карточек',
+    table_view: 'Вид таблицы',
+    tasks: 'задач(и)',
+    
+    // Statistics
+    total_tasks: 'Всего задач',
+    pending_tasks: 'В ожидании',
+    in_progress_tasks: 'В процессе',
+    completed_tasks_count: 'Завершено',
+    overdue_tasks_count: 'Просрочено',
+    
+    // Messages
+    task_created: 'Задача успешно создана',
+    task_updated: 'Задача успешно обновлена',
+    task_deleted: 'Задача успешно удалена',
+    task_completed: 'Задача отмечена как завершенная',
+    task_archived: 'Задача архивирована',
+    
+    // Placeholders
+    search_placeholder: 'Поиск задач...',
+    title_placeholder: 'Что нужно сделать?',
+    description_placeholder: 'Добавить описание...',
+    add_tag_placeholder: 'Добавить теги (нажмите Enter)',
+    tags_hint: 'Нажмите Enter или запятую для добавления тегов',
+    
+    // Empty states
+    no_results: 'Задачи не найдены',
+    no_overdue: 'Нет просроченных задач',
+    no_today: 'Нет задач на сегодня',
+    no_upcoming: 'Нет предстоящих задач',
+    no_due_date: 'Без срока',
+    
+    // Filters
+    filter_by: 'Фильтровать по',
+    sort_by: 'Сортировать по',
+    group_by_date: 'Группировать по дате',
+    show_completed: 'Показать завершенные',
+    show_archived: 'Показать архивированные',
+  },
+
+  tags: {
+    title: 'Теги',
+    create_tag: 'Создать тег',
+    edit_tag: 'Редактировать тег',
+    delete_tag: 'Удалить тег',
+    no_tags: 'Нет тегов',
+    tag_name: 'Название',
+    tag_color: 'Цвет',
+    most_used: 'Часто используемые',
+    tag_created: 'Тег успешно создан',
+    tag_updated: 'Тег успешно обновлен',
+    tag_deleted: 'Тег успешно удален',
   },
 }
 

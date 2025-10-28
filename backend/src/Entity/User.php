@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Repository\Database\UserRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
@@ -31,6 +33,19 @@ class User extends AbstractEntity implements UserInterface, PasswordAuthenticate
 
     #[ORM\Column(type: 'string', nullable: true)]
     protected ?string $googleUserName = null;
+
+    #[ORM\OneToMany(targetEntity: Task::class, mappedBy: 'user', cascade: ['remove'], orphanRemoval: true)]
+    private Collection $tasks;
+
+    #[ORM\OneToMany(targetEntity: Tag::class, mappedBy: 'user', cascade: ['remove'], orphanRemoval: true)]
+    private Collection $tags;
+
+    public function __construct()
+    {
+        parent::__construct();
+        $this->tasks = new ArrayCollection();
+        $this->tags = new ArrayCollection();
+    }
 
     public function __toString(): string
     {
@@ -140,5 +155,65 @@ class User extends AbstractEntity implements UserInterface, PasswordAuthenticate
     public function hasGoogleAuth(): bool
     {
         return $this->googleId !== null;
+    }
+
+    /**
+     * @return Collection<int, Task>
+     */
+    public function getTasks(): Collection
+    {
+        return $this->tasks;
+    }
+
+    public function addTask(Task $task): static
+    {
+        if (!$this->tasks->contains($task)) {
+            $this->tasks->add($task);
+            $task->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeTask(Task $task): static
+    {
+        if ($this->tasks->removeElement($task)) {
+            // Set the owning side to null
+            if ($task->getUser() === $this) {
+                $task->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Tag>
+     */
+    public function getTags(): Collection
+    {
+        return $this->tags;
+    }
+
+    public function addTag(Tag $tag): static
+    {
+        if (!$this->tags->contains($tag)) {
+            $this->tags->add($tag);
+            $tag->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeTag(Tag $tag): static
+    {
+        if ($this->tags->removeElement($tag)) {
+            // Set the owning side to null
+            if ($tag->getUser() === $this) {
+                $tag->setUser(null);
+            }
+        }
+
+        return $this;
     }
 }
