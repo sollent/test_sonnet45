@@ -59,7 +59,7 @@ final class TaskResponseDto
         // Map subtasks if requested
         if ($includeSubtasks) {
             $dto->subtasks = array_map(
-                fn($subtask) => self::fromEntity($subtask, false),
+                fn($subtask) => self::fromEntity($subtask, true), // Recursive loading
                 $task->getSubtasks()->toArray()
             );
         }

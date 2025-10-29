@@ -108,6 +108,11 @@ export const useTaskStore = defineStore('task', () => {
 
     try {
       const task = await taskService.getTask(id)
+      console.log('Fetched task from API:', task)
+      console.log('Task has subtasks:', task.subtasks?.length || 0)
+      if (task.subtasks && task.subtasks.length > 0) {
+        console.log('First subtask:', task.subtasks[0])
+      }
       selectedTask.value = task
       
       // Update task in list if it exists

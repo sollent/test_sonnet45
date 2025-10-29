@@ -20,6 +20,8 @@ export default {
     warning: 'Предупреждение',
     back: 'Назад',
     continue: 'Продолжить',
+    yes: 'Да',
+    no: 'Нет',
     or: 'ИЛИ',
     language: 'Язык',
     select_date: 'Выберите дату',
@@ -119,6 +121,20 @@ export default {
     unauthorized: 'Вы не авторизованы. Пожалуйста, войдите',
     session_expired: 'Ваша сессия истекла. Пожалуйста, войдите снова',
     unknown_error: 'Произошла неизвестная ошибка',
+    fetch_failed: 'Не удалось загрузить данные'
+  },
+  
+  calendar: {
+    title: 'Календарь',
+    month: 'Месяц',
+    week: 'Неделя',
+    today: 'Сегодня',
+    previous: 'Назад',
+    next: 'Вперед',
+    no_tasks_for_day: 'Нет задач на этот день',
+    all_day: 'Весь день',
+    tasks_count: '{count} задач',
+    new_event: 'Новое событие'
   },
 
   success: {
@@ -159,9 +175,27 @@ export default {
     status: 'Статус',
     start_date: 'Дата начала',
     due_date: 'Дата завершения',
+    description: 'Описание',
     tags: 'Теги',
+    tags_placeholder: 'Добавить теги (нажмите Enter)',
+    tags_help: 'Нажмите Enter или запятую для добавления тегов',
     subtasks: 'Подзадачи',
     add_subtask: 'Добавить подзадачу',
+    tree_structure: 'Древовидная структура',
+    view_full_tree: 'Открыть полное дерево',
+    subtasks_tree: 'Дерево подзадач',
+    tasks_total: 'всего',
+    main_task: 'Основная задача',
+    and_more: 'и еще {count}',
+    create_subtask: 'Создать подзадачу',
+    task_saved: 'Задача сохранена',
+    title_required: 'Название обязательно',
+    task_reopened: 'Задача открыта заново',
+    delete_confirmation: 'Вы уверены, что хотите удалить эту задачу? Это действие нельзя отменить.',
+    complete_with_subtasks_title: 'Завершить задачу с подзадачами',
+    complete_with_subtasks_message: 'Вы точно хотите завершить задачу? Есть {count} незавершенных подзадач. В случае завершения родительской задачи - все подзадачи будут завершены автоматически.',
+    subtasks_will_complete: 'Все подзадачи будут завершены автоматически',
+    actions: 'Действия',
     
     // Statuses
     status_pending: 'В ожидании',
@@ -212,6 +246,9 @@ export default {
     search_placeholder: 'Поиск задач...',
     title_placeholder: 'Что нужно сделать?',
     description_placeholder: 'Добавить описание...',
+    create_task_description: 'Создайте свою первую задачу, чтобы начать',
+    edit_task_description: 'Измените детали вашей задачи',
+    creating_subtask: 'Создание подзадачи для выбранной задачи',
     add_tag_placeholder: 'Добавить теги (нажмите Enter)',
     tags_hint: 'Нажмите Enter или запятую для добавления тегов',
     

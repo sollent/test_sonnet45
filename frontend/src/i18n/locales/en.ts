@@ -20,6 +20,8 @@ export default {
     warning: 'Warning',
     back: 'Back',
     continue: 'Continue',
+    yes: 'Yes',
+    no: 'No',
     or: 'OR',
     language: 'Language',
     select_date: 'Select date',
@@ -119,6 +121,20 @@ export default {
     unauthorized: 'You are not authorized. Please log in',
     session_expired: 'Your session has expired. Please log in again',
     unknown_error: 'An unknown error occurred',
+    fetch_failed: 'Failed to load data'
+  },
+  
+  calendar: {
+    title: 'Calendar',
+    month: 'Month',
+    week: 'Week',
+    today: 'Today',
+    previous: 'Previous',
+    next: 'Next',
+    no_tasks_for_day: 'No tasks for this day',
+    all_day: 'All day',
+    tasks_count: '{count} tasks',
+    new_event: 'New event'
   },
 
   success: {
@@ -159,9 +175,27 @@ export default {
     status: 'Status',
     start_date: 'Start Date',
     due_date: 'Due Date',
+    description: 'Description',
     tags: 'Tags',
+    tags_placeholder: 'Add tags (press Enter)',
+    tags_help: 'Press Enter or comma to add tags',
     subtasks: 'Subtasks',
     add_subtask: 'Add Subtask',
+    tree_structure: 'Tree Structure',
+    view_full_tree: 'View Full Tree',
+    subtasks_tree: 'Subtasks Tree',
+    tasks_total: 'total',
+    main_task: 'Main Task',
+    and_more: 'and {count} more',
+    create_subtask: 'Create Subtask',
+    task_saved: 'Task saved',
+    title_required: 'Title is required',
+    task_reopened: 'Task reopened',
+    delete_confirmation: 'Are you sure you want to delete this task? This action cannot be undone.',
+    complete_with_subtasks_title: 'Complete task with subtasks',
+    complete_with_subtasks_message: 'Are you sure you want to complete this task? There are {count} uncompleted subtasks. If you complete the parent task, all subtasks will be completed automatically.',
+    subtasks_will_complete: 'All subtasks will be completed automatically',
+    actions: 'Actions',
     
     // Statuses
     status_pending: 'Pending',
@@ -212,6 +246,9 @@ export default {
     search_placeholder: 'Search tasks...',
     title_placeholder: 'What needs to be done?',
     description_placeholder: 'Add description...',
+    create_task_description: 'Create your first task to get started',
+    edit_task_description: 'Edit your task details',
+    creating_subtask: 'Creating subtask for selected task',
     add_tag_placeholder: 'Add tags (press Enter)',
     tags_hint: 'Press Enter or comma to add tags',
     

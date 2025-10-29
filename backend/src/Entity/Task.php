@@ -73,7 +73,7 @@ class Task extends AbstractEntity
     #[Groups(['task:read'])]
     private ?self $parentTask = null;
 
-    #[ORM\OneToMany(targetEntity: self::class, mappedBy: 'parentTask', cascade: ['persist', 'remove'], orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: self::class, mappedBy: 'parentTask', cascade: ['persist', 'remove'], orphanRemoval: true, fetch: 'EAGER')]
     #[Groups(['task:read'])]
     private Collection $subtasks;
 

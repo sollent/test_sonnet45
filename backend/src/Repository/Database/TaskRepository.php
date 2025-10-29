@@ -215,6 +215,51 @@ class TaskRepository extends ServiceEntityRepository
         return $result;
     }
 
+    /**
+     * Find task with all nested subtasks loaded
+     */
+    public function findWithSubtasks(int $id): ?Task
+    {
+        $task = $this->createQueryBuilder('t')
+            ->leftJoin('t.subtasks', 's')
+            ->leftJoin('t.tags', 'tag')
+            ->addSelect('s')
+            ->addSelect('tag')
+            ->where('t.id = :id')
+            ->setParameter('id', $id)
+            ->getQuery()
+            ->getOneOrNullResult();
+            
+        // If task has subtasks, load their subtasks recursively
+        if ($task && $task->getSubtasks()->count() > 0) {
+            foreach ($task->getSubtasks() as $subtask) {
+                $this->loadSubtasksRecursively($subtask);
+            }
+        }
+        
+        return $task;
+    }
+    
+    /**
+     * Recursively load subtasks
+     */
+    private function loadSubtasksRecursively(Task $task): void
+    {
+        $subtasks = $this->createQueryBuilder('t')
+            ->leftJoin('t.tags', 'tag')
+            ->addSelect('tag')
+            ->where('t.parentTask = :parent')
+            ->setParameter('parent', $task)
+            ->getQuery()
+            ->getResult();
+            
+        foreach ($subtasks as $subtask) {
+            if ($subtask->getSubtasks()->count() > 0) {
+                $this->loadSubtasksRecursively($subtask);
+            }
+        }
+    }
+
     public function save(Task $entity, bool $flush = false): void
     {
         $this->getEntityManager()->persist($entity);
@@ -231,5 +276,77 @@ class TaskRepository extends ServiceEntityRepository
         if ($flush) {
             $this->getEntityManager()->flush();
         }
+    }
+
+    /**
+     * Find tasks for a specific date range
+     */
+    public function findTasksByDateRange(User $user, \DateTime $startDate, \DateTime $endDate, bool $includeCompleted = true): array
+    {
+        $qb = $this->createQueryBuilder('t')
+            ->leftJoin('t.tags', 'tag')
+            ->addSelect('tag')
+            ->where('t.user = :user')
+            ->andWhere('t.parentTask IS NULL') // Only root tasks
+            ->andWhere('(
+                (t.startDate BETWEEN :startDate AND :endDate) OR
+                (t.dueDate BETWEEN :startDate AND :endDate) OR
+                (t.startDate <= :startDate AND t.dueDate >= :endDate) OR
+                (t.startDate IS NULL AND t.dueDate BETWEEN :startDate AND :endDate) OR
+                (t.dueDate IS NULL AND t.startDate BETWEEN :startDate AND :endDate)
+            )')
+            ->setParameter('user', $user)
+            ->setParameter('startDate', $startDate)
+            ->setParameter('endDate', $endDate);
+
+        if (!$includeCompleted) {
+            $qb->andWhere('t.status != :completed')
+               ->setParameter('completed', TaskStatus::COMPLETED);
+        }
+
+        return $qb->orderBy('t.startDate', 'ASC')
+            ->addOrderBy('t.dueDate', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Find tasks for a specific day
+     */
+    public function findTasksByDay(User $user, \DateTime $date, bool $includeCompleted = true): array
+    {
+        $startOfDay = clone $date;
+        $startOfDay->setTime(0, 0, 0);
+        
+        $endOfDay = clone $date;
+        $endOfDay->setTime(23, 59, 59);
+
+        return $this->findTasksByDateRange($user, $startOfDay, $endOfDay, $includeCompleted);
+    }
+
+    /**
+     * Find tasks for calendar month view
+     */
+    public function findTasksForMonth(User $user, int $year, int $month, bool $includeCompleted = true): array
+    {
+        $startDate = new \DateTime("$year-$month-01");
+        $endDate = clone $startDate;
+        $endDate->modify('last day of this month')->setTime(23, 59, 59);
+
+        return $this->findTasksByDateRange($user, $startDate, $endDate, $includeCompleted);
+    }
+
+    /**
+     * Find tasks for calendar week view
+     */
+    public function findTasksForWeek(User $user, \DateTime $weekStart, bool $includeCompleted = true): array
+    {
+        $startDate = clone $weekStart;
+        $startDate->setTime(0, 0, 0);
+        
+        $endDate = clone $weekStart;
+        $endDate->modify('+6 days')->setTime(23, 59, 59);
+
+        return $this->findTasksByDateRange($user, $startDate, $endDate, $includeCompleted);
     }
 }

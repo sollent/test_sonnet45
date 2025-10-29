@@ -19,7 +19,10 @@ const API_ENDPOINTS = {
   TASK_ARCHIVE: (id: number) => `/api/tasks/${id}/archive`,
   TASK_UNARCHIVE: (id: number) => `/api/tasks/${id}/unarchive`,
   TASK_STATISTICS: '/api/tasks/statistics',
-  TASK_REORDER: '/api/tasks/reorder'
+  TASK_REORDER: '/api/tasks/reorder',
+  CALENDAR_MONTH: '/api/tasks/calendar/month',
+  CALENDAR_WEEK: '/api/tasks/calendar/week',
+  CALENDAR_DAY: '/api/tasks/calendar/day'
 }
 
 class TaskService {
@@ -56,7 +59,10 @@ class TaskService {
    * Get single task by ID
    */
   async getTask(id: number): Promise<Task> {
-    const { data } = await apiClient.get<Task>(API_ENDPOINTS.TASK_BY_ID(id))
+    // Add query parameter to include subtasks
+    const url = `${API_ENDPOINTS.TASK_BY_ID(id)}?includeSubtasks=true`
+    const { data } = await apiClient.get<Task>(url)
+    console.log('API Response for task', id, ':', data)
     return data
   }
 
@@ -149,6 +155,43 @@ class TaskService {
    */
   async getUpcomingTasks(): Promise<Task[]> {
     return this.getTasks({ view: 'upcoming' })
+  }
+
+  /**
+   * Get tasks for calendar month view
+   */
+  async getTasksForMonth(year: number, month: number, includeCompleted = true): Promise<Task[]> {
+    const params = new URLSearchParams({
+      year: year.toString(),
+      month: month.toString(),
+      includeCompleted: includeCompleted.toString()
+    })
+    const { data } = await apiClient.get<Task[]>(`${API_ENDPOINTS.CALENDAR_MONTH}?${params}`)
+    return data
+  }
+
+  /**
+   * Get tasks for calendar week view
+   */
+  async getTasksForWeek(weekStart: Date, includeCompleted = true): Promise<Task[]> {
+    const params = new URLSearchParams({
+      weekStart: weekStart.toISOString().split('T')[0],
+      includeCompleted: includeCompleted.toString()
+    })
+    const { data } = await apiClient.get<Task[]>(`${API_ENDPOINTS.CALENDAR_WEEK}?${params}`)
+    return data
+  }
+
+  /**
+   * Get tasks for specific day
+   */
+  async getTasksForDay(date: Date, includeCompleted = true): Promise<Task[]> {
+    const params = new URLSearchParams({
+      date: date.toISOString().split('T')[0],
+      includeCompleted: includeCompleted.toString()
+    })
+    const { data } = await apiClient.get<Task[]>(`${API_ENDPOINTS.CALENDAR_DAY}?${params}`)
+    return data
   }
 
   /**

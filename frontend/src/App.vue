@@ -2,6 +2,7 @@
 import { onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth.store'
 import Toast from 'primevue/toast'
+import ConfirmDialog from 'primevue/confirmdialog'
 import GlobalLanguageSwitcher from '@/components/ui/GlobalLanguageSwitcher.vue'
 
 const authStore = useAuthStore()
@@ -14,6 +15,7 @@ onMounted(async () => {
 <template>
   <div id="app">
     <Toast position="top-right" />
+    <ConfirmDialog />
     <router-view v-slot="{ Component, route }">
       <transition name="fade" mode="out-in">
         <component :is="Component" :key="route.path" />

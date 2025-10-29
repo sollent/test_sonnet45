@@ -3,6 +3,7 @@ import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useTaskStore } from '@/stores/task.store'
 import { useToast } from '@/composables/useToast'
+import { useTaskCompletion } from '@/composables/useTaskCompletion'
 import Sidebar from 'primevue/sidebar'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
@@ -12,28 +13,40 @@ import Calendar from 'primevue/calendar'
 import Chip from 'primevue/chip'
 import Chips from 'primevue/chips'
 import Divider from 'primevue/divider'
-import ConfirmDialog from 'primevue/confirmdialog'
 import { useConfirm } from 'primevue/useconfirm'
 import { TaskStatus, TaskPriority, TASK_PRIORITY_CONFIG, TASK_STATUS_CONFIG, type Task, type UpdateTaskRequest } from '@/types/task.types'
 import { taskService } from '@/services/task.service'
+import TaskTreeModal from './TaskTreeModal.vue'
 
 interface Props {
-  visible: boolean
-  task: Task | null
+  showSidebar?: boolean
+  selectedTask?: Task | null
+  // Support old props for backward compatibility
+  visible?: boolean
+  task?: Task | null
 }
 
 interface Emits {
+  (e: 'update:showSidebar', value: boolean): void
+  (e: 'update:selectedTask', value: Task | null): void
   (e: 'update:visible', value: boolean): void
+  (e: 'update:task', value: Task | null): void
   (e: 'task-updated'): void
   (e: 'task-deleted'): void
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  showSidebar: false,
+  selectedTask: null,
+  visible: false,
+  task: null
+})
 const emit = defineEmits<Emits>()
 
 const { t } = useI18n()
 const taskStore = useTaskStore()
 const { showSuccess, showError } = useToast()
+const { toggleTaskCompletion } = useTaskCompletion()
 const confirm = useConfirm()
 
 // Local state
@@ -50,8 +63,22 @@ const currentSubtask = ref<Task | null>(null)
 const subtaskEditData = ref<UpdateTaskRequest>({})
 const isSubtaskSubmitting = ref(false)
 
+// Tree modal state
+const showTreeModal = ref(false)
+
 // Edit form data
 const editData = ref<UpdateTaskRequest>({})
+
+// Computed for v-model compatibility
+const localVisible = computed({
+  get: () => props.showSidebar || props.visible || false,
+  set: (value) => {
+    emit('update:showSidebar', value)
+    emit('update:visible', value)
+  }
+})
+
+const currentTask = computed(() => props.selectedTask || props.task)
 
 // Computed
 const statusOptions = computed(() => [
@@ -69,43 +96,67 @@ const priorityOptions = computed(() => [
 ])
 
 const priorityConfig = computed(() => {
-  if (!props.task) return null
-  return TASK_PRIORITY_CONFIG[props.task.priority]
+  if (!currentTask.value) return null
+  return TASK_PRIORITY_CONFIG[currentTask.value.priority]
 })
 
 const statusConfig = computed(() => {
-  if (!props.task) return null
-  return TASK_STATUS_CONFIG[props.task.status]
+  if (!currentTask.value) return null
+  return TASK_STATUS_CONFIG[currentTask.value.status]
 })
 
 const completionPercentage = computed(() => {
-  if (!props.task || props.task.subtasks.length === 0) {
-    return props.task?.isCompleted ? 100 : 0
+  if (!currentTask.value || currentTask.value.subtasks.length === 0) {
+    return currentTask.value?.isCompleted ? 100 : 0
   }
-  return Math.round(props.task.completionProgress)
+  return Math.round(currentTask.value.completionProgress)
+})
+
+const totalSubtasks = computed(() => {
+  if (!currentTask.value) return 0
+  
+  function countSubtasks(task: Task): number {
+    let count = task.subtasks?.length || 0
+    task.subtasks?.forEach(st => {
+      count += countSubtasks(st)
+    })
+    return count
+  }
+  
+  return countSubtasks(currentTask.value)
 })
 
 // Watch for task changes
-watch(() => props.task, (newTask, oldTask) => {
+watch(() => currentTask.value, (newTask, oldTask) => {
   // Only reset if the task ID changes, or if there was no task before.
   if (newTask && (!oldTask || newTask.id !== oldTask.id)) {
     resetEditData()
     editMode.value = false
+    
+    // Debug: log task structure
+    if (newTask) {
+      console.log('Task loaded:', newTask)
+      console.log('Subtasks:', newTask.subtasks)
+      if (newTask.subtasks && newTask.subtasks.length > 0) {
+        console.log('First subtask:', newTask.subtasks[0])
+        console.log('First subtask has subtasks?', newTask.subtasks[0].subtasks)
+      }
+    }
   }
 }, { immediate: true })
 
 // Methods
 function resetEditData() {
-  if (!props.task) return
+  if (!currentTask.value) return
   
   editData.value = {
-    title: props.task.title,
-    description: props.task.description,
-    status: props.task.status,
-    priority: props.task.priority,
-    startDate: props.task.startDate,
-    dueDate: props.task.dueDate,
-    tags: props.task.tags.map(tag => tag.name)
+    title: currentTask.value.title,
+    description: currentTask.value.description,
+    status: currentTask.value.status,
+    priority: currentTask.value.priority,
+    startDate: currentTask.value.startDate,
+    dueDate: currentTask.value.dueDate,
+    tags: currentTask.value.tags.map(tag => tag.name)
   }
 }
 
@@ -149,7 +200,7 @@ async function handleSaveSubtask() {
     await taskStore.updateTask(currentSubtask.value.id, subtaskEditData.value)
     showSuccess(t('tasks.task_updated'))
     // refresh parent task to reflect changes
-    if (props.task) await taskStore.fetchTask(props.task.id)
+    if (currentTask.value) await taskStore.fetchTask(currentTask.value.id)
     emit('task-updated')
     closeSubtaskEditor()
   } catch (e: any) {
@@ -159,13 +210,22 @@ async function handleSaveSubtask() {
   }
 }
 
+// Handler for tree modal updates
+async function handleTreeUpdate() {
+  // Refresh the current task data
+  if (currentTask.value) {
+    await taskStore.fetchTask(currentTask.value.id)
+    emit('task-updated')
+  }
+}
+
 async function handleSave() {
-  if (!props.task) return
+  if (!currentTask.value) return
 
   isSubmitting.value = true
 
   try {
-    await taskStore.updateTask(props.task.id, editData.value)
+    await taskStore.updateTask(currentTask.value.id, editData.value)
     showSuccess(t('tasks.task_updated'))
     editMode.value = false
     emit('task-updated')
@@ -177,19 +237,27 @@ async function handleSave() {
 }
 
 async function handleToggleComplete() {
-  if (!props.task) return
+  if (!currentTask.value) return
 
-  try {
-    await taskStore.toggleTaskCompletion(props.task.id)
-    showSuccess(t('tasks.task_updated'))
+  // Use the new completion handler with confirmation for subtasks
+  await toggleTaskCompletion(currentTask.value, async () => {
+    // Refresh the current task to get updated state
+    if (currentTask.value) {
+      const updatedTask = await taskStore.fetchTask(currentTask.value.id)
+      // Update the local task reference
+      if (props.selectedTask) {
+        emit('update:selectedTask', updatedTask)
+      }
+      if (props.task) {
+        emit('update:task', updatedTask)
+      }
+    }
     emit('task-updated')
-  } catch (error: any) {
-    showError(error.message || t('errors.unknown_error'))
-  }
+  })
 }
 
 async function handleDelete() {
-  if (!props.task) return
+  if (!currentTask.value) return
 
   confirm.require({
     message: t('tasks.delete_task'),
@@ -198,7 +266,7 @@ async function handleDelete() {
     acceptClass: 'p-button-danger',
     accept: async () => {
       try {
-        await taskStore.deleteTask(props.task!.id)
+        await taskStore.deleteTask(currentTask.value!.id)
         showSuccess(t('tasks.task_deleted'))
         emit('task-deleted')
         emit('update:visible', false)
@@ -210,20 +278,20 @@ async function handleDelete() {
 }
 
 async function handleAddSubtask() {
-  if (!props.task || !newSubtaskTitle.value.trim()) return
+  if (!currentTask.value || !newSubtaskTitle.value.trim()) return
 
   isAddingSubtask.value = true
 
   try {
     await taskStore.createTask({
       title: newSubtaskTitle.value,
-      parentTaskId: props.task.id,
+      parentTaskId: currentTask.value.id,
       status: TaskStatus.PENDING,
       priority: TaskPriority.MEDIUM
     })
     
     // Refresh task details
-    await taskStore.fetchTask(props.task.id)
+    await taskStore.fetchTask(currentTask.value.id)
     
     newSubtaskTitle.value = ''
     showSuccess(t('tasks.task_created'))
@@ -237,13 +305,17 @@ async function handleAddSubtask() {
 
 async function handleToggleSubtask(subtaskId: number) {
   try {
-    await taskStore.toggleTaskCompletion(subtaskId)
+    // Fetch the subtask to check if it has its own subtasks
+    const subtask = await taskStore.fetchTask(subtaskId)
     
-    // Refresh parent task
-    if (props.task) {
-      await taskStore.fetchTask(props.task.id)
-    }
-    emit('task-updated')
+    // Use the new completion handler with confirmation
+    await toggleTaskCompletion(subtask, async () => {
+      // Refresh parent task
+      if (currentTask.value) {
+        await taskStore.fetchTask(currentTask.value.id)
+      }
+      emit('task-updated')
+    })
   } catch (error: any) {
     showError(error.message || t('errors.unknown_error'))
   }
@@ -267,7 +339,7 @@ async function saveEditSubtask() {
   }
   try {
     await taskStore.updateTask(editingSubtaskId.value, { title: editingSubtaskTitle.value.trim() })
-    if (props.task) await taskStore.fetchTask(props.task.id)
+    if (currentTask.value) await taskStore.fetchTask(currentTask.value.id)
     showSuccess(t('tasks.task_updated'))
     emit('task-updated')
   } catch (error: any) {
@@ -286,7 +358,7 @@ async function handleDeleteSubtask(subtaskId: number) {
     accept: async () => {
       try {
         await taskStore.deleteTask(subtaskId)
-        if (props.task) await taskStore.fetchTask(props.task.id)
+        if (currentTask.value) await taskStore.fetchTask(currentTask.value.id)
         showSuccess(t('tasks.task_deleted'))
         emit('task-updated')
       } catch (error: any) {
@@ -317,11 +389,10 @@ function handleClose() {
 
 <template>
   <Sidebar
-    :visible="visible"
+    v-model:visible="localVisible"
     position="right"
     :style="{ width: '90vw', maxWidth: '500px' }"
     :showCloseIcon="false"
-    @update:visible="(val) => emit('update:visible', val)"
   >
     <template #header>
       <div class="drawer-header">
@@ -352,11 +423,11 @@ function handleClose() {
     </template>
 
     <!-- Parent task details -->
-    <div v-if="task && !isSubtaskView" class="task-details">
+    <div v-if="currentTask && !isSubtaskView" class="task-details">
       <!-- Priority and Status Badges -->
       <div class="badges-row">
         <Chip
-          :label="t(`tasks.priority_${task.priority}`)"
+          :label="t(`tasks.priority_${currentTask.priority}`)"
           :style="{ 
             backgroundColor: priorityConfig?.color + '20',
             color: priorityConfig?.color,
@@ -364,7 +435,7 @@ function handleClose() {
           }"
         />
         <Chip
-          :label="t(`tasks.status_${task.status}`)"
+          :label="t(`tasks.status_${currentTask.status}`)"
           :style="{ 
             backgroundColor: statusConfig?.color + '20',
             color: statusConfig?.color,
@@ -382,7 +453,7 @@ function handleClose() {
           class="w-full"
           :placeholder="t('tasks.title_placeholder')"
         />
-        <h2 v-else class="task-title">{{ task.title }}</h2>
+        <h2 v-else class="task-title">{{ currentTask.title }}</h2>
       </div>
 
       <!-- Description -->
@@ -396,8 +467,8 @@ function handleClose() {
           autoResize
           :placeholder="t('tasks.description_placeholder')"
         />
-        <p v-else-if="task.description" class="task-description">
-          {{ task.description }}
+        <p v-else-if="currentTask.description" class="task-description">
+          {{ currentTask.description }}
         </p>
         <p v-else class="text-muted">{{ t('tasks.description_placeholder') }}</p>
       </div>
@@ -420,12 +491,12 @@ function handleClose() {
                 class="w-full"
                 dateFormat="dd.mm.yy"
               />
-              <p v-else class="date-value">{{ formatDate(task.startDate) }}</p>
+              <p v-else class="date-value">{{ formatDate(currentTask.startDate) }}</p>
             </div>
           </div>
           
           <div class="date-item">
-            <i class="pi pi-calendar-minus" :class="{ 'text-danger': task.isOverdue }" />
+            <i class="pi pi-calendar-minus" :class="{ 'text-danger': currentTask.isOverdue }" />
             <div>
               <label class="detail-label-small">{{ t('tasks.due_date') }}</label>
               <Calendar
@@ -437,8 +508,8 @@ function handleClose() {
                 class="w-full"
                 dateFormat="dd.mm.yy"
               />
-              <p v-else class="date-value" :class="{ 'text-danger': task.isOverdue }">
-                {{ formatDate(task.dueDate) }}
+              <p v-else class="date-value" :class="{ 'text-danger': currentTask.isOverdue }">
+                {{ formatDate(currentTask.dueDate) }}
               </p>
             </div>
           </div>
@@ -486,7 +557,7 @@ function handleClose() {
         </div>
         <div v-else class="tags-container">
           <Chip
-            v-for="tag in task.tags"
+            v-for="tag in currentTask.tags"
             :key="tag.id"
             :label="tag.name"
             :style="{ 
@@ -505,19 +576,19 @@ function handleClose() {
         <div class="subtasks-header">
           <label class="detail-label">
             {{ t('tasks.subtasks') }}
-            <span v-if="task.subtasks.length > 0" class="subtasks-count">
-              {{ task.subtasks.filter(s => s.isCompleted).length }} / {{ task.subtasks.length }}
+            <span v-if="currentTask.subtasks.length > 0" class="subtasks-count">
+              {{ currentTask.subtasks.filter(s => s.isCompleted).length }} / {{ currentTask.subtasks.length }}
             </span>
           </label>
-          <div v-if="task.subtasks.length > 0" class="progress-bar">
+          <div v-if="currentTask.subtasks.length > 0" class="progress-bar">
             <div class="progress-fill" :style="{ width: completionPercentage + '%' }" />
           </div>
         </div>
 
         <!-- Subtasks List -->
-        <div v-if="task.subtasks.length > 0" class="subtasks-list">
+        <div v-if="currentTask.subtasks.length > 0" class="subtasks-list">
           <div
-            v-for="subtask in task.subtasks"
+            v-for="subtask in currentTask.subtasks"
             :key="subtask.id"
             class="subtask-item"
           >
@@ -574,16 +645,64 @@ function handleClose() {
       </div>
 
       <Divider />
+      <!-- Compact Tree View -->
+      <div v-if="currentTask && currentTask.subtasks && currentTask.subtasks.length > 0" class="detail-section">
+        <div class="tree-section-header">
+          <div>
+            <label class="detail-label">
+              <i class="pi pi-sitemap" style="margin-right: 0.5rem;" />
+              {{ t('tasks.tree_structure') }}
+            </label>
+          </div>
+          <Button 
+            icon="pi pi-external-link" 
+            :label="t('tasks.view_full_tree')"
+            severity="info"
+            size="small"
+            outlined
+            @click="showTreeModal = true"
+          />
+        </div>
+        
+        <!-- Compact tree preview -->
+        <div class="compact-tree-container">
+          <div class="compact-tree-node root">
+            <i class="pi pi-folder" />
+            <span>{{ currentTask.title }}</span>
+            <span class="badge">{{ totalSubtasks }}</span>
+          </div>
+          <div class="compact-tree-children">
+            <div 
+              v-for="subtask in currentTask.subtasks.slice(0, 3)" 
+              :key="subtask.id"
+              class="compact-tree-node"
+              :class="{ 'completed': subtask.isCompleted }"
+            >
+              <i :class="subtask.isCompleted ? 'pi pi-check-circle' : 'pi pi-circle'" />
+              <span>{{ subtask.title }}</span>
+              <span v-if="subtask.subtasks && subtask.subtasks.length > 0" class="badge">
+                {{ subtask.subtasks.length }}
+              </span>
+            </div>
+            <div v-if="currentTask.subtasks.length > 3" class="compact-tree-more">
+              <i class="pi pi-ellipsis-h" />
+              {{ t('tasks.and_more', { count: currentTask.subtasks.length - 3 }) }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <Divider />
 
       <!-- Metadata -->
       <div class="detail-section metadata">
         <div class="metadata-item">
           <i class="pi pi-clock" />
-          <span>{{ t('profile.created_at') }}: {{ formatDate(task.createdAt) }}</span>
+          <span>{{ t('profile.created_at') }}: {{ formatDate(currentTask.createdAt) }}</span>
         </div>
         <div class="metadata-item">
           <i class="pi pi-refresh" />
-          <span>{{ t('profile.updated_at') }}: {{ formatDate(task.updatedAt) }}</span>
+          <span>{{ t('profile.updated_at') }}: {{ formatDate(currentTask.updatedAt) }}</span>
         </div>
       </div>
 
@@ -606,9 +725,9 @@ function handleClose() {
         </template>
         <template v-else>
           <Button
-            :label="task.isCompleted ? t('tasks.mark_incomplete') : t('tasks.mark_complete')"
-            :icon="task.isCompleted ? 'pi pi-times-circle' : 'pi pi-check-circle'"
-            :severity="task.isCompleted ? 'secondary' : 'success'"
+            :label="currentTask.isCompleted ? t('tasks.mark_incomplete') : t('tasks.mark_complete')"
+            :icon="currentTask.isCompleted ? 'pi pi-times-circle' : 'pi pi-check-circle'"
+            :severity="currentTask.isCompleted ? 'secondary' : 'success'"
             outlined
             @click="handleToggleComplete"
             class="w-full"
@@ -690,9 +809,14 @@ function handleClose() {
         <Button :label="t('common.save')" class="w-full" :loading="isSubtaskSubmitting" @click="handleSaveSubtask" />
       </div>
     </div>
-
-    <ConfirmDialog :style="{ width: '520px' }" :breakpoints="{ '960px': '75vw', '640px': '90vw' }" />
   </Sidebar>
+
+  <!-- Full Tree Modal -->
+  <TaskTreeModal
+    v-model="showTreeModal"
+    :task="currentTask"
+    @task-updated="handleTreeUpdate"
+  />
 </template>
 
 <style scoped>
@@ -1026,6 +1150,102 @@ function handleClose() {
   .form-row {
     grid-template-columns: 1fr;
   }
+}
+
+/* Compact Tree Styles */
+.tree-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.compact-tree-container {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 1rem;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.compact-tree-node {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: white;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s ease;
+  font-size: 0.9375rem;
+}
+
+.compact-tree-node:hover {
+  border-color: #667eea;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+}
+
+.compact-tree-node.root {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.compact-tree-node.root i {
+  color: white;
+}
+
+.compact-tree-node.completed {
+  opacity: 0.7;
+  background: #f0fdf4;
+}
+
+.compact-tree-node.completed span:not(.badge) {
+  text-decoration: line-through;
+  color: #6b7280;
+}
+
+.compact-tree-node i {
+  font-size: 1rem;
+  color: #667eea;
+}
+
+.compact-tree-node.completed i {
+  color: #10b981;
+}
+
+.compact-tree-node span:first-of-type {
+  flex: 1;
+}
+
+.compact-tree-node .badge {
+  background: #667eea;
+  color: white;
+  padding: 0.125rem 0.375rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.compact-tree-children {
+  padding-left: 1.5rem;
+  border-left: 2px solid #e2e8f0;
+  margin-left: 0.75rem;
+}
+
+.compact-tree-more {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  color: #6b7280;
+  font-size: 0.875rem;
+  font-style: italic;
 }
 </style>
 

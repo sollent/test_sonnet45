@@ -10,10 +10,10 @@ import Sidebar from 'primevue/sidebar'
 import Skeleton from 'primevue/skeleton'
 import InputText from 'primevue/inputtext'
 import TaskCard from '@/components/tasks/TaskCard.vue'
-import CreateTaskDialog from '@/components/tasks/CreateTaskDialog.vue'
 import TaskDetailsSidebar from '@/components/tasks/TaskDetailsSidebar.vue'
 import FloatingActionButton from '@/components/ui/FloatingActionButton.vue'
 import TaskFilters from '@/components/tasks/TaskFilters.vue'
+import TaskDialog from '@/components/tasks/TaskDialog.vue'
 import type { Task } from '@/types/task.types'
 
 const router = useRouter()
@@ -166,6 +166,12 @@ function handleTaskCreated() {
   taskStore.fetchStatistics()
 }
 
+function handleTaskSaved() {
+  taskStore.fetchTasks({ view: selectedView.value as any })
+  taskStore.fetchStatistics()
+  isCreateDialogVisible.value = false
+}
+
 function handleTaskUpdated() {
   taskStore.fetchTasks({ view: selectedView.value as any })
   taskStore.fetchStatistics()
@@ -206,6 +212,22 @@ function handleTaskDeleted() {
             class="mobile-filter-button"
           />
           <h1 class="header-title">{{ t('tasks.my_tasks') }}</h1>
+        </div>
+        <div class="header-nav">
+          <Button
+            :label="!isMobile ? t('tasks.my_tasks') : ''"
+            icon="pi pi-list"
+            :severity="$route.name === 'Dashboard' ? 'primary' : 'secondary'"
+            text
+            @click="$router.push('/dashboard')"
+          />
+          <Button
+            :label="!isMobile ? t('calendar.title') : ''"
+            icon="pi pi-calendar"
+            :severity="$route.name === 'Calendar' ? 'primary' : 'secondary'"
+            text
+            @click="$router.push('/calendar')"
+          />
         </div>
         <div class="header-actions">
            <p class="header-subtitle">{{ user?.email }}</p>
@@ -366,15 +388,15 @@ function handleTaskDeleted() {
       position="bottom-left"
       @click="handleCreateTask"
     />
-    <CreateTaskDialog
-      v-model:visible="isCreateDialogVisible"
+    <TaskDialog
+      v-model="isCreateDialogVisible"
       :task="editingTask"
-      @task-created="handleTaskCreated"
-      @task-updated="handleTaskUpdated"
+      @task-saved="handleTaskSaved"
     />
     <TaskDetailsSidebar
-      v-model:visible="isDetailsOpen"
+      :visible="isDetailsOpen"
       :task="selectedTask"
+      @update:visible="isDetailsOpen = $event"
       @task-updated="handleTaskUpdated"
       @task-deleted="handleTaskDeleted"
     />
@@ -429,6 +451,16 @@ function handleTaskDeleted() {
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
+}
+
+.header-nav {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.header-nav :deep(.p-button) {
+  font-weight: 500;
 }
 
 .header-left {

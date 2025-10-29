@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Checkbox from 'primevue/checkbox'
 import Chip from 'primevue/chip'
+import { useTaskCompletion } from '@/composables/useTaskCompletion'
 import type { Task } from '@/types/task.types'
 import { TaskPriority, TaskStatus } from '@/types/task.types'
 
@@ -15,10 +16,12 @@ const props = defineProps<Props>()
 const emit = defineEmits<{
   'click': [task: Task]
   'toggle-complete': [task: Task]
+  'task-updated': []
 }>()
 
 const { t } = useI18n()
 const i18n = useI18n()
+const { handleCheckboxChange } = useTaskCompletion()
 
 // Priority configuration
 const priorityConfig = computed(() => {
@@ -80,13 +83,28 @@ const formattedDueDate = computed(() => {
   return new Intl.DateTimeFormat(i18n.locale.value === 'ru' ? 'ru-RU' : 'en-US').format(dueDate)
 })
 
+const hasDeepNesting = computed(() => {
+  if (!props.task.subtasks || props.task.subtasks.length === 0) return false
+  return props.task.subtasks.some(subtask => subtask.subtasks && subtask.subtasks.length > 0)
+})
+
 function handleClick() {
   emit('click', props.task)
 }
 
-function handleToggleComplete(event: Event) {
+async function handleToggleComplete(event: Event) {
   event.stopPropagation()
-  emit('toggle-complete', props.task)
+  const checkbox = event.target as HTMLInputElement
+  const checked = checkbox.checked
+  
+  // Prevent default checkbox behavior
+  event.preventDefault()
+  
+  // Use the new completion handler with confirmation
+  await handleCheckboxChange(props.task, checked, () => {
+    emit('toggle-complete', props.task)
+    emit('task-updated')
+  })
 }
 </script>
 
@@ -151,8 +169,11 @@ function handleToggleComplete(event: Event) {
 
           <!-- Subtasks Count -->
           <div v-if="task.subtasks && task.subtasks.length > 0" class="task-card__subtasks">
-            <i class="pi pi-list" />
+            <i class="pi pi-sitemap" style="color: #667eea;" />
             <span>{{ task.subtasks.filter(s => s.isCompleted).length }}/{{ task.subtasks.length }}</span>
+            <span v-if="hasDeepNesting" class="task-card__tree-badge">
+              <i class="pi pi-share-alt" style="font-size: 0.75rem;" />
+            </span>
           </div>
         </div>
 
@@ -196,6 +217,8 @@ function handleToggleComplete(event: Event) {
   transform: translateY(-2px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
   border-color: rgba(102, 126, 234, 0.2);
+  z-index: 10;
+  position: relative;
 }
 
 .task-card--selected {
@@ -359,11 +382,23 @@ function handleToggleComplete(event: Event) {
   gap: 0.375rem;
   font-size: 0.8125rem;
   color: #718096;
-  font-weight: 500;
+  font-weight: 600;
+  background: rgba(102, 126, 234, 0.08);
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
+  border: 1px solid rgba(102, 126, 234, 0.2);
 }
 
 .task-card__subtasks i {
   font-size: 0.875rem;
+}
+
+.task-card__tree-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 0.25rem;
+  color: #667eea;
+  font-weight: 700;
 }
 
 /* Tags */
