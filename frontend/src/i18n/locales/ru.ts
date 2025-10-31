@@ -218,6 +218,7 @@ export default {
     
     // Views
     all_tasks: 'Все задачи',
+    active_tasks: 'Активные задачи',
     today_tasks: 'Сегодня',
     tomorrow_tasks: 'Завтра',
     overdue_tasks: 'Просроченные',

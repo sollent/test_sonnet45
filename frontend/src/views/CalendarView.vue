@@ -23,7 +23,7 @@
           />
         </div>
         <div class="header-actions">
-          <p class="header-subtitle">{{ user?.email }}</p>
+          <p v-if="!isMobile" class="header-subtitle">{{ user?.email }}</p>
           <Button 
             icon="pi pi-sign-out"
             severity="secondary"
@@ -95,7 +95,8 @@
             'other-month': !day.isCurrentMonth,
             'today': day.isToday,
             'selected': day.isSelected,
-            'has-tasks': day.tasks.length > 0
+            'has-tasks': day.tasks.length > 0,
+            'has-only-completed-tasks': day.hasOnlyCompletedTasks
           }"
           @click="selectDay(day)"
         >
@@ -105,7 +106,10 @@
               v-for="(task, idx) in day.tasks.slice(0, 3)"
               :key="task.id"
               class="task-dot"
-              :class="`priority-${task.priority.toLowerCase()}`"
+              :class="[
+                `priority-${task.priority.toLowerCase()}`,
+                { 'task-dot--completed': task.isCompleted }
+              ]"
               :title="task.title"
             />
             <span v-if="day.tasks.length > 3" class="more-tasks">
@@ -116,56 +120,57 @@
       </div>
 
       <!-- Selected Day Tasks -->
-    <div v-if="selectedDay" class="selected-day-tasks">
+    <div v-if="selectedDay" ref="selectedDaySection" class="selected-day-tasks">
         <div class="tasks-header">
-          <h3>
+          <h3 class="tasks-header__title">
             {{ formatDate(selectedDay.date) }}
             <Badge :value="selectedDay.tasks.length" severity="info" />
           </h3>
           <Button
             icon="pi pi-plus"
             :label="t('tasks.new_task')"
-            severity="primary"
-            size="small"
+            class="new-task-button"
             @click="openNewTaskDialog(selectedDay.date)"
           />
         </div>
       <div class="tasks-list">
-        <div
-          v-for="task in selectedDay.tasks"
-          :key="task.id"
-          :class="['task-item', { 'task-completed': task.isCompleted }]"
-          @click="selectTask(task)"
-        >
-          <input
-            type="checkbox"
-            :checked="task.isCompleted"
-            @click.stop
-            @change="handleToggleComplete(task)"
-            class="task-checkbox"
-          />
-          <div class="task-content">
-            <div class="task-title-row">
-              <span :class="['task-title', { 'completed': task.isCompleted }]">
-                {{ task.title }}
-              </span>
-              <i class="pi pi-angle-right task-arrow" />
-            </div>
-            <div v-if="!task.isCompleted" class="task-meta">
-              <span
-                v-for="tag in task.tags"
-                :key="tag.id"
-                class="task-tag"
-              >
-                # {{ tag.name }}
-              </span>
-              <span v-if="task.subtasks && task.subtasks.length > 0" class="task-subtasks">
-                {{ task.subtasks.filter((s: any) => s.isCompleted).length }}/{{ task.subtasks.length }}
-              </span>
-            </div>
+        <!-- Active Tasks -->
+        <div v-if="activeTasks.length > 0" class="tasks-section">
+          <div class="section-header">
+            <i class="pi pi-circle" />
+            <span class="section-title">{{ t('tasks.active_tasks') }}</span>
+            <Badge :value="activeTasks.length" severity="info" />
           </div>
-          <div class="task-time">{{ formatTaskTime(task) }}</div>
+          <div class="tasks-section__list">
+            <TaskCard
+              v-for="task in activeTasks"
+              :key="task.id"
+              :task="task"
+              @click="selectTask"
+              @toggle-complete="handleToggleComplete"
+            />
+          </div>
         </div>
+
+        <!-- Completed Tasks -->
+        <div v-if="completedTasks.length > 0" class="tasks-section">
+          <div class="section-header completed">
+            <i class="pi pi-check-circle" />
+            <span class="section-title">{{ t('tasks.completed_tasks') }}</span>
+            <Badge :value="completedTasks.length" severity="success" />
+          </div>
+          <div class="tasks-section__list">
+            <TaskCard
+              v-for="task in completedTasks"
+              :key="task.id"
+              :task="task"
+              @click="selectTask"
+              @toggle-complete="handleToggleComplete"
+            />
+          </div>
+        </div>
+
+        <!-- No Tasks -->
         <div v-if="selectedDay.tasks.length === 0" class="no-tasks">
           <i class="pi pi-calendar-times" />
           <p>{{ t('calendar.no_tasks_for_day') }}</p>
@@ -250,11 +255,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from 'vue-router'
 import Button from 'primevue/button'
 import Badge from 'primevue/badge'
+import TaskCard from '@/components/tasks/TaskCard.vue'
 import TaskDetailsSidebar from '@/components/tasks/TaskDetailsSidebar.vue'
 import TaskDialog from '@/components/tasks/TaskDialog.vue'
 import { useTaskStore } from '@/stores/task.store'
@@ -282,6 +288,46 @@ const selectedTask = ref<Task | null>(null)
 const showTaskDetails = ref(false)
 const showNewTaskDialog = ref(false)
 const newTaskDate = ref<Date | null>(null)
+const selectedDaySection = ref<HTMLElement | null>(null)
+
+// Computed properties for active and completed tasks
+const activeTasks = computed(() => {
+  if (!selectedDay.value) return []
+  return selectedDay.value.tasks.filter((task: Task) => !task.isCompleted)
+})
+
+const completedTasks = computed(() => {
+  if (!selectedDay.value) return []
+  return selectedDay.value.tasks.filter((task: Task) => task.isCompleted)
+})
+
+function normalizeDateValue(value: Date | string): Date {
+  const date = new Date(value)
+  date.setHours(0, 0, 0, 0)
+  return date
+}
+
+async function setSelectedDayByDate(date: Date) {
+  const normalized = normalizeDateValue(date)
+  const tasks = await taskService.getTasksForDay(new Date(normalized), true)
+  const matchingDay = calendarDays.value.find(day => normalizeDateValue(day.date).getTime() === normalized.getTime())
+  const todayNormalized = normalizeDateValue(new Date())
+
+  const baseDay = matchingDay
+    ? { ...matchingDay }
+    : {
+        date: new Date(normalized),
+        isCurrentMonth: normalized.getMonth() === currentDate.value.getMonth(),
+        isToday: normalized.getTime() === todayNormalized.getTime(),
+        hasOnlyCompletedTasks: tasks.length > 0 && tasks.every(task => task.isCompleted)
+      }
+
+  selectedDay.value = {
+    ...baseDay,
+    isSelected: true,
+    tasks
+  }
+}
 
 // Tasks data
 const monthTasks = ref<Task[]>([])
@@ -335,15 +381,36 @@ const calendarDays = computed(() => {
   for (let i = 0; i < 42; i++) {
     const date = new Date(startDate)
     date.setDate(startDate.getDate() + i)
+    date.setHours(0, 0, 0, 0)
     
     const dayTasks = monthTasks.value.filter(task => {
       // Check if task should appear on this day
       const taskStartDate = task.startDate ? new Date(task.startDate) : null
       const taskDueDate = task.dueDate ? new Date(task.dueDate) : null
       
-      // Task appears on start date or due date
-      if (taskStartDate && taskStartDate.toDateString() === date.toDateString()) return true
-      if (taskDueDate && taskDueDate.toDateString() === date.toDateString()) return true
+      if (taskStartDate) {
+        const normalizedStart = new Date(taskStartDate)
+        normalizedStart.setHours(0, 0, 0, 0)
+        if (normalizedStart.getTime() === date.getTime()) return true
+      }
+      
+      if (taskDueDate) {
+        const normalizedDue = new Date(taskDueDate)
+        normalizedDue.setHours(0, 0, 0, 0)
+        if (normalizedDue.getTime() === date.getTime()) return true
+      }
+      
+      // Task spans across this day
+      if (taskStartDate && taskDueDate) {
+        const normalizedStart = new Date(taskStartDate)
+        normalizedStart.setHours(0, 0, 0, 0)
+        const normalizedDue = new Date(taskDueDate)
+        normalizedDue.setHours(0, 0, 0, 0)
+        
+        if (normalizedStart.getTime() <= date.getTime() && normalizedDue.getTime() >= date.getTime()) {
+          return true
+        }
+      }
       
       // For overdue tasks, show them on today if they're still incomplete
       if (task.isOverdue && !task.isCompleted && date.toDateString() === today.toDateString()) {
@@ -353,12 +420,17 @@ const calendarDays = computed(() => {
       return false
     })
     
+    // Check if all tasks are completed
+    const hasOnlyCompletedTasks = dayTasks.length > 0 && dayTasks.every(task => task.isCompleted)
+    const isCurrentMonthDay = date.getMonth() === month
+    
     days.push({
       date,
-      isCurrentMonth: date.getMonth() === month,
+      isCurrentMonth: isCurrentMonthDay,
       isToday: date.getTime() === today.getTime(),
       isSelected: selectedDay.value?.date.toDateString() === date.toDateString(),
-      tasks: dayTasks
+      tasks: dayTasks,
+      hasOnlyCompletedTasks: hasOnlyCompletedTasks && isCurrentMonthDay
     })
   }
   
@@ -432,11 +504,15 @@ function navigateNext() {
   }
 }
 
-function navigateToday() {
+async function navigateToday() {
   currentDate.value = new Date()
   if (viewMode.value === 'month') {
     const today = calendarDays.value.find(day => day.isToday)
-    if (today) selectDay(today)
+    if (today) {
+      await selectDay(today)
+    } else {
+      await setSelectedDayByDate(new Date())
+    }
   }
 }
 
@@ -516,8 +592,14 @@ function getTaskStyle(task: any): any {
 }
 
 // Event handlers
-function selectDay(day: any) {
-  selectedDay.value = day
+async function selectDay(day: any) {
+  try {
+    await setSelectedDayByDate(day.date)
+    await nextTick()
+    selectedDaySection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  } catch (error: any) {
+    showError(error.message || t('errors.unknown_error'))
+  }
 }
 
 async function selectTask(task: Task) {
@@ -539,17 +621,12 @@ function openNewTaskDialog(date: Date) {
 }
 
 async function handleToggleComplete(task: Task) {
+  const selectedDate = selectedDay.value ? new Date(selectedDay.value.date) : null
   try {
-    await taskStore.toggleTaskCompletion(task.id)
     await fetchTasks()
-    
-    // Update selected day tasks if needed
-    if (selectedDay.value) {
-      const updatedTasks = await taskService.getTasksForDay(selectedDay.value.date)
-      selectedDay.value.tasks = updatedTasks
+    if (selectedDate) {
+      await setSelectedDayByDate(selectedDate)
     }
-    
-    showSuccess(task.isCompleted ? t('tasks.task_marked_incomplete') : t('tasks.task_marked_complete'))
   } catch (error: any) {
     showError(error.message || t('errors.unknown_error'))
   }
@@ -557,16 +634,25 @@ async function handleToggleComplete(task: Task) {
 
 async function handleTaskSaved() {
   showNewTaskDialog.value = false
+  const targetDate = selectedDay.value
+    ? new Date(selectedDay.value.date)
+    : newTaskDate.value
+    ? new Date(newTaskDate.value)
+    : null
+
   await fetchTasks()
+
+  if (targetDate) {
+    await setSelectedDayByDate(targetDate)
+  }
 }
 
 async function handleTaskUpdated() {
+  const selectedDate = selectedDay.value ? new Date(selectedDay.value.date) : null
   await fetchTasks()
   
-  // Update selected day tasks if needed
-  if (selectedDay.value) {
-    const updatedTasks = await taskService.getTasksForDay(selectedDay.value.date)
-    selectedDay.value.tasks = updatedTasks
+  if (selectedDate) {
+    await setSelectedDayByDate(selectedDate)
   }
   
   // Reload selected task if it's still open
@@ -585,12 +671,11 @@ async function handleTaskUpdated() {
 async function handleTaskDeleted() {
   showTaskDetails.value = false
   selectedTask.value = null
+  const selectedDate = selectedDay.value ? new Date(selectedDay.value.date) : null
   await fetchTasks()
   
-  // Update selected day tasks if needed
-  if (selectedDay.value) {
-    const updatedTasks = await taskService.getTasksForDay(selectedDay.value.date)
-    selectedDay.value.tasks = updatedTasks
+  if (selectedDate) {
+    await setSelectedDayByDate(selectedDate)
   }
 }
 
@@ -601,10 +686,18 @@ async function fetchTasks() {
     if (viewMode.value === 'month') {
       const year = currentDate.value.getFullYear()
       const month = currentDate.value.getMonth() + 1
-      monthTasks.value = await taskService.getTasksForMonth(year, month)
+      
+      // Fetch tasks for current, previous, and next month to ensure proper display across month boundaries
+      const [prevMonthTasks, currentMonthTasks, nextMonthTasks] = await Promise.all([
+        taskService.getTasksForMonth(month === 1 ? year - 1 : year, month === 1 ? 12 : month - 1, true),
+        taskService.getTasksForMonth(year, month, true),
+        taskService.getTasksForMonth(month === 12 ? year + 1 : year, month === 12 ? 1 : month + 1, true)
+      ])
+      
+      monthTasks.value = [...prevMonthTasks, ...currentMonthTasks, ...nextMonthTasks]
     } else {
       const weekStart = getWeekStart(currentDate.value)
-      weekTasks.value = await taskService.getTasksForWeek(weekStart)
+      weekTasks.value = await taskService.getTasksForWeek(weekStart, true)
     }
   } catch (error: any) {
     showError(error.message || t('errors.fetch_failed'))
@@ -803,6 +896,16 @@ onUnmounted(() => {
   background: #eff6ff;
 }
 
+.calendar-day.has-only-completed-tasks {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.2) inset;
+}
+
+.calendar-day.has-only-completed-tasks .day-number {
+  color: #065f46;
+  font-weight: 700;
+}
+
 .calendar-day.today .day-number {
   background: #3b82f6;
   color: white;
@@ -838,13 +941,26 @@ onUnmounted(() => {
   background: #94a3b8;
 }
 
+.task-dot.task-dot--completed {
+  background: #10b981;
+}
+
 .task-dot.priority-high,
 .task-dot.priority-urgent {
   background: #ef4444;
 }
 
+.task-dot.priority-high.task-dot--completed,
+.task-dot.priority-urgent.task-dot--completed {
+  background: #10b981;
+}
+
 .task-dot.priority-medium {
   background: #f59e0b;
+}
+
+.task-dot.priority-medium.task-dot--completed {
+  background: #10b981;
 }
 
 .task-dot.priority-low {
@@ -869,52 +985,111 @@ onUnmounted(() => {
 
 .tasks-header {
   display: flex;
-  justify-content: space-between;
+  flex-wrap: wrap;
   align-items: center;
+  gap: 0.75rem;
   margin-bottom: 1rem;
   padding-bottom: 1rem;
   border-bottom: 1px solid #e2e8f0;
 }
 
-.tasks-header h3 {
+.tasks-header__title {
   margin: 0;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 0.75rem;
   color: #1e293b;
+  font-size: 1.05rem;
+  font-weight: 600;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
-.tasks-list { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem; }
+.tasks-header__title :deep(.p-badge) {
+  min-width: 1.5rem;
+  height: 1.5rem;
+  line-height: 1.5rem;
+  font-size: 0.75rem;
+  border-radius: 999px;
+}
+
+.new-task-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.8rem 1.4rem;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.35);
+  transition: all 0.3s ease;
+  margin-left: auto;
+}
+
+.new-task-button:hover {
+  background: linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%);
+  box-shadow: 0 10px 24px rgba(102, 126, 234, 0.4);
+  transform: translateY(-2px);
+}
+
+.tasks-list { display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem; }
+
+.tasks-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #64748b;
+  position: sticky;
+  top: 0;
+  background: #ffffff;
+  z-index: 5;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+}
+
+.section-header i {
+  font-size: 0.625rem;
+}
+
+.section-header.completed {
+  color: #10b981;
+}
+
+.section-header .section-title {
+  flex: 1;
+}
+
+.section-header :deep(.p-badge) {
+  min-width: 1.25rem;
+  height: 1.25rem;
+  line-height: 1.25rem;
+  font-size: 0.625rem;
+  padding: 0 0.25rem;
+  border-radius: 10px;
+}
+
+.tasks-section__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.tasks-section__list :deep(.task-card) {
+  width: 100%;
+}
 
 /* Inline list-view styles (aligned with dashboard list view) */
-.task-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding: 1rem 1.25rem;
-  background: white;
-  border-radius: 12px;
-  border: 1px solid rgba(226,232,240,0.6);
-  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-  cursor: pointer;
-}
-.task-item.task-completed { opacity: 0.75; background: #f8fafc; }
-.task-checkbox {
-  width: 20px; height: 20px; margin-top: 0.125rem; cursor: pointer;
-  border: 2px solid #cbd5e1; border-radius: 4px; appearance: none; -webkit-appearance: none;
-}
-.task-checkbox:checked { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-color: #667eea; }
-.task-checkbox:checked::after { content: '✓'; display: block; color: white; font-size: 0.75rem; text-align: center; line-height: 16px; }
-.task-content { flex: 1; display: flex; flex-direction: column; gap: 0.25rem; }
-.task-title-row { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
-.task-title { font-size: 0.9375rem; color: #1e293b; font-weight: 500; }
-.task-title.completed { text-decoration: line-through; color: #94a3b8; }
-.task-arrow { color: #cbd5e1; }
-.task-item:hover .task-arrow { color: #667eea; }
-.task-meta { display: flex; gap: 0.75rem; flex-wrap: wrap; font-size: 0.8125rem; }
-.task-tag { color: #667eea; font-weight: 500; }
-.task-subtasks { color: #64748b; font-weight: 500; }
-.task-time { font-size: 0.8125rem; color: #94a3b8; font-weight: 500; white-space: nowrap; }
+/* Removed legacy list-item styles now that TaskCard is used */
 
 .no-tasks {
   text-align: center;
@@ -1144,6 +1319,20 @@ onUnmounted(() => {
 
   .time-column {
     width: 50px;
+  }
+
+  .tasks-header {
+    align-items: stretch;
+  }
+
+  .tasks-header__title {
+    flex: 1 1 100%;
+  }
+
+  .new-task-button {
+    width: 100%;
+    margin-left: 0;
+    justify-content: center;
   }
 }
 </style>

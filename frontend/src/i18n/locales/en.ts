@@ -218,6 +218,7 @@ export default {
     
     // Views
     all_tasks: 'All Tasks',
+    active_tasks: 'Active Tasks',
     today_tasks: 'Today',
     tomorrow_tasks: 'Tomorrow',
     overdue_tasks: 'Overdue',
