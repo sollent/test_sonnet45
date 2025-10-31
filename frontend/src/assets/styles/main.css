@@ -52,6 +52,10 @@ html, body {
   --error: #ef4444;
   --error-light: #fee2e2;
 
+  /* Focus */
+  --focus-border-color: #6366f1;
+  --focus-ring-color: rgba(99, 102, 241, 0.15);
+
   /* Background */
   --bg-primary: #ffffff;
   --bg-secondary: #f9fafb;
@@ -123,9 +127,52 @@ html {
 }
 
 /* Focus styles */
+*:focus {
+  outline: none;
+}
+
 *:focus-visible {
-  outline: 2px solid var(--primary-500);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: 0 0 0 0.2rem var(--focus-ring-color);
+  transition: box-shadow var(--transition-fast), border-color var(--transition-fast);
+}
+
+button:focus,
+button:focus-visible,
+.p-button:focus,
+.p-button:focus-visible {
+  border-color: var(--focus-border-color) !important;
+  box-shadow: 0 0 0 0.2rem var(--focus-ring-color) !important;
+}
+
+input:focus,
+input:focus-visible,
+textarea:focus,
+textarea:focus-visible,
+.p-inputtext:focus,
+.p-inputtext:focus-visible,
+.p-inputtextarea:focus,
+.p-inputtextarea:focus-visible,
+.p-dropdown:focus,
+.p-dropdown:focus-visible,
+.p-multiselect:focus,
+.p-multiselect:focus-visible,
+.p-calendar .p-inputtext:focus,
+.p-calendar .p-inputtext:focus-visible {
+  border-color: var(--focus-border-color) !important;
+  box-shadow: 0 0 0 0.25rem var(--focus-ring-color) !important;
+}
+
+.p-chips .p-chips-multiple-container:focus,
+.p-chips .p-chips-multiple-container:focus-visible,
+.p-chips .p-chips-multiple-container:focus-within {
+  border-color: var(--focus-border-color) !important;
+  box-shadow: 0 0 0 0.2rem var(--focus-ring-color) !important;
+}
+
+.p-chips .p-chips-multiple-container input:focus,
+.p-chips .p-chips-multiple-container input:focus-visible {
+  box-shadow: none !important;
 }
 
 /* Selection */
