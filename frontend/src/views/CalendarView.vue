@@ -147,7 +147,7 @@
               :key="task.id"
               :task="task"
               @click="selectTask"
-              @toggle-complete="handleToggleComplete"
+              @task-updated="handleToggleComplete"
             />
           </div>
         </div>
@@ -165,7 +165,7 @@
               :key="task.id"
               :task="task"
               @click="selectTask"
-              @toggle-complete="handleToggleComplete"
+              @task-updated="handleToggleComplete"
             />
           </div>
         </div>
@@ -326,6 +326,46 @@ async function setSelectedDayByDate(date: Date) {
     ...baseDay,
     isSelected: true,
     tasks
+  }
+}
+
+function updateTaskCollections(updatedTask: Task) {
+  const replaceTaskInArray = (source: Task[]): Task[] => {
+    const taskIndex = source.findIndex(task => task.id === updatedTask.id)
+    if (taskIndex === -1) {
+      return source
+    }
+
+    const nextTasks = [...source]
+    nextTasks.splice(taskIndex, 1, updatedTask)
+    return nextTasks
+  }
+
+  const updateReactiveArray = (target: typeof monthTasks | typeof weekTasks) => {
+    const current = target.value
+    const next = replaceTaskInArray(current)
+    if (next !== current) {
+      target.value = next
+    }
+  }
+
+  updateReactiveArray(monthTasks)
+  updateReactiveArray(weekTasks)
+
+  if (selectedDay.value) {
+    const nextTasks = replaceTaskInArray(selectedDay.value.tasks)
+    if (nextTasks !== selectedDay.value.tasks) {
+      const hasOnlyCompleted = nextTasks.length > 0 && nextTasks.every(task => task.isCompleted)
+      selectedDay.value = {
+        ...selectedDay.value,
+        tasks: nextTasks,
+        hasOnlyCompletedTasks: hasOnlyCompleted
+      }
+    }
+  }
+
+  if (selectedTask.value?.id === updatedTask.id) {
+    selectedTask.value = updatedTask
   }
 }
 
@@ -631,13 +671,9 @@ function openNewTaskDialog(date: Date) {
   showNewTaskDialog.value = true
 }
 
-async function handleToggleComplete(task: Task) {
-  const selectedDate = selectedDay.value ? new Date(selectedDay.value.date) : null
+function handleToggleComplete(updatedTask: Task) {
   try {
-    await fetchTasks()
-    if (selectedDate) {
-      await setSelectedDayByDate(selectedDate)
-    }
+    updateTaskCollections(updatedTask)
   } catch (error: any) {
     showError(error.message || t('errors.unknown_error'))
   }

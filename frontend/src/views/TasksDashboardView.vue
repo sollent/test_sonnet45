@@ -151,6 +151,18 @@ async function handleToggleTask(task: Task) {
   }
 }
 
+async function handleTaskCardUpdated(updatedTask: Task) {
+  if (selectedTask.value?.id === updatedTask.id) {
+    selectedTask.value = updatedTask
+  }
+
+  try {
+    await taskStore.fetchStatistics()
+  } catch (error) {
+    console.error('Failed to refresh task statistics', error)
+  }
+}
+
 function handleTaskClick(task: Task) {
   selectedTask.value = task
   isDetailsOpen.value = true
@@ -325,7 +337,7 @@ function handleTaskDeleted() {
                   :task="task"
                   :selected="selectedTask?.id === task.id"
                   @click="handleTaskClick"
-                  @toggle-complete="handleToggleTask"
+                  @task-updated="handleTaskCardUpdated"
                 />
               </div>
             </div>

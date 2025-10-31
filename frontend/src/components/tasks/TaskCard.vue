@@ -15,8 +15,7 @@ interface Props {
 const props = defineProps<Props>()
 const emit = defineEmits<{
   'click': [task: Task]
-  'toggle-complete': [task: Task]
-  'task-updated': []
+  'task-updated': [task: Task]
 }>()
 
 const { t } = useI18n()
@@ -101,9 +100,8 @@ async function handleToggleComplete(event: Event) {
   event.preventDefault()
   
   // Use the new completion handler with confirmation
-  await handleCheckboxChange(props.task, checked, () => {
-    emit('toggle-complete', props.task)
-    emit('task-updated')
+  await handleCheckboxChange(props.task, checked, (updatedTask) => {
+    emit('task-updated', updatedTask)
   })
 }
 </script>

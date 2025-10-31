@@ -33,7 +33,7 @@ export function useTaskCompletion() {
   /**
    * Complete task and all its subtasks recursively
    */
-  async function completeTaskWithSubtasks(taskId: number): Promise<void> {
+  async function completeTaskWithSubtasks(taskId: number): Promise<Task> {
     try {
       // First complete the main task
       await taskStore.toggleTaskCompletion(taskId)
@@ -46,7 +46,9 @@ export function useTaskCompletion() {
         await completeSubtasksRecursively(task.subtasks)
       }
       
+      const updatedTask = await taskStore.fetchTask(taskId)
       showSuccess(t('tasks.task_completed'))
+      return updatedTask
     } catch (error: any) {
       showError(error.message || t('errors.unknown_error'))
       throw error
@@ -73,7 +75,7 @@ export function useTaskCompletion() {
   /**
    * Toggle task completion with confirmation if there are uncompleted subtasks
    */
-  async function toggleTaskCompletion(task: Task | number, onSuccess?: () => void): Promise<void> {
+  async function toggleTaskCompletion(task: Task | number, onSuccess?: (updatedTask: Task) => void): Promise<void> {
     // Get task if only ID was provided
     let taskData: Task
     if (typeof task === 'number') {
@@ -86,8 +88,12 @@ export function useTaskCompletion() {
     if (taskData.isCompleted) {
       try {
         await taskStore.toggleTaskCompletion(taskData.id)
+        const updatedTask = taskStore.tasks.find(t => t.id === taskData.id) ?? {
+          ...taskData,
+          isCompleted: false
+        }
         showSuccess(t('tasks.task_reopened'))
-        if (onSuccess) onSuccess()
+        if (onSuccess) onSuccess(updatedTask)
       } catch (error: any) {
         showError(error.message || t('errors.unknown_error'))
       }
@@ -108,8 +114,8 @@ export function useTaskCompletion() {
         rejectLabel: t('common.no'),
         accept: async () => {
           try {
-            await completeTaskWithSubtasks(taskData.id)
-            if (onSuccess) onSuccess()
+            const updatedTask = await completeTaskWithSubtasks(taskData.id)
+            if (onSuccess) onSuccess(updatedTask)
           } catch (error: any) {
             showError(error.message || t('errors.unknown_error'))
           }
@@ -119,8 +125,12 @@ export function useTaskCompletion() {
       // No subtasks or all subtasks are completed, just complete the task
       try {
         await taskStore.toggleTaskCompletion(taskData.id)
+        const updatedTask = taskStore.tasks.find(t => t.id === taskData.id) ?? {
+          ...taskData,
+          isCompleted: true
+        }
         showSuccess(t('tasks.task_completed'))
-        if (onSuccess) onSuccess()
+        if (onSuccess) onSuccess(updatedTask)
       } catch (error: any) {
         showError(error.message || t('errors.unknown_error'))
       }
@@ -130,13 +140,17 @@ export function useTaskCompletion() {
   /**
    * Mark task as completed from checkbox (used in lists)
    */
-  async function handleCheckboxChange(task: Task, checked: boolean, onSuccess?: () => void): Promise<void> {
+  async function handleCheckboxChange(task: Task, checked: boolean, onSuccess?: (updatedTask: Task) => void): Promise<void> {
     // If unchecking, just toggle without confirmation
     if (!checked) {
       try {
         await taskStore.toggleTaskCompletion(task.id)
+        const updatedTask = taskStore.tasks.find(t => t.id === task.id) ?? {
+          ...task,
+          isCompleted: false
+        }
         showSuccess(t('tasks.task_reopened'))
-        if (onSuccess) onSuccess()
+        if (onSuccess) onSuccess(updatedTask)
       } catch (error: any) {
         showError(error.message || t('errors.unknown_error'))
       }
