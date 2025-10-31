@@ -202,7 +202,7 @@ async function handleToggleComplete(event: Event) {
   position: relative;
   display: flex;
   background: white;
-  border-radius: 16px;
+  border-radius: 10px;
   padding: 1.25rem;
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);

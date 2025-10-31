@@ -143,7 +143,7 @@ function handleSelectView(viewId: string) {
 
 .sidebar-section {
   background: white;
-  border-radius: 20px;
+  border-radius: 12px;
   padding: 1.5rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
   border: 1px solid rgba(226, 232, 240, 0.5);
@@ -173,7 +173,7 @@ function handleSelectView(viewId: string) {
   width: 100%;
   padding: 0.875rem 1rem 0.875rem 2.75rem;
   border: 2px solid #e2e8f0;
-  border-radius: 12px;
+  border-radius: 8px;
   font-size: 0.9375rem;
   transition: all 0.2s ease;
   background: #f8fafc;
@@ -229,7 +229,7 @@ function handleSelectView(viewId: string) {
   align-items: center;
   gap: 0.75rem;
   padding: 0.875rem 1rem;
-  border-radius: 12px;
+  border-radius: 8px;
   border: none;
   background: transparent;
   color: #4a5568;
@@ -249,7 +249,7 @@ function handleSelectView(viewId: string) {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   opacity: 0;
   transition: opacity 0.2s ease;
-  border-radius: 12px;
+  border-radius: 8px;
 }
 
 .view-item:hover {
@@ -309,7 +309,7 @@ function handleSelectView(viewId: string) {
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem 1rem;
-  border-radius: 10px;
+  border-radius: 8px;
   border: none;
   background: transparent;
   color: #4a5568;
@@ -358,7 +358,7 @@ function handleSelectView(viewId: string) {
 .stat-icon {
   width: 40px;
   height: 40px;
-  border-radius: 10px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
