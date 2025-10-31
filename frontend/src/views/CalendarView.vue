@@ -897,13 +897,13 @@ onUnmounted(() => {
 }
 
 .calendar-day.has-only-completed-tasks {
-  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.2) inset;
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.15) inset;
 }
 
 .calendar-day.has-only-completed-tasks .day-number {
-  color: #065f46;
-  font-weight: 700;
+  color: #16a34a;
+  font-weight: 600;
 }
 
 .calendar-day.today .day-number {
