@@ -78,7 +78,10 @@ const localVisible = computed({
   }
 })
 
-const currentTask = computed(() => props.selectedTask || props.task)
+// Local task state for optimistic updates
+const localTask = ref<Task | null>(null)
+
+const currentTask = computed(() => localTask.value || props.selectedTask || props.task)
 
 // Computed
 const statusOptions = computed(() => [
@@ -126,10 +129,11 @@ const totalSubtasks = computed(() => {
   return countSubtasks(currentTask.value)
 })
 
-// Watch for task changes
-watch(() => currentTask.value, (newTask, oldTask) => {
-  // Only reset if the task ID changes, or if there was no task before.
+// Watch for prop changes to sync local state
+watch(() => props.selectedTask || props.task, (newTask, oldTask) => {
+  // Reset local task when props change (new task selected)
   if (newTask && (!oldTask || newTask.id !== oldTask.id)) {
+    localTask.value = null // Clear local optimistic state
     resetEditData()
     editMode.value = false
     
@@ -142,6 +146,9 @@ watch(() => currentTask.value, (newTask, oldTask) => {
         console.log('First subtask has subtasks?', newTask.subtasks[0].subtasks)
       }
     }
+  } else if (newTask && localTask.value) {
+    // If we have optimistic state and props updated (same task), don't override
+    // This prevents flickering when server response comes back
   }
 }, { immediate: true })
 
@@ -303,20 +310,90 @@ async function handleAddSubtask() {
   }
 }
 
-async function handleToggleSubtask(subtaskId: number) {
-  try {
-    // Fetch the subtask to check if it has its own subtasks
-    const subtask = await taskStore.fetchTask(subtaskId)
+// Helper to calculate completion progress
+function calculateCompletionProgress(task: Task): number {
+  if (!task.subtasks || task.subtasks.length === 0) {
+    return task.isCompleted ? 100 : 0
+  }
+  
+  function countCompleted(tasks: Task[]): { completed: number; total: number } {
+    let completed = 0
+    let total = 0
     
-    // Use the new completion handler with confirmation
-    await toggleTaskCompletion(subtask, async () => {
-      // Refresh parent task
-      if (currentTask.value) {
-        await taskStore.fetchTask(currentTask.value.id)
+    tasks.forEach(t => {
+      total++
+      if (t.isCompleted) {
+        completed++
       }
-      emit('task-updated')
+      if (t.subtasks && t.subtasks.length > 0) {
+        const nested = countCompleted(t.subtasks)
+        completed += nested.completed
+        total += nested.total
+      }
     })
+    
+    return { completed, total }
+  }
+  
+  const { completed, total } = countCompleted(task.subtasks)
+  return total > 0 ? (completed / total) * 100 : 0
+}
+
+async function handleToggleSubtask(subtaskId: number) {
+  const baseTask = props.selectedTask || props.task
+  if (!baseTask || !baseTask.subtasks) return
+
+  // Find subtask
+  const subtaskIndex = baseTask.subtasks.findIndex(s => s.id === subtaskId)
+  if (subtaskIndex === -1) return
+
+  const originalSubtask = baseTask.subtasks[subtaskIndex]
+  
+  // Create optimistic subtask
+  const optimisticSubtask = {
+    ...originalSubtask,
+    isCompleted: !originalSubtask.isCompleted,
+    status: !originalSubtask.isCompleted ? 'completed' as const : 'pending' as const
+  }
+
+  // Create new subtasks array with optimistic update
+  const newSubtasks = [...baseTask.subtasks]
+  newSubtasks[subtaskIndex] = optimisticSubtask
+
+  // Update task with new subtasks array and recalculated progress
+  const optimisticTask = {
+    ...baseTask,
+    subtasks: newSubtasks
+  }
+  
+  // Recalculate completion progress locally
+  optimisticTask.completionProgress = calculateCompletionProgress(optimisticTask)
+
+  // Update local state immediately for instant UI update
+  localTask.value = optimisticTask
+
+  try {
+    // Make API call in background directly (bypass store optimistic update for subtasks)
+    const updatedSubtask = await taskService.toggleTask(subtaskId)
+    
+    // Update the optimistic task with real server data for this subtask
+    if (localTask.value && localTask.value.subtasks) {
+      const realSubtasks = [...localTask.value.subtasks]
+      const idx = realSubtasks.findIndex(s => s.id === subtaskId)
+      if (idx !== -1) {
+        realSubtasks[idx] = updatedSubtask
+        localTask.value = {
+          ...localTask.value,
+          subtasks: realSubtasks
+        }
+      }
+    }
+    
+    // Notify parent that task was updated (for list refresh)
+    emit('task-updated')
   } catch (error: any) {
+    // Rollback on error - clear optimistic state
+    localTask.value = null
     showError(error.message || t('errors.unknown_error'))
   }
 }

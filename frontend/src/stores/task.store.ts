@@ -195,12 +195,32 @@ export const useTaskStore = defineStore('task', () => {
   }
 
   async function toggleTaskCompletion(id: number): Promise<void> {
+    // Optimistic update - update UI immediately
+    const taskIndex = tasks.value.findIndex(t => t.id === id)
+    if (taskIndex === -1) return
+
+    const originalTask = { ...tasks.value[taskIndex] }
+    const optimisticTask = {
+      ...originalTask,
+      isCompleted: !originalTask.isCompleted,
+      status: !originalTask.isCompleted ? 'completed' : 'pending'
+    } as Task
+
+    // Update UI immediately
+    tasks.value[taskIndex] = optimisticTask
+    
+    if (selectedTask.value?.id === id) {
+      selectedTask.value = optimisticTask
+    }
+
     try {
+      // Make API call in background
       const updatedTask = await taskService.toggleTask(id)
       
-      const index = tasks.value.findIndex(t => t.id === id)
-      if (index !== -1) {
-        tasks.value[index] = updatedTask
+      // Update with real data from server
+      const currentIndex = tasks.value.findIndex(t => t.id === id)
+      if (currentIndex !== -1) {
+        tasks.value[currentIndex] = updatedTask
       }
       
       if (selectedTask.value?.id === id) {
@@ -209,6 +229,16 @@ export const useTaskStore = defineStore('task', () => {
       
       await fetchStatistics()
     } catch (err: any) {
+      // Rollback on error
+      const rollbackIndex = tasks.value.findIndex(t => t.id === id)
+      if (rollbackIndex !== -1) {
+        tasks.value[rollbackIndex] = originalTask
+      }
+      
+      if (selectedTask.value?.id === id) {
+        selectedTask.value = originalTask
+      }
+      
       error.value = err.message || 'Failed to toggle task'
       throw err
     }

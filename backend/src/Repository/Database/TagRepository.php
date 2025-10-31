@@ -86,24 +86,24 @@ class TagRepository extends ServiceEntityRepository
         $newTags = [];
 
         if (!empty($tagsToCreateNames)) {
-            $colors = [
+        $colors = [
                 '#3B82F6', '#10B981', '#F59E0B', '#EF4444',
                 '#8B5CF6', '#EC4899', '#14B8A6', '#F97316',
-            ];
-            $colorIndex = 0;
+        ];
+        $colorIndex = 0;
 
             foreach ($tagsToCreateNames as $name) {
                 $tag = new Tag();
                 $tag->setName($name)
                     ->setUser($user)
                     ->setColor($colors[$colorIndex % count($colors)]);
-
+                
                 // Persist, but don't flush yet
                 $this->getEntityManager()->persist($tag);
                 $newTags[] = $tag;
                 $colorIndex++;
             }
-
+            
             // Flush newly created tags so subsequent calls can find them
             $this->getEntityManager()->flush();
         }

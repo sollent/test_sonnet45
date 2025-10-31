@@ -99,8 +99,18 @@ async function handleToggleComplete(event: Event) {
   // Prevent default checkbox behavior
   event.preventDefault()
   
+  // Emit optimistic update immediately
+  const optimisticTask = {
+    ...props.task,
+    isCompleted: checked,
+    status: checked ? TaskStatus.COMPLETED : TaskStatus.PENDING
+  } as Task
+  
+  emit('task-updated', optimisticTask)
+  
   // Use the new completion handler with confirmation
   await handleCheckboxChange(props.task, checked, (updatedTask) => {
+    // Emit real server response
     emit('task-updated', updatedTask)
   })
 }
