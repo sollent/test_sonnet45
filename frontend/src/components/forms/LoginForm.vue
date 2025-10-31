@@ -11,12 +11,14 @@ import { useAuth } from '@/composables/useAuth'
 import { useToast } from '@/composables/useToast'
 import { useFormValidation } from '@/composables/useFormValidation'
 import type { LoginCredentials } from '@/types/auth.types'
+import { useLoaderStore } from '@/stores/loader.store'
 
 const router = useRouter()
 const { t } = useI18n()
 const { login, isLoading } = useAuth()
 const { showSuccess, showError } = useToast()
 const { errors, validateField, clearFieldError, emailRules, passwordRules } = useFormValidation()
+const loaderStore = useLoaderStore()
 
 const formData = ref<LoginCredentials>({
   email: '',
@@ -51,6 +53,7 @@ async function handleSubmit(): Promise<void> {
   try {
     await login(formData.value)
     showSuccess(t('success.login_success'), t('common.welcome'))
+    loaderStore.show()
     router.push('/dashboard')
   } catch (error: any) {
     // Extract message from API response

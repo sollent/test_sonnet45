@@ -13,6 +13,9 @@ import { i18n } from './i18n'
 import 'primeicons/primeicons.css'
 import 'primevue/resources/themes/lara-light-blue/theme.css'
 
+// AOS Animation Library
+import 'aos/dist/aos.css'
+
 // Custom styles (after PrimeVue to allow overrides)
 import './assets/styles/main.css'
 

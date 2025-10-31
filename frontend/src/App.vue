@@ -1,12 +1,14 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth.store'
+import { useLoaderStore } from '@/stores/loader.store'
 import Toast from 'primevue/toast'
 import ConfirmDialog from 'primevue/confirmdialog'
 import GlobalLanguageSwitcher from '@/components/ui/GlobalLanguageSwitcher.vue'
 import AppLoader from '@/components/AppLoader.vue'
 
 const authStore = useAuthStore()
+const loaderStore = useLoaderStore()
 const isAppLoaded = ref(false)
 
 onMounted(async () => {
@@ -14,14 +16,30 @@ onMounted(async () => {
 })
 
 function handleLoaderComplete() {
-  isAppLoaded.value = true
+  if (!isAppLoaded.value) {
+    isAppLoaded.value = true
+  }
+  loaderStore.finish()
 }
+
+const shouldShowLoader = computed(() => !isAppLoaded.value || loaderStore.isVisible)
+
+const loaderKey = computed(() => {
+  if (!isAppLoaded.value) {
+    return 'initial-loader'
+  }
+  return `dynamic-loader-${loaderStore.loaderKey}`
+})
 </script>
 
 <template>
   <div id="app">
     <!-- App Loader -->
-    <AppLoader v-if="!isAppLoaded" @loaded="handleLoaderComplete" />
+    <AppLoader
+      v-if="shouldShowLoader"
+      :key="loaderKey"
+      @loaded="handleLoaderComplete"
+    />
     
     <!-- Main App Content -->
     <template v-else>

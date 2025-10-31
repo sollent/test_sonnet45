@@ -6,12 +6,14 @@ import { GoogleLogin } from 'vue3-google-login'
 import { useAuth } from '@/composables/useAuth'
 import { useToast } from '@/composables/useToast'
 import { GOOGLE_CONFIG } from '@/config/google'
+import { useLoaderStore } from '@/stores/loader.store'
 
 const router = useRouter()
 const { t } = useI18n()
 const { loginWithGoogle } = useAuth()
 const { showSuccess, showError } = useToast()
 const isLoading = ref(false)
+const loaderStore = useLoaderStore()
 
 interface CredentialResponse {
   credential: string
@@ -28,6 +30,7 @@ async function handleGoogleLogin(response: CredentialResponse) {
   try {
     await loginWithGoogle(response.credential)
     showSuccess(t('success.login_success'), t('common.welcome'))
+    loaderStore.show()
     router.push('/dashboard')
   } catch (error: any) {
     console.error('Google login error:', error)

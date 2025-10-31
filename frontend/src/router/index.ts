@@ -4,6 +4,12 @@ import { ROUTES } from '@/config/constants'
 
 const routes: RouteRecordRaw[] = [
   {
+    path: '/',
+    name: 'Landing',
+    component: () => import('@/views/LandingPage.vue'),
+    meta: { requiresAuth: false }
+  },
+  {
     path: ROUTES.HOME,
     name: 'Home',
     component: () => import('@/views/HomeView.vue'),

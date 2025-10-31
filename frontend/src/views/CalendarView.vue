@@ -103,7 +103,7 @@
           <div class="day-number">{{ day.date.getDate() }}</div>
           <div v-if="day.tasks.length > 0" class="day-tasks-preview">
             <div
-              v-for="(task, idx) in day.tasks.slice(0, 3)"
+              v-for="task in day.tasks.slice(0, 3)"
               :key="task.id"
               class="task-dot"
               :class="[
@@ -271,7 +271,6 @@ import { taskService } from '@/services/task.service'
 
 const { t, locale } = useI18n()
 const router = useRouter()
-const route = useRoute()
 const taskStore = useTaskStore()
 const authStore = useAuthStore()
 const { showSuccess, showError } = useToast()
@@ -310,6 +309,7 @@ function normalizeDateValue(value: Date | string): Date {
 async function setSelectedDayByDate(date: Date) {
   const normalized = normalizeDateValue(date)
   const tasks = await taskService.getTasksForDay(new Date(normalized), true)
+  
   const matchingDay = calendarDays.value.find(day => normalizeDateValue(day.date).getTime() === normalized.getTime())
   const todayNormalized = normalizeDateValue(new Date())
 
@@ -366,7 +366,6 @@ const calendarDays = computed(() => {
   const year = currentDate.value.getFullYear()
   const month = currentDate.value.getMonth()
   const firstDay = new Date(year, month, 1)
-  const lastDay = new Date(year, month + 1, 0)
   
   // Get first Monday
   const startDate = new Date(firstDay)
@@ -384,36 +383,48 @@ const calendarDays = computed(() => {
     date.setHours(0, 0, 0, 0)
     
     const dayTasks = monthTasks.value.filter(task => {
-      // Check if task should appear on this day
       const taskStartDate = task.startDate ? new Date(task.startDate) : null
       const taskDueDate = task.dueDate ? new Date(task.dueDate) : null
       
+      // Normalize dates to midnight for comparison (create new Date objects to avoid mutation)
+      let normalizedStart: Date | null = null
+      let normalizedDue: Date | null = null
+      
       if (taskStartDate) {
-        const normalizedStart = new Date(taskStartDate)
+        normalizedStart = new Date(taskStartDate)
         normalizedStart.setHours(0, 0, 0, 0)
-        if (normalizedStart.getTime() === date.getTime()) return true
       }
       
       if (taskDueDate) {
-        const normalizedDue = new Date(taskDueDate)
+        normalizedDue = new Date(taskDueDate)
         normalizedDue.setHours(0, 0, 0, 0)
-        if (normalizedDue.getTime() === date.getTime()) return true
       }
       
-      // Task spans across this day
-      if (taskStartDate && taskDueDate) {
-        const normalizedStart = new Date(taskStartDate)
-        normalizedStart.setHours(0, 0, 0, 0)
-        const normalizedDue = new Date(taskDueDate)
-        normalizedDue.setHours(0, 0, 0, 0)
-        
+      // Task appears on this day if:
+      // 1. It starts on this day
+      if (normalizedStart && normalizedStart.getTime() === date.getTime()) {
+        return true
+      }
+      
+      // 2. It ends on this day
+      if (normalizedDue && normalizedDue.getTime() === date.getTime()) {
+        return true
+      }
+      
+      // 3. It spans across this day (starts before or on this day, ends after or on this day)
+      if (normalizedStart && normalizedDue) {
         if (normalizedStart.getTime() <= date.getTime() && normalizedDue.getTime() >= date.getTime()) {
           return true
         }
       }
       
-      // For overdue tasks, show them on today if they're still incomplete
-      if (task.isOverdue && !task.isCompleted && date.toDateString() === today.toDateString()) {
+      // 4. Task has only startDate (no dueDate) and starts on this day
+      if (normalizedStart && !normalizedDue && normalizedStart.getTime() === date.getTime()) {
+        return true
+      }
+      
+      // 5. Task has only dueDate (no startDate) and ends on this day
+      if (!normalizedStart && normalizedDue && normalizedDue.getTime() === date.getTime()) {
         return true
       }
       
@@ -660,7 +671,7 @@ async function handleTaskUpdated() {
     try {
       const updatedTask = await taskStore.fetchTask(selectedTask.value.id)
       selectedTask.value = updatedTask
-    } catch (error) {
+    } catch {
       // Task might have been deleted
       showTaskDetails.value = false
       selectedTask.value = null
@@ -694,7 +705,11 @@ async function fetchTasks() {
         taskService.getTasksForMonth(month === 12 ? year + 1 : year, month === 12 ? 1 : month + 1, true)
       ])
       
-      monthTasks.value = [...prevMonthTasks, ...currentMonthTasks, ...nextMonthTasks]
+      const mergedTasks = new Map<number, Task>()
+      ;[...prevMonthTasks, ...currentMonthTasks, ...nextMonthTasks].forEach(task => {
+        mergedTasks.set(task.id, task)
+      })
+      monthTasks.value = Array.from(mergedTasks.values())
     } else {
       const weekStart = getWeekStart(currentDate.value)
       weekTasks.value = await taskService.getTasksForWeek(weekStart, true)

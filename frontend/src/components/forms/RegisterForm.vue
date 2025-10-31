@@ -11,12 +11,14 @@ import { useAuth } from '@/composables/useAuth'
 import { useToast } from '@/composables/useToast'
 import { useFormValidation } from '@/composables/useFormValidation'
 import type { RegisterCredentials } from '@/types/auth.types'
+import { useLoaderStore } from '@/stores/loader.store'
 
 const router = useRouter()
 const { t } = useI18n()
 const { register, isLoading } = useAuth()
 const { showSuccess, showError } = useToast()
 const { errors, validateField, clearFieldError, emailRules, passwordRules } = useFormValidation()
+const loaderStore = useLoaderStore()
 
 const formData = ref<RegisterCredentials & { confirmPassword: string }>({
   email: '',
@@ -69,6 +71,7 @@ async function handleSubmit(): Promise<void> {
       password: formData.value.password
     })
     showSuccess(t('success.registration_success'), t('common.welcome'))
+    loaderStore.show()
     router.push('/dashboard')
   } catch (error: any) {
     // Extract message from API response

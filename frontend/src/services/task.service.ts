@@ -26,6 +26,13 @@ const API_ENDPOINTS = {
 }
 
 class TaskService {
+  private formatDateForApi(date: Date): string {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
+
   /**
    * Get list of tasks with filters
    */
@@ -175,7 +182,7 @@ class TaskService {
    */
   async getTasksForWeek(weekStart: Date, includeCompleted = true): Promise<Task[]> {
     const params = new URLSearchParams({
-      weekStart: weekStart.toISOString().split('T')[0],
+      weekStart: this.formatDateForApi(weekStart),
       includeCompleted: includeCompleted.toString()
     })
     const { data } = await apiClient.get<Task[]>(`${API_ENDPOINTS.CALENDAR_WEEK}?${params}`)
@@ -187,7 +194,7 @@ class TaskService {
    */
   async getTasksForDay(date: Date, includeCompleted = true): Promise<Task[]> {
     const params = new URLSearchParams({
-      date: date.toISOString().split('T')[0],
+      date: this.formatDateForApi(date),
       includeCompleted: includeCompleted.toString()
     })
     const { data } = await apiClient.get<Task[]>(`${API_ENDPOINTS.CALENDAR_DAY}?${params}`)
