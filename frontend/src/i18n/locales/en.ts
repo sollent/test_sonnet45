@@ -31,6 +31,25 @@ export default {
     add: 'Add',
   },
 
+  loader: {
+    tasks: {
+      init_system: 'System Initialization',
+      load_components: 'Loading Components',
+      setup_interface: 'Setting Up Interface',
+      prepare_data: 'Preparing Data',
+      final_check: 'Final Check'
+    },
+    phases: {
+      connecting: 'Connecting to Server',
+      loading_profile: 'Loading Profile',
+      syncing_tasks: 'Syncing Tasks',
+      preparing_interface: 'Preparing Interface',
+      applying_settings: 'Applying Settings',
+      optimizing: 'Optimizing',
+      finishing: 'Finishing'
+    }
+  },
+
   auth: {
     login_title: 'Welcome Back',
     login_subtitle: 'Sign in to continue',

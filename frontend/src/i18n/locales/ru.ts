@@ -31,6 +31,25 @@ export default {
     add: 'Добавить',
   },
 
+  loader: {
+    tasks: {
+      init_system: 'Инициализация системы',
+      load_components: 'Загрузка компонентов',
+      setup_interface: 'Настройка интерфейса',
+      prepare_data: 'Подготовка данных',
+      final_check: 'Финальная проверка'
+    },
+    phases: {
+      connecting: 'Подключение к серверу',
+      loading_profile: 'Загрузка профиля',
+      syncing_tasks: 'Синхронизация задач',
+      preparing_interface: 'Подготовка интерфейса',
+      applying_settings: 'Применение настроек',
+      optimizing: 'Оптимизация',
+      finishing: 'Завершение'
+    }
+  },
+
   auth: {
     login_title: 'С возвращением',
     login_subtitle: 'Войдите, чтобы продолжить',
