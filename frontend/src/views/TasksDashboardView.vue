@@ -548,21 +548,38 @@ async function handleTaskDeleted() {
     />
     
       <!-- Mobile Filters Panel -->
-      <Sidebar v-model:visible="isFiltersPanelVisible" position="bottom" class="filters-sidebar">
+      <Sidebar v-model:visible="isFiltersPanelVisible" position="full" class="filters-sidebar" :modal="true" :showCloseIcon="false">
         <template #header>
-          <div class="filters-header">
-            <h3>{{ t('tasks.filters') }}</h3>
-            <Button
-              icon="pi pi-times"
-              text
-              rounded
-              @click="isFiltersPanelVisible = false"
-            />
+          <div class="mobile-filters-header">
+            <h2>{{ t('tasks.filters') }}</h2>
+            <button @click="isFiltersPanelVisible = false" class="close-btn">
+              <i class="pi pi-times"></i>
+            </button>
           </div>
         </template>
-        <div class="mobile-filters-content">
-          <QuickFilters />
-          <TaskFiltersPanel />
+        
+        <div class="mobile-filters-scroll">
+          <!-- Quick Filters Mobile -->
+          <div class="mobile-quick-filters">
+            <QuickFilters />
+          </div>
+          
+          <!-- Advanced Filters Mobile -->
+          <div class="mobile-advanced-filters">
+            <TaskFiltersPanel />
+          </div>
+        </div>
+        
+        <!-- Mobile Actions Footer -->
+        <div class="mobile-filters-footer">
+          <button @click="taskStore.clearFilters(); isFiltersPanelVisible = false" class="footer-btn footer-btn--secondary">
+            <i class="pi pi-times"></i>
+            {{ t('tasks.clear_all') }}
+          </button>
+          <button @click="isFiltersPanelVisible = false" class="footer-btn footer-btn--primary">
+            <i class="pi pi-check"></i>
+            {{ t('tasks.apply_filters') }}
+          </button>
         </div>
       </Sidebar>
   </div>
@@ -610,38 +627,163 @@ async function handleTaskDeleted() {
 }
 
 /* ===== Mobile Filters Sidebar ===== */
+.filters-sidebar {
+  z-index: 99999 !important;
+}
+
+.filters-sidebar :deep(.p-sidebar-mask) {
+  z-index: 99998 !important;
+  background: rgba(0, 0, 0, 0.5) !important;
+}
+
 .filters-sidebar :deep(.p-sidebar) {
-  height: 95vh !important;
-  max-height: 95vh !important;
-  border-radius: 24px 24px 0 0;
-  overflow-y: auto;
+  height: 100vh !important;
+  max-height: 100vh !important;
+  width: 100vw !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: #f8f9fa !important;
+  z-index: 99999 !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
 }
 
 .filters-sidebar :deep(.p-sidebar-content) {
-  padding: 0;
+  padding: 0 !important;
   height: 100%;
-  overflow-y: auto;
-}
-
-.filters-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  padding: 0.5rem 0;
+  flex-direction: column;
+  background: #f8f9fa;
 }
 
-.filters-header h3 {
+.filters-sidebar :deep(.p-sidebar-header) {
+  padding: 0 !important;
+  border-bottom: none;
+  flex-shrink: 0;
+}
+
+.mobile-filters-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  background: white;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.mobile-filters-header h2 {
   margin: 0;
   font-size: 1.25rem;
   font-weight: 700;
-  color: var(--p-text-color);
+  color: #212529;
 }
 
-.mobile-filters-content {
-  padding: 1rem;
+.close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  background: #f8f9fa;
+  border: none;
+  border-radius: 50%;
+  color: #6c757d;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.close-btn:hover {
+  background: #e9ecef;
+  color: #495057;
+}
+
+.close-btn i {
+  font-size: 1.25rem;
+}
+
+.mobile-filters-scroll {
+  flex: 1;
   overflow-y: auto;
-  height: calc(100% - 4rem);
+  overflow-x: hidden;
+  padding: 1.5rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mobile-quick-filters {
+  margin-bottom: 1.5rem;
+}
+
+.mobile-advanced-filters {
+  /* Filters panel will have its own styling */
+}
+
+/* Override filters styling for mobile sidebar */
+.mobile-filters-scroll .filters-container {
+  box-shadow: none;
+  background: transparent;
+  margin-bottom: 0;
+}
+
+.mobile-filters-scroll .quick-filters {
+  margin-bottom: 1rem;
+}
+
+.mobile-filters-scroll .quick-filters__list {
+  padding: 0.5rem 0;
+}
+
+/* Mobile Footer Actions */
+.mobile-filters-footer {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  background: white;
+  border-top: 1px solid #e9ecef;
+  flex-shrink: 0;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.footer-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.938rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.footer-btn--primary {
+  background: #6366f1;
+  color: white;
+}
+
+.footer-btn--primary:hover {
+  background: #5558e3;
+  transform: scale(1.02);
+}
+
+.footer-btn--secondary {
+  background: #f8f9fa;
+  color: #dc3545;
+  border: 1.5px solid #e9ecef;
+}
+
+.footer-btn--secondary:hover {
+  background: #fff5f5;
+  border-color: #dc3545;
+}
+
+.footer-btn i {
+  font-size: 1rem;
 }
 
 .dashboard-background {

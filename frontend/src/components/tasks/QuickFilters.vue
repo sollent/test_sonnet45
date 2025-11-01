@@ -30,7 +30,7 @@ const quickFilters: QuickFilter[] = [
     id: 'today',
     label: 'На сегодня',
     icon: 'pi pi-calendar',
-    color: '#8b5cf6',
+    color: '#6366f1',
     filters: {
       // This will be handled by view filter
     }
@@ -38,8 +38,8 @@ const quickFilters: QuickFilter[] = [
   {
     id: 'overdue',
     label: 'Просроченные',
-    icon: 'pi pi-exclamation-triangle',
-    color: '#ef4444',
+    icon: 'pi pi-clock',
+    color: '#f59e0b',
     filters: {
       // This will be handled by view filter
     }
@@ -157,8 +157,8 @@ function formatDateForApi(date: Date): string {
 .quick-filter {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
+  gap: 0.625rem;
+  padding: 0.625rem 1.125rem;
   background: white;
   border: 1.5px solid #e9ecef;
   border-radius: 12px;
@@ -167,21 +167,22 @@ function formatDateForApi(date: Date): string {
   color: #495057;
   white-space: nowrap;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s ease;
   flex-shrink: 0;
 }
 
 .quick-filter:hover {
   background: #f8f9fa;
   border-color: #dee2e6;
-  transform: scale(1.02);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .quick-filter--active {
-  background: white;
-  border-color: #6366f1;
-  color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  background: #6366f1 !important;
+  border-color: #6366f1 !important;
+  color: white !important;
+  box-shadow: 0 2px 12px rgba(99, 102, 241, 0.3);
 }
 
 .quick-filter__icon {
@@ -192,15 +193,23 @@ function formatDateForApi(date: Date): string {
   height: 1.125rem;
   font-size: 1rem;
   flex-shrink: 0;
+  line-height: 1;
+  color: inherit;
+}
+
+.quick-filter--active .quick-filter__icon {
+  color: white !important;
 }
 
 .quick-filter__label {
   line-height: 1.3;
   font-size: 0.875rem;
+  color: inherit;
 }
 
 .quick-filter--active .quick-filter__label {
   font-weight: 600;
+  color: white !important;
 }
 
 /* Mobile */

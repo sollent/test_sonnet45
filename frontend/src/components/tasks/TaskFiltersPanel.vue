@@ -9,52 +9,40 @@ import Calendar from 'primevue/calendar'
 const { t } = useI18n()
 const taskStore = useTaskStore()
 
-// Simple debounce implementation
-function debounce<T extends (...args: any[]) => any>(
-  func: T,
-  wait: number
-): (...args: Parameters<T>) => void {
-  let timeout: ReturnType<typeof setTimeout> | null = null
-  return function(this: any, ...args: Parameters<T>) {
-    const context = this
-    if (timeout) clearTimeout(timeout)
-    timeout = setTimeout(() => func.apply(context, args), wait)
-  }
-}
-
 // UI State
 const isExpanded = ref(false)
-const searchQuery = ref('')
 const taskTypeFilter = ref<'all' | 'active' | 'completed'>('all')
 const dateFrom = ref<Date | null>(null)
 const dateTo = ref<Date | null>(null)
 
+// Popular tags for quick access
+const popularTags = computed(() => taskStore.tags.slice(0, 5))
+
 // Local filter state
-const localFilters = ref<TaskFiltersState & { assignee?: string }>({
+const localFilters = ref<TaskFiltersState>({
   tags: [],
   completed: null,
   dateFrom: null,
   dateTo: null,
   priorities: [],
-  statuses: [],
-  assignee: ''
+  statuses: []
 })
 
 // Priority options
-const priorityOptions = computed(() => [
-  { label: t('tasks.priority_low'), value: TaskPriority.LOW, color: '#10b981' },
-  { label: t('tasks.priority_medium'), value: TaskPriority.MEDIUM, color: '#f59e0b' },
-  { label: t('tasks.priority_high'), value: TaskPriority.HIGH, color: '#ef4444' },
-  { label: t('tasks.priority_urgent'), value: TaskPriority.URGENT, color: '#dc2626' }
-])
+const priorityOptions = [
+  { label: 'Низкий', value: TaskPriority.LOW, color: '#10b981' },
+  { label: 'Средний', value: TaskPriority.MEDIUM, color: '#f59e0b' },
+  { label: 'Высокий', value: TaskPriority.HIGH, color: '#ef4444' },
+  { label: 'Срочный', value: TaskPriority.URGENT, color: '#dc2626' }
+]
 
 // Status options
-const statusOptions = computed(() => [
-  { label: t('tasks.status_pending'), value: TaskStatus.PENDING, color: '#6b7280' },
-  { label: t('tasks.status_in_progress'), value: TaskStatus.IN_PROGRESS, color: '#3b82f6' },
-  { label: t('tasks.status_completed'), value: TaskStatus.COMPLETED, color: '#10b981' },
-  { label: t('tasks.status_cancelled'), value: TaskStatus.CANCELLED, color: '#ef4444' }
-])
+const statusOptions = [
+  { label: 'В ожидании', value: TaskStatus.PENDING, color: '#6b7280' },
+  { label: 'В процессе', value: TaskStatus.IN_PROGRESS, color: '#3b82f6' },
+  { label: 'Завершена', value: TaskStatus.COMPLETED, color: '#10b981' },
+  { label: 'Отменена', value: TaskStatus.CANCELLED, color: '#ef4444' }
+]
 
 // Count active filters
 const activeFiltersCount = computed(() => {
@@ -64,7 +52,6 @@ const activeFiltersCount = computed(() => {
   if (localFilters.value.dateFrom || localFilters.value.dateTo) count++
   if (localFilters.value.priorities.length > 0) count++
   if (localFilters.value.statuses.length > 0) count++
-  if (searchQuery.value) count++
   return count
 })
 
@@ -89,12 +76,10 @@ function clearFilters() {
     dateFrom: null,
     dateTo: null,
     priorities: [],
-    statuses: [],
-    assignee: ''
+    statuses: []
   }
   dateFrom.value = null
   dateTo.value = null
-  searchQuery.value = ''
   taskTypeFilter.value = 'all'
   taskStore.clearFilters()
 }
@@ -121,14 +106,16 @@ function toggleStatus(status: TaskStatus) {
   applyFilters()
 }
 
-// Handle search with debounce
-const handleSearch = debounce(() => {
-  if (searchQuery.value) {
-    taskStore.setSearchQuery(searchQuery.value)
+// Toggle tag
+function toggleTag(tagId: number) {
+  const index = localFilters.value.tags.indexOf(tagId)
+  if (index > -1) {
+    localFilters.value.tags.splice(index, 1)
   } else {
-    taskStore.clearSearch()
+    localFilters.value.tags.push(tagId)
   }
-}, 300)
+  applyFilters()
+}
 
 // Handle date change
 function handleDateChange() {
@@ -147,12 +134,6 @@ function handleDateChange() {
   applyFilters()
 }
 
-// Save filter as preset
-function saveFilter() {
-  // TODO: Implement save filter functionality
-  console.log('Save filter:', localFilters.value)
-}
-
 // Watch task type filter
 watch(taskTypeFilter, (newValue) => {
   if (newValue === 'completed') {
@@ -164,187 +145,151 @@ watch(taskTypeFilter, (newValue) => {
   }
   applyFilters()
 })
-
-// Toggle tags
-function toggleTag(tagId: number) {
-  const index = localFilters.value.tags.indexOf(tagId)
-  if (index > -1) {
-    localFilters.value.tags.splice(index, 1)
-  } else {
-    localFilters.value.tags.push(tagId)
-  }
-  applyFilters()
-}
 </script>
 
 <template>
   <div class="filters-container">
-    <!-- Header with toggle -->
-    <div class="filters-header" @click="isExpanded = !isExpanded">
-      <div class="filters-title">
+    <!-- Compact Header -->
+    <button @click="isExpanded = !isExpanded" class="filters-toggle">
+      <div class="toggle-left">
         <i class="pi pi-filter"></i>
         <span>{{ t('tasks.filters') }}</span>
-        <span v-if="activeFiltersCount > 0" class="filter-badge">
-          {{ activeFiltersCount }}
-        </span>
+        <span v-if="activeFiltersCount > 0" class="count-badge">{{ activeFiltersCount }}</span>
       </div>
-      <button 
-        class="expand-toggle"
-        :aria-label="isExpanded ? t('tasks.hide_filters') : t('tasks.show_filters')"
-      >
-        <i :class="['pi', isExpanded ? 'pi-chevron-up' : 'pi-chevron-down']"></i>
-      </button>
-    </div>
+      <i :class="['pi', isExpanded ? 'pi-chevron-up' : 'pi-chevron-down']" class="chevron"></i>
+    </button>
 
-    <!-- Filters Panel -->
-    <Transition name="filters-slide">
-      <div v-show="isExpanded" class="filters-panel">
+    <!-- Compact Filters Panel -->
+    <Transition name="slide">
+      <div v-show="isExpanded" class="filters-content">
+        <!-- Grid Layout for Compact View -->
         <div class="filters-grid">
-          <!-- Search -->
-          <div class="filter-section filter-section--search">
-            <div class="filter-input-group">
-              <i class="pi pi-search input-icon"></i>
-              <input 
-                type="text"
-                v-model="searchQuery"
-                @input="handleSearch"
-                :placeholder="t('tasks.search_placeholder')"
-                class="filter-search-input"
-              />
-            </div>
-          </div>
-
-          <!-- Task Type Filter -->
-          <div class="filter-section">
-            <label class="filter-label">
+          <!-- Тип задач -->
+          <div class="filter-block">
+            <div class="block-label">
               <i class="pi pi-list"></i>
-              <span>{{ t('tasks.task_type') }}</span>
-            </label>
-            <div class="button-group">
-              <button 
-                :class="['filter-button', { active: taskTypeFilter === 'all' }]"
-                @click="taskTypeFilter = 'all'"
-              >
+              {{ t('tasks.task_type') }}
+            </div>
+            <div class="btn-group">
+              <button :class="['btn-option', { active: taskTypeFilter === 'all' }]" @click="taskTypeFilter = 'all'">
                 {{ t('tasks.all_tasks') }}
               </button>
-              <button 
-                :class="['filter-button', { active: taskTypeFilter === 'active' }]"
-                @click="taskTypeFilter = 'active'"
-              >
+              <button :class="['btn-option', { active: taskTypeFilter === 'active' }]" @click="taskTypeFilter = 'active'">
                 {{ t('tasks.active') }}
               </button>
-              <button 
-                :class="['filter-button', { active: taskTypeFilter === 'completed' }]"
-                @click="taskTypeFilter = 'completed'"
-              >
+              <button :class="['btn-option', { active: taskTypeFilter === 'completed' }]" @click="taskTypeFilter = 'completed'">
                 {{ t('tasks.completed') }}
               </button>
             </div>
           </div>
 
-          <!-- Tags -->
-          <div class="filter-section">
-            <label class="filter-label">
+          <!-- Приоритет -->
+          <div class="filter-block">
+            <div class="block-label">
+              <i class="pi pi-flag"></i>
+              {{ t('tasks.priority') }}
+            </div>
+            <div class="options-wrap">
+              <button
+                v-for="priority in priorityOptions"
+                :key="priority.value"
+                :class="['option-pill', { active: localFilters.priorities.includes(priority.value) }]"
+                @click="togglePriority(priority.value)"
+              >
+                <span class="dot" :style="{ background: priority.color }"></span>
+                {{ priority.label }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Статус -->
+          <div class="filter-block">
+            <div class="block-label">
+              <i class="pi pi-info-circle"></i>
+              {{ t('tasks.status_execution') }}
+            </div>
+            <div class="options-wrap">
+              <button
+                v-for="status in statusOptions"
+                :key="status.value"
+                :class="['option-pill', { active: localFilters.statuses.includes(status.value) }]"
+                @click="toggleStatus(status.value)"
+              >
+                <span class="dot" :style="{ background: status.color }"></span>
+                {{ status.label }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Теги -->
+          <div class="filter-block">
+            <div class="block-label">
               <i class="pi pi-tags"></i>
-              <span>{{ t('tasks.tags') }}</span>
-            </label>
+              {{ t('tasks.tags') }}
+            </div>
+            <div class="tags-row">
+              <button
+                v-for="tag in popularTags"
+                :key="tag.id"
+                :class="['tag-pill', { active: localFilters.tags.includes(tag.id) }]"
+                @click="toggleTag(tag.id)"
+              >
+                <span class="tag-avatar" :style="{ background: tag.color }">
+                  {{ tag.name.charAt(0).toUpperCase() }}
+                </span>
+                {{ tag.name }}
+              </button>
+            </div>
             <MultiSelect
               v-model="localFilters.tags"
               :options="taskStore.tags"
               optionLabel="name"
               optionValue="id"
               :placeholder="t('tasks.select_tags')"
-              :maxSelectedLabels="3"
-              class="w-full filter-multiselect"
+              class="tags-select"
               @change="applyFilters"
             />
           </div>
 
-          <!-- Date Range -->
-          <div class="filter-section">
-            <label class="filter-label">
+          <!-- Период -->
+          <div class="filter-block">
+            <div class="block-label">
               <i class="pi pi-calendar"></i>
-              <span>{{ t('tasks.period') }}</span>
-            </label>
-            <div class="date-range-inputs">
+              {{ t('tasks.period') }}
+            </div>
+            <div class="date-row">
               <Calendar
                 v-model="dateFrom"
                 :placeholder="t('tasks.date_from')"
                 dateFormat="dd.mm.yy"
-                class="date-input"
+                showIcon
+                class="compact-date"
                 @date-select="handleDateChange"
                 @clear-click="handleDateChange"
               />
-              <span class="date-separator">—</span>
+              <span class="dash">—</span>
               <Calendar
                 v-model="dateTo"
                 :placeholder="t('tasks.date_to')"
                 dateFormat="dd.mm.yy"
-                class="date-input"
+                showIcon
+                class="compact-date"
                 @date-select="handleDateChange"
                 @clear-click="handleDateChange"
               />
             </div>
           </div>
-
-          <!-- Priority -->
-          <div class="filter-section">
-            <label class="filter-label">
-              <i class="pi pi-flag"></i>
-              <span>{{ t('tasks.priority') }}</span>
-            </label>
-            <div class="priority-pills">
-              <button
-                v-for="priority in priorityOptions"
-                :key="priority.value"
-                :class="['priority-pill', { active: localFilters.priorities.includes(priority.value) }]"
-                :style="{ '--pill-color': priority.color }"
-                @click="togglePriority(priority.value)"
-              >
-                <span class="pill-dot" :style="{ background: priority.color }"></span>
-                {{ priority.label }}
-              </button>
-            </div>
-          </div>
-
-          <!-- Status -->
-          <div class="filter-section">
-            <label class="filter-label">
-              <i class="pi pi-info-circle"></i>
-              <span>{{ t('tasks.status_execution') }}</span>
-            </label>
-            <div class="status-pills">
-              <button
-                v-for="status in statusOptions"
-                :key="status.value"
-                :class="['status-pill', { active: localFilters.statuses.includes(status.value) }]"
-                :style="{ '--pill-color': status.color }"
-                @click="toggleStatus(status.value)"
-              >
-                <span class="status-indicator" :style="{ background: status.color }"></span>
-                {{ status.label }}
-              </button>
-            </div>
-          </div>
         </div>
 
-        <!-- Actions -->
-        <div class="filter-actions">
-          <button 
-            @click="clearFilters"
-            :disabled="activeFiltersCount === 0"
-            class="clear-button"
-          >
+        <!-- Compact Actions -->
+        <div class="actions-bar">
+          <button @click="applyFilters" class="apply-btn">
+            <i class="pi pi-check"></i>
+            {{ t('tasks.apply_filters') }}
+          </button>
+          <button @click="clearFilters" :disabled="activeFiltersCount === 0" class="clear-btn">
             <i class="pi pi-times"></i>
             {{ t('tasks.clear_all') }}
-          </button>
-          <button 
-            @click="saveFilter"
-            class="save-button"
-            v-if="activeFiltersCount > 0"
-          >
-            <i class="pi pi-bookmark"></i>
-            {{ t('tasks.save_filter') }}
           </button>
         </div>
       </div>
@@ -355,433 +300,426 @@ function toggleTag(tagId: number) {
 <style scoped>
 .filters-container {
   background: white;
-  border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  overflow: hidden;
-  margin-bottom: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  margin-bottom: 1rem;
 }
 
-.filters-header {
+/* Compact Toggle */
+.filters-toggle {
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem 1.25rem;
-  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-  border-bottom: 1px solid #e9ecef;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: none;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: background 0.15s ease;
 }
 
-.filters-header:hover {
-  background: linear-gradient(135deg, #f0f1f3 0%, #fafbfc 100%);
+.filters-toggle:hover {
+  background: #fafbfc;
 }
 
-.filters-title {
+.toggle-left {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
   font-weight: 600;
-  font-size: 0.938rem;
+  font-size: 0.875rem;
   color: #495057;
 }
 
-.filters-title i {
+.toggle-left i {
   color: #6366f1;
-  font-size: 1.125rem;
+  font-size: 0.938rem;
 }
 
-.filter-badge {
+.count-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 1.5rem;
-  height: 1.5rem;
-  padding: 0 0.375rem;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.313rem;
   background: #6366f1;
   color: white;
-  border-radius: 12px;
-  font-size: 0.75rem;
+  border-radius: 8px;
+  font-size: 0.688rem;
   font-weight: 700;
 }
 
-.expand-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  background: white;
-  border: 1px solid #dee2e6;
-  border-radius: 8px;
-  color: #6c757d;
-  cursor: pointer;
-  transition: all 0.2s ease;
+.chevron {
+  color: #adb5bd;
+  font-size: 0.813rem;
+  transition: transform 0.2s ease;
 }
 
-.expand-toggle:hover {
-  background: #f8f9fa;
-  border-color: #6366f1;
-  color: #6366f1;
+/* Compact Content */
+.filters-content {
+  padding: 0 1rem 0.875rem 1rem;
+  border-top: 1px solid #f1f3f5;
 }
 
-/* Filters Panel */
-.filters-panel {
-  padding: 1.25rem;
-  background: white;
-}
-
+/* Compact Grid */
 .filters-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.25rem;
-  margin-bottom: 1.25rem;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.875rem;
+  padding: 0.875rem 0;
 }
 
-.filter-section {
+.filter-block {
   display: flex;
   flex-direction: column;
-  gap: 0.625rem;
-}
-
-.filter-section--search {
-  grid-column: 1 / -1;
-}
-
-.filter-label {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #6c757d;
-}
-
-.filter-label i {
-  font-size: 0.875rem;
-  color: #adb5bd;
-}
-
-/* Search Input */
-.filter-input-group {
-  position: relative;
-}
-
-.input-icon {
-  position: absolute;
-  left: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #adb5bd;
-  font-size: 1rem;
-  pointer-events: none;
-}
-
-.filter-search-input {
-  width: 100%;
-  padding: 0.75rem 1rem 0.75rem 2.75rem;
-  background: #f8f9fa;
-  border: 2px solid transparent;
-  border-radius: 12px;
-  font-size: 0.938rem;
-  color: #212529;
-  transition: all 0.2s ease;
-}
-
-.filter-search-input:focus {
-  outline: none;
-  background: white;
-  border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-}
-
-.filter-search-input::placeholder {
-  color: #adb5bd;
-}
-
-/* MultiSelect */
-.filter-multiselect :deep(.p-multiselect) {
-  background: #f8f9fa;
-  border: 2px solid transparent;
-  border-radius: 10px;
-  min-height: 42px;
-}
-
-.filter-multiselect :deep(.p-multiselect:not(.p-disabled):hover) {
-  border-color: #dee2e6;
-}
-
-.filter-multiselect :deep(.p-multiselect:not(.p-disabled).p-focus) {
-  background: white;
-  border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-}
-
-/* Button Group */
-.button-group {
-  display: flex;
-  gap: 0;
-  background: #f8f9fa;
-  border-radius: 10px;
-  padding: 0.25rem;
-}
-
-.filter-button {
-  flex: 1;
-  padding: 0.5rem 1rem;
-  background: transparent;
-  border: none;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #6c757d;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.filter-button:hover {
-  color: #495057;
-}
-
-.filter-button.active {
-  background: white;
-  color: #6366f1;
-  font-weight: 600;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-/* Date Range */
-.date-range-inputs {
-  display: flex;
-  align-items: center;
   gap: 0.5rem;
 }
 
-.date-input {
-  flex: 1;
-}
-
-.date-input :deep(.p-inputtext) {
-  padding: 0.625rem 1rem;
-  background: #f8f9fa;
-  border: 2px solid transparent;
-  border-radius: 10px;
-  font-size: 0.875rem;
-  transition: all 0.2s ease;
-}
-
-.date-input :deep(.p-inputtext:focus) {
-  background: white;
-  border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-}
-
-.date-separator {
-  color: #adb5bd;
-  font-weight: 500;
-}
-
-/* Priority Pills */
-.priority-pills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.priority-pill {
+.block-label {
   display: flex;
   align-items: center;
   gap: 0.375rem;
-  padding: 0.375rem 0.875rem;
+  font-size: 0.688rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: #868e96;
+}
+
+.block-label i {
+  font-size: 0.75rem;
+  color: #adb5bd;
+}
+
+/* Segmented Control - Compact */
+.btn-group {
+  display: flex;
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 0.188rem;
+  gap: 0.188rem;
+}
+
+.btn-option {
+  flex: 1;
+  padding: 0.375rem 0.625rem;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.813rem;
+  font-weight: 500;
+  color: #6c757d;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  white-space: nowrap;
+}
+
+.btn-option.active {
   background: white;
-  border: 2px solid #dee2e6;
-  border-radius: 20px;
+  color: #6366f1;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* Compact Pills */
+.options-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.option-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  background: white;
+  border: 1.5px solid #e9ecef;
+  border-radius: 10px;
   font-size: 0.813rem;
   font-weight: 500;
   color: #495057;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.12s ease;
 }
 
-.pill-dot {
+.dot {
   width: 0.5rem;
   height: 0.5rem;
   border-radius: 50%;
-  transition: transform 0.2s ease;
+  flex-shrink: 0;
 }
 
-.priority-pill:hover {
-  border-color: var(--pill-color);
+.option-pill:hover {
+  background: #f8f9fa;
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.priority-pill.active {
-  background: var(--pill-color);
-  border-color: var(--pill-color);
+.option-pill.active {
+  background: #6366f1;
+  border-color: #6366f1;
   color: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.25);
 }
 
-.priority-pill.active .pill-dot {
+.option-pill.active .dot {
   background: white !important;
-  transform: scale(1.2);
 }
 
-/* Status Pills */
-.status-pills {
+/* Tags Compact */
+.tags-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.375rem;
+  margin-bottom: 0.5rem;
 }
 
-.status-pill {
-  display: flex;
+.tag-pill {
+  display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.375rem 0.875rem;
+  gap: 0.375rem;
+  padding: 0.313rem 0.688rem;
   background: white;
-  border: 2px solid #dee2e6;
+  border: 1.5px solid #e9ecef;
   border-radius: 10px;
   font-size: 0.813rem;
   font-weight: 500;
   color: #495057;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.12s ease;
 }
 
-.status-indicator {
-  width: 0.625rem;
-  height: 0.625rem;
-  border-radius: 50%;
-  transition: transform 0.2s ease;
-}
-
-.status-pill:hover {
-  border-color: var(--pill-color);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.status-pill.active {
-  border-color: var(--pill-color);
-  background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7));
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-.status-pill.active .status-indicator {
-  transform: scale(1.4);
-  box-shadow: 0 0 0 2px rgba(255,255,255,0.8);
-}
-
-/* Filter Actions */
-.filter-actions {
-  display: flex;
-  gap: 0.75rem;
-  padding-top: 1.25rem;
-  border-top: 1px solid #e9ecef;
-}
-
-.clear-button,
-.save-button {
+.tag-avatar {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.625rem 1.25rem;
-  border: 2px solid #dee2e6;
-  border-radius: 10px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #495057;
-  background: white;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  justify-content: center;
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 5px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
 }
 
-.clear-button:hover:not(:disabled) {
-  border-color: #dc3545;
-  color: #dc3545;
-  background: #fff5f5;
+.tag-pill:hover {
+  background: #f8f9fa;
+  transform: translateY(-1px);
 }
 
-.clear-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.save-button {
-  margin-left: auto;
+.tag-pill.active {
+  background: #6366f1;
   border-color: #6366f1;
+  color: white;
+}
+
+.tag-pill.active .tag-avatar {
+  background: rgba(255, 255, 255, 0.25) !important;
+}
+
+.tags-select :deep(.p-multiselect) {
+  width: 100%;
+  background: #f8f9fa;
+  border: 1.5px solid #e9ecef;
+  border-radius: 8px;
+  min-height: 36px;
+  font-size: 0.813rem;
+}
+
+.tags-select :deep(.p-multiselect:hover) {
+  border-color: #dee2e6;
+}
+
+.tags-select :deep(.p-multiselect.p-focus) {
+  background: white;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.08);
+}
+
+/* Date Inputs Compact */
+.date-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.compact-date {
+  flex: 1;
+}
+
+.compact-date :deep(.p-calendar) {
+  width: 100%;
+}
+
+.compact-date :deep(.p-inputtext) {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  background: #f8f9fa;
+  border: 1.5px solid #e9ecef;
+  border-radius: 8px;
+  font-size: 0.813rem;
+  color: #495057;
+  transition: all 0.12s ease;
+}
+
+.compact-date :deep(.p-inputtext:hover) {
+  border-color: #dee2e6;
+}
+
+.compact-date :deep(.p-inputtext:focus) {
+  background: white;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.08);
+}
+
+.compact-date :deep(.p-datepicker-trigger) {
+  color: #6366f1;
+  font-size: 0.875rem;
+}
+
+.dash {
+  color: #adb5bd;
+  font-weight: 500;
+  font-size: 0.813rem;
+}
+
+/* Compact Actions */
+.actions-bar {
+  display: flex;
+  gap: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #f1f3f5;
+}
+
+.apply-btn,
+.clear-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.813rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.apply-btn {
+  flex: 1;
   background: #6366f1;
   color: white;
 }
 
-.save-button:hover {
+.apply-btn:hover {
   background: #5558e3;
-  border-color: #5558e3;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 3px 8px rgba(99, 102, 241, 0.25);
+}
+
+.clear-btn {
+  background: white;
+  color: #dc3545;
+  border: 1.5px solid #e9ecef;
+}
+
+.clear-btn:hover:not(:disabled) {
+  background: #fff5f5;
+  border-color: #dc3545;
+}
+
+.clear-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
 }
 
 /* Animations */
-.filters-slide-enter-active,
-.filters-slide-leave-active {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+.slide-enter-active,
+.slide-leave-active {
+  transition: all 0.25s ease;
+  overflow: hidden;
 }
 
-.filters-slide-enter-from {
+.slide-enter-from,
+.slide-leave-to {
   opacity: 0;
   max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
-.filters-slide-leave-to {
-  opacity: 0;
-  max-height: 0;
+.slide-enter-to,
+.slide-leave-from {
+  opacity: 1;
+  max-height: 400px;
 }
 
-/* Mobile Responsive */
+/* Mobile */
 @media (max-width: 768px) {
-  .filters-container {
-    border-radius: 12px;
-    margin-bottom: 1rem;
+  .filters-toggle {
+    padding: 0.625rem 0.875rem;
   }
 
-  .filters-header {
-    padding: 0.875rem 1rem;
-  }
-
-  .filters-panel {
-    padding: 1rem;
+  .filters-content {
+    padding: 0 0.875rem 0.75rem 0.875rem;
   }
 
   .filters-grid {
     grid-template-columns: 1fr;
-    gap: 1rem;
+    gap: 0.75rem;
+    padding: 0.75rem 0;
   }
 
-  .date-range-inputs {
+  .btn-group {
+    flex-direction: row;
+  }
+
+  .btn-option {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.5rem;
+  }
+
+  .options-wrap {
+    gap: 0.313rem;
+  }
+
+  .option-pill {
+    padding: 0.313rem 0.625rem;
+    font-size: 0.75rem;
+  }
+
+  .tag-pill {
+    padding: 0.25rem 0.625rem;
+    font-size: 0.75rem;
+  }
+
+  .tag-avatar {
+    width: 1rem;
+    height: 1rem;
+    font-size: 0.563rem;
+  }
+
+  .date-row {
     flex-direction: column;
-    align-items: stretch;
+    gap: 0.375rem;
   }
 
-  .date-separator {
+  .dash {
     display: none;
   }
 
-  .filter-actions {
-    flex-direction: column;
-    gap: 0.5rem;
+  .actions-bar {
+    flex-direction: row;
+    gap: 0.375rem;
   }
 
-  .clear-button,
-  .save-button {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .save-button {
-    margin-left: 0;
+  .apply-btn,
+  .clear-btn {
+    font-size: 0.75rem;
+    padding: 0.5rem 0.875rem;
   }
 }
 
@@ -789,53 +727,45 @@ function toggleTag(tagId: number) {
 @media (prefers-color-scheme: dark) {
   .filters-container {
     background: var(--p-surface-900);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   }
 
-  .filters-header {
-    background: var(--p-surface-900);
-    border-bottom-color: var(--p-surface-700);
-  }
-
-  .filters-title {
-    color: var(--p-text-color);
-  }
-
-  .expand-toggle {
-    background: var(--p-surface-800);
-    border-color: var(--p-surface-700);
-    color: var(--p-text-muted-color);
-  }
-
-  .filters-panel {
-    background: var(--p-surface-900);
-  }
-
-  .filter-search-input {
-    background: var(--p-surface-800);
-    color: var(--p-text-color);
-  }
-
-  .button-group {
+  .filters-toggle:hover {
     background: var(--p-surface-800);
   }
 
-  .filter-button.active {
+  .filters-content {
+    border-top-color: var(--p-surface-700);
+  }
+
+  .btn-group {
+    background: var(--p-surface-800);
+  }
+
+  .btn-option.active {
     background: var(--p-surface-700);
   }
 
-  .priority-pill,
-  .status-pill {
+  .option-pill,
+  .tag-pill {
     background: var(--p-surface-800);
     border-color: var(--p-surface-700);
     color: var(--p-text-color);
   }
 
-  .clear-button,
-  .save-button {
+  .tags-select :deep(.p-multiselect),
+  .compact-date :deep(.p-inputtext) {
     background: var(--p-surface-800);
     border-color: var(--p-surface-700);
     color: var(--p-text-color);
+  }
+
+  .clear-btn {
+    background: var(--p-surface-800);
+    border-color: var(--p-surface-700);
+  }
+
+  .actions-bar {
+    border-top-color: var(--p-surface-700);
   }
 }
 </style>
