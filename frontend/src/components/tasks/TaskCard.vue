@@ -82,7 +82,12 @@ const formattedDueDate = computed(() => {
   return new Intl.DateTimeFormat(i18n.locale.value === 'ru' ? 'ru-RU' : 'en-US').format(dueDate)
 })
 
+const completedSubtasks = computed(() => props.task.completedSubtaskCount ?? props.task.subtasks?.filter(s => s.isCompleted).length ?? 0)
+const totalSubtasks = computed(() => props.task.subtaskCount ?? props.task.subtasks?.length ?? 0)
 const hasDeepNesting = computed(() => {
+  if (typeof props.task.hasNestedSubtasks === 'boolean') {
+    return props.task.hasNestedSubtasks
+  }
   if (!props.task.subtasks || props.task.subtasks.length === 0) return false
   return props.task.subtasks.some(subtask => subtask.subtasks && subtask.subtasks.length > 0)
 })
@@ -91,14 +96,7 @@ function handleClick() {
   emit('click', props.task)
 }
 
-async function handleToggleComplete(event: Event) {
-  event.stopPropagation()
-  const checkbox = event.target as HTMLInputElement
-  const checked = checkbox.checked
-  
-  // Prevent default checkbox behavior
-  event.preventDefault()
-  
+async function handleToggleComplete(checked: boolean) {
   // Emit optimistic update immediately
   const optimisticTask = {
     ...props.task,
@@ -109,10 +107,21 @@ async function handleToggleComplete(event: Event) {
   emit('task-updated', optimisticTask)
   
   // Use the new completion handler with confirmation
-  await handleCheckboxChange(props.task, checked, (updatedTask) => {
-    // Emit real server response
-    emit('task-updated', updatedTask)
-  })
+  try {
+    await handleCheckboxChange(props.task, checked, (updatedTask) => {
+      // Emit real server response
+      emit('task-updated', updatedTask)
+    })
+  } catch (error: any) {
+    // If error, revert optimistic update
+    const revertedTask = {
+      ...props.task,
+      isCompleted: !checked,
+      status: !checked ? TaskStatus.COMPLETED : TaskStatus.PENDING
+    } as Task
+    emit('task-updated', revertedTask)
+    // Error is already shown by handleCheckboxChange, so we don't need to rethrow
+  }
 }
 </script>
 
@@ -135,11 +144,11 @@ async function handleToggleComplete(event: Event) {
     <div class="task-card__content">
       <!-- Header -->
       <div class="task-card__header">
-        <div class="task-card__checkbox">
+        <div class="task-card__checkbox" @click.stop>
           <Checkbox
             :model-value="isCompleted"
             :binary="true"
-            @click="handleToggleComplete"
+            @update:model-value="handleToggleComplete"
           />
         </div>
 
@@ -176,9 +185,9 @@ async function handleToggleComplete(event: Event) {
           </div>
 
           <!-- Subtasks Count -->
-          <div v-if="task.subtasks && task.subtasks.length > 0" class="task-card__subtasks">
+          <div v-if="totalSubtasks > 0" class="task-card__subtasks">
             <i class="pi pi-sitemap" style="color: #667eea;" />
-            <span>{{ task.subtasks.filter(s => s.isCompleted).length }}/{{ task.subtasks.length }}</span>
+            <span>{{ completedSubtasks }}/{{ totalSubtasks }}</span>
             <span v-if="hasDeepNesting" class="task-card__tree-badge">
               <i class="pi pi-share-alt" style="font-size: 0.75rem;" />
             </span>

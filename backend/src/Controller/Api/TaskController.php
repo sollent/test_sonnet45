@@ -20,19 +20,24 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
+use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Security\Core\User\User;
+use App\Repository\Database\UserRepository;
 
-#[Route('/api/tasks')]
+#[Route('/api/tasks', name: 'task_')]
 #[IsGranted('ROLE_USER')]
 #[OA\Tag(name: 'Tasks')]
 class TaskController extends AbstractController
 {
     public function __construct(
         private readonly TaskService $taskService,
-        private readonly TaskRepository $taskRepository
+        private readonly TaskRepository $taskRepository,
+        private readonly UserRepository $userRepository
     ) {
     }
 
-    #[Route('', name: 'api_tasks_list', methods: ['GET'])]
+    #[Route('', name: 'list', methods: ['GET'])]
     #[OA\Get(
         summary: 'Get list of tasks',
         parameters: [
@@ -97,23 +102,81 @@ class TaskController extends AbstractController
             
             $tasks = match ($view) {
                 'today' => $this->taskService->getTodayTasks($user),
-                'overdue' => $this->taskService->getOverdueTasks($user),
-                'upcoming' => $this->taskService->getUpcomingTasks($user),
-                default => $this->taskService->getUserTasks(
-                    $user,
-                    $request->query->has('status') ? TaskStatus::from($request->query->get('status')) : null,
-                    $request->query->getBoolean('archived', false),
-                    true
-                )
+                'overdue' => $this->taskService->getOverdueTasksPaginated($user, 1, 50)['tasks'],
+                'upcoming' => $this->taskService->getUpcomingTasks($user, 30),
+                'unscheduled' => $this->taskService->getUnscheduledTasksPaginated($user, 1, 50)['tasks'],
+                default => $this->taskService->getActiveTasks($user)
             };
         }
 
         $response = array_map(
-            fn($task) => TaskResponseDto::fromEntity($task, true),
+            fn(Task $task) => TaskResponseDto::fromEntity($task, false, false),
             $tasks
         );
 
         return $this->json($response);
+    }
+
+    #[Route('/overdue', name: 'overdue_list', methods: ['GET'])]
+    #[OA\Response(
+        response: 200,
+        description: 'Returns the paginated list of overdue tasks for the current user',
+        content: new OA\JsonContent(
+            type: 'object',
+            properties: [
+                new OA\Property(property: 'tasks', type: 'array', items: new OA\Items(ref: '#/components/schemas/TaskList')),
+                new OA\Property(property: 'total', type: 'integer')
+            ]
+        )
+    )]
+    #[OA\Parameter(name: 'page', in: 'query', description: 'The page number', schema: new OA\Schema(type: 'integer', default: 1))]
+    #[OA\Parameter(name: 'limit', in: 'query', description: 'The number of items per page', schema: new OA\Schema(type: 'integer', default: 20))]
+    public function getOverdueTasks(Request $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        $page = $request->query->getInt('page', 1);
+        $limit = $request->query->getInt('limit', 20);
+
+        $data = $this->taskService->getOverdueTasksPaginated($user, $page, $limit);
+        $data['tasks'] = array_map(
+            fn(Task $task) => TaskResponseDto::fromEntity($task, false, false),
+            $data['tasks']
+        );
+
+        return $this->json($data, Response::HTTP_OK);
+    }
+
+    #[Route('/unscheduled', name: 'unscheduled_list', methods: ['GET'])]
+    #[OA\Response(
+        response: 200,
+        description: 'Returns the paginated list of tasks without due dates for the current user',
+        content: new OA\JsonContent(
+            type: 'object',
+            properties: [
+                new OA\Property(property: 'tasks', type: 'array', items: new OA\Items(ref: '#/components/schemas/TaskList')),
+                new OA\Property(property: 'total', type: 'integer')
+            ]
+        )
+    )]
+    #[OA\Parameter(name: 'page', in: 'query', description: 'The page number', schema: new OA\Schema(type: 'integer', default: 1))]
+    #[OA\Parameter(name: 'limit', in: 'query', description: 'The number of items per page', schema: new OA\Schema(type: 'integer', default: 20))]
+    public function getUnscheduledTasks(Request $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        $page = $request->query->getInt('page', 1);
+        $limit = $request->query->getInt('limit', 20);
+
+        $data = $this->taskService->getUnscheduledTasksPaginated($user, $page, $limit);
+        $data['tasks'] = array_map(
+            fn(Task $task) => TaskResponseDto::fromEntity($task, false, false),
+            $data['tasks']
+        );
+
+        return $this->json($data, Response::HTTP_OK);
     }
 
     #[Route('/statistics', name: 'api_tasks_statistics', methods: ['GET'])]

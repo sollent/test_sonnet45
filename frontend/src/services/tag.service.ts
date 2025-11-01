@@ -1,85 +1,57 @@
-/**
- * Tag Service - handles all tag-related API calls
- */
-
 import { apiClient } from './api.service'
-import type { Tag, CreateTagRequest, UpdateTagRequest } from '@/types/task.types'
+import type { Tag } from '@/types/task.types'
 
-const API_ENDPOINTS = {
-  TAGS: '/api/tags',
-  TAG_BY_ID: (id: number) => `/api/tags/${id}`,
-  TAGS_MOST_USED: '/api/tags/most-used'
+export interface TagSearchResponse {
+  tags: Tag[]
 }
 
 class TagService {
+  private readonly API_URL = '/api/tags'
+
   /**
-   * Get list of tags
+   * Get most popular/used tags
    */
-  async getTags(search?: string, limit?: number): Promise<Tag[]> {
-    const params = new URLSearchParams()
-    
-    if (search) {
-      params.append('search', search)
-    }
-    if (limit) {
-      params.append('limit', String(limit))
-    }
-
-    const queryString = params.toString()
-    const url = queryString ? `${API_ENDPOINTS.TAGS}?${queryString}` : API_ENDPOINTS.TAGS
-
-    const { data } = await apiClient.get<Tag[]>(url)
-    return data
+  async getMostUsedTags(limit: number = 7): Promise<Tag[]> {
+    const response = await apiClient.get<Tag[]>(`${this.API_URL}/most-used`, {
+      params: { limit }
+    })
+    return response.data
   }
 
   /**
-   * Get most used tags
-   */
-  async getMostUsedTags(limit: number = 5): Promise<Tag[]> {
-    const { data } = await apiClient.get<Tag[]>(
-      `${API_ENDPOINTS.TAGS_MOST_USED}?limit=${limit}`
-    )
-    return data
-  }
-
-  /**
-   * Get single tag by ID
-   */
-  async getTag(id: number): Promise<Tag> {
-    const { data } = await apiClient.get<Tag>(API_ENDPOINTS.TAG_BY_ID(id))
-    return data
-  }
-
-  /**
-   * Create new tag
-   */
-  async createTag(tagData: CreateTagRequest): Promise<Tag> {
-    const { data } = await apiClient.post<Tag>(API_ENDPOINTS.TAGS, tagData)
-    return data
-  }
-
-  /**
-   * Update existing tag
-   */
-  async updateTag(id: number, tagData: UpdateTagRequest): Promise<Tag> {
-    const { data } = await apiClient.put<Tag>(API_ENDPOINTS.TAG_BY_ID(id), tagData)
-    return data
-  }
-
-  /**
-   * Delete tag
-   */
-  async deleteTag(id: number): Promise<void> {
-    await apiClient.delete(API_ENDPOINTS.TAG_BY_ID(id))
-  }
-
-  /**
-   * Search tags
+   * Search tags by query
    */
   async searchTags(query: string): Promise<Tag[]> {
-    return this.getTags(query)
+    if (!query || query.trim().length === 0) {
+      return []
+    }
+    
+    const response = await apiClient.get<Tag[]>(`${this.API_URL}`, {
+      params: { search: query.trim() }
+    })
+    return response.data
+  }
+
+  /**
+   * Get all user tags
+   */
+  async getAllTags(limit?: number): Promise<Tag[]> {
+    const response = await apiClient.get<Tag[]>(`${this.API_URL}`, {
+      params: limit ? { limit } : {}
+    })
+    return response.data
+  }
+
+  /**
+   * Create a new tag
+   */
+  async createTag(name: string, color?: string): Promise<Tag> {
+    const response = await apiClient.post<Tag>(`${this.API_URL}`, {
+      name,
+      color: color || '#3B82F6'
+    })
+    return response.data
   }
 }
 
 export const tagService = new TagService()
-

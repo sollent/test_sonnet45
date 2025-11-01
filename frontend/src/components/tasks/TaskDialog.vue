@@ -77,6 +77,7 @@
             showTime
             hourFormat="24"
             dateFormat="dd.mm.yy"
+            :stepMinute="10"
             class="w-full"
           />
         </div>
@@ -89,6 +90,7 @@
             showTime
             hourFormat="24"
             dateFormat="dd.mm.yy"
+            :stepMinute="10"
             class="w-full"
           />
         </div>
@@ -96,13 +98,46 @@
 
       <div class="form-field">
         <label class="field-label">{{ t('tasks.tags') }}</label>
-        <Chips
+        <AutoComplete
           v-model="form.tags"
+          :suggestions="searchSuggestions.map(t => t.name)"
           :placeholder="t('tasks.tags_placeholder')"
-          class="w-full chips-full-width"
-          separator=","
+          multiple
+          class="w-full autocomplete-tags"
+          @complete="handleTagSearch"
+          :forceSelection="false"
+          :pt="{ input: { onKeydown: onTagsKeydown } }"
         />
         <small class="field-hint">{{ t('tasks.tags_help') }}</small>
+        
+        <!-- Popular tags -->
+        <div v-if="!isEditMode" class="popular-tags">
+          <small class="popular-tags-label">{{ t('tasks.popular_tags') }}:</small>
+          
+          <!-- Skeleton loaders -->
+          <div v-if="isLoadingPopular" class="popular-tags-list">
+            <Skeleton v-for="i in 7" :key="i" width="4rem" height="1.75rem" borderRadius="16px" class="tag-skeleton" />
+          </div>
+          
+            <!-- Popular tags chips -->
+            <div v-else-if="popularTags.length > 0" class="popular-tags-list">
+              <Chip
+                v-for="tag in popularTags"
+                :key="tag.id"
+                :label="tag.name"
+                :style="{ 
+                  backgroundColor: tag.color + '20',
+                  color: tag.color,
+                  border: `1px solid ${tag.color}40`,
+                  fontWeight: 600
+                }"
+                class="popular-tag-chip"
+                @click="addPopularTag(tag)"
+              />
+            </div>
+          
+          <small v-else class="no-tags-hint">{{ t('tasks.no_popular_tags') }}</small>
+        </div>
       </div>
 
       <div v-if="parentTaskId" class="parent-info">
@@ -137,16 +172,26 @@ import InputText from 'primevue/inputtext'
 import Textarea from 'primevue/textarea'
 import Dropdown from 'primevue/dropdown'
 import Calendar from 'primevue/calendar'
-import Chips from 'primevue/chips'
+import AutoComplete from 'primevue/autocomplete'
+import Chip from 'primevue/chip'
+import Skeleton from 'primevue/skeleton'
 import Button from 'primevue/button'
 import { useTaskStore } from '@/stores/task.store'
 import { useToast } from '@/composables/useToast'
+import { useTagSuggestions } from '@/composables/useTagSuggestions'
 import { TaskStatus, TaskPriority } from '@/types/task.types'
-import type { Task, CreateTaskRequest, UpdateTaskRequest } from '@/types/task.types'
+import type { Task, CreateTaskRequest, UpdateTaskRequest, Tag as TaskTag } from '@/types/task.types'
 
 const { t } = useI18n()
 const taskStore = useTaskStore()
 const { showSuccess, showError } = useToast()
+const {
+  popularTags,
+  isLoadingPopular,
+  searchSuggestions,
+  searchTags,
+  initialize: initializeTagSuggestions
+} = useTagSuggestions()
 
 const props = defineProps<{
   modelValue: boolean
@@ -216,12 +261,48 @@ function initializeForm() {
     isEditMode.value = false
     resetForm()
     
+    // Initialize tag suggestions for new tasks
+    initializeTagSuggestions(7)
+    
     if (props.initialDate) {
       form.startDate = new Date(props.initialDate)
       const endDate = new Date(props.initialDate)
       endDate.setHours(endDate.getHours() + 1)
       form.dueDate = endDate
     }
+  }
+}
+
+function addPopularTag(tag: TaskTag) {
+  const tagName = tag.name.trim()
+  
+  // Check if tag already exists (case-insensitive)
+  const exists = form.tags.some(t => t.toLowerCase() === tagName.toLowerCase())
+  
+  if (!exists) {
+    form.tags.push(tagName)
+  }
+}
+
+async function handleTagSearch(event: any) {
+  const query = event.query?.trim()
+  if (query && query.length > 0) {
+    await searchTags(query)
+  }
+}
+
+function onTagsKeydown(event: KeyboardEvent) {
+  if (event.key !== 'Enter') return
+  const target = event.target as HTMLInputElement | null
+  const value = target?.value?.trim()
+  if (!value) return
+  const exists = form.tags.some(t => t.toLowerCase() === value.toLowerCase())
+  if (!exists) {
+    form.tags.push(value)
+  }
+  if (target) {
+    // Clear the input without affecting selected tags
+    target.value = ''
   }
 }
 
@@ -369,8 +450,47 @@ onMounted(() => {
   width: 100%;
 }
 
-.chips-full-width :deep(.p-chips-multiple-container) {
+.autocomplete-tags :deep(.p-autocomplete-multiple-container) {
   width: 100%;
+  padding: 0.5rem 0.625rem; /* inner spacing */
+  border-radius: 12px; /* softer corners */
+  border: 1px solid #e5e7eb; /* subtle border */
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.autocomplete-tags :deep(.p-autocomplete-input) {
+  width: 100%;
+}
+
+/* Remove inner input border/outline inside AutoComplete */
+.autocomplete-tags :deep(.p-inputtext) {
+  border: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  background: transparent !important;
+}
+
+/* Focus state on container instead of harsh blue outline */
+.autocomplete-tags :deep(.p-inputwrapper-focus .p-autocomplete-multiple-container),
+.autocomplete-tags :deep(.p-autocomplete-multiple-container.p-focus) {
+  border-color: rgba(99, 102, 241, 0.55) !important;
+  box-shadow: 0 0 0 5px rgba(99, 102, 241, 0.16) !important;
+}
+
+/* Better spacing for empty results message */
+/* Empty results spacing - overlay can be outside component tree */
+:deep(.p-autocomplete-panel) {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+:deep(.p-autocomplete-panel .p-autocomplete-empty-message) {
+  padding: 0.9rem 1rem !important;
+  color: #475569;
+}
+
+:deep(.p-autocomplete-panel .p-autocomplete-items .p-autocomplete-item) {
+  padding: 0.55rem 0.9rem;
 }
 
 .p-error {
@@ -394,6 +514,54 @@ onMounted(() => {
   display: flex;
   justify-content: flex-end;
   gap: 0.75rem;
+}
+
+.popular-tags {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.popular-tags-label {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.popular-tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.popular-tag-chip {
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.75rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.popular-tag-chip:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.popular-tag-chip:active {
+  transform: translateY(0);
+}
+
+.tag-skeleton {
+  display: inline-block;
+  margin-right: 0.5rem;
+}
+
+.no-tags-hint {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-style: italic;
 }
 
 @media (max-width: 640px) {

@@ -474,15 +474,17 @@ async function handleToggleComplete(node: any, checked: boolean) {
   
   // For unchecking, just update immediately
   if (!checked) {
+    // Update local state immediately
+    const newMap = new Map(completedStatesMap.value)
+    newMap.set(taskId, checked)
+    completedStatesMap.value = newMap
+    
+    // Show success notification immediately (before API call)
+    showSuccess(t('tasks.task_reopened'))
+    
     try {
-      // Update local state immediately
-      const newMap = new Map(completedStatesMap.value)
-      newMap.set(taskId, checked)
-      completedStatesMap.value = newMap
-      
       await taskService.toggleTask(taskId)
       await refreshTask()
-      showSuccess(t('tasks.task_reopened'))
     } catch (error: any) {
       // Revert on error
       const revertMap = new Map(completedStatesMap.value)

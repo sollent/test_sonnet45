@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useTaskStore } from '@/stores/task.store'
 import { useToast } from '@/composables/useToast'
 import { useTaskCompletion } from '@/composables/useTaskCompletion'
+import { useTagSuggestions } from '@/composables/useTagSuggestions'
 import Sidebar from 'primevue/sidebar'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
@@ -11,10 +12,11 @@ import Textarea from 'primevue/textarea'
 import Dropdown from 'primevue/dropdown'
 import Calendar from 'primevue/calendar'
 import Chip from 'primevue/chip'
-import Chips from 'primevue/chips'
+import AutoComplete from 'primevue/autocomplete'
+import Skeleton from 'primevue/skeleton'
 import Divider from 'primevue/divider'
 import { useConfirm } from 'primevue/useconfirm'
-import { TaskStatus, TaskPriority, TASK_PRIORITY_CONFIG, TASK_STATUS_CONFIG, type Task, type UpdateTaskRequest } from '@/types/task.types'
+import { TaskStatus, TaskPriority, TASK_PRIORITY_CONFIG, TASK_STATUS_CONFIG, type Task, type UpdateTaskRequest, type Tag as TaskTag } from '@/types/task.types'
 import { taskService } from '@/services/task.service'
 import TaskTreeModal from './TaskTreeModal.vue'
 
@@ -47,6 +49,13 @@ const { t } = useI18n()
 const taskStore = useTaskStore()
 const { showSuccess, showError } = useToast()
 const { toggleTaskCompletion } = useTaskCompletion()
+const {
+  popularTags,
+  isLoadingPopular,
+  searchSuggestions,
+  searchTags,
+  initialize: initializeTagSuggestions
+} = useTagSuggestions()
 const confirm = useConfirm()
 
 // Local state
@@ -69,6 +78,9 @@ const showTreeModal = ref(false)
 // Edit form data
 const editData = ref<UpdateTaskRequest>({})
 
+// Local task state for optimistic updates
+const localTask = ref<Task | null>(null)
+
 // Computed for v-model compatibility
 const localVisible = computed({
   get: () => props.showSidebar || props.visible || false,
@@ -78,7 +90,87 @@ const localVisible = computed({
   }
 })
 
-const currentTask = computed(() => props.selectedTask || props.task)
+// Use local task if available, otherwise use props
+const currentTask = computed(() => localTask.value || props.selectedTask || props.task)
+
+// Watch for prop changes to sync local task
+watch(() => props.selectedTask || props.task, (newTask) => {
+  if (newTask) {
+    localTask.value = { ...newTask }
+    // Initialize tag suggestions when opening sidebar in edit mode
+    if (editMode.value) {
+      initializeTagSuggestions(7)
+    }
+  } else {
+    localTask.value = null
+  }
+}, { immediate: true, deep: true })
+
+// Initialize tag suggestions when entering edit mode
+watch(editMode, (isEdit) => {
+  if (isEdit && currentTask.value) {
+    initializeTagSuggestions(7)
+  }
+})
+
+// Helper function to add popular tag to edit form
+function addPopularTagToEdit(tag: TaskTag) {
+  if (!editData.value.tags) {
+    editData.value.tags = []
+  }
+  
+  const tagName = tag.name.trim()
+  // Check if tag already exists (case-insensitive)
+  const exists = editData.value.tags.some(t => t.toLowerCase() === tagName.toLowerCase())
+  
+  if (!exists) {
+    editData.value.tags.push(tagName)
+  }
+}
+
+// Handle tag search for autocomplete
+async function handleTagSearch(event: any) {
+  const query = event.query?.trim()
+  if (query && query.length > 0) {
+    await searchTags(query)
+  }
+}
+
+// Add free-text tag on Enter for main edit form
+function onEditTagsKeydown(event: KeyboardEvent) {
+  if (event.key !== 'Enter') return
+  const target = event.target as HTMLInputElement | null
+  const value = target?.value?.trim()
+  if (!value) return
+  if (!editData.value.tags) {
+    editData.value.tags = []
+  }
+  const exists = editData.value.tags.some(t => t.toLowerCase() === value.toLowerCase())
+  if (!exists) {
+    editData.value.tags.push(value)
+  }
+  if (target) {
+    target.value = ''
+  }
+}
+
+// Add free-text tag on Enter for subtask editor
+function onSubtaskTagsKeydown(event: KeyboardEvent) {
+  if (event.key !== 'Enter') return
+  const target = event.target as HTMLInputElement | null
+  const value = target?.value?.trim()
+  if (!value) return
+  if (!subtaskEditData.value.tags) {
+    subtaskEditData.value.tags = []
+  }
+  const exists = subtaskEditData.value.tags.some(t => t.toLowerCase() === value.toLowerCase())
+  if (!exists) {
+    subtaskEditData.value.tags.push(value)
+  }
+  if (target) {
+    target.value = ''
+  }
+}
 
 // Computed
 const statusOptions = computed(() => [
@@ -106,10 +198,23 @@ const statusConfig = computed(() => {
 })
 
 const completionPercentage = computed(() => {
-  if (!currentTask.value || currentTask.value.subtasks.length === 0) {
-    return currentTask.value?.isCompleted ? 100 : 0
+  if (!currentTask.value) {
+    return 0
   }
-  return Math.round(currentTask.value.completionProgress)
+  if (!currentTask.value.subtasks || currentTask.value.subtasks.length === 0) {
+    return currentTask.value.isCompleted ? 100 : 0
+  }
+  
+  // Calculate progress from localTask if available, otherwise use completionProgress from server
+  const task = localTask.value || currentTask.value
+  const total = task.subtaskCount || task.subtasks?.length || 0
+  const completed = task.completedSubtaskCount ?? task.subtasks?.filter(s => s.isCompleted).length ?? 0
+  
+  if (total === 0) {
+    return currentTask.value.isCompleted ? 100 : 0
+  }
+  
+  return Math.round((completed / total) * 100)
 })
 
 const totalSubtasks = computed(() => {
@@ -199,9 +304,21 @@ async function handleSaveSubtask() {
   try {
     await taskStore.updateTask(currentSubtask.value.id, subtaskEditData.value)
     showSuccess(t('tasks.task_updated'))
-    // refresh parent task to reflect changes
-    if (currentTask.value) await taskStore.fetchTask(currentTask.value.id)
-    emit('task-updated')
+    // Refresh parent task to reflect changes in localTask
+    if (currentTask.value) {
+      const updatedTask = await taskStore.fetchTask(currentTask.value.id)
+      // Update localTask to sync with server
+      if (localTask.value) {
+        localTask.value = { ...updatedTask }
+        if (props.selectedTask) {
+          emit('update:selectedTask', localTask.value)
+        }
+        if (props.task) {
+          emit('update:task', localTask.value)
+        }
+      }
+    }
+    // Don't emit task-updated for subtask operations - they don't affect the main task list
     closeSubtaskEditor()
   } catch (e: any) {
     showError(e.message || t('errors.unknown_error'))
@@ -239,21 +356,61 @@ async function handleSave() {
 async function handleToggleComplete() {
   if (!currentTask.value) return
 
-  // Use the new completion handler with confirmation for subtasks
-  await toggleTaskCompletion(currentTask.value, async () => {
-    // Refresh the current task to get updated state
-    if (currentTask.value) {
-      const updatedTask = await taskStore.fetchTask(currentTask.value.id)
-      // Update the local task reference
-      if (props.selectedTask) {
-        emit('update:selectedTask', updatedTask)
-      }
-      if (props.task) {
-        emit('update:task', updatedTask)
-      }
+  // Store original task for rollback
+  const originalTask = { ...currentTask.value }
+  const newIsCompleted = !currentTask.value.isCompleted
+  const newStatus = newIsCompleted ? TaskStatus.COMPLETED : TaskStatus.PENDING
+
+  // Optimistic update - update localTask immediately for instant UI update
+  localTask.value = {
+    ...currentTask.value,
+    isCompleted: newIsCompleted,
+    status: newStatus
+  } as Task
+
+  // Also update props via emit for parent component
+  if (props.selectedTask) {
+    emit('update:selectedTask', localTask.value)
+  }
+  if (props.task) {
+    emit('update:task', localTask.value)
+  }
+
+  // Show success notification immediately
+  showSuccess(newIsCompleted ? t('tasks.task_completed') : t('tasks.task_reopened'))
+
+  // Make API call in background
+  try {
+    await taskStore.toggleTaskCompletion(currentTask.value.id)
+    
+    // Fetch updated task to get all changes (including subtasks completion)
+    const updatedTask = await taskStore.fetchTask(currentTask.value.id)
+    
+    // Update localTask with real data from server
+    localTask.value = { ...updatedTask }
+    
+    // Update props with real data
+    if (props.selectedTask) {
+      emit('update:selectedTask', updatedTask)
     }
+    if (props.task) {
+      emit('update:task', updatedTask)
+    }
+    
     emit('task-updated')
-  })
+  } catch (error: any) {
+    // Rollback on error - restore original task
+    localTask.value = { ...originalTask }
+    
+    if (props.selectedTask) {
+      emit('update:selectedTask', originalTask)
+    }
+    if (props.task) {
+      emit('update:task', originalTask)
+    }
+    
+    showError(error.message || t('errors.unknown_error'))
+  }
 }
 
 async function handleDelete() {
@@ -265,13 +422,25 @@ async function handleDelete() {
     icon: 'pi pi-exclamation-triangle',
     acceptClass: 'p-button-danger',
     accept: async () => {
+      const taskId = currentTask.value!.id
+      
+      // Optimistic update - close sidebar and emit deletion immediately
+      emit('task-deleted')
+      emit('update:visible', false)
+      
+      // Show success notification immediately
+      showSuccess(t('tasks.task_deleted'))
+      
+      // Make API call in background
       try {
-        await taskStore.deleteTask(currentTask.value!.id)
-        showSuccess(t('tasks.task_deleted'))
-        emit('task-deleted')
-        emit('update:visible', false)
+        await taskStore.deleteTask(taskId)
       } catch (error: any) {
+        // Rollback - reopen sidebar and show error
+        emit('update:visible', true)
         showError(error.message || t('errors.unknown_error'))
+        
+        // Re-emit task-updated to refresh UI
+        emit('task-updated')
       }
     }
   })
@@ -280,23 +449,113 @@ async function handleDelete() {
 async function handleAddSubtask() {
   if (!currentTask.value || !newSubtaskTitle.value.trim()) return
 
+  const subtaskTitle = newSubtaskTitle.value.trim()
+  const originalSubtasks = localTask.value?.subtasks ? [...localTask.value.subtasks] : []
+  
+  // Create optimistic subtask
+  const optimisticSubtask: Task = {
+    id: Date.now(), // Temporary ID
+    title: subtaskTitle,
+    description: null,
+    status: TaskStatus.PENDING,
+    priority: TaskPriority.MEDIUM,
+    isCompleted: false,
+    parentTaskId: currentTask.value.id,
+    subtasks: [],
+    tags: [],
+    startDate: null,
+    dueDate: null,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    isArchived: false,
+    subtaskCount: 0,
+    completedSubtaskCount: 0,
+    hasNestedSubtasks: false
+  }
+
+  // Optimistic update - add subtask immediately
+  if (localTask.value) {
+    localTask.value = {
+      ...localTask.value,
+      subtasks: [...(localTask.value.subtasks || []), optimisticSubtask],
+      subtaskCount: (localTask.value.subtaskCount || 0) + 1
+    }
+    
+    // Update props
+    if (props.selectedTask) {
+      emit('update:selectedTask', localTask.value)
+    }
+    if (props.task) {
+      emit('update:task', localTask.value)
+    }
+  }
+
+  // Clear input immediately
+  newSubtaskTitle.value = ''
+  
+  // Show success notification immediately
+  showSuccess(t('tasks.task_created'))
+  
   isAddingSubtask.value = true
 
+  // Make API call in background
   try {
-    await taskStore.createTask({
-      title: newSubtaskTitle.value,
+    const createdTask = await taskStore.createTask({
+      title: subtaskTitle,
       parentTaskId: currentTask.value.id,
       status: TaskStatus.PENDING,
       priority: TaskPriority.MEDIUM
     })
     
-    // Refresh task details
-    await taskStore.fetchTask(currentTask.value.id)
+    // Update localTask with real task from server (replace temporary one by index to preserve order)
+    if (localTask.value) {
+      const subtasks = localTask.value.subtasks || []
+      const tempIndex = subtasks.findIndex(s => s.id === optimisticSubtask.id)
+      if (tempIndex !== -1) {
+        // Replace temporary subtask with real one at the same position to preserve order
+        subtasks[tempIndex] = createdTask
+      } else {
+        // If not found, add at the end (shouldn't happen, but fallback)
+        subtasks.push(createdTask)
+      }
+      
+      localTask.value = {
+        ...localTask.value,
+        subtasks: [...subtasks], // Preserve order
+        subtaskCount: localTask.value.subtaskCount || subtasks.length
+      }
+      
+      // Update props
+      if (props.selectedTask) {
+        emit('update:selectedTask', localTask.value)
+      }
+      if (props.task) {
+        emit('update:task', localTask.value)
+      }
+    }
     
-    newSubtaskTitle.value = ''
-    showSuccess(t('tasks.task_created'))
-    emit('task-updated')
+    // Don't emit task-updated for subtask operations - they don't affect the main task list
   } catch (error: any) {
+    // Rollback on error
+    if (localTask.value) {
+      localTask.value = {
+        ...localTask.value,
+        subtasks: originalSubtasks,
+        subtaskCount: originalSubtasks.length
+      }
+      
+      // Restore input
+      newSubtaskTitle.value = subtaskTitle
+      
+      // Update props
+      if (props.selectedTask) {
+        emit('update:selectedTask', localTask.value)
+      }
+      if (props.task) {
+        emit('update:task', localTask.value)
+      }
+    }
+    
     showError(error.message || t('errors.unknown_error'))
   } finally {
     isAddingSubtask.value = false
@@ -304,19 +563,124 @@ async function handleAddSubtask() {
 }
 
 async function handleToggleSubtask(subtaskId: number) {
+  if (!localTask.value?.subtasks) return
+  
+  // Find subtask in localTask
+  const subtask = localTask.value.subtasks.find(s => s.id === subtaskId)
+  if (!subtask) return
+
+  // Store original subtask for rollback
+  const originalSubtask = { ...subtask }
+  const newIsCompleted = !subtask.isCompleted
+  const newStatus = newIsCompleted ? TaskStatus.COMPLETED : TaskStatus.PENDING
+
+  // Optimistic update - update subtask state immediately
+  if (localTask.value.subtasks) {
+    const wasCompleted = subtask.isCompleted
+    const subtasks = localTask.value.subtasks.map(s => 
+      s.id === subtaskId 
+        ? { 
+            ...s, 
+            isCompleted: newIsCompleted, 
+            status: newStatus 
+          } 
+        : s
+    )
+    
+    // Update completed count based on state change
+    let newCompletedCount = localTask.value.completedSubtaskCount || 0
+    if (newIsCompleted && !wasCompleted) {
+      // Was not completed, now completing - increment
+      newCompletedCount += 1
+    } else if (!newIsCompleted && wasCompleted) {
+      // Was completed, now uncompleting - decrement
+      newCompletedCount = Math.max(0, newCompletedCount - 1)
+    }
+    
+    localTask.value = {
+      ...localTask.value,
+      subtasks: [...subtasks],
+      completedSubtaskCount: newCompletedCount
+    }
+    
+    // Update props
+    if (props.selectedTask) {
+      emit('update:selectedTask', localTask.value)
+    }
+    if (props.task) {
+      emit('update:task', localTask.value)
+    }
+  }
+
   try {
-    // Fetch the subtask to check if it has its own subtasks
-    const subtask = await taskStore.fetchTask(subtaskId)
+    // Fetch the subtask to check if it has its own subtasks (for confirmation dialog)
+    const fullSubtask = await taskStore.fetchTask(subtaskId)
     
     // Use the new completion handler with confirmation
-    await toggleTaskCompletion(subtask, async () => {
-      // Refresh parent task
+    await toggleTaskCompletion(fullSubtask, async () => {
+      // Fetch updated parent task to sync with server
       if (currentTask.value) {
-        await taskStore.fetchTask(currentTask.value.id)
+        const updatedTask = await taskStore.fetchTask(currentTask.value.id)
+        
+        // Update localTask but preserve order and keep optimistic updates
+        if (localTask.value?.subtasks) {
+          const subtasks = localTask.value.subtasks.map(s => {
+            const serverSubtask = updatedTask.subtasks?.find(ss => ss.id === s.id)
+            return serverSubtask || s
+          })
+          
+          localTask.value = {
+            ...localTask.value,
+            subtasks: [...subtasks],
+            subtaskCount: updatedTask.subtaskCount || localTask.value.subtaskCount,
+            completedSubtaskCount: updatedTask.completedSubtaskCount || localTask.value.completedSubtaskCount
+          }
+          
+          // Update props
+          if (props.selectedTask) {
+            emit('update:selectedTask', localTask.value)
+          }
+          if (props.task) {
+            emit('update:task', localTask.value)
+          }
+        }
       }
-      emit('task-updated')
+      // Don't emit task-updated for subtask operations - they don't affect the main task list
     })
   } catch (error: any) {
+    // Rollback on error
+    if (localTask.value?.subtasks) {
+      const wasCompleted = originalSubtask.isCompleted
+      
+      const subtasks = localTask.value.subtasks.map(s => 
+        s.id === subtaskId ? { ...originalSubtask } : s
+      )
+      
+      // Restore completed count - reverse what we did
+      let restoredCompletedCount = localTask.value.completedSubtaskCount || 0
+      if (newIsCompleted && !wasCompleted) {
+        // We tried to complete (incremented), but failed - decrement back
+        restoredCompletedCount = Math.max(0, restoredCompletedCount - 1)
+      } else if (!newIsCompleted && wasCompleted) {
+        // We tried to uncomplete (decremented), but failed - increment back
+        restoredCompletedCount += 1
+      }
+      
+      localTask.value = {
+        ...localTask.value,
+        subtasks: [...subtasks],
+        completedSubtaskCount: restoredCompletedCount
+      }
+      
+      // Update props
+      if (props.selectedTask) {
+        emit('update:selectedTask', localTask.value)
+      }
+      if (props.task) {
+        emit('update:task', localTask.value)
+      }
+    }
+    
     showError(error.message || t('errors.unknown_error'))
   }
 }
@@ -337,15 +701,96 @@ async function saveEditSubtask() {
     cancelEditSubtask()
     return
   }
-  try {
-    await taskStore.updateTask(editingSubtaskId.value, { title: editingSubtaskTitle.value.trim() })
-    if (currentTask.value) await taskStore.fetchTask(currentTask.value.id)
-    showSuccess(t('tasks.task_updated'))
-    emit('task-updated')
-  } catch (error: any) {
-    showError(error.message || t('errors.unknown_error'))
-  } finally {
+
+  const newTitle = editingSubtaskTitle.value.trim()
+  const subtaskId = editingSubtaskId.value
+  
+  // Store original subtask for rollback
+  const originalSubtask = localTask.value?.subtasks?.find(s => s.id === subtaskId)
+  if (!originalSubtask) {
     cancelEditSubtask()
+    return
+  }
+
+  // Optimistic update - update subtask title immediately
+  if (localTask.value?.subtasks) {
+    const subtasks = localTask.value.subtasks.map(s => 
+      s.id === subtaskId ? { ...s, title: newTitle } : s
+    )
+    
+    localTask.value = {
+      ...localTask.value,
+      subtasks: [...subtasks]
+    }
+    
+    // Update props
+    if (props.selectedTask) {
+      emit('update:selectedTask', localTask.value)
+    }
+    if (props.task) {
+      emit('update:task', localTask.value)
+    }
+  }
+
+  // Exit edit mode immediately
+  cancelEditSubtask()
+  
+  // Show success notification immediately
+  showSuccess(t('tasks.task_updated'))
+
+  // Make API call in background
+  try {
+    await taskStore.updateTask(subtaskId, { title: newTitle })
+    
+    // Fetch updated task to sync with server
+    if (currentTask.value) {
+      const updatedTask = await taskStore.fetchTask(currentTask.value.id)
+      // Update localTask but preserve order
+      if (localTask.value?.subtasks) {
+        const serverSubtask = updatedTask.subtasks?.find(s => s.id === subtaskId)
+        if (serverSubtask) {
+          const subtasks = localTask.value.subtasks.map(s => 
+            s.id === subtaskId ? { ...serverSubtask } : s
+          )
+          localTask.value = {
+            ...localTask.value,
+            subtasks: [...subtasks]
+          }
+          
+          // Update props
+          if (props.selectedTask) {
+            emit('update:selectedTask', localTask.value)
+          }
+          if (props.task) {
+            emit('update:task', localTask.value)
+          }
+        }
+      }
+    }
+    
+    // Don't emit task-updated for subtask operations - they don't affect the main task list
+  } catch (error: any) {
+    // Rollback on error
+    if (localTask.value?.subtasks && originalSubtask) {
+      const subtasks = localTask.value.subtasks.map(s => 
+        s.id === subtaskId ? { ...originalSubtask } : s
+      )
+      
+      localTask.value = {
+        ...localTask.value,
+        subtasks: [...subtasks]
+      }
+      
+      // Update props
+      if (props.selectedTask) {
+        emit('update:selectedTask', localTask.value)
+      }
+      if (props.task) {
+        emit('update:task', localTask.value)
+      }
+    }
+    
+    showError(error.message || t('errors.unknown_error'))
   }
 }
 
@@ -356,12 +801,81 @@ async function handleDeleteSubtask(subtaskId: number) {
     icon: 'pi pi-exclamation-triangle',
     acceptClass: 'p-button-danger',
     accept: async () => {
+      // Store original subtasks for rollback
+      const originalSubtasks = localTask.value?.subtasks ? [...localTask.value.subtasks] : []
+      const deletedSubtask = originalSubtasks.find(s => s.id === subtaskId)
+      
+      // Optimistic update - remove subtask immediately
+      if (localTask.value?.subtasks) {
+        const subtasks = localTask.value.subtasks.filter(s => s.id !== subtaskId)
+        
+        localTask.value = {
+          ...localTask.value,
+          subtasks: [...subtasks],
+          subtaskCount: Math.max(0, (localTask.value.subtaskCount || 0) - 1)
+        }
+        
+        // Update props
+        if (props.selectedTask) {
+          emit('update:selectedTask', localTask.value)
+        }
+        if (props.task) {
+          emit('update:task', localTask.value)
+        }
+      }
+
+      // Show success notification immediately
+      showSuccess(t('tasks.task_deleted'))
+
+      // Make API call in background
       try {
         await taskStore.deleteTask(subtaskId)
-        if (currentTask.value) await taskStore.fetchTask(currentTask.value.id)
-        showSuccess(t('tasks.task_deleted'))
-        emit('task-updated')
+        
+        // Sync with server (but preserve order if subtask was already removed)
+        if (currentTask.value && deletedSubtask) {
+          const updatedTask = await taskStore.fetchTask(currentTask.value.id)
+          // Update localTask but preserve order - only update if subtask still exists in our list
+          if (localTask.value?.subtasks) {
+            const serverSubtask = updatedTask.subtasks?.find(s => s.id === subtaskId)
+            if (!serverSubtask) {
+              // Subtask was deleted on server, our optimistic update was correct
+              // Just sync other fields if needed
+              localTask.value = {
+                ...localTask.value,
+                subtaskCount: updatedTask.subtaskCount || localTask.value.subtaskCount,
+                completedSubtaskCount: updatedTask.completedSubtaskCount || localTask.value.completedSubtaskCount
+              }
+              
+              // Update props
+              if (props.selectedTask) {
+                emit('update:selectedTask', localTask.value)
+              }
+              if (props.task) {
+                emit('update:task', localTask.value)
+              }
+            }
+          }
+        }
+        
+        // Don't emit task-updated for subtask operations - they don't affect the main task list
       } catch (error: any) {
+        // Rollback on error
+        if (localTask.value && deletedSubtask) {
+          localTask.value = {
+            ...localTask.value,
+            subtasks: originalSubtasks,
+            subtaskCount: originalSubtasks.length
+          }
+          
+          // Update props
+          if (props.selectedTask) {
+            emit('update:selectedTask', localTask.value)
+          }
+          if (props.task) {
+            emit('update:task', localTask.value)
+          }
+        }
+        
         showError(error.message || t('errors.unknown_error'))
       }
     }
@@ -488,6 +1002,7 @@ function handleClose() {
                 showTime
                 hourFormat="24"
                 :placeholder="t('common.select_date')"
+                :stepMinute="10"
                 class="w-full"
                 dateFormat="dd.mm.yy"
               />
@@ -505,6 +1020,7 @@ function handleClose() {
                 showTime
                 hourFormat="24"
                 :placeholder="t('common.select_date')"
+                :stepMinute="10"
                 class="w-full"
                 dateFormat="dd.mm.yy"
               />
@@ -547,13 +1063,46 @@ function handleClose() {
       <!-- Tags -->
       <div class="detail-section">
         <label class="detail-label">{{ t('tasks.tags') }}</label>
-        <div v-if="editMode">
-          <Chips
+        <div v-if="editMode" class="tags-edit-container">
+          <AutoComplete
             v-model="editData.tags"
+            :suggestions="searchSuggestions.map(t => t.name)"
             :placeholder="t('tasks.add_tag_placeholder')"
-            separator="," 
-            class="w-full"
+            multiple
+            class="w-full autocomplete-tags"
+            @complete="handleTagSearch"
+            :forceSelection="false"
+            :pt="{ input: { onKeydown: onEditTagsKeydown } }"
           />
+          
+          <!-- Popular tags -->
+          <div class="popular-tags">
+            <small class="popular-tags-label">{{ t('tasks.popular_tags') }}:</small>
+            
+            <!-- Skeleton loaders -->
+            <div v-if="isLoadingPopular" class="popular-tags-list">
+              <Skeleton v-for="i in 7" :key="i" width="3.5rem" height="1.4rem" borderRadius="16px" class="tag-skeleton" />
+            </div>
+            
+            <!-- Popular tags chips -->
+            <div v-else-if="popularTags.length > 0" class="popular-tags-list">
+              <Chip
+                v-for="tag in popularTags"
+                :key="tag.id"
+                :label="tag.name"
+                :style="{ 
+                  backgroundColor: tag.color + '20',
+                  color: tag.color,
+                  border: `1px solid ${tag.color}40`,
+                  fontWeight: 600
+                }"
+                class="popular-tag-chip"
+                @click="addPopularTagToEdit(tag)"
+              />
+            </div>
+            
+            <small v-else class="no-tags-hint">{{ t('tasks.no_popular_tags') }}</small>
+          </div>
         </div>
         <div v-else class="tags-container">
           <Chip
@@ -576,17 +1125,18 @@ function handleClose() {
         <div class="subtasks-header">
           <label class="detail-label">
             {{ t('tasks.subtasks') }}
-            <span v-if="currentTask.subtasks.length > 0" class="subtasks-count">
-              {{ currentTask.subtasks.filter(s => s.isCompleted).length }} / {{ currentTask.subtasks.length }}
+            <span v-if="currentTask.subtasks && currentTask.subtasks.length > 0" class="subtasks-count">
+              {{ currentTask.completedSubtaskCount ?? currentTask.subtasks.filter(s => s.isCompleted).length }} /
+              {{ currentTask.subtaskCount ?? currentTask.subtasks.length }}
             </span>
           </label>
-          <div v-if="currentTask.subtasks.length > 0" class="progress-bar">
+          <div v-if="currentTask.subtasks && currentTask.subtasks.length > 0" class="progress-bar">
             <div class="progress-fill" :style="{ width: completionPercentage + '%' }" />
           </div>
         </div>
 
         <!-- Subtasks List -->
-        <div v-if="currentTask.subtasks.length > 0" class="subtasks-list">
+        <div v-if="currentTask?.subtasks && currentTask.subtasks.length > 0" class="subtasks-list">
           <div
             v-for="subtask in currentTask.subtasks"
             :key="subtask.id"
@@ -681,12 +1231,12 @@ function handleClose() {
               <i :class="subtask.isCompleted ? 'pi pi-check-circle' : 'pi pi-circle'" />
               <span>{{ subtask.title }}</span>
               <span v-if="subtask.subtasks && subtask.subtasks.length > 0" class="badge">
-                {{ subtask.subtasks.length }}
+                {{ subtask.subtaskCount ?? subtask.subtasks.length }}
               </span>
             </div>
-            <div v-if="currentTask.subtasks.length > 3" class="compact-tree-more">
+            <div v-if="currentTask.subtasks && currentTask.subtasks.length > 3" class="compact-tree-more">
               <i class="pi pi-ellipsis-h" />
-              {{ t('tasks.and_more', { count: currentTask.subtasks.length - 3 }) }}
+              {{ t('tasks.and_more', { count: (currentTask.subtaskCount ?? currentTask.subtasks.length) - 3 }) }}
             </div>
           </div>
         </div>
@@ -767,14 +1317,14 @@ function handleClose() {
             <i class="pi pi-calendar-plus" />
             <div>
               <label class="detail-label-small">{{ t('tasks.start_date') }}</label>
-              <Calendar v-model="subtaskEditData.startDate" showTime hourFormat="24" :placeholder="t('common.select_date')" class="w-full" dateFormat="dd.mm.yy" />
+              <Calendar v-model="subtaskEditData.startDate" showTime hourFormat="24" :placeholder="t('common.select_date')" :stepMinute="10" class="w-full" dateFormat="dd.mm.yy" />
             </div>
           </div>
           <div class="date-item">
             <i class="pi pi-calendar-minus" />
             <div>
               <label class="detail-label-small">{{ t('tasks.due_date') }}</label>
-              <Calendar v-model="subtaskEditData.dueDate" showTime hourFormat="24" :placeholder="t('common.select_date')" class="w-full" dateFormat="dd.mm.yy" />
+              <Calendar v-model="subtaskEditData.dueDate" showTime hourFormat="24" :placeholder="t('common.select_date')" :stepMinute="10" class="w-full" dateFormat="dd.mm.yy" />
             </div>
           </div>
         </div>
@@ -799,7 +1349,16 @@ function handleClose() {
       <!-- Tags -->
       <div class="detail-section">
         <label class="detail-label">{{ t('tasks.tags') }}</label>
-        <Chips v-model="subtaskEditData.tags" :placeholder="t('tasks.add_tag_placeholder')" separator="," class="w-full" />
+        <AutoComplete
+          v-model="subtaskEditData.tags"
+          :suggestions="searchSuggestions.map(t => t.name)"
+          :placeholder="t('tasks.add_tag_placeholder')"
+          multiple
+          class="w-full autocomplete-tags"
+          @complete="handleTagSearch"
+          :forceSelection="false"
+          :pt="{ input: { onKeydown: onSubtaskTagsKeydown } }"
+        />
       </div>
 
       <Divider />
@@ -1246,6 +1805,102 @@ function handleClose() {
   color: #6b7280;
   font-size: 0.875rem;
   font-style: italic;
+}
+
+/* Popular tags */
+.popular-tags {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.popular-tags-label {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.popular-tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.popular-tag-chip {
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.75rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.popular-tag-chip:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.popular-tag-chip:active {
+  transform: translateY(0);
+}
+
+.tag-skeleton {
+  display: inline-block;
+  margin-right: 0.5rem;
+}
+
+.no-tags-hint {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.tags-edit-container {
+  width: 100%;
+}
+
+.tags-edit-container .autocomplete-tags :deep(.p-autocomplete),
+.tags-edit-container .autocomplete-tags :deep(.p-autocomplete-multiple-container) {
+  width: 100% !important;
+  padding: 0.35rem 0.5rem; /* inner spacing */
+  border-radius: 12px; /* softer corners */
+  border: 1px solid #e5e7eb; /* subtle border */
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.tags-edit-container .autocomplete-tags :deep(.p-autocomplete-input) {
+  width: 100% !important;
+}
+
+/* Remove inner input border/outline inside AutoComplete */
+.tags-edit-container .autocomplete-tags :deep(.p-inputtext) {
+  border: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  background: transparent !important;
+}
+
+/* Focus state */
+.tags-edit-container .autocomplete-tags :deep(.p-inputwrapper-focus .p-autocomplete-multiple-container),
+.tags-edit-container .autocomplete-tags :deep(.p-autocomplete-multiple-container.p-focus) {
+  border-color: rgba(99, 102, 241, 0.55) !important;
+  box-shadow: 0 0 0 5px rgba(99, 102, 241, 0.16) !important;
+}
+
+/* Empty results spacing */
+.tags-edit-container :deep(.p-autocomplete-panel) {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.tags-edit-container :deep(.p-autocomplete-panel .p-autocomplete-empty-message) {
+  padding: 0.9rem 1rem !important;
+  color: #475569;
+}
+
+.tags-edit-container :deep(.p-autocomplete-panel .p-autocomplete-items .p-autocomplete-item) {
+  padding: 0.55rem 0.9rem;
 }
 </style>
 

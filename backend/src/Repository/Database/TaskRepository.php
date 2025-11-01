@@ -9,6 +9,7 @@ use App\Entity\User;
 use App\Enum\TaskStatus;
 use App\Enum\TaskPriority;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\Tools\Pagination\Paginator;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -134,6 +135,28 @@ class TaskRepository extends ServiceEntityRepository
             ->setParameter('completed', TaskStatus::COMPLETED)
             ->setParameter('tomorrow', $tomorrow)
             ->setParameter('endDate', $endDate)
+            ->orderBy('t.dueDate', 'ASC')
+            ->addOrderBy('t.priority', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function findActiveTasks(User $user): array
+    {
+        $todayStart = new \DateTimeImmutable('today');
+
+        return $this->createQueryBuilder('t')
+            ->where('t.user = :user')
+            ->andWhere('t.parentTask IS NULL')
+            ->andWhere('t.isArchived = false')
+            ->andWhere('t.status != :completed')
+            ->andWhere('(
+                (t.dueDate IS NOT NULL AND t.dueDate >= :todayStart) OR
+                (t.startDate IS NOT NULL AND t.startDate >= :todayStart)
+            )')
+            ->setParameter('user', $user)
+            ->setParameter('completed', TaskStatus::COMPLETED)
+            ->setParameter('todayStart', $todayStart)
             ->orderBy('t.dueDate', 'ASC')
             ->addOrderBy('t.priority', 'DESC')
             ->getQuery()
@@ -348,5 +371,44 @@ class TaskRepository extends ServiceEntityRepository
         $endDate->modify('+6 days')->setTime(23, 59, 59);
 
         return $this->findTasksByDateRange($user, $startDate, $endDate, $includeCompleted);
+    }
+
+    public function findOverdueByUserPaginated(User $user, int $page, int $limit): Paginator
+    {
+        $query = $this->createQueryBuilder('t')
+            ->where('t.user = :user')
+            ->andWhere('t.parentTask IS NULL')
+            ->andWhere('t.isArchived = false')
+            ->andWhere('t.dueDate < :today')
+            ->andWhere('t.status != :completedStatus')
+            ->setParameter('user', $user)
+            ->setParameter('today', new \DateTimeImmutable())
+            ->setParameter('completedStatus', TaskStatus::COMPLETED)
+            ->orderBy('t.dueDate', 'ASC')
+            ->addOrderBy('t.priority', 'DESC')
+            ->getQuery()
+            ->setFirstResult(($page - 1) * $limit)
+            ->setMaxResults($limit);
+
+        return new Paginator($query);
+    }
+
+    public function findUnscheduledByUserPaginated(User $user, int $page, int $limit): Paginator
+    {
+        $query = $this->createQueryBuilder('t')
+            ->where('t.user = :user')
+            ->andWhere('t.parentTask IS NULL')
+            ->andWhere('t.isArchived = false')
+            ->andWhere('t.status != :completedStatus')
+            ->andWhere('t.dueDate IS NULL')
+            ->setParameter('user', $user)
+            ->setParameter('completedStatus', TaskStatus::COMPLETED)
+            ->orderBy('t.createdAt', 'DESC')
+            ->addOrderBy('t.priority', 'DESC')
+            ->getQuery()
+            ->setFirstResult(($page - 1) * $limit)
+            ->setMaxResults($limit);
+
+        return new Paginator($query);
     }
 }

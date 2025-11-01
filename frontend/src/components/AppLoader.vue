@@ -34,29 +34,31 @@ const loadingPhases = computed(() => [
 const currentPhase = computed(() => loadingPhases.value[currentPhaseIndex.value])
 
 onMounted(() => {
-  // Update phase more frequently
+  // Update phase more frequently (reduced from 600ms to 350ms)
   const phaseInterval = setInterval(() => {
     if (currentPhaseIndex.value < loadingPhases.value.length - 1) {
       currentPhaseIndex.value++
     }
-  }, 600)
+  }, 350)
 
-  // Task completion animation
+  // Task completion animation (reduced from 750ms to 400ms)
   const taskInterval = setInterval(() => {
     if (completedTasks.value < tasks.value.length) {
+      // Reduced delay from 400ms to 200ms
       setTimeout(() => {
         completedTasks.value++
         progress.value = (completedTasks.value / tasks.value.length) * 100
-      }, 400)
+      }, 200)
     } else {
       clearInterval(taskInterval)
       clearInterval(phaseInterval)
+      // Reduced delays from 600ms + 400ms to 300ms + 200ms
       setTimeout(() => {
         showLoader.value = false
-        setTimeout(() => emit('loaded'), 400)
-      }, 600)
+        setTimeout(() => emit('loaded'), 200)
+      }, 300)
     }
-  }, 750)
+  }, 400)
 })
 </script>
 
@@ -340,17 +342,17 @@ onMounted(() => {
   border-radius: 8px;
   opacity: 0;
   transform: translateX(-25px);
-  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .task-item.is-active {
-  animation: taskAppear 0.5s ease-out forwards, taskPulse 1.2s ease-in-out infinite;
+  animation: taskAppear 0.3s ease-out forwards, taskPulse 0.9s ease-in-out infinite;
   background: linear-gradient(135deg, rgba(102, 126, 234, 0.08), rgba(118, 75, 162, 0.08));
   box-shadow: 0 3px 10px rgba(102, 126, 234, 0.15);
 }
 
 .task-item.is-completed {
-  animation: taskComplete 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation: taskComplete 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
 @keyframes taskAppear {
@@ -390,13 +392,13 @@ onMounted(() => {
 
 .task-item.is-active .task-checkbox {
   border-color: #667eea;
-  animation: checkboxShake 0.45s ease;
+  animation: checkboxShake 0.3s ease;
 }
 
 .task-item.is-completed .task-checkbox {
   background: linear-gradient(135deg, #667eea, #764ba2);
   border-color: #667eea;
-  animation: checkboxPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: checkboxPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 @keyframes checkboxShake {
@@ -422,7 +424,7 @@ onMounted(() => {
 }
 
 .task-item.is-completed .check-icon {
-  animation: drawCheck 0.35s ease-out 0.15s forwards;
+  animation: drawCheck 0.25s ease-out 0.1s forwards;
 }
 
 @keyframes drawCheck {
@@ -469,7 +471,7 @@ onMounted(() => {
   height: 100%;
   background: linear-gradient(90deg, #667eea, #764ba2);
   border-radius: 4px;
-  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
 }
 
@@ -617,7 +619,7 @@ onMounted(() => {
 
 .phase-slide-enter-active,
 .phase-slide-leave-active {
-  transition: all 0.25s ease;
+  transition: all 0.2s ease;
 }
 
 .phase-slide-enter-from {
@@ -648,7 +650,7 @@ onMounted(() => {
   height: 100%;
   background: #fff;
   border-radius: 3px;
-  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
 }
 
@@ -663,7 +665,7 @@ onMounted(() => {
 /* Fade transition */
 .loader-fade-enter-active,
 .loader-fade-leave-active {
-  transition: all 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .loader-fade-leave-to {

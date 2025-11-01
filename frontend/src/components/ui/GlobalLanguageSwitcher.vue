@@ -34,16 +34,24 @@ const currentLanguage = computed(() => {
 })
 
 function switchLanguage(newLocale: 'ru' | 'en') {
-  setLocale(newLocale)
-  
-  const newLang = languages.find(l => l.locale === newLocale)
-  if (newLang) {
-    const message = newLocale === 'ru' 
-      ? `Язык изменен на ${newLang.label}` 
-      : `Language changed to ${newLang.label}`
-    const title = newLocale === 'ru' ? 'Успешно' : 'Success'
+  if (newLocale !== locale.value) {
+    setLocale(newLocale)
     
-    showSuccess(message, title)
+    const newLang = languages.find(l => l.locale === newLocale)
+    if (newLang) {
+      const message = newLocale === 'ru' 
+        ? `Язык изменен на ${newLang.label}` 
+        : `Language changed to ${newLang.label}`
+      const title = newLocale === 'ru' ? 'Успешно' : 'Success'
+      
+      showSuccess(message, title)
+      
+      // Reload page to apply PrimeVue Calendar locale changes
+      // This ensures all components (including Calendar) are properly localized
+      setTimeout(() => {
+        window.location.reload()
+      }, 300)
+    }
   }
 }
 

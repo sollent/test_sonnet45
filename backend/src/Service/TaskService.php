@@ -15,6 +15,7 @@ use App\Repository\Database\TagRepository;
 use App\Repository\Database\TaskRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Doctrine\ORM\Tools\Pagination\Paginator;
 
 final class TaskService
 {
@@ -238,6 +239,26 @@ final class TaskService
         return $this->taskRepository->findUpcomingTasks($user, $days);
     }
 
+    public function getActiveTasks(User $user): array
+    {
+        return $this->taskRepository->findActiveTasks($user);
+    }
+
+    public function getUnscheduledTasksPaginated(User $user, int $page, int $limit): array
+    {
+        $paginator = $this->taskRepository->findUnscheduledByUserPaginated($user, $page, $limit);
+
+        $tasks = [];
+        foreach ($paginator as $task) {
+            $tasks[] = $task;
+        }
+
+        return [
+            'tasks' => $tasks,
+            'total' => count($paginator),
+        ];
+    }
+
     /**
      * Search tasks by query
      */
@@ -276,6 +297,21 @@ final class TaskService
         }
         
         $this->entityManager->flush();
+    }
+
+    public function getOverdueTasksPaginated(User $user, int $page, int $limit): array
+    {
+        $paginator = $this->taskRepository->findOverdueByUserPaginated($user, $page, $limit);
+
+        $tasks = [];
+        foreach ($paginator as $task) {
+            $tasks[] = $task;
+        }
+
+        return [
+            'tasks' => $tasks,
+            'total' => count($paginator),
+        ];
     }
 
     /**

@@ -12,7 +12,8 @@ import type {
   CreateTaskRequest,
   UpdateTaskRequest,
   TaskStatistics,
-  TaskFilters
+  TaskFilters,
+  TagUsage
 } from '@/types/task.types'
 
 export const useTaskStore = defineStore('task', () => {
@@ -24,6 +25,11 @@ export const useTaskStore = defineStore('task', () => {
   const isLoading = ref(false)
   const error = ref<string | null>(null)
   const currentFilter = ref<TaskFilters>({})
+
+  const overdueTasksPaginated = ref<{ tasks: Task[], total: number }>({ tasks: [], total: 0 })
+  const isOverdueLoading = ref(false)
+  const unscheduledTasksPaginated = ref<{ tasks: Task[], total: number }>({ tasks: [], total: 0 })
+  const isUnscheduledLoading = ref(false)
 
   // Getters
   const pendingTasks = computed(() => 
@@ -38,29 +44,60 @@ export const useTaskStore = defineStore('task', () => {
     tasks.value.filter(t => t.status === 'completed' && !t.isArchived)
   )
 
-  const overdueTasks = computed(() => 
-    tasks.value.filter(t => t.isOverdue && !t.isCompleted && !t.isArchived)
-  )
-
   const todayTasks = computed(() => {
-    const today = new Date()
-    const todayStart = new Date(today.setHours(0, 0, 0, 0))
-    const todayEnd = new Date(today.setHours(23, 59, 59, 999))
+    const todayStart = new Date()
+    todayStart.setHours(0, 0, 0, 0)
+    const todayEnd = new Date(todayStart)
+    todayEnd.setHours(23, 59, 59, 999)
 
-    return tasks.value.filter(t => {
-      if (t.isArchived || t.status === 'completed') {
-        return false
+    return tasks.value.filter(task => {
+      const dueDate = task.dueDate ? new Date(task.dueDate) : null
+      const startDate = task.startDate ? new Date(task.startDate) : null
+
+      if (dueDate) {
+        dueDate.setHours(0, 0, 0, 0)
+        if (dueDate.getTime() === todayStart.getTime()) {
+          return true
+        }
       }
-      
-      const dueDate = t.dueDate ? new Date(t.dueDate) : null
-      const startDate = t.startDate ? new Date(t.startDate) : null
 
-      const isDueToday = dueDate && dueDate >= todayStart && dueDate <= todayEnd
-      const isStartingToday = startDate && startDate >= todayStart && startDate <= todayEnd
+      if (!dueDate && startDate) {
+        startDate.setHours(0, 0, 0, 0)
+        if (startDate.getTime() === todayStart.getTime()) {
+          return true
+        }
+      }
 
-      return isDueToday || isStartingToday
+      return false
     })
   })
+
+  const overdueTasks = computed(() => overdueTasksPaginated.value.tasks)
+  
+  const upcomingTasks = computed(() => {
+    const todayEnd = new Date()
+    todayEnd.setHours(23, 59, 59, 999)
+
+    return tasks.value.filter(task => {
+      const dueDate = task.dueDate ? new Date(task.dueDate) : null
+      const startDate = task.startDate ? new Date(task.startDate) : null
+
+      if (dueDate) {
+        return dueDate.getTime() > todayEnd.getTime()
+      }
+
+      if (startDate) {
+        return startDate.getTime() > todayEnd.getTime()
+      }
+
+      // Tasks without specific dates are treated as upcoming backlog
+      return true
+    })
+  })
+
+  const overdueTotal = computed(() => overdueTasksPaginated.value.total)
+  const unscheduledTasks = computed(() => unscheduledTasksPaginated.value.tasks)
+  const unscheduledTotal = computed(() => unscheduledTasksPaginated.value.total)
 
   const tasksByPriority = computed(() => {
     const grouped: Record<string, Task[]> = {
@@ -174,53 +211,119 @@ export const useTaskStore = defineStore('task', () => {
   }
 
   async function deleteTask(id: number): Promise<void> {
-    isLoading.value = true
-    error.value = null
-
-    try {
-      await taskService.deleteTask(id)
-      tasks.value = tasks.value.filter(t => t.id !== id)
-      
-      if (selectedTask.value?.id === id) {
-        selectedTask.value = null
-      }
-      
-      await fetchStatistics()
-    } catch (err: any) {
-      error.value = err.message || 'Failed to delete task'
-      throw err
-    } finally {
-      isLoading.value = false
-    }
-  }
-
-  async function toggleTaskCompletion(id: number): Promise<void> {
-    // Optimistic update - update UI immediately
+    // Optimistic update - remove from UI immediately
     const taskIndex = tasks.value.findIndex(t => t.id === id)
-    if (taskIndex === -1) return
+    const overdueTaskIndex = overdueTasksPaginated.value.tasks.findIndex(t => t.id === id)
+    const unscheduledTaskIndex = unscheduledTasksPaginated.value.tasks.findIndex(t => t.id === id)
+    
+    // Store original state for rollback
+    const originalTasks = [...tasks.value]
+    const originalOverdueTasks = [...overdueTasksPaginated.value.tasks]
+    const originalUnscheduledTasks = [...unscheduledTasksPaginated.value.tasks]
+    const originalSelectedTask = selectedTask.value
 
-    const originalTask = { ...tasks.value[taskIndex] }
-    const optimisticTask = {
-      ...originalTask,
-      isCompleted: !originalTask.isCompleted,
-      status: !originalTask.isCompleted ? 'completed' : 'pending'
-    } as Task
-
-    // Update UI immediately
-    tasks.value[taskIndex] = optimisticTask
+    // Optimistic update - remove from all locations immediately
+    if (taskIndex !== -1) {
+      tasks.value = tasks.value.filter(t => t.id !== id)
+    }
+    
+    if (overdueTaskIndex !== -1) {
+      overdueTasksPaginated.value.tasks = overdueTasksPaginated.value.tasks.filter(t => t.id !== id)
+      overdueTasksPaginated.value.total = Math.max(0, overdueTasksPaginated.value.total - 1)
+    }
+    
+    if (unscheduledTaskIndex !== -1) {
+      unscheduledTasksPaginated.value.tasks = unscheduledTasksPaginated.value.tasks.filter(t => t.id !== id)
+      unscheduledTasksPaginated.value.total = Math.max(0, unscheduledTasksPaginated.value.total - 1)
+    }
     
     if (selectedTask.value?.id === id) {
-      selectedTask.value = optimisticTask
+      selectedTask.value = null
     }
 
     try {
       // Make API call in background
+      await taskService.deleteTask(id)
+      
+      // Update statistics
+      await fetchStatistics()
+    } catch (err: any) {
+      // Rollback on error
+      tasks.value = originalTasks
+      overdueTasksPaginated.value.tasks = originalOverdueTasks
+      overdueTasksPaginated.value.total = originalOverdueTasks.length
+      unscheduledTasksPaginated.value.tasks = originalUnscheduledTasks
+      unscheduledTasksPaginated.value.total = originalUnscheduledTasks.length
+      selectedTask.value = originalSelectedTask
+      
+      error.value = err.message || 'Failed to delete task'
+      throw err
+    }
+  }
+
+  async function toggleTaskCompletion(id: number): Promise<void> {
+    // Find task in all possible locations
+    const taskIndex = tasks.value.findIndex(t => t.id === id)
+    const overdueTaskIndex = overdueTasksPaginated.value.tasks.findIndex(t => t.id === id)
+    const unscheduledTaskIndex = unscheduledTasksPaginated.value.tasks.findIndex(t => t.id === id)
+    
+    // Check if task exists in store (for optimistic updates)
+    const taskExistsInStore = taskIndex !== -1 || overdueTaskIndex !== -1 || unscheduledTaskIndex !== -1
+    
+    // Get original task from any location if it exists in store
+    let originalTask: Task | null = null
+    if (taskIndex !== -1) {
+      originalTask = { ...tasks.value[taskIndex] }
+    } else if (overdueTaskIndex !== -1) {
+      originalTask = { ...overdueTasksPaginated.value.tasks[overdueTaskIndex] }
+    } else if (unscheduledTaskIndex !== -1) {
+      originalTask = { ...unscheduledTasksPaginated.value.tasks[unscheduledTaskIndex] }
+    }
+
+    // If task exists in store, do optimistic update
+    if (taskExistsInStore && originalTask) {
+      const optimisticTask = {
+        ...originalTask,
+        isCompleted: !originalTask.isCompleted,
+        status: !originalTask.isCompleted ? 'completed' : 'pending'
+      } as Task
+
+      // Optimistic update - update UI immediately in all locations
+      if (taskIndex !== -1) {
+        tasks.value[taskIndex] = optimisticTask
+      }
+      
+      if (overdueTaskIndex !== -1) {
+        overdueTasksPaginated.value.tasks[overdueTaskIndex] = optimisticTask
+      }
+      
+      if (unscheduledTaskIndex !== -1) {
+        unscheduledTasksPaginated.value.tasks[unscheduledTaskIndex] = optimisticTask
+      }
+      
+      if (selectedTask.value?.id === id) {
+        selectedTask.value = optimisticTask
+      }
+    }
+
+    try {
+      // Always make API call, even if task is not in store (e.g., calendar tasks)
       const updatedTask = await taskService.toggleTask(id)
       
-      // Update with real data from server
-      const currentIndex = tasks.value.findIndex(t => t.id === id)
-      if (currentIndex !== -1) {
-        tasks.value[currentIndex] = updatedTask
+      // Update with real data from server in all locations (if task exists in store)
+      const currentTaskIndex = tasks.value.findIndex(t => t.id === id)
+      if (currentTaskIndex !== -1) {
+        tasks.value[currentTaskIndex] = updatedTask
+      }
+      
+      const currentOverdueIndex = overdueTasksPaginated.value.tasks.findIndex(t => t.id === id)
+      if (currentOverdueIndex !== -1) {
+        overdueTasksPaginated.value.tasks[currentOverdueIndex] = updatedTask
+      }
+      
+      const currentUnscheduledIndex = unscheduledTasksPaginated.value.tasks.findIndex(t => t.id === id)
+      if (currentUnscheduledIndex !== -1) {
+        unscheduledTasksPaginated.value.tasks[currentUnscheduledIndex] = updatedTask
       }
       
       if (selectedTask.value?.id === id) {
@@ -229,14 +332,23 @@ export const useTaskStore = defineStore('task', () => {
       
       await fetchStatistics()
     } catch (err: any) {
-      // Rollback on error
-      const rollbackIndex = tasks.value.findIndex(t => t.id === id)
-      if (rollbackIndex !== -1) {
-        tasks.value[rollbackIndex] = originalTask
-      }
-      
-      if (selectedTask.value?.id === id) {
-        selectedTask.value = originalTask
+      // Rollback on error only if task was in store
+      if (taskExistsInStore && originalTask) {
+        if (taskIndex !== -1) {
+          tasks.value[taskIndex] = originalTask
+        }
+        
+        if (overdueTaskIndex !== -1) {
+          overdueTasksPaginated.value.tasks[overdueTaskIndex] = originalTask
+        }
+        
+        if (unscheduledTaskIndex !== -1) {
+          unscheduledTasksPaginated.value.tasks[unscheduledTaskIndex] = originalTask
+        }
+        
+        if (selectedTask.value?.id === id) {
+          selectedTask.value = originalTask
+        }
       }
       
       error.value = err.message || 'Failed to toggle task'
@@ -277,6 +389,30 @@ export const useTaskStore = defineStore('task', () => {
     } catch (err: any) {
       error.value = err.message || 'Failed to unarchive task'
       throw err
+    }
+  }
+
+  async function fetchOverdueTasksPaginated(page: number, limit: number): Promise<void> {
+    isOverdueLoading.value = true
+    error.value = null
+    try {
+      overdueTasksPaginated.value = await taskService.getOverdueTasksPaginated(page, limit)
+    } catch (err: any) {
+      error.value = err.message || 'Failed to fetch overdue tasks'
+    } finally {
+      isOverdueLoading.value = false
+    }
+  }
+
+  async function fetchUnscheduledTasksPaginated(page: number, limit: number): Promise<void> {
+    isUnscheduledLoading.value = true
+    error.value = null
+    try {
+      unscheduledTasksPaginated.value = await taskService.getUnscheduledTasksPaginated(page, limit)
+    } catch (err: any) {
+      error.value = err.message || 'Failed to fetch unscheduled tasks'
+    } finally {
+      isUnscheduledLoading.value = false
     }
   }
 
@@ -358,6 +494,14 @@ export const useTaskStore = defineStore('task', () => {
     todayTasks,
     tasksByPriority,
     mostUsedTags,
+    upcomingTasks,
+    overdueTasksPaginated,
+    overdueTotal,
+    unscheduledTasks,
+    unscheduledTasksPaginated,
+    unscheduledTotal,
+    isOverdueLoading,
+    isUnscheduledLoading,
     
     // Actions
     fetchTasks,
@@ -374,7 +518,9 @@ export const useTaskStore = defineStore('task', () => {
     deleteTag,
     selectTask,
     clearError,
-    resetStore
+    resetStore,
+    fetchOverdueTasksPaginated,
+    fetchUnscheduledTasksPaginated
   }
 })
 

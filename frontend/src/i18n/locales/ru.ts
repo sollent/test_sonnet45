@@ -308,6 +308,8 @@ export default {
     tags: 'Теги',
     tags_placeholder: 'Добавить теги (нажмите Enter)',
     tags_help: 'Нажмите Enter или запятую для добавления тегов',
+    popular_tags: 'Популярные теги',
+    no_popular_tags: 'Пока нет популярных тегов',
     subtasks: 'Подзадачи',
     add_subtask: 'Добавить подзадачу',
     tree_structure: 'Древовидная структура',
@@ -363,7 +365,8 @@ export default {
     pending_tasks: 'В ожидании',
     in_progress_tasks: 'В процессе',
     completed_tasks_count: 'Завершено',
-    overdue_tasks_count: 'Просрочено',
+    overdue_tasks_count: 'Просроченные',
+    unscheduled_tasks: 'Без срока',
     
     // Messages
     task_created: 'Задача успешно создана',

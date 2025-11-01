@@ -27,11 +27,14 @@ const internalSearchQuery = computed({
   set: (value) => emit('update:searchQuery', value)
 })
 
+const activeCount = computed(() => taskStore.todayTasks.length + taskStore.upcomingTasks.length)
+
 const views = computed(() => [
-  { id: 'all', label: t('tasks.all_tasks'), icon: 'pi pi-list', count: taskStore.statistics?.total || 0, color: '#667eea' },
+  { id: 'all', label: t('tasks.all_tasks'), icon: 'pi pi-list', count: activeCount.value, color: '#667eea' },
   { id: 'today', label: t('tasks.today_tasks'), icon: 'pi pi-calendar', count: taskStore.todayTasks.length, color: '#10b981' },
-  { id: 'overdue', label: t('tasks.overdue_tasks'), icon: 'pi pi-exclamation-circle', count: taskStore.overdueTasks.length, color: '#ef4444' },
-  { id: 'upcoming', label: t('tasks.upcoming_tasks'), icon: 'pi pi-clock', count: 0, color: '#f59e0b' },
+  { id: 'upcoming', label: t('tasks.upcoming_tasks'), icon: 'pi pi-clock', count: taskStore.upcomingTasks.length, color: '#f59e0b' },
+  { id: 'overdue', label: t('tasks.overdue_tasks'), icon: 'pi pi-exclamation-circle', count: taskStore.overdueTotal || taskStore.statistics?.overdue || 0, color: '#ef4444' },
+  { id: 'unscheduled', label: t('tasks.unscheduled_tasks'), icon: 'pi pi-inbox', count: taskStore.unscheduledTotal || 0, color: '#64748b' }
 ])
 
 function handleSelectView(viewId: string) {

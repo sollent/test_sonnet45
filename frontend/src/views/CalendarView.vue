@@ -671,9 +671,40 @@ function openNewTaskDialog(date: Date) {
   showNewTaskDialog.value = true
 }
 
-function handleToggleComplete(updatedTask: Task) {
+async function handleToggleComplete(updatedTask: Task) {
   try {
+    // Update local collections immediately with optimistic update
+    // This ensures UI updates instantly while API call happens in background
     updateTaskCollections(updatedTask)
+    
+    // Wait for API call to complete (toggleTaskCompletion is already being called by TaskCard)
+    // Then update with real data from server
+    // Use a longer delay to ensure API call completes and store updates
+    setTimeout(async () => {
+      try {
+        // Try to get updated task from store first
+        let taskFromStore = taskStore.tasks.find(t => t.id === updatedTask.id) 
+          ?? taskStore.overdueTasksPaginated.tasks.find(t => t.id === updatedTask.id)
+          ?? taskStore.unscheduledTasksPaginated.tasks.find(t => t.id === updatedTask.id)
+        
+        // If not in store (e.g., calendar task), fetch directly from API
+        if (!taskFromStore) {
+          try {
+            taskFromStore = await taskStore.fetchTask(updatedTask.id)
+          } catch {
+            // Task might not be accessible, use the optimistic update
+            return
+          }
+        }
+        
+        if (taskFromStore) {
+          updateTaskCollections(taskFromStore)
+        }
+      } catch (error) {
+        // Silently fail - optimistic update is already applied
+        console.warn('Failed to sync calendar task with server response:', error)
+      }
+    }, 300)
   } catch (error: any) {
     showError(error.message || t('errors.unknown_error'))
   }

@@ -53,6 +53,7 @@
           :placeholder="t('common.select_date')"
           showTime
           hourFormat="24"
+          :stepMinute="10"
           class="w-full"
         />
       </div>
@@ -64,6 +65,7 @@
           :placeholder="t('common.select_date')"
           showTime
           hourFormat="24"
+          :stepMinute="10"
           class="w-full"
         />
       </div>

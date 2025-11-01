@@ -13,6 +13,8 @@ import type {
 
 const API_ENDPOINTS = {
   TASKS: '/api/tasks',
+  TASKS_OVERDUE: '/api/tasks/overdue',
+  TASKS_UNSCHEDULED: '/api/tasks/unscheduled',
   TASK_BY_ID: (id: number) => `/api/tasks/${id}`,
   TASK_COMPLETE: (id: number) => `/api/tasks/${id}/complete`,
   TASK_TOGGLE: (id: number) => `/api/tasks/${id}/toggle`,
@@ -213,6 +215,16 @@ class TaskService {
    */
   async getTasksByTag(tagId: number): Promise<Task[]> {
     return this.getTasks({ tag: tagId })
+  }
+
+  async getOverdueTasksPaginated(page: number, limit: number): Promise<{ tasks: Task[], total: number }> {
+    const response = await apiClient.get(API_ENDPOINTS.TASKS_OVERDUE, { params: { page, limit } })
+    return response.data
+  }
+
+  async getUnscheduledTasksPaginated(page: number, limit: number): Promise<{ tasks: Task[], total: number }> {
+    const response = await apiClient.get(API_ENDPOINTS.TASKS_UNSCHEDULED, { params: { page, limit } })
+    return response.data
   }
 }
 

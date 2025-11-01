@@ -47,7 +47,7 @@ export function useTaskCompletion() {
       }
       
       const updatedTask = await taskStore.fetchTask(taskId)
-      showSuccess(t('tasks.task_completed'))
+      // Note: Success notification is already shown in toggleTaskCompletion before calling this
       return updatedTask
     } catch (error: any) {
       showError(error.message || t('errors.unknown_error'))
@@ -86,15 +86,18 @@ export function useTaskCompletion() {
 
     // If task is already completed, just uncomplete it (no confirmation needed)
     if (taskData.isCompleted) {
+      // Show success notification immediately (before API call)
+      showSuccess(t('tasks.task_reopened'))
+      
       try {
         await taskStore.toggleTaskCompletion(taskData.id)
-        const updatedTask = taskStore.tasks.find(t => t.id === taskData.id) ?? {
+        const updatedTask = findTaskInStore(taskData.id) ?? {
           ...taskData,
           isCompleted: false
         }
-        showSuccess(t('tasks.task_reopened'))
         if (onSuccess) onSuccess(updatedTask)
       } catch (error: any) {
+        // Show error notification (this will replace the success notification)
         showError(error.message || t('errors.unknown_error'))
       }
       return
@@ -113,28 +116,44 @@ export function useTaskCompletion() {
         acceptLabel: t('common.yes'),
         rejectLabel: t('common.no'),
         accept: async () => {
+          // Show success notification immediately (before API calls)
+          showSuccess(t('tasks.task_completed'))
+          
           try {
             const updatedTask = await completeTaskWithSubtasks(taskData.id)
             if (onSuccess) onSuccess(updatedTask)
           } catch (error: any) {
+            // Show error notification (this will replace the success notification)
             showError(error.message || t('errors.unknown_error'))
           }
         }
       })
     } else {
       // No subtasks or all subtasks are completed, just complete the task
+      // Show success notification immediately (before API call)
+      showSuccess(t('tasks.task_completed'))
+      
       try {
         await taskStore.toggleTaskCompletion(taskData.id)
-        const updatedTask = taskStore.tasks.find(t => t.id === taskData.id) ?? {
+        const updatedTask = findTaskInStore(taskData.id) ?? {
           ...taskData,
           isCompleted: true
         }
-        showSuccess(t('tasks.task_completed'))
         if (onSuccess) onSuccess(updatedTask)
       } catch (error: any) {
+        // Show error notification (this will replace the success notification)
         showError(error.message || t('errors.unknown_error'))
       }
     }
+  }
+
+  /**
+   * Find task in any store location (main tasks, overdue, unscheduled)
+   */
+  function findTaskInStore(taskId: number): Task | undefined {
+    return taskStore.tasks.find(t => t.id === taskId) 
+      ?? taskStore.overdueTasksPaginated.tasks.find(t => t.id === taskId)
+      ?? taskStore.unscheduledTasksPaginated.tasks.find(t => t.id === taskId)
   }
 
   /**
@@ -143,15 +162,18 @@ export function useTaskCompletion() {
   async function handleCheckboxChange(task: Task, checked: boolean, onSuccess?: (updatedTask: Task) => void): Promise<void> {
     // If unchecking, just toggle without confirmation
     if (!checked) {
+      // Show success notification immediately (before API call)
+      showSuccess(t('tasks.task_reopened'))
+      
       try {
         await taskStore.toggleTaskCompletion(task.id)
-        const updatedTask = taskStore.tasks.find(t => t.id === task.id) ?? {
+        const updatedTask = findTaskInStore(task.id) ?? {
           ...task,
           isCompleted: false
         }
-        showSuccess(t('tasks.task_reopened'))
         if (onSuccess) onSuccess(updatedTask)
       } catch (error: any) {
+        // Show error notification (this will replace the success notification)
         showError(error.message || t('errors.unknown_error'))
       }
       return

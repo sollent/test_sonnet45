@@ -308,6 +308,8 @@ export default {
     tags: 'Tags',
     tags_placeholder: 'Add tags (press Enter)',
     tags_help: 'Press Enter or comma to add tags',
+    popular_tags: 'Popular tags',
+    no_popular_tags: 'No popular tags yet',
     subtasks: 'Subtasks',
     add_subtask: 'Add Subtask',
     tree_structure: 'Tree Structure',
@@ -364,6 +366,7 @@ export default {
     in_progress_tasks: 'In Progress',
     completed_tasks_count: 'Completed',
     overdue_tasks_count: 'Overdue',
+    unscheduled_tasks: 'No Due Date',
     
     // Messages
     task_created: 'Task created successfully',

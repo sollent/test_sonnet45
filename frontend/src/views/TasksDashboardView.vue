@@ -9,6 +9,7 @@ import Button from 'primevue/button'
 import Sidebar from 'primevue/sidebar'
 import Skeleton from 'primevue/skeleton'
 import InputText from 'primevue/inputtext'
+import Paginator, { type PageState } from 'primevue/paginator'
 import TaskCard from '@/components/tasks/TaskCard.vue'
 import TaskDetailsSidebar from '@/components/tasks/TaskDetailsSidebar.vue'
 import FloatingActionButton from '@/components/ui/FloatingActionButton.vue'
@@ -30,6 +31,16 @@ const isCreateDialogVisible = ref(false)
 const editingTask = ref<Task | null>(null)
 const isFiltersVisible = ref(false)
 const displayMode = ref<'cards' | 'list'>('cards')
+const overduePage = ref(1)
+const overdueLimit = ref(20)
+const unscheduledPage = ref(1)
+const unscheduledLimit = ref(20)
+
+const currentLoading = computed(() => {
+  if (selectedView.value === 'overdue') return taskStore.isOverdueLoading
+  if (selectedView.value === 'unscheduled') return taskStore.isUnscheduledLoading
+  return taskStore.isLoading
+})
 
 // Simple breakpoint detection
 const isMobile = ref(window.innerWidth < 1024)
@@ -40,23 +51,36 @@ const onResize = () => {
 onMounted(() => {
   window.addEventListener('resize', onResize)
   // Fetch data
-  try {
-    Promise.all([
-      taskStore.fetchTasks(),
-      taskStore.fetchStatistics(),
-      taskStore.fetchTags()
-    ])
-  } catch (error) {
-    showError(t('errors.unknown_error'))
-  }
+  selectView(selectedView.value)
+  taskStore.fetchStatistics()
+  taskStore.fetchTags()
 })
 
-const filteredTasks = computed(() => {
-  let tasks = taskStore.tasks
+const displayedTasks = computed(() => {
+  let tasks: Task[] = []
+  
+  switch (selectedView.value) {
+    case 'today':
+      tasks = taskStore.todayTasks
+      break
+    case 'overdue':
+      tasks = taskStore.overdueTasksPaginated.tasks
+      break
+    case 'unscheduled':
+      tasks = taskStore.unscheduledTasksPaginated.tasks
+      break
+    case 'upcoming':
+      tasks = taskStore.upcomingTasks
+      break
+    case 'all':
+    default:
+      tasks = taskStore.tasks
+      break
+  }
   
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
-    tasks = tasks.filter(task => 
+    return tasks.filter(task => 
       task.title.toLowerCase().includes(query) ||
       task.description?.toLowerCase().includes(query)
     )
@@ -68,7 +92,7 @@ const filteredTasks = computed(() => {
 const groupedTasks = computed(() => {
   const groups: Record<string, { label: string; tasks: Task[] }> = {}
   
-  filteredTasks.value.forEach(task => {
+  displayedTasks.value.forEach(task => {
     let groupKey = 'no-date'
     let groupLabel = t('tasks.no_due_date')
     
@@ -136,10 +160,42 @@ function handleLogout() {
 }
 
 function selectView(viewId: string) {
-  taskStore.fetchTasks({ view: viewId === 'all' ? undefined : viewId as any })
+  selectedView.value = viewId
+  if (viewId === 'overdue') {
+    overduePage.value = 1
+    taskStore.fetchOverdueTasksPaginated(overduePage.value, overdueLimit.value)
+  } else if (viewId === 'unscheduled') {
+    unscheduledPage.value = 1
+    taskStore.fetchUnscheduledTasksPaginated(unscheduledPage.value, unscheduledLimit.value)
+  } else {
+    taskStore.fetchTasks({ view: 'all' })
+  }
+  
   if (isMobile.value) {
     isFiltersVisible.value = false
   }
+}
+
+async function refreshCurrentView() {
+  if (selectedView.value === 'overdue') {
+    await taskStore.fetchOverdueTasksPaginated(overduePage.value, overdueLimit.value)
+  } else if (selectedView.value === 'unscheduled') {
+    await taskStore.fetchUnscheduledTasksPaginated(unscheduledPage.value, unscheduledLimit.value)
+  } else {
+    await taskStore.fetchTasks({ view: 'all' })
+  }
+}
+
+function onOverduePageChange(event: PageState) {
+  overduePage.value = event.page + 1
+  overdueLimit.value = event.rows
+  taskStore.fetchOverdueTasksPaginated(overduePage.value, overdueLimit.value)
+}
+
+function onUnscheduledPageChange(event: PageState) {
+  unscheduledPage.value = event.page + 1
+  unscheduledLimit.value = event.rows
+  taskStore.fetchUnscheduledTasksPaginated(unscheduledPage.value, unscheduledLimit.value)
 }
 
 async function handleToggleTask(task: Task) {
@@ -166,6 +222,17 @@ async function handleTaskCardUpdated(updatedTask: Task) {
 function handleTaskClick(task: Task) {
   selectedTask.value = task
   isDetailsOpen.value = true
+
+  taskStore.fetchTask(task.id)
+    .then(fullTask => {
+      if (selectedTask.value?.id === fullTask.id) {
+        selectedTask.value = fullTask
+      }
+    })
+    .catch((error: any) => {
+      console.error('Failed to load task details', error)
+      showError(t('errors.fetch_failed'))
+    })
 }
 
 function handleCreateTask() {
@@ -173,32 +240,57 @@ function handleCreateTask() {
   isCreateDialogVisible.value = true
 }
 
-function handleTaskCreated() {
-  taskStore.fetchTasks({ view: selectedView.value as any })
-  taskStore.fetchStatistics()
+async function handleTaskCreated() {
+  await refreshCurrentView()
+  await taskStore.fetchStatistics()
 }
 
-function handleTaskSaved() {
-  taskStore.fetchTasks({ view: selectedView.value as any })
-  taskStore.fetchStatistics()
+async function handleTaskSaved() {
+  await refreshCurrentView()
+  await taskStore.fetchStatistics()
   isCreateDialogVisible.value = false
 }
 
-function handleTaskUpdated() {
-  taskStore.fetchTasks({ view: selectedView.value as any })
-  taskStore.fetchStatistics()
+async function handleTaskUpdated() {
+  // Only update selected task if it exists, without reloading all tasks
+  // This prevents unnecessary API calls when working with subtasks
   if (selectedTask.value) {
-    taskStore.fetchTask(selectedTask.value.id).then(updatedTask => {
+    try {
+      const updatedTask = await taskStore.fetchTask(selectedTask.value.id)
       selectedTask.value = updatedTask
-    })
+      
+      // Update task in store if it exists there
+      const taskIndex = taskStore.tasks.findIndex(t => t.id === updatedTask.id)
+      if (taskIndex !== -1) {
+        taskStore.tasks[taskIndex] = updatedTask
+      }
+      
+      // Also update in paginated lists if exists
+      const overdueIndex = taskStore.overdueTasksPaginated.tasks.findIndex(t => t.id === updatedTask.id)
+      if (overdueIndex !== -1) {
+        taskStore.overdueTasksPaginated.tasks[overdueIndex] = updatedTask
+      }
+      
+      const unscheduledIndex = taskStore.unscheduledTasksPaginated.tasks.findIndex(t => t.id === updatedTask.id)
+      if (unscheduledIndex !== -1) {
+        taskStore.unscheduledTasksPaginated.tasks[unscheduledIndex] = updatedTask
+      }
+    } catch (error) {
+      console.error('Failed to refresh selected task', error)
+    }
   }
+  
+  // Update statistics in background (without blocking)
+  taskStore.fetchStatistics().catch(error => {
+    console.error('Failed to refresh task statistics', error)
+  })
 }
 
-function handleTaskDeleted() {
+async function handleTaskDeleted() {
   isDetailsOpen.value = false
   selectedTask.value = null
-  taskStore.fetchTasks({ view: selectedView.value as any })
-  taskStore.fetchStatistics()
+  await refreshCurrentView()
+  await taskStore.fetchStatistics()
 }
 </script>
 
@@ -308,14 +400,14 @@ function handleTaskDeleted() {
           </div>
 
           <!-- Loading State -->
-          <div v-if="taskStore.isLoading" class="tasks-container">
+          <div v-if="currentLoading" class="tasks-container">
             <Skeleton height="120px" class="mb-4" borderRadius="16px" />
             <Skeleton height="120px" class="mb-4" borderRadius="16px" />
             <Skeleton height="120px" class="mb-4" borderRadius="16px" />
           </div>
 
           <!-- Empty State -->
-          <div v-else-if="filteredTasks.length === 0" class="empty-state">
+          <div v-else-if="displayedTasks.length === 0" class="empty-state">
             <div class="empty-state-icon">
               <i class="pi pi-inbox" />
             </div>
@@ -379,8 +471,8 @@ function handleTaskDeleted() {
                       >
                         # {{ tag.name }}
                       </span>
-                      <span v-if="task.subtasks && task.subtasks.length > 0" class="task-subtasks">
-                        {{ task.subtasks.filter((s: any) => s.isCompleted).length }}/{{ task.subtasks.length }}
+                      <span v-if="(task.subtaskCount ?? 0) > 0" class="task-subtasks">
+                        {{ task.completedSubtaskCount ?? 0 }}/{{ task.subtaskCount ?? 0 }}
                       </span>
                     </div>
                   </div>
@@ -389,6 +481,20 @@ function handleTaskDeleted() {
               </div>
             </div>
           </div>
+
+          <!-- Paginator for Paginated Views -->
+          <transition name="fade-up">
+            <div v-if="['overdue', 'unscheduled'].includes(selectedView) && displayedTasks.length > 0" class="paginator-wrapper">
+              <Paginator
+                :rows="selectedView === 'overdue' ? overdueLimit : unscheduledLimit"
+                :total-records="selectedView === 'overdue' ? taskStore.overdueTotal : taskStore.unscheduledTotal"
+                :rows-per-page-options="[10, 20, 50]"
+                :pageLinkSize="isMobile ? 4 : 5"
+                @page="selectedView === 'overdue' ? onOverduePageChange($event) : onUnscheduledPageChange($event)"
+                class="custom-paginator"
+              />
+            </div>
+          </transition>
         </main>
       </div>
     </div>
@@ -527,6 +633,13 @@ function handleTaskDeleted() {
 
 .main-content {
   min-height: 500px;
+  padding-bottom: 6rem; /* Space for floating buttons */
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    padding-bottom: 7rem; /* Extra space for mobile floating buttons */
+  }
 }
 
 /* ===== Mobile Search ===== */
@@ -735,6 +848,172 @@ function handleTaskDeleted() {
   .task-group-list {
     grid-template-columns: 1fr;
     gap: 0.75rem;
+  }
+}
+
+.paginator-wrapper {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: center;
+}
+
+.custom-paginator {
+  --paginator-bg: #ffffff;
+  --paginator-border: rgba(226, 232, 240, 0.8);
+  --paginator-hover: #f8fafc;
+  background: var(--paginator-bg);
+  border: 1px solid var(--paginator-border);
+  border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(100, 116, 139, 0.12);
+  padding: 0.5rem 1rem;
+  animation: fadeIn 0.25s ease;
+}
+
+.custom-paginator :deep(.p-paginator-page) {
+  border-radius: 10px;
+  margin: 0 0.25rem;
+  transition: all 0.2s ease;
+}
+
+.custom-paginator :deep(.p-paginator-page:not(.p-highlight):hover) {
+  background: var(--paginator-hover);
+  transform: translateY(-1px);
+}
+
+.custom-paginator :deep(.p-paginator-page.p-highlight) {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  border: none;
+  color: white;
+  box-shadow: 0 8px 18px rgba(99, 102, 241, 0.35);
+}
+
+.custom-paginator :deep(.p-paginator-prev),
+.custom-paginator :deep(.p-paginator-next),
+.custom-paginator :deep(.p-paginator-first),
+.custom-paginator :deep(.p-paginator-last) {
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.custom-paginator :deep(.p-paginator-prev:not(.p-disabled):hover),
+.custom-paginator :deep(.p-paginator-next:not(.p-disabled):hover),
+.custom-paginator :deep(.p-paginator-first:not(.p-disabled):hover),
+.custom-paginator :deep(.p-paginator-last:not(.p-disabled):hover) {
+  background: var(--paginator-hover);
+  transform: translateY(-1px);
+}
+
+.fade-up-enter-active,
+.fade-up-leave-active {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.fade-up-enter-from,
+.fade-up-leave-to {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 768px) {
+  .paginator-wrapper {
+    padding: 0 0.75rem;
+  }
+
+  .custom-paginator {
+    width: 100%;
+    padding: 0.65rem 0.85rem;
+    border-radius: 16px;
+    border: none;
+    box-shadow: 0 18px 45px rgba(79, 70, 229, 0.18);
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.9) 0%, rgba(244, 246, 255, 0.95) 100%);
+    backdrop-filter: blur(10px);
+  }
+
+  .custom-paginator {
+    overflow: hidden;
+  }
+
+  .custom-paginator :deep(.p-paginator),
+  .custom-paginator :deep(.p-paginator-content) {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    width: 100%;
+  }
+
+  .custom-paginator :deep(.p-paginator-content > *) {
+    flex-shrink: 0;
+  }
+
+  .custom-paginator :deep(.p-paginator-first),
+  .custom-paginator :deep(.p-paginator-last),
+  .custom-paginator :deep(.p-dropdown),
+  .custom-paginator :deep(.p-paginator-current),
+  .custom-paginator :deep(.p-paginator-pages .p-paginator-page-break) {
+    display: none !important;
+  }
+
+  .custom-paginator :deep(.p-paginator-prev),
+  .custom-paginator :deep(.p-paginator-next) {
+    display: inline-flex !important;
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    border-radius: 12px;
+    margin: 0;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(99, 102, 241, 0.16);
+    color: #475569;
+    box-shadow: 0 6px 16px rgba(99, 102, 241, 0.18);
+    cursor: pointer;
+  }
+
+  .custom-paginator :deep(.p-paginator-prev:not(.p-disabled):hover),
+  .custom-paginator :deep(.p-paginator-next:not(.p-disabled):hover) {
+    background: rgba(99, 102, 241, 0.08);
+    transform: translateY(-1px);
+  }
+
+  .custom-paginator :deep(.p-paginator-pages) {
+    display: flex !important;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 0.3rem;
+    flex-wrap: nowrap;
+  }
+
+  .custom-paginator :deep(.p-paginator-page) {
+    display: inline-flex !important;
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    margin: 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(99, 102, 241, 0.16);
+    color: #475569;
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.15);
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  .custom-paginator :deep(.p-paginator-page.p-highlight) {
+    background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%);
+    color: #fff;
+    box-shadow: 0 12px 26px rgba(99, 102, 241, 0.48);
   }
 }
 </style>

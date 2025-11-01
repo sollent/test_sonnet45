@@ -20,10 +20,10 @@ export interface Tag {
   id: number
   name: string
   color: string
-  icon: string | null
-  usageCount: number
-  createdAt: string
-  updatedAt: string
+  icon?: string | null
+  usageCount?: number
+  createdAt?: string
+  updatedAt?: string
 }
 
 export interface Task {
@@ -36,15 +36,18 @@ export interface Task {
   dueDate: string | null
   completedAt: string | null
   parentTaskId: number | null
-  subtasks: Task[]
+  subtasks?: Task[]
   tags: Tag[]
-  sortOrder: number
-  isArchived: boolean
+  sortOrder?: number
+  isArchived?: boolean
   isCompleted: boolean
   isOverdue: boolean
-  completionProgress: number
-  createdAt: string
-  updatedAt: string
+  completionProgress?: number
+  createdAt?: string | null
+  updatedAt?: string | null
+  subtaskCount?: number
+  completedSubtaskCount?: number
+  hasNestedSubtasks?: boolean
 }
 
 export interface CreateTaskRequest {
