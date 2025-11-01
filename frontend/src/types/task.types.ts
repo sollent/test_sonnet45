@@ -89,7 +89,22 @@ export interface TaskFilters {
   archived?: boolean
   tag?: number
   search?: string
-  view?: 'today' | 'overdue' | 'upcoming' | 'all'
+  view?: 'today' | 'overdue' | 'upcoming' | 'all' | 'unscheduled'
+  tags?: number[]
+  completed?: boolean
+  dateFrom?: string
+  dateTo?: string
+  priorities?: TaskPriority[]
+  statuses?: TaskStatus[]
+}
+
+export interface TaskFiltersState {
+  tags: number[]
+  completed: boolean | null
+  dateFrom: string | null
+  dateTo: string | null
+  priorities: TaskPriority[]
+  statuses: TaskStatus[]
 }
 
 export interface CreateTagRequest {

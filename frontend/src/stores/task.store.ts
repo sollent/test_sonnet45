@@ -13,6 +13,7 @@ import type {
   UpdateTaskRequest,
   TaskStatistics,
   TaskFilters,
+  TaskFiltersState,
   TagUsage
 } from '@/types/task.types'
 
@@ -30,6 +31,20 @@ export const useTaskStore = defineStore('task', () => {
   const isOverdueLoading = ref(false)
   const unscheduledTasksPaginated = ref<{ tasks: Task[], total: number }>({ tasks: [], total: 0 })
   const isUnscheduledLoading = ref(false)
+  
+  // Filters state
+  const activeFilters = ref<TaskFiltersState>({
+    tags: [],
+    completed: null,
+    dateFrom: null,
+    dateTo: null,
+    priorities: [],
+    statuses: []
+  })
+  
+  // Search state
+  const searchQuery = ref<string>('')
+  const currentView = ref<string>('all')
 
   // Getters
   const pendingTasks = computed(() => 
@@ -392,11 +407,12 @@ export const useTaskStore = defineStore('task', () => {
     }
   }
 
-  async function fetchOverdueTasksPaginated(page: number, limit: number): Promise<void> {
+  async function fetchOverdueTasksPaginated(page: number, limit: number, filters?: TaskFiltersState): Promise<void> {
     isOverdueLoading.value = true
     error.value = null
     try {
-      overdueTasksPaginated.value = await taskService.getOverdueTasksPaginated(page, limit)
+      const queryFilters = filters ? buildQueryFilters(filters) : {}
+      overdueTasksPaginated.value = await taskService.getOverdueTasksPaginated(page, limit, queryFilters)
     } catch (err: any) {
       error.value = err.message || 'Failed to fetch overdue tasks'
     } finally {
@@ -404,16 +420,48 @@ export const useTaskStore = defineStore('task', () => {
     }
   }
 
-  async function fetchUnscheduledTasksPaginated(page: number, limit: number): Promise<void> {
+  async function fetchUnscheduledTasksPaginated(page: number, limit: number, filters?: TaskFiltersState): Promise<void> {
     isUnscheduledLoading.value = true
     error.value = null
     try {
-      unscheduledTasksPaginated.value = await taskService.getUnscheduledTasksPaginated(page, limit)
+      const queryFilters = filters ? buildQueryFilters(filters) : {}
+      unscheduledTasksPaginated.value = await taskService.getUnscheduledTasksPaginated(page, limit, queryFilters)
     } catch (err: any) {
       error.value = err.message || 'Failed to fetch unscheduled tasks'
     } finally {
       isUnscheduledLoading.value = false
     }
+  }
+  
+  // Helper to build query filters from state
+  function buildQueryFilters(filters: TaskFiltersState): TaskFilters {
+    const queryFilters: TaskFilters = {}
+    
+    if (filters.tags.length > 0) {
+      queryFilters.tags = filters.tags
+    }
+    
+    if (filters.completed !== null) {
+      queryFilters.completed = filters.completed
+    }
+    
+    if (filters.dateFrom) {
+      queryFilters.dateFrom = filters.dateFrom
+    }
+    
+    if (filters.dateTo) {
+      queryFilters.dateTo = filters.dateTo
+    }
+    
+    if (filters.priorities.length > 0) {
+      queryFilters.priorities = filters.priorities
+    }
+    
+    if (filters.statuses.length > 0) {
+      queryFilters.statuses = filters.statuses
+    }
+    
+    return queryFilters
   }
 
   async function fetchStatistics(): Promise<void> {
@@ -466,6 +514,96 @@ export const useTaskStore = defineStore('task', () => {
     error.value = null
   }
 
+  // Filter actions
+  function setFilters(filters: TaskFiltersState): void {
+    activeFilters.value = { ...filters }
+    
+    // Build query params for API
+    const queryFilters: TaskFilters = {
+      ...currentFilter.value
+    }
+    
+    if (filters.tags.length > 0) {
+      queryFilters.tags = filters.tags
+    }
+    
+    if (filters.completed !== null) {
+      queryFilters.completed = filters.completed
+    }
+    
+    if (filters.dateFrom) {
+      queryFilters.dateFrom = filters.dateFrom
+    }
+    
+    if (filters.dateTo) {
+      queryFilters.dateTo = filters.dateTo
+    }
+    
+    if (filters.priorities.length > 0) {
+      queryFilters.priorities = filters.priorities
+    }
+    
+    if (filters.statuses.length > 0) {
+      queryFilters.statuses = filters.statuses
+    }
+    
+    // Refetch tasks with new filters
+    fetchTasks(queryFilters)
+  }
+  
+  function clearFilters(): void {
+    activeFilters.value = {
+      tags: [],
+      completed: null,
+      dateFrom: null,
+      dateTo: null,
+      priorities: [],
+      statuses: []
+    }
+    
+    // Refetch without filters
+    const baseFilter: TaskFilters = {
+      view: currentFilter.value.view || 'all'
+    }
+    fetchTasks(baseFilter)
+  }
+  
+  function hasActiveFilters(): boolean {
+    return (
+      activeFilters.value.tags.length > 0 ||
+      activeFilters.value.completed !== null ||
+      activeFilters.value.dateFrom !== null ||
+      activeFilters.value.dateTo !== null ||
+      activeFilters.value.priorities.length > 0 ||
+      activeFilters.value.statuses.length > 0 ||
+      searchQuery.value !== ''
+    )
+  }
+  
+  // Set search query
+  function setSearchQuery(query: string): void {
+    searchQuery.value = query
+    // Re-fetch tasks with search
+    const queryFilters: TaskFilters = {
+      ...currentFilter.value,
+      search: query
+    }
+    fetchTasks(queryFilters)
+  }
+  
+  // Clear search
+  function clearSearch(): void {
+    searchQuery.value = ''
+    fetchTasks(currentFilter.value)
+  }
+  
+  // Set current view
+  function setCurrentView(view: string): void {
+    currentView.value = view
+    currentFilter.value = { view } as TaskFilters
+    fetchTasks(currentFilter.value)
+  }
+
   function resetStore(): void {
     tasks.value = []
     tags.value = []
@@ -474,6 +612,14 @@ export const useTaskStore = defineStore('task', () => {
     isLoading.value = false
     error.value = null
     currentFilter.value = {}
+    activeFilters.value = {
+      tags: [],
+      completed: null,
+      dateFrom: null,
+      dateTo: null,
+      priorities: [],
+      statuses: []
+    }
   }
 
   return {
@@ -485,6 +631,9 @@ export const useTaskStore = defineStore('task', () => {
     isLoading,
     error,
     currentFilter,
+    activeFilters,
+    searchQuery,
+    currentView,
     
     // Getters
     pendingTasks,
@@ -520,7 +669,13 @@ export const useTaskStore = defineStore('task', () => {
     clearError,
     resetStore,
     fetchOverdueTasksPaginated,
-    fetchUnscheduledTasksPaginated
+    fetchUnscheduledTasksPaginated,
+    setFilters,
+    clearFilters,
+    hasActiveFilters,
+    setSearchQuery,
+    clearSearch,
+    setCurrentView
   }
 })
 

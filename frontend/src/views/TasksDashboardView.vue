@@ -14,6 +14,8 @@ import TaskCard from '@/components/tasks/TaskCard.vue'
 import TaskDetailsSidebar from '@/components/tasks/TaskDetailsSidebar.vue'
 import FloatingActionButton from '@/components/ui/FloatingActionButton.vue'
 import TaskFilters from '@/components/tasks/TaskFilters.vue'
+import TaskFiltersPanel from '@/components/tasks/TaskFiltersPanel.vue'
+import QuickFilters from '@/components/tasks/QuickFilters.vue'
 import TaskDialog from '@/components/tasks/TaskDialog.vue'
 import type { Task } from '@/types/task.types'
 
@@ -30,6 +32,7 @@ const selectedTask = ref<Task | null>(null)
 const isCreateDialogVisible = ref(false)
 const editingTask = ref<Task | null>(null)
 const isFiltersVisible = ref(false)
+const isFiltersPanelVisible = ref(false)
 const displayMode = ref<'cards' | 'list'>('cards')
 const overduePage = ref(1)
 const overdueLimit = ref(20)
@@ -370,23 +373,39 @@ async function handleTaskDeleted() {
 
         <!-- Task List -->
         <main class="main-content">
-          <!-- Desktop View Toggle -->
-          <div v-if="!isMobile" class="view-toggle">
+          <!-- Top Controls Bar -->
+          <div class="top-controls">
+            <!-- Filters Button (Mobile) -->
             <Button
-              :icon="'pi pi-th-large'"
-              :severity="displayMode === 'cards' ? 'primary' : 'secondary'"
-              :outlined="displayMode !== 'cards'"
-              @click="displayMode = 'cards'"
-              :aria-label="t('tasks.cards_view')"
+              v-if="isMobile"
+              icon="pi pi-filter"
+              :label="t('tasks.filters')"
+              severity="secondary"
+              outlined
+              @click="isFiltersPanelVisible = true"
+              :badge="taskStore.hasActiveFilters() ? String(taskStore.activeFilters.tags.length + taskStore.activeFilters.priorities.length + taskStore.activeFilters.statuses.length + (taskStore.activeFilters.completed !== null ? 1 : 0) + (taskStore.activeFilters.dateFrom || taskStore.activeFilters.dateTo ? 1 : 0)) : undefined"
+              badgeClass="p-badge-danger"
             />
-            <Button
-              :icon="'pi pi-list'"
-              :severity="displayMode === 'list' ? 'primary' : 'secondary'"
-              :outlined="displayMode !== 'list'"
-              @click="displayMode = 'list'"
-              :aria-label="t('tasks.table_view')"
-            />
+            
+            <!-- Desktop View Toggle -->
+            <div v-if="!isMobile" class="view-toggle">
+              <Button
+                :icon="'pi pi-th-large'"
+                :severity="displayMode === 'cards' ? 'primary' : 'secondary'"
+                :outlined="displayMode !== 'cards'"
+                @click="displayMode = 'cards'"
+                :aria-label="t('tasks.cards_view')"
+              />
+              <Button
+                :icon="'pi pi-list'"
+                :severity="displayMode === 'list' ? 'primary' : 'secondary'"
+                :outlined="displayMode !== 'list'"
+                @click="displayMode = 'list'"
+                :aria-label="t('tasks.table_view')"
+              />
+            </div>
           </div>
+          
           <!-- Mobile Search -->
           <div v-if="isMobile" class="mobile-search-container">
             <span class="p-input-icon-left w-full">
@@ -398,6 +417,16 @@ async function handleTaskDeleted() {
               />
             </span>
           </div>
+          
+        <!-- Quick Filters (Desktop) -->
+        <div v-if="!isMobile">
+          <QuickFilters />
+        </div>
+        
+        <!-- Filters Panel (Desktop) -->
+        <div v-if="!isMobile" class="filters-panel-container">
+          <TaskFiltersPanel />
+        </div>
 
           <!-- Loading State -->
           <div v-if="currentLoading" class="tasks-container">
@@ -517,6 +546,25 @@ async function handleTaskDeleted() {
       @task-updated="handleTaskUpdated"
       @task-deleted="handleTaskDeleted"
     />
+    
+      <!-- Mobile Filters Panel -->
+      <Sidebar v-model:visible="isFiltersPanelVisible" position="bottom" class="filters-sidebar">
+        <template #header>
+          <div class="filters-header">
+            <h3>{{ t('tasks.filters') }}</h3>
+            <Button
+              icon="pi pi-times"
+              text
+              rounded
+              @click="isFiltersPanelVisible = false"
+            />
+          </div>
+        </template>
+        <div class="mobile-filters-content">
+          <QuickFilters />
+          <TaskFiltersPanel />
+        </div>
+      </Sidebar>
   </div>
 </template>
 
@@ -526,6 +574,74 @@ async function handleTaskDeleted() {
   min-height: 100vh;
   position: relative;
   background-color: #f8f9fa;
+}
+
+.dashboard-background {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ===== Top Controls ===== */
+.top-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+}
+
+/* ===== Filters Panel ===== */
+.filters-panel-container {
+  margin-bottom: 1.5rem;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== Mobile Filters Sidebar ===== */
+.filters-sidebar :deep(.p-sidebar) {
+  height: 95vh !important;
+  max-height: 95vh !important;
+  border-radius: 24px 24px 0 0;
+  overflow-y: auto;
+}
+
+.filters-sidebar :deep(.p-sidebar-content) {
+  padding: 0;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.filters-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 0.5rem 0;
+}
+
+.filters-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--p-text-color);
+}
+
+.mobile-filters-content {
+  padding: 1rem;
+  overflow-y: auto;
+  height: calc(100% - 4rem);
 }
 
 .dashboard-background {

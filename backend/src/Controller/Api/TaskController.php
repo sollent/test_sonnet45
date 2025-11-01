@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller\Api;
 
 use App\Dto\Request\Task\CreateTaskDto;
+use App\Dto\Request\Task\TaskFilterDto;
 use App\Dto\Request\Task\UpdateTaskDto;
 use App\Dto\Response\Task\TaskResponseDto;
 use App\Entity\Task;
@@ -17,6 +18,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Attribute\MapQueryString;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
@@ -39,25 +41,13 @@ class TaskController extends AbstractController
 
     #[Route('', name: 'list', methods: ['GET'])]
     #[OA\Get(
-        summary: 'Get list of tasks',
+        summary: 'Get list of tasks with filters',
         parameters: [
             new OA\Parameter(
-                name: 'status',
+                name: 'view',
                 in: 'query',
                 required: false,
-                schema: new OA\Schema(type: 'string', enum: ['pending', 'in_progress', 'completed', 'cancelled'])
-            ),
-            new OA\Parameter(
-                name: 'archived',
-                in: 'query',
-                required: false,
-                schema: new OA\Schema(type: 'boolean')
-            ),
-            new OA\Parameter(
-                name: 'tag',
-                in: 'query',
-                required: false,
-                schema: new OA\Schema(type: 'integer')
+                schema: new OA\Schema(type: 'string', enum: ['today', 'overdue', 'upcoming', 'all', 'unscheduled'])
             ),
             new OA\Parameter(
                 name: 'search',
@@ -66,10 +56,40 @@ class TaskController extends AbstractController
                 schema: new OA\Schema(type: 'string')
             ),
             new OA\Parameter(
-                name: 'view',
+                name: 'tags',
                 in: 'query',
                 required: false,
-                schema: new OA\Schema(type: 'string', enum: ['today', 'overdue', 'upcoming', 'all'])
+                schema: new OA\Schema(type: 'array', items: new OA\Items(type: 'integer'))
+            ),
+            new OA\Parameter(
+                name: 'completed',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'boolean')
+            ),
+            new OA\Parameter(
+                name: 'dateFrom',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'string', format: 'date')
+            ),
+            new OA\Parameter(
+                name: 'dateTo',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'string', format: 'date')
+            ),
+            new OA\Parameter(
+                name: 'priorities',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'array', items: new OA\Items(type: 'string'))
+            ),
+            new OA\Parameter(
+                name: 'statuses',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'array', items: new OA\Items(type: 'string'))
             )
         ],
         responses: [
@@ -83,29 +103,27 @@ class TaskController extends AbstractController
             )
         ]
     )]
-    public function list(Request $request): JsonResponse
-    {
+    public function list(
+        Request $request,
+        #[MapQueryString] TaskFilterDto $filters = new TaskFilterDto()
+    ): JsonResponse {
         $user = $this->getUser();
         
         // Handle search
         $search = $request->query->get('search');
         if ($search) {
-            $tasks = $this->taskService->searchTasks($user, $search);
-        }
-        // Handle tag filter
-        elseif ($tagId = $request->query->getInt('tag')) {
-            $tasks = $this->taskService->getTasksByTag($user, $tagId);
+            $tasks = $this->taskService->searchTasks($user, $search, $filters);
         }
         // Handle view filters
         else {
             $view = $request->query->get('view', 'all');
             
             $tasks = match ($view) {
-                'today' => $this->taskService->getTodayTasks($user),
-                'overdue' => $this->taskService->getOverdueTasksPaginated($user, 1, 50)['tasks'],
-                'upcoming' => $this->taskService->getUpcomingTasks($user, 30),
-                'unscheduled' => $this->taskService->getUnscheduledTasksPaginated($user, 1, 50)['tasks'],
-                default => $this->taskService->getActiveTasks($user)
+                'today' => $this->taskService->getTodayTasks($user, $filters),
+                'overdue' => $this->taskService->getOverdueTasksPaginated($user, 1, 50, $filters)['tasks'],
+                'upcoming' => $this->taskService->getUpcomingTasks($user, 30, $filters),
+                'unscheduled' => $this->taskService->getUnscheduledTasksPaginated($user, 1, 50, $filters)['tasks'],
+                default => $this->taskService->getActiveTasks($user, $filters)
             };
         }
 
@@ -131,15 +149,17 @@ class TaskController extends AbstractController
     )]
     #[OA\Parameter(name: 'page', in: 'query', description: 'The page number', schema: new OA\Schema(type: 'integer', default: 1))]
     #[OA\Parameter(name: 'limit', in: 'query', description: 'The number of items per page', schema: new OA\Schema(type: 'integer', default: 20))]
-    public function getOverdueTasks(Request $request): JsonResponse
-    {
+    public function getOverdueTasks(
+        Request $request,
+        #[MapQueryString] TaskFilterDto $filters = new TaskFilterDto()
+    ): JsonResponse {
         /** @var User $user */
         $user = $this->getUser();
 
         $page = $request->query->getInt('page', 1);
         $limit = $request->query->getInt('limit', 20);
 
-        $data = $this->taskService->getOverdueTasksPaginated($user, $page, $limit);
+        $data = $this->taskService->getOverdueTasksPaginated($user, $page, $limit, $filters);
         $data['tasks'] = array_map(
             fn(Task $task) => TaskResponseDto::fromEntity($task, false, false),
             $data['tasks']
@@ -162,15 +182,17 @@ class TaskController extends AbstractController
     )]
     #[OA\Parameter(name: 'page', in: 'query', description: 'The page number', schema: new OA\Schema(type: 'integer', default: 1))]
     #[OA\Parameter(name: 'limit', in: 'query', description: 'The number of items per page', schema: new OA\Schema(type: 'integer', default: 20))]
-    public function getUnscheduledTasks(Request $request): JsonResponse
-    {
+    public function getUnscheduledTasks(
+        Request $request,
+        #[MapQueryString] TaskFilterDto $filters = new TaskFilterDto()
+    ): JsonResponse {
         /** @var User $user */
         $user = $this->getUser();
 
         $page = $request->query->getInt('page', 1);
         $limit = $request->query->getInt('limit', 20);
 
-        $data = $this->taskService->getUnscheduledTasksPaginated($user, $page, $limit);
+        $data = $this->taskService->getUnscheduledTasksPaginated($user, $page, $limit, $filters);
         $data['tasks'] = array_map(
             fn(Task $task) => TaskResponseDto::fromEntity($task, false, false),
             $data['tasks']

@@ -56,6 +56,26 @@ class TaskService {
     if (filters?.view) {
       params.append('view', filters.view)
     }
+    
+    // New filter parameters
+    if (filters?.tags && filters.tags.length > 0) {
+      filters.tags.forEach(tagId => params.append('tags[]', String(tagId)))
+    }
+    if (filters?.completed !== undefined) {
+      params.append('completed', String(filters.completed))
+    }
+    if (filters?.dateFrom) {
+      params.append('dateFrom', filters.dateFrom)
+    }
+    if (filters?.dateTo) {
+      params.append('dateTo', filters.dateTo)
+    }
+    if (filters?.priorities && filters.priorities.length > 0) {
+      filters.priorities.forEach(priority => params.append('priorities[]', priority))
+    }
+    if (filters?.statuses && filters.statuses.length > 0) {
+      filters.statuses.forEach(status => params.append('statuses[]', status))
+    }
 
     const queryString = params.toString()
     const url = queryString ? `${API_ENDPOINTS.TASKS}?${queryString}` : API_ENDPOINTS.TASKS
@@ -217,13 +237,57 @@ class TaskService {
     return this.getTasks({ tag: tagId })
   }
 
-  async getOverdueTasksPaginated(page: number, limit: number): Promise<{ tasks: Task[], total: number }> {
-    const response = await apiClient.get(API_ENDPOINTS.TASKS_OVERDUE, { params: { page, limit } })
+  async getOverdueTasksPaginated(page: number, limit: number, filters?: TaskFilters): Promise<{ tasks: Task[], total: number }> {
+    const params: any = { page, limit }
+    
+    // Add filter parameters
+    if (filters?.tags && filters.tags.length > 0) {
+      params['tags[]'] = filters.tags
+    }
+    if (filters?.completed !== undefined) {
+      params.completed = filters.completed
+    }
+    if (filters?.dateFrom) {
+      params.dateFrom = filters.dateFrom
+    }
+    if (filters?.dateTo) {
+      params.dateTo = filters.dateTo
+    }
+    if (filters?.priorities && filters.priorities.length > 0) {
+      params['priorities[]'] = filters.priorities
+    }
+    if (filters?.statuses && filters.statuses.length > 0) {
+      params['statuses[]'] = filters.statuses
+    }
+    
+    const response = await apiClient.get(API_ENDPOINTS.TASKS_OVERDUE, { params })
     return response.data
   }
 
-  async getUnscheduledTasksPaginated(page: number, limit: number): Promise<{ tasks: Task[], total: number }> {
-    const response = await apiClient.get(API_ENDPOINTS.TASKS_UNSCHEDULED, { params: { page, limit } })
+  async getUnscheduledTasksPaginated(page: number, limit: number, filters?: TaskFilters): Promise<{ tasks: Task[], total: number }> {
+    const params: any = { page, limit }
+    
+    // Add filter parameters
+    if (filters?.tags && filters.tags.length > 0) {
+      params['tags[]'] = filters.tags
+    }
+    if (filters?.completed !== undefined) {
+      params.completed = filters.completed
+    }
+    if (filters?.dateFrom) {
+      params.dateFrom = filters.dateFrom
+    }
+    if (filters?.dateTo) {
+      params.dateTo = filters.dateTo
+    }
+    if (filters?.priorities && filters.priorities.length > 0) {
+      params['priorities[]'] = filters.priorities
+    }
+    if (filters?.statuses && filters.statuses.length > 0) {
+      params['statuses[]'] = filters.statuses
+    }
+    
+    const response = await apiClient.get(API_ENDPOINTS.TASKS_UNSCHEDULED, { params })
     return response.data
   }
 }

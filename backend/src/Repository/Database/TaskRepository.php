@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Repository\Database;
 
+use App\Dto\Request\Task\TaskFilterDto;
 use App\Entity\Task;
 use App\Entity\User;
 use App\Enum\TaskStatus;
 use App\Enum\TaskPriority;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\QueryBuilder;
 use Doctrine\ORM\Tools\Pagination\Paginator;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -68,12 +70,12 @@ class TaskRepository extends ServiceEntityRepository
      *
      * @return Task[]
      */
-    public function findTodayTasks(User $user): array
+    public function findTodayTasks(User $user, ?TaskFilterDto $filters = null): array
     {
         $todayStart = new \DateTimeImmutable('today');
         $todayEnd = new \DateTimeImmutable('today 23:59:59');
 
-        return $this->createQueryBuilder('t')
+        $qb = $this->createQueryBuilder('t')
             ->where('t.user = :user')
             ->andWhere('t.parentTask IS NULL')
             ->andWhere('t.isArchived = false')
@@ -84,11 +86,17 @@ class TaskRepository extends ServiceEntityRepository
             ->setParameter('user', $user)
             ->setParameter('completedStatus', TaskStatus::COMPLETED)
             ->setParameter('todayStart', $todayStart)
-            ->setParameter('todayEnd', $todayEnd)
-            ->orderBy('t.priority', 'DESC')
-            ->addOrderBy('t.dueDate', 'ASC')
-            ->getQuery()
-            ->getResult();
+            ->setParameter('todayEnd', $todayEnd);
+
+        // Apply filters
+        if ($filters) {
+            $this->applyFilters($qb, $filters);
+        }
+
+        $qb->orderBy('t.priority', 'DESC')
+           ->addOrderBy('t.dueDate', 'ASC');
+
+        return $qb->getQuery()->getResult();
     }
 
     /**
@@ -120,12 +128,12 @@ class TaskRepository extends ServiceEntityRepository
      *
      * @return Task[]
      */
-    public function findUpcomingTasks(User $user, int $days = 7): array
+    public function findUpcomingTasks(User $user, int $days = 7, ?TaskFilterDto $filters = null): array
     {
         $tomorrow = new \DateTimeImmutable('tomorrow');
         $endDate = new \DateTimeImmutable("+{$days} days");
 
-        return $this->createQueryBuilder('t')
+        $qb = $this->createQueryBuilder('t')
             ->where('t.user = :user')
             ->andWhere('t.parentTask IS NULL')
             ->andWhere('t.isArchived = false')
@@ -134,18 +142,24 @@ class TaskRepository extends ServiceEntityRepository
             ->setParameter('user', $user)
             ->setParameter('completed', TaskStatus::COMPLETED)
             ->setParameter('tomorrow', $tomorrow)
-            ->setParameter('endDate', $endDate)
-            ->orderBy('t.dueDate', 'ASC')
-            ->addOrderBy('t.priority', 'DESC')
-            ->getQuery()
-            ->getResult();
+            ->setParameter('endDate', $endDate);
+
+        // Apply filters
+        if ($filters) {
+            $this->applyFilters($qb, $filters);
+        }
+
+        $qb->orderBy('t.dueDate', 'ASC')
+           ->addOrderBy('t.priority', 'DESC');
+
+        return $qb->getQuery()->getResult();
     }
 
-    public function findActiveTasks(User $user): array
+    public function findActiveTasks(User $user, ?TaskFilterDto $filters = null): array
     {
         $todayStart = new \DateTimeImmutable('today');
 
-        return $this->createQueryBuilder('t')
+        $qb = $this->createQueryBuilder('t')
             ->where('t.user = :user')
             ->andWhere('t.parentTask IS NULL')
             ->andWhere('t.isArchived = false')
@@ -156,11 +170,17 @@ class TaskRepository extends ServiceEntityRepository
             )')
             ->setParameter('user', $user)
             ->setParameter('completed', TaskStatus::COMPLETED)
-            ->setParameter('todayStart', $todayStart)
-            ->orderBy('t.dueDate', 'ASC')
-            ->addOrderBy('t.priority', 'DESC')
-            ->getQuery()
-            ->getResult();
+            ->setParameter('todayStart', $todayStart);
+
+        // Apply filters
+        if ($filters) {
+            $this->applyFilters($qb, $filters);
+        }
+
+        $qb->orderBy('t.dueDate', 'ASC')
+           ->addOrderBy('t.priority', 'DESC');
+
+        return $qb->getQuery()->getResult();
     }
 
     /**
@@ -189,18 +209,24 @@ class TaskRepository extends ServiceEntityRepository
      *
      * @return Task[]
      */
-    public function searchTasks(User $user, string $query): array
+    public function searchTasks(User $user, string $query, ?TaskFilterDto $filters = null): array
     {
-        return $this->createQueryBuilder('t')
+        $qb = $this->createQueryBuilder('t')
             ->where('t.user = :user')
             ->andWhere('t.parentTask IS NULL')
             ->andWhere('t.isArchived = false')
             ->andWhere('(LOWER(t.title) LIKE :query OR LOWER(t.description) LIKE :query)')
             ->setParameter('user', $user)
-            ->setParameter('query', '%' . strtolower($query) . '%')
-            ->orderBy('t.sortOrder', 'ASC')
-            ->getQuery()
-            ->getResult();
+            ->setParameter('query', '%' . strtolower($query) . '%');
+
+        // Apply filters
+        if ($filters) {
+            $this->applyFilters($qb, $filters);
+        }
+
+        $qb->orderBy('t.sortOrder', 'ASC');
+
+        return $qb->getQuery()->getResult();
     }
 
     /**
@@ -373,9 +399,9 @@ class TaskRepository extends ServiceEntityRepository
         return $this->findTasksByDateRange($user, $startDate, $endDate, $includeCompleted);
     }
 
-    public function findOverdueByUserPaginated(User $user, int $page, int $limit): Paginator
+    public function findOverdueByUserPaginated(User $user, int $page, int $limit, ?TaskFilterDto $filters = null): Paginator
     {
-        $query = $this->createQueryBuilder('t')
+        $qb = $this->createQueryBuilder('t')
             ->where('t.user = :user')
             ->andWhere('t.parentTask IS NULL')
             ->andWhere('t.isArchived = false')
@@ -383,32 +409,104 @@ class TaskRepository extends ServiceEntityRepository
             ->andWhere('t.status != :completedStatus')
             ->setParameter('user', $user)
             ->setParameter('today', new \DateTimeImmutable())
-            ->setParameter('completedStatus', TaskStatus::COMPLETED)
-            ->orderBy('t.dueDate', 'ASC')
-            ->addOrderBy('t.priority', 'DESC')
-            ->getQuery()
+            ->setParameter('completedStatus', TaskStatus::COMPLETED);
+
+        // Apply filters
+        if ($filters) {
+            $this->applyFilters($qb, $filters);
+        }
+
+        $qb->orderBy('t.dueDate', 'ASC')
+           ->addOrderBy('t.priority', 'DESC');
+
+        $query = $qb->getQuery()
             ->setFirstResult(($page - 1) * $limit)
             ->setMaxResults($limit);
 
         return new Paginator($query);
     }
 
-    public function findUnscheduledByUserPaginated(User $user, int $page, int $limit): Paginator
+    public function findUnscheduledByUserPaginated(User $user, int $page, int $limit, ?TaskFilterDto $filters = null): Paginator
     {
-        $query = $this->createQueryBuilder('t')
+        $qb = $this->createQueryBuilder('t')
             ->where('t.user = :user')
             ->andWhere('t.parentTask IS NULL')
             ->andWhere('t.isArchived = false')
             ->andWhere('t.status != :completedStatus')
             ->andWhere('t.dueDate IS NULL')
             ->setParameter('user', $user)
-            ->setParameter('completedStatus', TaskStatus::COMPLETED)
-            ->orderBy('t.createdAt', 'DESC')
-            ->addOrderBy('t.priority', 'DESC')
-            ->getQuery()
+            ->setParameter('completedStatus', TaskStatus::COMPLETED);
+
+        // Apply filters
+        if ($filters) {
+            $this->applyFilters($qb, $filters);
+        }
+
+        $qb->orderBy('t.createdAt', 'DESC')
+           ->addOrderBy('t.priority', 'DESC');
+
+        $query = $qb->getQuery()
             ->setFirstResult(($page - 1) * $limit)
             ->setMaxResults($limit);
 
         return new Paginator($query);
+    }
+
+    /**
+     * Apply filters to query builder
+     * 
+     * @param QueryBuilder $qb
+     * @param TaskFilterDto $filters
+     */
+    private function applyFilters(QueryBuilder $qb, TaskFilterDto $filters): void
+    {
+        if (!$filters->hasFilters()) {
+            return;
+        }
+
+        // Filter by tags
+        if ($filters->tags !== null && !empty($filters->tags)) {
+            $qb->join('t.tags', 'filter_tag')
+               ->andWhere('filter_tag.id IN (:filterTags)')
+               ->setParameter('filterTags', $filters->tags);
+        }
+
+        // Filter by completion status
+        if ($filters->completed !== null) {
+            if ($filters->completed) {
+                $qb->andWhere('t.status = :completedFilterStatus')
+                   ->setParameter('completedFilterStatus', TaskStatus::COMPLETED);
+            } else {
+                $qb->andWhere('t.status != :notCompletedFilterStatus')
+                   ->setParameter('notCompletedFilterStatus', TaskStatus::COMPLETED);
+            }
+        }
+
+        // Filter by date range
+        if ($filters->dateFrom !== null) {
+            $dateFrom = new \DateTimeImmutable($filters->dateFrom);
+            $qb->andWhere('(t.dueDate >= :filterDateFrom OR t.startDate >= :filterDateFrom)')
+               ->setParameter('filterDateFrom', $dateFrom);
+        }
+
+        if ($filters->dateTo !== null) {
+            $dateTo = new \DateTimeImmutable($filters->dateTo . ' 23:59:59');
+            $qb->andWhere('(t.dueDate <= :filterDateTo OR t.startDate <= :filterDateTo)')
+               ->setParameter('filterDateTo', $dateTo);
+        }
+
+        // Filter by priorities
+        if ($filters->priorities !== null && !empty($filters->priorities)) {
+            $priorities = array_map(fn($p) => TaskPriority::from($p), $filters->priorities);
+            $qb->andWhere('t.priority IN (:filterPriorities)')
+               ->setParameter('filterPriorities', $priorities);
+        }
+
+        // Filter by statuses
+        if ($filters->statuses !== null && !empty($filters->statuses)) {
+            $statuses = array_map(fn($s) => TaskStatus::from($s), $filters->statuses);
+            $qb->andWhere('t.status IN (:filterStatuses)')
+               ->setParameter('filterStatuses', $statuses);
+        }
     }
 }
