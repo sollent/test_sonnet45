@@ -1,0 +1,217 @@
+# Task Manager - Cursor Rules
+
+## 📚 Документация проекта
+
+**ВАЖНО**: Перед началом работы прочитай:
+1. `AI_QUICK_REFERENCE.md` - быстрая шпаргалка (5 мин)
+2. `PROJECT_DOCUMENTATION.md` - полная документация (20 мин)
+3. `ARCHITECTURE_DECISIONS.md` - архитектурные решения
+4. `TROUBLESHOOTING.md` - решение проблем
+
+## 🎯 Ключевые принципы
+
+### 1. ВСЕГДА используй оптимистичные обновления
+```typescript
+// ✅ Правильно
+localState.value = newValue  // Сначала UI
+await api.update()           // Потом запрос
+
+// ❌ Неправильно
+await api.update()           // Ждем
+fetchData()                  // Перезагружаем
+```
+
+### 2. НЕ перезагружай списки
+```typescript
+// ✅ Точечное обновление
+tasks.value[idx] = updatedTask
+
+// ❌ Полная перезагрузка
+await fetchAllTasks()
+```
+
+### 3. Backend ТОЛЬКО в Docker
+```bash
+# ✅ Правильно
+docker-compose exec php bin/console ...
+
+# ❌ Неправильно
+php bin/console ...
+```
+
+### 4. TypeScript strict mode
+- Типизируй ВСЁ
+- Никогда не используй `any`
+- Используй type guards
+
+### 5. Mobile-first
+- Проверяй адаптивность
+- Border-radius: 8-12px (не больше!)
+- Большие кликабельные области
+
+## 🏗️ Архитектура
+
+### Frontend
+```
+components/ → composables/ → stores/ → services/ → API
+```
+
+### Backend
+```
+Controller → Service → Repository → Entity
+```
+
+## 📝 Naming Conventions
+
+### Backend (PHP)
+- Classes: `PascalCase`
+- Methods: `camelCase`
+- Variables: `camelCase`
+
+### Frontend (TypeScript)
+- Components: `PascalCase.vue`
+- Composables: `useCamelCase`
+- Variables: `camelCase`
+- Types: `PascalCase`
+
+## 🔧 Частые задачи
+
+### Добавить поле в Task
+1. Backend: Entity → DTO → Migration
+2. Frontend: Type → Form → Display
+
+### Исправить даты
+```typescript
+// ✅ Используй
+formatDateForApi(date)
+
+// ❌ НЕ используй
+date.toISOString().split('T')[0]
+```
+
+### Добавить фильтр
+1. Frontend: TaskFilters.vue
+2. Computed в View
+3. Backend: Repository query
+
+## ⚠️ Частые ошибки
+
+1. **Задачи моргают** → Используй точечное обновление
+2. **Даты сдвигаются** → Используй `formatDateForApi`
+3. **Двойные borders** → Уже исправлено в `main.css`
+4. **401 Unauthorized** → Проверь токен в localStorage
+5. **CORS error** → Проверь `nelmio_cors.yaml`
+
+## 🎨 Дизайн
+
+### Цвета
+```css
+Primary: #6366f1
+Success: #10b981
+Warning: #f59e0b
+Danger: #ef4444
+```
+
+### Размеры
+```css
+Border-radius: 8-12px
+Spacing: 8px, 16px, 24px
+```
+
+## 🚀 Команды
+
+### Backend
+```bash
+docker-compose exec php bin/console make:migration
+docker-compose exec php bin/console doctrine:migrations:migrate
+docker-compose exec php bin/console cache:clear
+```
+
+### Frontend
+```bash
+npm run dev
+npm run type-check
+npm run build
+```
+
+## 📊 Task структура
+
+```typescript
+interface Task {
+  id: number
+  title: string
+  status: 'pending' | 'in_progress' | 'completed'
+  priority: 'low' | 'medium' | 'high' | 'urgent'
+  isCompleted: boolean
+  completionProgress: number  // Автоматически
+  parent?: Task               // Родитель
+  subtasks?: Task[]           // Рекурсивно!
+  tags?: Tag[]
+  startDate?: Date
+  dueDate?: Date
+}
+```
+
+## 🔐 Тестовые аккаунты
+
+```
+sollent98@gmail.com / Pahan1998
+vladislikedev@gmail.com / Pahan1998
+```
+
+## 📡 API Endpoints
+
+```
+GET    /api/tasks
+GET    /api/tasks/{id}
+POST   /api/tasks
+PUT    /api/tasks/{id}
+DELETE /api/tasks/{id}
+POST   /api/tasks/{id}/toggle
+GET    /api/tasks/statistics
+```
+
+## 💡 Best Practices
+
+### Composables
+```typescript
+// Выноси переиспользуемую логику
+export function useTaskCompletion() {
+  // ...
+  return { toggleTaskCompletion }
+}
+```
+
+### Computed vs Methods
+```vue
+<!-- ✅ Используй computed -->
+<div>{{ filteredTasks }}</div>
+
+<!-- ❌ НЕ используй methods -->
+<div>{{ filterTasks() }}</div>
+```
+
+### Debounce для поиска
+```typescript
+const debouncedSearch = debounce(searchTasks, 300)
+```
+
+## 🆘 Если что-то сломалось
+
+1. Проверь `TROUBLESHOOTING.md`
+2. Посмотри логи: `docker-compose logs -f`
+3. Проверь DevTools Console
+4. Перезапусти: `docker-compose restart`
+
+## 📚 Полезные ссылки
+
+- Project Docs: `PROJECT_DOCUMENTATION.md`
+- Quick Reference: `AI_QUICK_REFERENCE.md`
+- Architecture: `ARCHITECTURE_DECISIONS.md`
+- Troubleshooting: `TROUBLESHOOTING.md`
+- API Docs: http://localhost:8000/api/doc
+
+---
+
+**Помни**: Оптимистичные обновления + Точечное обновление = Быстрый UI ⚡
+
