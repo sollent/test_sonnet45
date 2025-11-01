@@ -14,8 +14,8 @@ import TaskCard from '@/components/tasks/TaskCard.vue'
 import TaskDetailsSidebar from '@/components/tasks/TaskDetailsSidebar.vue'
 import FloatingActionButton from '@/components/ui/FloatingActionButton.vue'
 import TaskFilters from '@/components/tasks/TaskFilters.vue'
-import TaskFiltersPanel from '@/components/tasks/TaskFiltersPanel.vue'
 import QuickFilters from '@/components/tasks/QuickFilters.vue'
+import AdvancedFiltersModal from '@/components/tasks/AdvancedFiltersModal.vue'
 import TaskDialog from '@/components/tasks/TaskDialog.vue'
 import type { Task } from '@/types/task.types'
 
@@ -36,6 +36,29 @@ const isFiltersPanelVisible = ref(false)
 const displayMode = ref<'cards' | 'list'>('cards')
 const overduePage = ref(1)
 const overdueLimit = ref(20)
+
+// Active filters count
+const activeFiltersCount = computed(() => {
+  const filters = taskStore.activeFilters
+  let count = 0
+  if (filters.tags.length > 0) count++
+  if (filters.priorities.length > 0) count++
+  if (filters.statuses.length > 0) count++
+  if (filters.completed !== null) count++
+  if (filters.dateFrom || filters.dateTo) count++
+  return count
+})
+
+// Handle quick filter change
+function handleQuickFilterChange(view: string) {
+  console.log('Quick filter changed:', view)
+  // Handle view change based on quick filter
+}
+
+// Handle filters apply
+function handleFiltersApply() {
+  console.log('Filters applied')
+}
 const unscheduledPage = ref(1)
 const unscheduledLimit = ref(20)
 
@@ -418,14 +441,18 @@ async function handleTaskDeleted() {
             </span>
           </div>
           
-        <!-- Quick Filters (Desktop) -->
-        <div v-if="!isMobile">
-          <QuickFilters />
-        </div>
-        
-        <!-- Filters Panel (Desktop) -->
-        <div v-if="!isMobile" class="filters-panel-container">
-          <TaskFiltersPanel />
+        <!-- Quick Filters Row (Desktop & Mobile) -->
+        <div class="filters-row">
+          <div class="quick-filters-wrapper">
+            <QuickFilters @filter-change="handleQuickFilterChange" />
+          </div>
+          <button @click="isFiltersPanelVisible = true" class="advanced-filters-btn">
+            <i class="pi pi-sliders-h"></i>
+            <span class="btn-text">{{ t('tasks.filters') }}</span>
+            <span v-if="taskStore.hasActiveFilters()" class="filters-count">
+              {{ activeFiltersCount }}
+            </span>
+          </button>
         </div>
 
           <!-- Loading State -->
@@ -547,41 +574,12 @@ async function handleTaskDeleted() {
       @task-deleted="handleTaskDeleted"
     />
     
-      <!-- Mobile Filters Panel -->
-      <Sidebar v-model:visible="isFiltersPanelVisible" position="full" class="filters-sidebar" :modal="true" :showCloseIcon="false">
-        <template #header>
-          <div class="mobile-filters-header">
-            <h2>{{ t('tasks.filters') }}</h2>
-            <button @click="isFiltersPanelVisible = false" class="close-btn">
-              <i class="pi pi-times"></i>
-            </button>
-          </div>
-        </template>
-        
-        <div class="mobile-filters-scroll">
-          <!-- Quick Filters Mobile -->
-          <div class="mobile-quick-filters">
-            <QuickFilters />
-          </div>
-          
-          <!-- Advanced Filters Mobile -->
-          <div class="mobile-advanced-filters">
-            <TaskFiltersPanel />
-          </div>
-        </div>
-        
-        <!-- Mobile Actions Footer -->
-        <div class="mobile-filters-footer">
-          <button @click="taskStore.clearFilters(); isFiltersPanelVisible = false" class="footer-btn footer-btn--secondary">
-            <i class="pi pi-times"></i>
-            {{ t('tasks.clear_all') }}
-          </button>
-          <button @click="isFiltersPanelVisible = false" class="footer-btn footer-btn--primary">
-            <i class="pi pi-check"></i>
-            {{ t('tasks.apply_filters') }}
-          </button>
-        </div>
-      </Sidebar>
+    <!-- Advanced Filters Modal -->
+    <AdvancedFiltersModal 
+      :visible="isFiltersPanelVisible" 
+      @update:visible="isFiltersPanelVisible = $event"
+      @apply="handleFiltersApply"
+    />
   </div>
 </template>
 
@@ -610,180 +608,102 @@ async function handleTaskDeleted() {
 }
 
 /* ===== Filters Panel ===== */
-.filters-panel-container {
-  margin-bottom: 1.5rem;
-  animation: slideDown 0.3s ease-out;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* ===== Mobile Filters Sidebar ===== */
-.filters-sidebar {
-  z-index: 99999 !important;
-}
-
-.filters-sidebar :deep(.p-sidebar-mask) {
-  z-index: 99998 !important;
-  background: rgba(0, 0, 0, 0.5) !important;
-}
-
-.filters-sidebar :deep(.p-sidebar) {
-  height: 100vh !important;
-  max-height: 100vh !important;
-  width: 100vw !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  background: #f8f9fa !important;
-  z-index: 99999 !important;
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-}
-
-.filters-sidebar :deep(.p-sidebar-content) {
-  padding: 0 !important;
-  height: 100%;
+/* Filters Row */
+.filters-row {
   display: flex;
-  flex-direction: column;
-  background: #f8f9fa;
-}
-
-.filters-sidebar :deep(.p-sidebar-header) {
-  padding: 0 !important;
-  border-bottom: none;
-  flex-shrink: 0;
-}
-
-.mobile-filters-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1.25rem 1.5rem;
-  background: white;
-  border-bottom: 1px solid #e9ecef;
-}
-
-.mobile-filters-header h2 {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #212529;
-}
-
-.close-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  background: #f8f9fa;
-  border: none;
-  border-radius: 50%;
-  color: #6c757d;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.close-btn:hover {
-  background: #e9ecef;
-  color: #495057;
-}
-
-.close-btn i {
-  font-size: 1.25rem;
-}
-
-.mobile-filters-scroll {
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 1.5rem;
-  -webkit-overflow-scrolling: touch;
-}
-
-.mobile-quick-filters {
-  margin-bottom: 1.5rem;
-}
-
-.mobile-advanced-filters {
-  /* Filters panel will have its own styling */
-}
-
-/* Override filters styling for mobile sidebar */
-.mobile-filters-scroll .filters-container {
-  box-shadow: none;
-  background: transparent;
-  margin-bottom: 0;
-}
-
-.mobile-filters-scroll .quick-filters {
-  margin-bottom: 1rem;
-}
-
-.mobile-filters-scroll .quick-filters__list {
-  padding: 0.5rem 0;
-}
-
-/* Mobile Footer Actions */
-.mobile-filters-footer {
-  display: flex;
+  align-items: flex-start;
   gap: 0.75rem;
-  padding: 1.25rem 1.5rem;
-  background: white;
-  border-top: 1px solid #e9ecef;
-  flex-shrink: 0;
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.06);
+  margin-bottom: 1.5rem;
 }
 
-.footer-btn {
+.quick-filters-wrapper {
   flex: 1;
-  display: flex;
+  min-width: 0;
+}
+
+.advanced-filters-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.125rem;
+  background: white;
+  border: 1.5px dashed #dee2e6;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #495057;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  align-self: flex-start;
+}
+
+.advanced-filters-btn i {
+  font-size: 1rem;
+  color: #6366f1;
+  flex-shrink: 0;
+}
+
+.btn-text {
+  color: inherit;
+}
+
+.advanced-filters-btn:hover {
+  background: #f8f9fa;
+  border-color: #6366f1;
+  border-style: solid;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.filters-count {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  padding: 0.875rem 1.5rem;
-  border: none;
-  border-radius: 12px;
-  font-size: 0.938rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.footer-btn--primary {
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.313rem;
   background: #6366f1;
   color: white;
+  border-radius: 8px;
+  font-size: 0.688rem;
+  font-weight: 700;
 }
 
-.footer-btn--primary:hover {
-  background: #5558e3;
-  transform: scale(1.02);
-}
+/* Mobile specific overrides */
+@media (max-width: 768px) {
+  .filters-row {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
 
-.footer-btn--secondary {
-  background: #f8f9fa;
-  color: #dc3545;
-  border: 1.5px solid #e9ecef;
-}
+  .quick-filters-wrapper {
+    flex: 1;
+  }
 
-.footer-btn--secondary:hover {
-  background: #fff5f5;
-  border-color: #dc3545;
-}
+  .advanced-filters-btn {
+    padding: 0.625rem;
+    min-width: 3.5rem;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
 
-.footer-btn i {
-  font-size: 1rem;
+  .advanced-filters-btn .btn-text {
+    display: none;
+  }
+
+  .advanced-filters-btn i {
+    font-size: 1.25rem;
+  }
+
+  .filters-count {
+    position: absolute;
+    top: -0.375rem;
+    right: -0.375rem;
+  }
 }
 
 .dashboard-background {

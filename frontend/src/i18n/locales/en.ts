@@ -396,6 +396,8 @@ export default {
     filters_applied: '{count} filter(s) applied',
     show_filters: 'Show Filters',
     hide_filters: 'Hide Filters',
+    clear: 'Clear',
+    add_tag: 'Add Tag',
     
     // Messages
     task_created: 'Task created successfully',

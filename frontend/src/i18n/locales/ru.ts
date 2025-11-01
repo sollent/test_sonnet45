@@ -403,6 +403,8 @@ export default {
     filters_applied: 'Применено фильтров: {count}',
     show_filters: 'Показать фильтры',
     hide_filters: 'Скрыть фильтры',
+    clear: 'Очистить',
+    add_tag: 'Добавить тег',
     
     // Messages
     task_created: 'Задача успешно создана',
