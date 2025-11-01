@@ -1073,6 +1073,7 @@ function handleClose() {
             @complete="handleTagSearch"
             :forceSelection="false"
             :pt="{ input: { onKeydown: onEditTagsKeydown } }"
+            :appendTo="'self'"
           />
           
           <!-- Popular tags -->
@@ -1358,6 +1359,7 @@ function handleClose() {
           @complete="handleTagSearch"
           :forceSelection="false"
           :pt="{ input: { onKeydown: onSubtaskTagsKeydown } }"
+          :appendTo="'self'"
         />
       </div>
 
@@ -1463,14 +1465,20 @@ function handleClose() {
 
 .date-item {
   display: flex;
-  align-items: flex-start;
+  align-items: center; /* keep icon vertically centered */
   gap: 0.75rem;
 }
 
 .date-item > i {
   font-size: 1.25rem;
   color: #667eea;
-  margin-top: 0.25rem;
+  margin-top: 0; /* prevent drifting */
+  line-height: 1; /* avoid baseline shifts */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
 }
 
 .date-item > div {
@@ -1618,6 +1626,12 @@ function handleClose() {
 
 .metadata-item > i {
   color: #a0aec0;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
 }
 
 .action-buttons {
@@ -1647,15 +1661,15 @@ function handleClose() {
   margin: 0;
 }
 
-/* Remove all outlines from inputs and buttons */
-:deep(.p-inputtext),
-:deep(.p-textarea),
-:deep(.p-dropdown),
-:deep(.p-calendar),
-:deep(.p-chips),
-:deep(.p-chips .p-chips-multiple-container),
-:deep(.p-chips .p-chips-input-token input),
-:deep(.p-button) {
+/* Remove all outlines from inputs and buttons (scoped under sidebar content) */
+.task-details :deep(.p-inputtext),
+.task-details :deep(.p-textarea),
+.task-details :deep(.p-dropdown),
+.task-details :deep(.p-calendar),
+.task-details :deep(.p-chips),
+.task-details :deep(.p-chips .p-chips-multiple-container),
+.task-details :deep(.p-chips .p-chips-input-token input),
+.task-details :deep(.p-button) {
   outline: none !important;
 }
 
@@ -1668,20 +1682,20 @@ function handleClose() {
 
 :deep(.p-inputtext:focus),
 :deep(.p-inputtext:focus-visible),
-:deep(.p-textarea:focus),
-:deep(.p-textarea:focus-visible),
-:deep(.p-dropdown:focus),
-:deep(.p-dropdown:focus-visible),
-:deep(.p-calendar:focus),
-:deep(.p-calendar:focus-visible),
-:deep(.p-chips:focus),
-:deep(.p-chips:focus-visible),
-:deep(.p-chips .p-chips-multiple-container:focus),
-:deep(.p-chips .p-chips-multiple-container:focus-visible),
-:deep(.p-chips .p-chips-input-token input:focus),
-:deep(.p-chips .p-chips-input-token input:focus-visible),
-:deep(.p-button:focus),
-:deep(.p-button:focus-visible) {
+.task-details :deep(.p-textarea:focus),
+.task-details :deep(.p-textarea:focus-visible),
+.task-details :deep(.p-dropdown:focus),
+.task-details :deep(.p-dropdown:focus-visible),
+.task-details :deep(.p-calendar:focus),
+.task-details :deep(.p-calendar:focus-visible),
+.task-details :deep(.p-chips:focus),
+.task-details :deep(.p-chips:focus-visible),
+.task-details :deep(.p-chips .p-chips-multiple-container:focus),
+.task-details :deep(.p-chips .p-chips-multiple-container:focus-visible),
+.task-details :deep(.p-chips .p-chips-input-token input:focus),
+.task-details :deep(.p-chips .p-chips-input-token input:focus-visible),
+.task-details :deep(.p-button:focus),
+.task-details :deep(.p-button:focus-visible) {
   outline: none !important;
 }
 
@@ -1695,11 +1709,11 @@ function handleClose() {
   box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.2) !important;
 }
 
-:deep(.p-button) {
+.task-details :deep(.p-button) {
   font-weight: 600;
 }
 
-:deep(.p-button:not(.p-button-text):not(.p-button-outlined)) {
+.task-details :deep(.p-button:not(.p-button-text):not(.p-button-outlined)) {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border: none;
 }

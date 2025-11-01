@@ -107,6 +107,7 @@
           @complete="handleTagSearch"
           :forceSelection="false"
           :pt="{ input: { onKeydown: onTagsKeydown } }"
+          :appendTo="'self'"
         />
         <small class="field-hint">{{ t('tasks.tags_help') }}</small>
         

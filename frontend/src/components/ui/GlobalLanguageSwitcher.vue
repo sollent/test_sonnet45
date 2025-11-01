@@ -120,7 +120,7 @@ function selectLanguage(lang: LanguageOption) {
 <style scoped>
 .global-language-switcher {
   position: fixed;
-  right: 1.5rem;
+  right: max(1.5rem, calc((100vw - 1600px) / 2 + 1.5rem));
   bottom: 1.5rem;
   z-index: 9999;
 }

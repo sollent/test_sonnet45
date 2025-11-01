@@ -68,12 +68,12 @@ function handleClick() {
 /* Positions */
 .fab-bottom-right {
   bottom: 2rem;
-  right: 2rem;
+  right: max(1.5rem, calc((100vw - 1600px) / 2 + 1.5rem));
 }
 
 .fab-bottom-left {
   bottom: 2rem;
-  left: 2rem;
+  left: max(1.5rem, calc((100vw - 1600px) / 2 + 1.5rem));
 }
 
 .fab-top-right {

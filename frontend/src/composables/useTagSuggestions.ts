@@ -2,6 +2,7 @@ import { ref, watch, type Ref } from 'vue'
 import { tagService } from '@/services/tag.service'
 import type { Tag } from '@/types/task.types'
 import { useToast } from './useToast'
+import { useTaskStore } from '@/stores/task.store'
 
 /**
  * Composable for tag suggestions and autocomplete functionality
@@ -28,12 +29,60 @@ export function useTagSuggestions() {
     popularTagsError.value = null
 
     try {
-      popularTags.value = await tagService.getMostUsedTags(limit)
+      const apiTags = await tagService.getMostUsedTags(limit)
+      popularTags.value = apiTags
+      
+      // Fallback: if API returned empty, compute from currently loaded tasks
+      if (!apiTags || apiTags.length === 0) {
+        const fallback = computePopularFromStore(limit)
+        if (fallback.length > 0) {
+          popularTags.value = fallback
+        }
+      }
     } catch (error: any) {
       popularTagsError.value = error.message || 'Failed to load popular tags'
       console.error('Failed to fetch popular tags:', error)
+      // Try fallback from store on error
+      const fallback = computePopularFromStore(limit)
+      popularTags.value = fallback
     } finally {
       isLoadingPopular.value = false
+    }
+  }
+
+  function computePopularFromStore(limit: number = 7): Tag[] {
+    try {
+      const taskStore = useTaskStore()
+      const sources = [
+        taskStore.tasks,
+        taskStore.overdueTasksPaginated?.tasks || [],
+        taskStore.unscheduledTasksPaginated?.tasks || []
+      ]
+
+      const nameToAgg = new Map<string, { tag: Tag, count: number }>()
+      for (const list of sources) {
+        for (const task of list) {
+          const tags = task.tags || []
+          for (const t of tags) {
+            const key = t.name.toLowerCase()
+            const current = nameToAgg.get(key)
+            if (current) {
+              current.count += 1
+            } else {
+              nameToAgg.set(key, { tag: { id: t.id, name: t.name, color: t.color }, count: 1 })
+            }
+          }
+        }
+      }
+
+      const sorted = Array.from(nameToAgg.values())
+        .sort((a, b) => b.count - a.count)
+        .slice(0, limit)
+        .map(x => x.tag)
+
+      return sorted
+    } catch (e) {
+      return []
     }
   }
 

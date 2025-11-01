@@ -43,14 +43,28 @@ class TagService {
   }
 
   /**
+   * Backwards-compatible alias used by store
+   */
+  async getTags(limit?: number): Promise<Tag[]> {
+    return this.getAllTags(limit)
+  }
+
+  /**
    * Create a new tag
    */
-  async createTag(name: string, color?: string): Promise<Tag> {
+  async createTag(payload: { name: string; color?: string }): Promise<Tag> {
     const response = await apiClient.post<Tag>(`${this.API_URL}`, {
-      name,
-      color: color || '#3B82F6'
+      name: payload.name,
+      color: payload.color || '#3B82F6'
     })
     return response.data
+  }
+
+  /**
+   * Delete tag by id
+   */
+  async deleteTag(id: number): Promise<void> {
+    await apiClient.delete(`${this.API_URL}/${id}`)
   }
 }
 

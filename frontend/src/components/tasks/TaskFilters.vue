@@ -244,6 +244,16 @@ function handleSelectView(viewId: string) {
   position: relative;
   overflow: hidden;
 }
+.view-item i {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  line-height: 1; /* avoid baseline shifts while icon font loads */
+  font-size: 1.125rem;
+}
+
 
 .view-item::before {
   content: '';

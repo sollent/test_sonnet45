@@ -353,6 +353,7 @@ function handleClose() {
           @complete="handleTagSearch"
           :forceSelection="false"
           :pt="{ input: { onKeydown: onCreateDialogTagsKeydown } }"
+          :appendTo="'self'"
         />
         <small class="field-hint">{{ t('tasks.tags_hint') }}</small>
         

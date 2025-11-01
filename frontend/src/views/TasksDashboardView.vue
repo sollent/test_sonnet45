@@ -425,7 +425,7 @@ async function handleTaskDeleted() {
               <div class="task-group-list">
                 <TaskCard
                   v-for="task in group.tasks"
-                  :key="task.id"
+                  :key="`${task.id}:${task.isCompleted ? 1 : 0}`"
                   :task="task"
                   :selected="selectedTask?.id === task.id"
                   @click="handleTaskClick"
@@ -445,7 +445,7 @@ async function handleTaskDeleted() {
               <div class="tasks-list">
                 <div
                   v-for="task in group.tasks"
-                  :key="task.id"
+                  :key="`${task.id}:${task.isCompleted ? 1 : 0}`"
                   :class="['task-item', { 'task-completed': task.isCompleted }]"
                   @click="handleTaskClick(task)"
                 >
@@ -483,18 +483,17 @@ async function handleTaskDeleted() {
           </div>
 
           <!-- Paginator for Paginated Views -->
-          <transition name="fade-up">
-            <div v-if="['overdue', 'unscheduled'].includes(selectedView) && displayedTasks.length > 0" class="paginator-wrapper">
-              <Paginator
-                :rows="selectedView === 'overdue' ? overdueLimit : unscheduledLimit"
-                :total-records="selectedView === 'overdue' ? taskStore.overdueTotal : taskStore.unscheduledTotal"
-                :rows-per-page-options="[10, 20, 50]"
-                :pageLinkSize="isMobile ? 4 : 5"
-                @page="selectedView === 'overdue' ? onOverduePageChange($event) : onUnscheduledPageChange($event)"
-                class="custom-paginator"
-              />
-            </div>
-          </transition>
+          <div v-if="['overdue', 'unscheduled'].includes(selectedView)" class="paginator-wrapper">
+            <Paginator
+              :rows="selectedView === 'overdue' ? overdueLimit : unscheduledLimit"
+              :total-records="selectedView === 'overdue' ? taskStore.overdueTotal : taskStore.unscheduledTotal"
+              :rows-per-page-options="[10, 20, 50]"
+              :pageLinkSize="isMobile ? 4 : 5"
+              template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
+              @page="selectedView === 'overdue' ? onOverduePageChange($event) : onUnscheduledPageChange($event)"
+              class="custom-paginator"
+            />
+          </div>
         </main>
       </div>
     </div>
@@ -654,6 +653,13 @@ async function handleTaskDeleted() {
   gap: 0.5rem;
   justify-content: flex-end;
   margin-bottom: 1rem;
+}
+
+.view-toggle :deep(.p-button .p-button-icon) {
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .mobile-search-container :deep(.p-inputtext) {
