@@ -50,6 +50,31 @@ export default {
     }
   },
 
+  days: {
+    mon_short: 'Mon',
+    tue_short: 'Tue',
+    wed_short: 'Wed',
+    thu_short: 'Thu',
+    fri_short: 'Fri',
+    sat_short: 'Sat',
+    sun_short: 'Sun'
+  },
+  
+  months: {
+    january: 'January',
+    february: 'February',
+    march: 'March',
+    april: 'April',
+    may: 'May',
+    june: 'June',
+    july: 'July',
+    august: 'August',
+    september: 'September',
+    october: 'October',
+    november: 'November',
+    december: 'December'
+  },
+  
   auth: {
     login_title: 'Welcome Back',
     login_subtitle: 'Sign in to continue',
@@ -399,6 +424,22 @@ export default {
     clear: 'Clear',
     add_tag: 'Add Tag',
     
+    // File Attachments
+    attachments: 'Attachments',
+    choose_files: 'Choose Files',
+    upload: 'Upload',
+    cancel: 'Cancel',
+    drag_files_here: 'Drag files here or click to select',
+    max_file_size: 'Maximum size: {size}',
+    uploading: 'Uploading',
+    file_uploaded: 'File uploaded successfully',
+    file_deleted: 'File deleted',
+    file_too_large: 'File is too large',
+    invalid_file_type: 'Invalid file type',
+    upload_error: 'Upload error',
+    delete_error: 'Delete error',
+    add_tag_placeholder: 'Add tags',
+    
     // Messages
     task_created: 'Task created successfully',
     
@@ -425,6 +466,36 @@ export default {
     edit_task_description: 'Edit your task details',
     creating_subtask: 'Creating subtask for selected task',
     add_tag_placeholder: 'Add tags (press Enter)',
+    
+    // Recurrence
+    repeat: 'Repeat',
+    no_repeat: 'No repeat',
+    recurrence_type: 'Recurrence type',
+    select_recurrence_type: 'Select recurrence type',
+    daily: 'Daily',
+    weekly: 'Weekly', 
+    monthly: 'Monthly',
+    yearly: 'Yearly',
+    custom: 'Custom',
+    daily_description: 'Task will repeat every day',
+    days_of_week: 'Days of week',
+    day_of_month: 'Day of month',
+    month: 'Month',
+    day: 'Day',
+    enter_day: 'Enter day',
+    select_month: 'Select month',
+    every_n_days: 'Repeat interval',
+    every: 'Every',
+    days: 'days',
+    time_of_day: 'Time of day',
+    select_time: 'Select time',
+    advanced_settings: 'Advanced settings',
+    end_date_optional: 'End date (optional)',
+    select_end_date: 'Select end date',
+    max_occurrences_optional: 'Maximum occurrences (optional)',
+    no_limit: 'No limit',
+    preview_occurrences: 'Next occurrences',
+    recurring: 'Recurring',
     tags_hint: 'Press Enter or comma to add tags',
     
     // Empty states

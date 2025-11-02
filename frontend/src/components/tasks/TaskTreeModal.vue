@@ -10,19 +10,21 @@
   >
     <div class="tree-modal-container">
       <div class="tree-modal-header">
-        <h2 class="tree-modal-title">
-          <i class="pi pi-sitemap" style="margin-right: 0.75rem;" />
-          {{ task?.title }}
-        </h2>
-        <div class="tree-modal-stats">
-          <span class="stat-item">
-            <i class="pi pi-list" />
-            {{ totalTasks }} {{ t('tasks.tasks_total') }}
-          </span>
-          <span class="stat-item completed">
-            <i class="pi pi-check-circle" />
-            {{ completedTasks }} {{ t('tasks.status_completed').toLowerCase() }}
-          </span>
+        <div class="header-main">
+          <h2 class="tree-modal-title">
+            <i class="pi pi-sitemap" />
+            <span class="title-text">{{ truncateText(task?.title || '', 50) }}</span>
+          </h2>
+          <div class="tree-modal-stats">
+            <span class="stat-item">
+              <span class="stat-number">{{ totalTasks }}</span>
+              <i class="pi pi-list" />
+            </span>
+            <span class="stat-item completed">
+              <span class="stat-number">{{ completedTasks }}</span>
+              <i class="pi pi-check-circle" />
+            </span>
+          </div>
         </div>
       </div>
 
@@ -128,23 +130,23 @@
 
       <div class="tree-modal-footer">
         <div class="tree-legend">
-          <span class="legend-item">
+          <span class="legend-item" v-tooltip="t('tasks.main_task')">
             <i class="pi pi-folder" style="color: #8b92a8;" />
-            {{ t('tasks.main_task') }}
           </span>
-          <span class="legend-item">
+          <span class="legend-item" v-tooltip="t('tasks.status_pending')">
             <i class="pi pi-circle" style="color: #94a3b8;" />
-            {{ t('tasks.status_pending') }}
           </span>
-          <span class="legend-item">
+          <span class="legend-item" v-tooltip="t('tasks.status_completed')">
             <i class="pi pi-check-circle" style="color: #10b981;" />
-            {{ t('tasks.status_completed') }}
           </span>
         </div>
         <Button 
-          :label="t('common.close')" 
+          icon="pi pi-times" 
           severity="secondary" 
+          text
+          rounded
           @click="visible = false" 
+          v-tooltip="t('common.close')"
         />
       </div>
     </div>
@@ -289,9 +291,19 @@ const completedStatesMap = ref(new Map<number, boolean>())
 // Dialog style based on screen size - mobile always fullscreen
 const dialogStyle = computed(() => {
   if (isMobile.value) {
-    return { width: '100vw', height: '100vh' }
+    return { 
+      width: '100vw', 
+      height: '100vh',
+      margin: 0,
+      maxHeight: '100vh'
+    }
   }
-  return { width: '90vw', height: '90vh' }
+  return { 
+    width: '95vw', 
+    height: '94vh',
+    maxHeight: '94vh',
+    maxWidth: '1400px'
+  }
 })
 
 // Forms
@@ -652,42 +664,77 @@ async function refreshTask() {
 }
 
 .tree-modal-header {
-  padding: 1.5rem;
-  background: linear-gradient(135deg, #e0e7ff 0%, #f0f4ff 100%);
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   border-bottom: 1px solid #e2e8f0;
 }
 
+.header-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
 .tree-modal-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin: 0 0 0.75rem 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0;
   display: flex;
   align-items: center;
+  gap: 0.5rem;
   color: #1e293b;
+  flex: 1;
+  min-width: 0;
+}
+
+.tree-modal-title i {
+  flex-shrink: 0;
+  font-size: 1rem;
+  color: #6366f1;
+}
+
+.title-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .tree-modal-stats {
   display: flex;
-  gap: 2rem;
+  gap: 1rem;
+  flex-shrink: 0;
 }
 
 .stat-item {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.9375rem;
+  gap: 0.25rem;
+  font-size: 0.875rem;
   color: #64748b;
+  background: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
 }
 
 .stat-item.completed {
   color: #10b981;
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+}
+
+.stat-number {
+  font-weight: 600;
+  font-size: 0.9375rem;
 }
 
 .tree-modal-content {
   flex: 1;
   overflow: auto;
-  padding: 2rem;
+  padding: 1rem;
   background: #f8f9fa;
+  min-height: 0; /* Important for flex shrinking */
 }
 
 /* Compact tree layout */
@@ -730,9 +777,9 @@ async function refreshTask() {
 .tree-node-card {
   background: white;
   border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 0.75rem;
-  width: 220px;
+  border-radius: 8px;
+  padding: 0.625rem;
+  width: 200px;
   transition: all 0.2s ease;
   cursor: pointer;
   position: relative;
@@ -781,13 +828,13 @@ async function refreshTask() {
 }
 
 .node-title {
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: #1e293b;
-  line-height: 1.3;
+  line-height: 1.2;
   word-break: break-word;
   flex: 1;
-  padding-right: 2rem;
+  padding-right: 1.5rem;
 }
 
 .node-title.completed {
@@ -796,9 +843,10 @@ async function refreshTask() {
 }
 
 .node-description {
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   color: #64748b;
-  line-height: 1.3;
+  line-height: 1.25;
+  margin-top: 0.125rem;
 }
 
 .node-footer {
@@ -919,58 +967,159 @@ async function refreshTask() {
 }
 
 .tree-modal-footer {
-  padding: 1.5rem;
+  padding: 0.5rem 1rem;
   background: white;
   border-top: 1px solid #e2e8f0;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  min-height: 3rem;
 }
 
 .tree-legend {
   display: flex;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 .legend-item {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.875rem;
-  color: #6b7280;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: #f8fafc;
+  border-radius: 6px;
+  cursor: help;
+  transition: all 0.2s;
+}
+
+.legend-item:hover {
+  background: #e2e8f0;
+}
+
+.legend-item i {
+  font-size: 1rem;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
   .tree-modal-header {
-    padding: 1rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .header-main {
+    gap: 0.5rem;
   }
 
   .tree-modal-title {
-    font-size: 1.25rem;
+    font-size: 1rem;
+    gap: 0.375rem;
+  }
+
+  .tree-modal-title i {
+    font-size: 0.875rem;
+  }
+
+  .tree-modal-stats {
+    gap: 0.5rem;
+  }
+
+  .stat-item {
+    padding: 0.125rem 0.375rem;
+    font-size: 0.75rem;
+  }
+
+  .stat-number {
+    font-size: 0.8125rem;
   }
 
   .tree-modal-content {
-    padding: 1rem;
+    padding: 0.75rem;
   }
 
   .tree-node-card {
-    width: 200px;
+    width: 180px;
+    padding: 0.5rem;
   }
 
   .tree-modal-footer {
-    flex-direction: column;
-    gap: 1rem;
+    padding: 0.375rem 0.75rem;
+    min-height: 2.5rem;
   }
 
   .tree-legend {
-    flex-wrap: wrap;
-    justify-content: center;
-    font-size: 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .legend-item {
+    width: 28px;
+    height: 28px;
+  }
+
+  .legend-item i {
+    font-size: 0.875rem;
   }
 
   .form-row {
     grid-template-columns: 1fr;
+  }
+
+  /* Hide dialog header on mobile to save space */
+  :deep(.p-dialog-header) {
+    padding: 0.75rem !important;
+  }
+
+  :deep(.p-dialog-title) {
+    font-size: 1rem !important;
+  }
+
+  :deep(.p-dialog-header-icon) {
+    width: 1.75rem !important;
+    height: 1.75rem !important;
+  }
+}
+
+/* Dialog overrides for better space usage */
+.task-tree-modal :deep(.p-dialog) {
+  display: flex;
+  flex-direction: column;
+}
+
+.task-tree-modal :deep(.p-dialog-header) {
+  flex-shrink: 0;
+  padding: 0.75rem 1rem !important;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.task-tree-modal :deep(.p-dialog-title) {
+  font-size: 1.125rem !important;
+  font-weight: 600 !important;
+}
+
+.task-tree-modal :deep(.p-dialog-content) {
+  padding: 0 !important;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Mobile specific dialog overrides */
+@media (max-width: 768px) {
+  .task-tree-modal :deep(.p-dialog-header) {
+    padding: 0.5rem 0.75rem !important;
+  }
+  
+  .task-tree-modal :deep(.p-dialog-title) {
+    font-size: 0.9375rem !important;
+  }
+  
+  .task-tree-modal :deep(.p-dialog-header-icon) {
+    width: 1.5rem !important;
+    height: 1.5rem !important;
   }
 }
 </style>

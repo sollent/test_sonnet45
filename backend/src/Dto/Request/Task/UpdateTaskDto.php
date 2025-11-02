@@ -37,6 +37,11 @@ final class UpdateTaskDto
      */
     public ?array $tags = null;
 
+    /**
+     * @var int[]|null
+     */
+    public ?array $mediaIds = null;
+
     public ?int $sortOrder = null;
 
     public ?bool $isArchived = null;

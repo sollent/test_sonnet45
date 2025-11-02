@@ -50,6 +50,31 @@ export default {
     }
   },
 
+  days: {
+    mon_short: 'Пн',
+    tue_short: 'Вт',
+    wed_short: 'Ср',
+    thu_short: 'Чт',
+    fri_short: 'Пт',
+    sat_short: 'Сб',
+    sun_short: 'Вс'
+  },
+  
+  months: {
+    january: 'Январь',
+    february: 'Февраль',
+    march: 'Март',
+    april: 'Апрель',
+    may: 'Май',
+    june: 'Июнь',
+    july: 'Июль',
+    august: 'Август',
+    september: 'Сентябрь',
+    october: 'Октябрь',
+    november: 'Ноябрь',
+    december: 'Декабрь'
+  },
+  
   auth: {
     login_title: 'С возвращением',
     login_subtitle: 'Войдите, чтобы продолжить',
@@ -406,6 +431,22 @@ export default {
     clear: 'Очистить',
     add_tag: 'Добавить тег',
     
+    // File Attachments
+    attachments: 'Вложения',
+    choose_files: 'Выбрать файлы',
+    upload: 'Загрузить',
+    cancel: 'Отмена',
+    drag_files_here: 'Перетащите файлы сюда или нажмите для выбора',
+    max_file_size: 'Максимальный размер: {size}',
+    uploading: 'Загрузка',
+    file_uploaded: 'Файл успешно загружен',
+    file_deleted: 'Файл удален',
+    file_too_large: 'Файл слишком большой',
+    invalid_file_type: 'Недопустимый тип файла',
+    upload_error: 'Ошибка загрузки файла',
+    delete_error: 'Ошибка удаления файла',
+    add_tag_placeholder: 'Добавить теги',
+    
     // Messages
     task_created: 'Задача успешно создана',
     task_updated: 'Задача успешно обновлена',
@@ -421,6 +462,36 @@ export default {
     edit_task_description: 'Измените детали вашей задачи',
     creating_subtask: 'Создание подзадачи для выбранной задачи',
     add_tag_placeholder: 'Добавить теги (нажмите Enter)',
+    
+    // Recurrence
+    repeat: 'Повторять',
+    no_repeat: 'Без повторений',
+    recurrence_type: 'Тип повторения',
+    select_recurrence_type: 'Выберите тип повторения',
+    daily: 'Ежедневно',
+    weekly: 'Еженедельно', 
+    monthly: 'Ежемесячно',
+    yearly: 'Ежегодно',
+    custom: 'Настраиваемый',
+    daily_description: 'Задача будет повторяться каждый день',
+    days_of_week: 'Дни недели',
+    day_of_month: 'День месяца',
+    month: 'Месяц',
+    day: 'День',
+    enter_day: 'Введите день',
+    select_month: 'Выберите месяц',
+    every_n_days: 'Интервал повторения',
+    every: 'Каждые',
+    days: 'дней',
+    time_of_day: 'Время дня',
+    select_time: 'Выберите время',
+    advanced_settings: 'Расширенные настройки',
+    end_date_optional: 'Дата окончания (опционально)',
+    select_end_date: 'Выберите дату окончания',
+    max_occurrences_optional: 'Максимум повторений (опционально)',
+    no_limit: 'Без ограничений',
+    preview_occurrences: 'Следующие повторения',
+    recurring: 'Повторяется',
     tags_hint: 'Нажмите Enter или запятую для добавления тегов',
     
     // Empty states

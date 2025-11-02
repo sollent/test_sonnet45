@@ -82,6 +82,11 @@ class Task extends AbstractEntity
     #[Groups(['task:read', 'task:write', 'task:list'])]
     private Collection $tags;
 
+    #[ORM\ManyToMany(targetEntity: MediaObject::class)]
+    #[ORM\JoinTable(name: 'task_media')]
+    #[Groups(['task:read', 'task:write'])]
+    private Collection $mediaObjects;
+
     #[ORM\Column]
     #[Groups(['task:read'])]
     private int $sortOrder = 0;
@@ -90,11 +95,23 @@ class Task extends AbstractEntity
     #[Groups(['task:read'])]
     private bool $isArchived = false;
 
+    #[ORM\OneToOne(targetEntity: RecurrenceRule::class, mappedBy: 'templateTask', cascade: ['persist', 'remove'])]
+    private ?RecurrenceRule $recurrenceRule = null;
+
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    #[Groups(['task:read'])]
+    private bool $isRecurringTemplate = false;
+
+    #[ORM\ManyToOne(targetEntity: RecurrenceRule::class)]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?RecurrenceRule $generatedFromRule = null;
+
     public function __construct()
     {
         parent::__construct();
         $this->subtasks = new ArrayCollection();
         $this->tags = new ArrayCollection();
+        $this->mediaObjects = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -284,6 +301,37 @@ class Task extends AbstractEntity
         return $this;
     }
 
+    /**
+     * @return Collection<int, MediaObject>
+     */
+    public function getMediaObjects(): Collection
+    {
+        return $this->mediaObjects;
+    }
+
+    public function addMediaObject(MediaObject $mediaObject): static
+    {
+        if (!$this->mediaObjects->contains($mediaObject)) {
+            $this->mediaObjects->add($mediaObject);
+        }
+
+        return $this;
+    }
+
+    public function removeMediaObject(MediaObject $mediaObject): static
+    {
+        $this->mediaObjects->removeElement($mediaObject);
+
+        return $this;
+    }
+    
+    public function clearMediaObjects(): static
+    {
+        $this->mediaObjects->clear();
+
+        return $this;
+    }
+
     public function isCompleted(): bool
     {
         return $this->status === TaskStatus::COMPLETED;
@@ -306,5 +354,38 @@ class Task extends AbstractEntity
         
         $completed = $this->subtasks->filter(fn($task) => $task->isCompleted())->count();
         return ($completed / $this->subtasks->count()) * 100;
+    }
+
+    public function getRecurrenceRule(): ?RecurrenceRule
+    {
+        return $this->recurrenceRule;
+    }
+
+    public function setRecurrenceRule(?RecurrenceRule $recurrenceRule): self
+    {
+        $this->recurrenceRule = $recurrenceRule;
+        return $this;
+    }
+
+    public function isRecurringTemplate(): bool
+    {
+        return $this->isRecurringTemplate;
+    }
+
+    public function setIsRecurringTemplate(bool $isRecurringTemplate): self
+    {
+        $this->isRecurringTemplate = $isRecurringTemplate;
+        return $this;
+    }
+
+    public function getGeneratedFromRule(): ?RecurrenceRule
+    {
+        return $this->generatedFromRule;
+    }
+
+    public function setGeneratedFromRule(?RecurrenceRule $generatedFromRule): self
+    {
+        $this->generatedFromRule = $generatedFromRule;
+        return $this;
     }
 }

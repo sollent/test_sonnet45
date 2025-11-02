@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Dto\Response\Task;
 
+use App\Dto\Response\Recurrence\RecurrenceRuleDto;
 use App\Entity\Task;
 use App\Enum\TaskPriority;
 use App\Enum\TaskStatus;
@@ -31,6 +32,9 @@ final class TaskResponseDto
     public int $subtaskCount = 0;
     public int $completedSubtaskCount = 0;
     public bool $hasNestedSubtasks = false;
+    public array $attachments = [];
+    public bool $isRecurringTemplate = false;
+    public ?array $recurrenceRule = null;
 
     public static function fromEntity(Task $task, bool $includeSubtasks = false, bool $includeMeta = true): self
     {
@@ -49,6 +53,7 @@ final class TaskResponseDto
         $dto->isCompleted = $task->isCompleted();
         $dto->isOverdue = $task->isOverdue();
         $dto->completionProgress = $task->getCompletionProgress();
+        $dto->isRecurringTemplate = $task->isRecurringTemplate();
 
         if ($includeMeta) {
             $dto->createdAt = $task->getCreatedAt();
@@ -76,6 +81,28 @@ final class TaskResponseDto
                 fn($subtask) => self::fromEntity($subtask, true, $includeMeta),
                 $subtasks->toArray()
             );
+        }
+
+        // Map media objects
+        $dto->attachments = array_map(
+            static fn($media) => [
+                'id' => $media->getId(),
+                'fileName' => $media->getFileName(),
+                'originalName' => $media->getOriginalName(),
+                'mimeType' => $media->getMimeType(),
+                'fileSize' => $media->getFileSize(),
+                'fileSizeHuman' => $media->getHumanReadableSize(),
+                'fileType' => $media->getFileType(),
+                'filePath' => $media->getFilePath(),
+                'thumbnailPath' => $media->getThumbnailPath(),
+                'createdAt' => $media->getCreatedAt()->format('Y-m-d H:i:s'),
+            ],
+            $task->getMediaObjects()->toArray()
+        );
+
+        // Map recurrence rule if exists
+        if ($task->getRecurrenceRule()) {
+            $dto->recurrenceRule = RecurrenceRuleDto::fromEntity($task->getRecurrenceRule());
         }
 
         return $dto;

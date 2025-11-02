@@ -40,7 +40,27 @@ final class CreateTaskDto
      */
     public array $tags = [];
 
+    /**
+     * @var int[]
+     */
+    public array $mediaIds = [];
+
     public int $sortOrder = 0;
 
     public bool $isArchived = false;
+
+    /**
+     * Recurrence settings (optional)
+     * @var array{
+     *   recurrenceType: string,
+     *   interval?: int,
+     *   daysOfWeek?: int[],
+     *   dayOfMonth?: int,
+     *   monthOfYear?: int,
+     *   endDate?: string,
+     *   maxOccurrences?: int,
+     *   timeOfDay?: string
+     * }|null
+     */
+    public ?array $recurrence = null;
 }

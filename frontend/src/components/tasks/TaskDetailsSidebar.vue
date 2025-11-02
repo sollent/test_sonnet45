@@ -5,6 +5,9 @@ import { useTaskStore } from '@/stores/task.store'
 import { useToast } from '@/composables/useToast'
 import { useTaskCompletion } from '@/composables/useTaskCompletion'
 import { useTagSuggestions } from '@/composables/useTagSuggestions'
+import SimpleFileUploader from '@/components/ui/SimpleFileUploader.vue'
+import mediaService from '@/services/media.service'
+import type { TaskAttachment } from '@/types/task.types'
 import Sidebar from 'primevue/sidebar'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
@@ -899,6 +902,78 @@ function handleClose() {
   editMode.value = false
   emit('update:visible', false)
 }
+
+// Handle file upload
+async function handleFileUpload(file: File) {
+  if (!localTask.value?.id) return
+  
+  try {
+    // 1. Загружаем файл и получаем MediaObject
+    const mediaObject = await mediaService.uploadFile(file)
+    
+    // 2. Обновляем задачу с новым mediaId
+    const currentMediaIds = localTask.value.attachments?.map(a => a.id) || []
+    const newMediaIds = [...currentMediaIds, mediaObject.id]
+    
+    const updateData = {
+      mediaIds: newMediaIds
+    }
+    
+    const updatedTask = await taskStore.updateTask(localTask.value.id, updateData)
+    localTask.value = { ...updatedTask }
+    
+    showSuccess(t('tasks.file_uploaded'))
+    
+    // Update props
+    if (props.selectedTask) {
+      emit('update:selectedTask', localTask.value)
+    }
+    if (props.task) {
+      emit('update:task', localTask.value)
+    }
+  } catch (error: any) {
+    showError(error.message || 'Upload error')
+  }
+}
+
+// Handle file delete
+async function handleFileDelete(attachmentId: number) {
+  if (!localTask.value?.id) return
+  
+  try {
+    // 1. Удаляем MediaObject
+    await mediaService.deleteMedia(attachmentId)
+    
+    // 2. Обновляем задачу без этого mediaId
+    const currentMediaIds = localTask.value.attachments?.map(a => a.id) || []
+    const newMediaIds = currentMediaIds.filter(id => id !== attachmentId)
+    
+    const updateData = {
+      mediaIds: newMediaIds
+    }
+    
+    const updatedTask = await taskStore.updateTask(localTask.value.id, updateData)
+    localTask.value = { ...updatedTask }
+    
+    showSuccess(t('tasks.file_deleted'))
+    
+    // Update props
+    if (props.selectedTask) {
+      emit('update:selectedTask', localTask.value)
+    }
+    if (props.task) {
+      emit('update:task', localTask.value)
+    }
+  } catch (error: any) {
+    showError(error.message || 'Delete error')
+  }
+}
+
+// Handle file view
+function handleFileView(attachment: TaskAttachment) {
+  const url = mediaService.getFileUrl(attachment.filePath)
+  window.open(url, '_blank')
+}
 </script>
 
 <template>
@@ -1193,6 +1268,22 @@ function handleClose() {
             :disabled="!newSubtaskTitle.trim()"
           />
         </div>
+      </div>
+
+      <Divider />
+
+      <!-- File Attachments -->
+      <div v-if="currentTask" class="detail-section">
+        <label class="detail-label">
+          <i class="pi pi-paperclip"></i>
+          {{ t('tasks.attachments') }}
+        </label>
+        <SimpleFileUploader 
+          :attachments="currentTask.attachments"
+          @upload="handleFileUpload"
+          @delete="handleFileDelete"
+          @view="handleFileView"
+        />
       </div>
 
       <Divider />

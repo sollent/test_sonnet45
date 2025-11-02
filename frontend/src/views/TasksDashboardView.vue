@@ -87,7 +87,7 @@ const displayedTasks = computed(() => {
   
   switch (selectedView.value) {
     case 'today':
-      tasks = taskStore.todayTasks
+    tasks = taskStore.todayTasks
       break
     case 'overdue':
       tasks = taskStore.overdueTasksPaginated.tasks
@@ -414,18 +414,18 @@ async function handleTaskDeleted() {
             <div v-if="!isMobile" class="view-toggle">
               <Button
                 :icon="'pi pi-th-large'"
-                :severity="displayMode === 'cards' ? 'primary' : 'secondary'"
-                :outlined="displayMode !== 'cards'"
-                @click="displayMode = 'cards'"
-                :aria-label="t('tasks.cards_view')"
-              />
-              <Button
+              :severity="displayMode === 'cards' ? 'primary' : 'secondary'"
+              :outlined="displayMode !== 'cards'"
+              @click="displayMode = 'cards'"
+              :aria-label="t('tasks.cards_view')"
+            />
+            <Button
                 :icon="'pi pi-list'"
                 :severity="displayMode === 'list' ? 'primary' : 'secondary'"
                 :outlined="displayMode !== 'list'"
                 @click="displayMode = 'list'"
-                :aria-label="t('tasks.table_view')"
-              />
+              :aria-label="t('tasks.table_view')"
+            />
             </div>
           </div>
           
@@ -453,7 +453,7 @@ async function handleTaskDeleted() {
               {{ activeFiltersCount }}
             </span>
           </button>
-        </div>
+          </div>
 
           <!-- Loading State -->
           <div v-if="currentLoading" class="tasks-container">
@@ -464,11 +464,11 @@ async function handleTaskDeleted() {
 
           <!-- Empty State -->
           <div v-else-if="displayedTasks.length === 0" class="empty-state">
-            <div class="empty-state-icon">
-              <i class="pi pi-inbox" />
-            </div>
-            <h3 class="empty-state-title">{{ t('tasks.no_tasks') }}</h3>
-            <p class="empty-state-description">{{ t('tasks.no_tasks_description') }}</p>
+          <div class="empty-state-icon">
+            <i class="pi pi-inbox" />
+          </div>
+          <h3 class="empty-state-title">{{ t('tasks.no_tasks') }}</h3>
+          <p class="empty-state-description">{{ t('tasks.no_tasks_description') }}</p>
           </div>
 
           <!-- Cards/Grid View -->
@@ -533,10 +533,10 @@ async function handleTaskDeleted() {
                     </div>
                   </div>
                   <div class="task-time">{{ task.dueDate ? new Date(task.dueDate).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) : '' }}</div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
           <!-- Paginator for Paginated Views -->
           <div v-if="['overdue', 'unscheduled'].includes(selectedView)" class="paginator-wrapper">
@@ -1031,7 +1031,7 @@ async function handleTaskDeleted() {
   }
   .task-group-list {
     grid-template-columns: 1fr;
-    gap: 0.75rem;
+  gap: 0.75rem;
   }
 }
 
@@ -1191,8 +1191,8 @@ async function handleTaskDeleted() {
     box-shadow: 0 4px 14px rgba(99, 102, 241, 0.15);
     align-items: center;
     justify-content: center;
-    cursor: pointer;
-  }
+  cursor: pointer;
+}
 
   .custom-paginator :deep(.p-paginator-page.p-highlight) {
     background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%);

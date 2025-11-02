@@ -12,8 +12,12 @@ use App\Entity\User;
 use App\Enum\TaskStatus;
 use App\Exception\Task\TaskNotFoundException;
 use App\Exception\Task\TaskAccessDeniedException;
+use App\Dto\Request\Recurrence\CreateRecurrenceDto;
 use App\Repository\Database\TagRepository;
 use App\Repository\Database\TaskRepository;
+use App\Repository\Database\MediaObjectRepository;
+use App\Entity\MediaObject;
+use App\Service\RecurrenceService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Doctrine\ORM\Tools\Pagination\Paginator;
@@ -23,7 +27,9 @@ final class TaskService
     public function __construct(
         private readonly TaskRepository $taskRepository,
         private readonly TagRepository $tagRepository,
-        private readonly EntityManagerInterface $entityManager
+        private readonly EntityManagerInterface $entityManager,
+        private readonly MediaObjectRepository $mediaObjectRepository,
+        private readonly ?RecurrenceService $recurrenceService = null
     ) {
     }
 
@@ -59,8 +65,32 @@ final class TaskService
             }
         }
 
+        // Handle media objects
+        if (!empty($dto->mediaIds)) {
+            error_log('Processing mediaIds: ' . json_encode($dto->mediaIds));
+            foreach ($dto->mediaIds as $mediaId) {
+                $mediaObject = $this->mediaObjectRepository->find($mediaId);
+                if ($mediaObject && $mediaObject->getUploadedBy() === $user) {
+                    error_log('Adding media object ' . $mediaId . ' to task');
+                    $task->addMediaObject($mediaObject);
+                } else {
+                    error_log('Media object ' . $mediaId . ' not found or access denied');
+                }
+            }
+        } else {
+            error_log('No mediaIds provided in DTO');
+        }
+
         $this->entityManager->persist($task);
         $this->entityManager->flush();
+
+        // Handle recurrence if specified
+        if ($dto->recurrence !== null && $this->recurrenceService !== null) {
+            $this->recurrenceService->createRecurrenceRule($task, 
+                $dto->recurrence['recurrenceType'] ?? 'daily',
+                $dto->recurrence
+            );
+        }
 
         return $task;
     }
@@ -116,6 +146,22 @@ final class TaskService
                 $tags = $this->tagRepository->findOrCreateByNames($dto->tags, $user);
                 foreach ($tags as $tag) {
                     $task->addTag($tag);
+                }
+            }
+        }
+
+        // Handle media objects update
+        if ($dto->mediaIds !== null) {
+            // Clear existing media
+            $task->clearMediaObjects();
+
+            // Add new media
+            if (!empty($dto->mediaIds)) {
+                foreach ($dto->mediaIds as $mediaId) {
+                    $mediaObject = $this->mediaObjectRepository->find($mediaId);
+                    if ($mediaObject && $mediaObject->getUploadedBy() === $user) {
+                        $task->addMediaObject($mediaObject);
+                    }
                 }
             }
         }

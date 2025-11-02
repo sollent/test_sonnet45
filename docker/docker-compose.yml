@@ -58,6 +58,30 @@ services:
       RABBITMQ_DEFAULT_PASS: password # пароль
     networks:
       - nginx-php83-psql16
+  
+  cron:
+    container_name: backend-cron
+    build:
+      context: .
+      dockerfile: ./dev/php/Dockerfile
+    volumes:
+      - ../backend:/var/www/backend-app
+      - ./cron/crontab:/etc/cron.d/app-cron
+      - ./dev/php/php.ini-development:/usr/local/etc/php/php.ini
+    command: >
+      sh -c "
+      apt-get update && apt-get install -y cron &&
+      chmod 0644 /etc/cron.d/app-cron &&
+      crontab /etc/cron.d/app-cron &&
+      touch /var/log/cron.log &&
+      cron && tail -f /var/log/cron.log
+      "
+    depends_on:
+      - php83-fpm
+      - psql16
+    networks:
+      - nginx-php83-psql16
+      
 networks:
   nginx-php83-psql16:
 volumes:

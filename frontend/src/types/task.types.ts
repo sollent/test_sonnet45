@@ -26,6 +26,41 @@ export interface Tag {
   updatedAt?: string
 }
 
+export interface TaskAttachment {
+  id: number
+  fileName: string
+  originalName: string
+  mimeType: string
+  fileSize: number
+  fileSizeHuman: string
+  fileType: 'image' | 'document' | 'video' | 'other'
+  filePath: string
+  uploadedAt: string
+}
+
+export type RecurrenceType = 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom'
+
+export interface RecurrenceRule {
+  id?: number
+  recurrenceType: RecurrenceType
+  interval?: number // For custom type - every N days
+  daysOfWeek?: number[] // For weekly [1,2,3,4,5] = Mon-Fri
+  dayOfMonth?: number // For monthly
+  monthOfYear?: number // For yearly
+  endDate?: string | null
+  maxOccurrences?: number | null
+  timeOfDay?: string | null // HH:mm format
+  currentOccurrences?: number
+  nextOccurrenceDate?: string
+  isActive?: boolean
+  previewDates?: string[]
+}
+
+export interface RecurrenceSettings {
+  enabled: boolean
+  rule?: RecurrenceRule
+}
+
 export interface Task {
   id: number
   title: string
@@ -38,6 +73,7 @@ export interface Task {
   parentTaskId: number | null
   subtasks?: Task[]
   tags: Tag[]
+  attachments?: TaskAttachment[]
   sortOrder?: number
   isArchived?: boolean
   isCompleted: boolean
@@ -48,6 +84,8 @@ export interface Task {
   subtaskCount?: number
   completedSubtaskCount?: number
   hasNestedSubtasks?: boolean
+  isRecurringTemplate?: boolean
+  recurrenceRule?: RecurrenceRule | null
 }
 
 export interface CreateTaskRequest {
@@ -59,8 +97,10 @@ export interface CreateTaskRequest {
   dueDate?: string | null
   parentTaskId?: number | null
   tags?: string[]
+  mediaIds?: number[]
   sortOrder?: number
   isArchived?: boolean
+  recurrence?: RecurrenceRule | null
 }
 
 export interface UpdateTaskRequest {
@@ -71,6 +111,7 @@ export interface UpdateTaskRequest {
   startDate?: string | null
   dueDate?: string | null
   tags?: string[]
+  mediaIds?: number[]
   sortOrder?: number
   isArchived?: boolean
 }

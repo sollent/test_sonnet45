@@ -141,6 +141,27 @@
         </div>
       </div>
 
+      <!-- File Attachments (всегда доступны) -->
+      <div class="form-field">
+        <label class="field-label">
+          <i class="pi pi-paperclip"></i>
+          {{ t('tasks.attachments') }}
+        </label>
+        <SimpleFileUploader 
+          :attachments="localAttachments"
+          @upload="handleFileUpload"
+          @delete="handleFileDelete"
+          @view="handleFileView"
+        />
+      </div>
+
+      <!-- Recurrence Settings (не показываем для подзадач и при редактировании) -->
+      <div v-if="!parentTaskId && !isEditMode" class="form-field recurrence-field">
+        <RecurrenceSettings 
+          v-model="recurrenceSettings"
+        />
+      </div>
+
       <div v-if="parentTaskId" class="parent-info">
         <i class="pi pi-info-circle" />
         {{ t('tasks.creating_subtask') }}
@@ -181,7 +202,10 @@ import { useTaskStore } from '@/stores/task.store'
 import { useToast } from '@/composables/useToast'
 import { useTagSuggestions } from '@/composables/useTagSuggestions'
 import { TaskStatus, TaskPriority } from '@/types/task.types'
-import type { Task, CreateTaskRequest, UpdateTaskRequest, Tag as TaskTag } from '@/types/task.types'
+import type { Task, CreateTaskRequest, UpdateTaskRequest, Tag as TaskTag, TaskAttachment, RecurrenceSettings as RecurrenceSettingsType } from '@/types/task.types'
+import SimpleFileUploader from '@/components/ui/SimpleFileUploader.vue'
+import RecurrenceSettings from '@/components/tasks/RecurrenceSettings.vue'
+import mediaService from '@/services/media.service'
 
 const { t } = useI18n()
 const taskStore = useTaskStore()
@@ -209,6 +233,12 @@ const emit = defineEmits<{
 const visible = ref(props.modelValue)
 const isEditMode = ref(false)
 const isSubmitting = ref(false)
+const localAttachments = ref<TaskAttachment[]>([])
+const pendingFiles = ref<File[]>([]) // Файлы ожидающие загрузки
+const recurrenceSettings = ref<RecurrenceSettingsType>({
+  enabled: false,
+  rule: undefined
+})
 
 const form = reactive({
   title: '',
@@ -217,7 +247,8 @@ const form = reactive({
   priority: TaskPriority.MEDIUM,
   startDate: null as Date | null,
   dueDate: null as Date | null,
-  tags: [] as string[]
+  tags: [] as string[],
+  mediaIds: [] as number[]
 })
 
 const errors = reactive({
@@ -258,6 +289,8 @@ function initializeForm() {
     form.startDate = props.task.startDate ? new Date(props.task.startDate) : null
     form.dueDate = props.task.dueDate ? new Date(props.task.dueDate) : null
     form.tags = props.task.tags?.map(tag => tag.name) || []
+    localAttachments.value = props.task.attachments || []
+    form.mediaIds = props.task.attachments?.map(a => a.id) || []
   } else {
     isEditMode.value = false
     resetForm()
@@ -315,7 +348,14 @@ function resetForm() {
   form.startDate = null
   form.dueDate = null
   form.tags = []
+  form.mediaIds = []
   errors.title = ''
+  localAttachments.value = []
+  pendingFiles.value = []
+  recurrenceSettings.value = {
+    enabled: false,
+    rule: undefined
+  }
 }
 
 function validateForm(): boolean {
@@ -327,6 +367,40 @@ function validateForm(): boolean {
   }
   
   return true
+}
+
+// Handle file upload - загружаем файл СРАЗУ и получаем ID
+async function handleFileUpload(file: File) {
+  try {
+    console.log('Uploading file:', file.name)
+    const mediaObject = await mediaService.uploadFile(file)
+    console.log('Media object created:', mediaObject)
+    localAttachments.value.push(mediaObject)
+    form.mediaIds.push(mediaObject.id)
+    console.log('Current mediaIds:', form.mediaIds)
+    showSuccess(t('tasks.file_uploaded'))
+  } catch (error: any) {
+    console.error('Upload error:', error)
+    showError(error.message || t('tasks.upload_error'))
+  }
+}
+
+// Handle file delete
+async function handleFileDelete(attachmentId: number) {
+  try {
+    await mediaService.deleteMedia(attachmentId)
+    localAttachments.value = localAttachments.value.filter(a => a.id !== attachmentId)
+    form.mediaIds = form.mediaIds.filter(id => id !== attachmentId)
+    showSuccess(t('tasks.file_deleted'))
+  } catch (error: any) {
+    showError(error.message || t('tasks.delete_error'))
+  }
+}
+
+// Handle file view
+function handleFileView(attachment: TaskAttachment) {
+  const url = mediaService.getFileUrl(attachment.filePath)
+  window.open(url, '_blank')
 }
 
 async function handleSubmit() {
@@ -345,7 +419,8 @@ async function handleSubmit() {
         priority: form.priority,
         startDate: form.startDate?.toISOString() || undefined,
         dueDate: form.dueDate?.toISOString() || undefined,
-        tags: form.tags.length > 0 ? form.tags : undefined
+        tags: form.tags.length > 0 ? form.tags : undefined,
+        mediaIds: form.mediaIds.length > 0 ? form.mediaIds : undefined
       }
       
       result = await taskStore.updateTask(props.task.id, updateData)
@@ -359,8 +434,13 @@ async function handleSubmit() {
         startDate: form.startDate?.toISOString() || undefined,
         dueDate: form.dueDate?.toISOString() || undefined,
         tags: form.tags.length > 0 ? form.tags : undefined,
-        parentTaskId: props.parentTaskId || undefined
+        mediaIds: form.mediaIds,
+        parentTaskId: props.parentTaskId || undefined,
+        recurrence: recurrenceSettings.value.enabled ? recurrenceSettings.value.rule || null : null
       }
+      
+      console.log('Creating task with data:', createData)
+      console.log('Media IDs:', form.mediaIds)
       
       result = await taskStore.createTask(createData)
       showSuccess(t('tasks.task_created'))
@@ -509,6 +589,12 @@ onMounted(() => {
   border-radius: 6px;
   color: #1e40af;
   font-size: 0.875rem;
+}
+
+.recurrence-field {
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+  margin-top: 1rem;
 }
 
 .dialog-footer {

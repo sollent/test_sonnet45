@@ -192,6 +192,12 @@ async function handleToggleComplete(checked: boolean) {
               <i class="pi pi-share-alt" style="font-size: 0.75rem;" />
             </span>
           </div>
+
+          <!-- Recurrence Indicator -->
+          <div v-if="task.isRecurringTemplate" class="task-card__recurrence">
+            <i class="pi pi-refresh" style="color: #10b981;" />
+            <span>{{ t('tasks.recurring') }}</span>
+          </div>
         </div>
 
         <!-- Tags -->
@@ -407,6 +413,21 @@ async function handleToggleComplete(checked: boolean) {
 }
 
 .task-card__subtasks i {
+  font-size: 0.875rem;
+}
+
+.task-card__recurrence {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+}
+
+.task-card__recurrence i {
   font-size: 0.875rem;
 }
 
