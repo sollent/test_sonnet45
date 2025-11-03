@@ -52,7 +52,37 @@ const activeFiltersCount = computed(() => {
 // Handle quick filter change
 function handleQuickFilterChange(view: string) {
   console.log('Quick filter changed:', view)
-  // Handle view change based on quick filter
+
+  // Map quick filter views to actual view names
+  const viewMapping: Record<string, string> = {
+    'today': 'today',
+    'urgent': 'all', // Will be filtered by priority on frontend
+    'overdue': 'overdue',
+    'in-progress': 'all' // Will be filtered by status on frontend
+  }
+
+  const actualView = viewMapping[view] || view
+
+  // Apply additional filters for special cases
+  if (view === 'urgent') {
+    // Filter by high priority
+    taskStore.setFilters({
+      ...taskStore.activeFilters,
+      priorities: ['high', 'urgent']
+    })
+  } else if (view === 'in-progress') {
+    // Filter by in_progress status
+    taskStore.setFilters({
+      ...taskStore.activeFilters,
+      statuses: ['in_progress']
+    })
+  } else {
+    // Clear filters for standard views
+    taskStore.clearFilters()
+  }
+
+  // Select the actual view
+  selectView(actualView)
 }
 
 // Handle filters apply

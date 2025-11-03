@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
+import { useTaskStore } from '@/stores/task.store'
 
 const { t } = useI18n()
 const router = useRouter()
+const taskStore = useTaskStore()
 
 interface QuickFilter {
   id: string
@@ -25,15 +27,13 @@ const quickFilters: QuickFilter[] = [
     id: 'urgent',
     label: 'Срочные',
     icon: 'pi pi-bolt',
-    view: 'urgent',
-    count: 12
+    view: 'urgent'
   },
   {
     id: 'overdue',
     label: 'Просроченные',
     icon: 'pi pi-clock',
-    view: 'overdue',
-    count: 3
+    view: 'overdue'
   },
   {
     id: 'in-progress',
@@ -43,7 +43,7 @@ const quickFilters: QuickFilter[] = [
   }
 ]
 
-const activeFilter = ref<string>('today')
+const activeFilter = ref<string | null>(null)
 
 const emit = defineEmits<{
   (e: 'filter-change', view: string): void
