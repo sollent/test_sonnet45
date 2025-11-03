@@ -327,43 +327,9 @@ const periods = computed(() => [
   { label: t('analytics.all_time'), value: 365 }
 ])
 
+// DEPRECATED: Replaced with reloadAllData using single dashboard endpoint
 async function loadAnalytics() {
-  isLoading.value = true
-  try {
-    // Load all analytics data in parallel
-    const [
-      overviewData,
-      timeline,
-      statusDist,
-      priorityBreak,
-      weekday,
-      heatmap,
-      tags,
-      insightsData
-    ] = await Promise.all([
-      analyticsService.getOverview(),
-      analyticsService.getCompletionTimeline(selectedPeriod.value),
-      analyticsService.getStatusDistribution(),
-      analyticsService.getPriorityBreakdown(),
-      analyticsService.getWeekdayProductivity(),
-      analyticsService.getProductivityHeatmap(currentYear),
-      analyticsService.getTopTags(5),
-      analyticsService.getInsights()
-    ])
-
-    overview.value = overviewData
-    timelineData.value = timeline
-    statusDistribution.value = statusDist
-    priorityBreakdown.value = priorityBreak
-    weekdayData.value = weekday
-    heatmapData.value = heatmap
-    topTags.value = tags
-    insights.value = insightsData.insights
-  } catch (error: any) {
-    showError(error.message || t('errors.fetch_failed'))
-  } finally {
-    isLoading.value = false
-  }
+  await reloadAllData()
 }
 
 function selectPeriod(period: number) {
@@ -399,51 +365,33 @@ async function reloadAllData() {
   } else {
     isRecalculating.value = true
   }
-  
+
   try {
-    // Reload all data based on current selection
-    const promises = [
-      analyticsService.getOverview(),
-      analyticsService.getStatusDistribution(),
-      analyticsService.getPriorityBreakdown(),
-      analyticsService.getWeekdayProductivity(),
-      analyticsService.getProductivityHeatmap(currentYear),
-      analyticsService.getTopTags(5),
-      analyticsService.getInsights()
-    ]
-    
-    // Timeline with custom range or period
+    // Single optimized dashboard request with all data
+    let dashboardParams: any = { year: currentYear }
+
+    // Timeline parameters
     if (customRange.value && customDateRange.value) {
       const dateFrom = customDateRange.value[0].toISOString().split('T')[0]
       const dateTo = customDateRange.value[1]?.toISOString().split('T')[0] || dateFrom
-      promises.unshift(
-        analyticsService.getCompletionTimelineByDateRange(dateFrom, dateTo)
-      )
+      dashboardParams.dateFrom = dateFrom
+      dashboardParams.dateTo = dateTo
     } else {
-      promises.unshift(
-        analyticsService.getCompletionTimeline(selectedPeriod.value)
-      )
+      dashboardParams.period = selectedPeriod.value
     }
-    
-    const [
-      timeline,
-      overviewData,
-      statusDist,
-      priorityBreak,
-      weekday,
-      heatmap,
-      tags,
-      insightsData
-    ] = await Promise.all(promises)
-    
-    timelineData.value = timeline
-    overview.value = overviewData
-    statusDistribution.value = statusDist
-    priorityBreakdown.value = priorityBreak
-    weekdayData.value = weekday
-    heatmapData.value = heatmap
-    topTags.value = tags
-    insights.value = insightsData.insights
+
+    const dashboardData = await analyticsService.getDashboard(dashboardParams)
+
+    // Assign all data from single response
+    overview.value = dashboardData.overview
+    timelineData.value = dashboardData.timeline
+    statusDistribution.value = dashboardData.statusDistribution
+    priorityBreakdown.value = dashboardData.priorityBreakdown
+    weekdayData.value = dashboardData.weekdayProductivity
+    heatmapData.value = dashboardData.productivityHeatmap
+    topTags.value = dashboardData.topTags
+    insights.value = dashboardData.insights
+
   } catch (error: any) {
     showError(error.message || t('errors.fetch_failed'))
   } finally {

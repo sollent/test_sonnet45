@@ -261,5 +261,110 @@ final class AnalyticsService
         
         return $streak;
     }
+
+    /**
+     * Get complete dashboard data in a single optimized request
+     * Combines all analytics data to minimize database queries
+     */
+    public function getDashboardData(User $user, array $params): array
+    {
+        $period = $params['period'] ?? 30;
+        $dateFrom = $params['dateFrom'];
+        $dateTo = $params['dateTo'];
+        $year = $params['year'] ?? (int)date('Y');
+
+        // OPTIMIZATION: Get core statistics once and reuse
+        $stats = $this->taskRepository->getUserTaskStatistics($user);
+
+        // OPTIMIZATION: Get this week's data once
+        $thisWeekStart = new \DateTimeImmutable('monday this week');
+        $thisWeekTasks = $this->taskRepository->findTasksCreatedBetween($user, $thisWeekStart, new \DateTimeImmutable());
+        $lastWeekStart = $thisWeekStart->modify('-7 days');
+        $lastWeekTasks = $this->taskRepository->findTasksCreatedBetween($user, $lastWeekStart, $thisWeekStart);
+        $thisWeekCompleted = $this->taskRepository->findTasksCompletedBetween($user, $thisWeekStart, new \DateTimeImmutable());
+
+        // OPTIMIZATION: Calculate common metrics once
+        $avgCompletionTime = $this->taskRepository->getAverageCompletionTime($user);
+        $currentStreak = $this->calculateStreak($user);
+        $onTimeRate = $this->taskRepository->getOnTimeCompletionRate($user);
+        $mostProductiveDay = $this->taskRepository->getMostProductiveDay($user);
+
+        // OPTIMIZATION: Get timeline data (can be expensive)
+        if ($dateFrom && $dateTo) {
+            $timelineStart = new \DateTimeImmutable($dateFrom);
+            $timelineEnd = new \DateTimeImmutable($dateTo);
+        } else {
+            $timelineEnd = new \DateTimeImmutable();
+            if ($period >= 365) {
+                $timelineStart = $timelineEnd->modify('-6 months');
+            } else {
+                $timelineStart = $timelineEnd->modify("-{$period} days");
+            }
+        }
+        $timelineData = $this->taskRepository->getCompletionTimelineData($user, $timelineStart, $timelineEnd);
+
+        // OPTIMIZATION: Get all required data in parallel-like execution
+        $priorityBreakdown = $this->taskRepository->getPriorityBreakdown($user);
+        $productivityHeatmap = $this->taskRepository->getProductivityHeatmap($user, $year);
+        $weekdayProductivity = $this->taskRepository->getWeekdayProductivity($user);
+        $topTags = $this->getTopTags($user, 5);
+        $insights = $this->generateInsights($user);
+
+        return [
+            // Overview data
+            'overview' => [
+                'totalTasks' => $stats['total'],
+                'completedThisWeek' => count($thisWeekCompleted),
+                'weeklyChange' => count($thisWeekTasks) - count($lastWeekTasks),
+                'weeklyChangePercent' => count($lastWeekTasks) > 0
+                    ? round((count($thisWeekTasks) - count($lastWeekTasks)) / count($lastWeekTasks) * 100, 1)
+                    : 0,
+                'averageCompletionTime' => $avgCompletionTime,
+                'currentStreak' => $currentStreak,
+                'onTimeCompletionRate' => $onTimeRate,
+                'mostProductiveDay' => $mostProductiveDay,
+                'pending' => $stats['pending'] ?? 0,
+                'inProgress' => $stats['in_progress'] ?? 0,
+                'completed' => $stats['completed'] ?? 0,
+                'overdue' => $stats['overdue'] ?? 0
+            ],
+
+            // Timeline data
+            'timeline' => $timelineData,
+
+            // Status distribution
+            'statusDistribution' => [
+                'pending' => $stats['pending'] ?? 0,
+                'in_progress' => $stats['in_progress'] ?? 0,
+                'completed' => $stats['completed'] ?? 0,
+                'cancelled' => $stats['cancelled'] ?? 0,
+                'total' => $stats['total'] ?? 0
+            ],
+
+            // Priority breakdown
+            'priorityBreakdown' => $priorityBreakdown,
+
+            // Productivity heatmap
+            'productivityHeatmap' => $productivityHeatmap,
+
+            // Weekday productivity
+            'weekdayProductivity' => $weekdayProductivity,
+
+            // Top tags
+            'topTags' => $topTags,
+
+            // Insights
+            'insights' => $insights,
+
+            // Metadata
+            'meta' => [
+                'period' => $period,
+                'dateFrom' => $dateFrom,
+                'dateTo' => $dateTo,
+                'year' => $year,
+                'generatedAt' => (new \DateTimeImmutable())->format('c')
+            ]
+        ];
+    }
 }
 

@@ -200,5 +200,61 @@ final class AnalyticsController extends AbstractController
         $insights = $this->analyticsService->generateInsights($user);
         return $this->json(['insights' => $insights]);
     }
+
+    #[Route('/dashboard', name: 'dashboard', methods: ['GET'])]
+    #[OA\Get(
+        summary: 'Get complete analytics dashboard data',
+        description: 'Returns all analytics data in a single optimized request'
+    )]
+    #[OA\Parameter(
+        name: 'period',
+        in: 'query',
+        required: false,
+        description: 'Timeline period in days (default: 30)',
+        schema: new OA\Schema(type: 'integer')
+    )]
+    #[OA\Parameter(
+        name: 'dateFrom',
+        in: 'query',
+        required: false,
+        description: 'Timeline start date (Y-m-d)',
+        schema: new OA\Schema(type: 'string', format: 'date')
+    )]
+    #[OA\Parameter(
+        name: 'dateTo',
+        in: 'query',
+        required: false,
+        description: 'Timeline end date (Y-m-d)',
+        schema: new OA\Schema(type: 'string', format: 'date')
+    )]
+    #[OA\Parameter(
+        name: 'year',
+        in: 'query',
+        required: false,
+        description: 'Heatmap year (default: current year)',
+        schema: new OA\Schema(type: 'integer')
+    )]
+    #[OA\Response(
+        response: 200,
+        description: 'Complete dashboard analytics data'
+    )]
+    public function getDashboard(
+        Request $request,
+        #[CurrentUser] User $user
+    ): JsonResponse {
+        $period = $request->query->getInt('period', 30);
+        $dateFrom = $request->query->get('dateFrom');
+        $dateTo = $request->query->get('dateTo');
+        $year = $request->query->getInt('year', (int)date('Y'));
+
+        $data = $this->analyticsService->getDashboardData($user, [
+            'period' => $period,
+            'dateFrom' => $dateFrom,
+            'dateTo' => $dateTo,
+            'year' => $year,
+        ]);
+
+        return $this->json($data);
+    }
 }
 

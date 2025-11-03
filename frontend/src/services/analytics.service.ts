@@ -65,6 +65,24 @@ export interface InsightsResponse {
   insights: Insight[]
 }
 
+export interface DashboardData {
+  overview: AnalyticsOverview
+  timeline: TimelineData
+  statusDistribution: StatusDistribution
+  priorityBreakdown: PriorityBreakdown
+  productivityHeatmap: Record<string, number>
+  weekdayProductivity: Record<string, number>
+  topTags: TopTag[]
+  insights: Insight[]
+  meta: {
+    period: number
+    dateFrom: string | null
+    dateTo: string | null
+    year: number
+    generatedAt: string
+  }
+}
+
 class AnalyticsService {
   private baseURL = '/api/analytics'
 
@@ -144,6 +162,28 @@ class AnalyticsService {
    */
   async getInsights(): Promise<InsightsResponse> {
     const response = await apiClient.get<InsightsResponse>(`${this.baseURL}/insights`)
+    return response.data
+  }
+
+  /**
+   * Get complete dashboard data in a single optimized request
+   */
+  async getDashboard(params?: {
+    period?: number
+    dateFrom?: string
+    dateTo?: string
+    year?: number
+  }): Promise<DashboardData> {
+    const queryParams = new URLSearchParams()
+    if (params?.period) queryParams.append('period', params.period.toString())
+    if (params?.dateFrom) queryParams.append('dateFrom', params.dateFrom)
+    if (params?.dateTo) queryParams.append('dateTo', params.dateTo)
+    if (params?.year) queryParams.append('year', params.year.toString())
+
+    const queryString = queryParams.toString()
+    const url = queryString ? `${this.baseURL}/dashboard?${queryString}` : `${this.baseURL}/dashboard`
+
+    const response = await apiClient.get<DashboardData>(url)
     return response.data
   }
 }
