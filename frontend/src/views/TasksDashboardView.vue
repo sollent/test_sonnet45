@@ -58,6 +58,8 @@ function handleQuickFilterChange(view: string) {
 // Handle filters apply
 function handleFiltersApply() {
   console.log('Filters applied')
+  // Refresh current view with new filters
+  refreshCurrentView()
 }
 const unscheduledPage = ref(1)
 const unscheduledLimit = ref(20)
@@ -187,6 +189,13 @@ function handleLogout() {
 
 function selectView(viewId: string) {
   selectedView.value = viewId
+
+  // Build query filters from active filters
+  const queryFilters = {
+    view: viewId === 'all' ? 'all' : viewId,
+    ...taskStore.activeFilters
+  }
+
   if (viewId === 'overdue') {
     overduePage.value = 1
     taskStore.fetchOverdueTasksPaginated(overduePage.value, overdueLimit.value)
@@ -194,21 +203,27 @@ function selectView(viewId: string) {
     unscheduledPage.value = 1
     taskStore.fetchUnscheduledTasksPaginated(unscheduledPage.value, unscheduledLimit.value)
   } else {
-    taskStore.fetchTasks({ view: 'all' })
+    taskStore.fetchTasks(queryFilters)
   }
-  
+
   if (isMobile.value) {
     isFiltersVisible.value = false
   }
 }
 
 async function refreshCurrentView() {
+  // Build query filters from active filters
+  const queryFilters = {
+    view: selectedView.value === 'all' ? 'all' : selectedView.value,
+    ...taskStore.activeFilters
+  }
+
   if (selectedView.value === 'overdue') {
     await taskStore.fetchOverdueTasksPaginated(overduePage.value, overdueLimit.value)
   } else if (selectedView.value === 'unscheduled') {
     await taskStore.fetchUnscheduledTasksPaginated(unscheduledPage.value, unscheduledLimit.value)
   } else {
-    await taskStore.fetchTasks({ view: 'all' })
+    await taskStore.fetchTasks(queryFilters)
   }
 }
 

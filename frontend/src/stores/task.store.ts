@@ -411,7 +411,9 @@ export const useTaskStore = defineStore('task', () => {
     isOverdueLoading.value = true
     error.value = null
     try {
-      const queryFilters = filters ? buildQueryFilters(filters) : {}
+      // Use provided filters or active filters
+      const filtersToUse = filters || activeFilters.value
+      const queryFilters = buildQueryFilters(filtersToUse)
       overdueTasksPaginated.value = await taskService.getOverdueTasksPaginated(page, limit, queryFilters)
     } catch (err: any) {
       error.value = err.message || 'Failed to fetch overdue tasks'
@@ -424,7 +426,9 @@ export const useTaskStore = defineStore('task', () => {
     isUnscheduledLoading.value = true
     error.value = null
     try {
-      const queryFilters = filters ? buildQueryFilters(filters) : {}
+      // Use provided filters or active filters
+      const filtersToUse = filters || activeFilters.value
+      const queryFilters = buildQueryFilters(filtersToUse)
       unscheduledTasksPaginated.value = await taskService.getUnscheduledTasksPaginated(page, limit, queryFilters)
     } catch (err: any) {
       error.value = err.message || 'Failed to fetch unscheduled tasks'
@@ -436,31 +440,31 @@ export const useTaskStore = defineStore('task', () => {
   // Helper to build query filters from state
   function buildQueryFilters(filters: TaskFiltersState): TaskFilters {
     const queryFilters: TaskFilters = {}
-    
-    if (filters.tags.length > 0) {
+
+    if (filters.tags && filters.tags.length > 0) {
       queryFilters.tags = filters.tags
     }
-    
-    if (filters.completed !== null) {
+
+    if (filters.completed !== null && filters.completed !== undefined) {
       queryFilters.completed = filters.completed
     }
-    
+
     if (filters.dateFrom) {
       queryFilters.dateFrom = filters.dateFrom
     }
-    
+
     if (filters.dateTo) {
       queryFilters.dateTo = filters.dateTo
     }
-    
-    if (filters.priorities.length > 0) {
+
+    if (filters.priorities && filters.priorities.length > 0) {
       queryFilters.priorities = filters.priorities
     }
-    
-    if (filters.statuses.length > 0) {
+
+    if (filters.statuses && filters.statuses.length > 0) {
       queryFilters.statuses = filters.statuses
     }
-    
+
     return queryFilters
   }
 
@@ -517,36 +521,13 @@ export const useTaskStore = defineStore('task', () => {
   // Filter actions
   function setFilters(filters: TaskFiltersState): void {
     activeFilters.value = { ...filters }
-    
-    // Build query params for API
+
+    // Build query params for API using the buildQueryFilters helper
     const queryFilters: TaskFilters = {
-      ...currentFilter.value
+      ...currentFilter.value,
+      ...buildQueryFilters(filters)
     }
-    
-    if (filters.tags.length > 0) {
-      queryFilters.tags = filters.tags
-    }
-    
-    if (filters.completed !== null) {
-      queryFilters.completed = filters.completed
-    }
-    
-    if (filters.dateFrom) {
-      queryFilters.dateFrom = filters.dateFrom
-    }
-    
-    if (filters.dateTo) {
-      queryFilters.dateTo = filters.dateTo
-    }
-    
-    if (filters.priorities.length > 0) {
-      queryFilters.priorities = filters.priorities
-    }
-    
-    if (filters.statuses.length > 0) {
-      queryFilters.statuses = filters.statuses
-    }
-    
+
     // Refetch tasks with new filters
     fetchTasks(queryFilters)
   }

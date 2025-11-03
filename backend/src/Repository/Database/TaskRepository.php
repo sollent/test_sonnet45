@@ -79,14 +79,19 @@ class TaskRepository extends ServiceEntityRepository
             ->where('t.user = :user')
             ->andWhere('t.parentTask IS NULL')
             ->andWhere('t.isArchived = false')
-            ->andWhere('t.status != :completedStatus')
             ->andWhere(
                 '(t.dueDate BETWEEN :todayStart AND :todayEnd) OR (t.startDate BETWEEN :todayStart AND :todayEnd)'
             )
             ->setParameter('user', $user)
-            ->setParameter('completedStatus', TaskStatus::COMPLETED)
             ->setParameter('todayStart', $todayStart)
             ->setParameter('todayEnd', $todayEnd);
+
+        // Apply default status filter only if no status filter is provided
+        $statuses = $filters ? $filters->getStatuses() : null;
+        if (!$statuses || empty($statuses)) {
+            $qb->andWhere('t.status != :completedStatus')
+               ->setParameter('completedStatus', TaskStatus::COMPLETED);
+        }
 
         // Apply filters
         if ($filters) {
@@ -137,12 +142,17 @@ class TaskRepository extends ServiceEntityRepository
             ->where('t.user = :user')
             ->andWhere('t.parentTask IS NULL')
             ->andWhere('t.isArchived = false')
-            ->andWhere('t.status != :completed')
             ->andWhere('(t.startDate >= :tomorrow AND t.startDate <= :endDate) OR (t.dueDate >= :tomorrow AND t.dueDate <= :endDate)')
             ->setParameter('user', $user)
-            ->setParameter('completed', TaskStatus::COMPLETED)
             ->setParameter('tomorrow', $tomorrow)
             ->setParameter('endDate', $endDate);
+
+        // Apply default status filter only if no status filter is provided
+        $statuses = $filters ? $filters->getStatuses() : null;
+        if (!$statuses || empty($statuses)) {
+            $qb->andWhere('t.status != :completed')
+               ->setParameter('completed', TaskStatus::COMPLETED);
+        }
 
         // Apply filters
         if ($filters) {
@@ -163,14 +173,19 @@ class TaskRepository extends ServiceEntityRepository
             ->where('t.user = :user')
             ->andWhere('t.parentTask IS NULL')
             ->andWhere('t.isArchived = false')
-            ->andWhere('t.status != :completed')
             ->andWhere('(
                 (t.dueDate IS NOT NULL AND t.dueDate >= :todayStart) OR
                 (t.startDate IS NOT NULL AND t.startDate >= :todayStart)
             )')
             ->setParameter('user', $user)
-            ->setParameter('completed', TaskStatus::COMPLETED)
             ->setParameter('todayStart', $todayStart);
+
+        // Apply default status filter only if no status filter is provided
+        $statuses = $filters ? $filters->getStatuses() : null;
+        if (!$statuses || empty($statuses)) {
+            $qb->andWhere('t.status != :completed')
+               ->setParameter('completed', TaskStatus::COMPLETED);
+        }
 
         // Apply filters
         if ($filters) {
@@ -406,10 +421,15 @@ class TaskRepository extends ServiceEntityRepository
             ->andWhere('t.parentTask IS NULL')
             ->andWhere('t.isArchived = false')
             ->andWhere('t.dueDate < :today')
-            ->andWhere('t.status != :completedStatus')
             ->setParameter('user', $user)
-            ->setParameter('today', new \DateTimeImmutable())
-            ->setParameter('completedStatus', TaskStatus::COMPLETED);
+            ->setParameter('today', new \DateTimeImmutable());
+
+        // Apply default status filter only if no status filter is provided
+        $statuses = $filters ? $filters->getStatuses() : null;
+        if (!$statuses || empty($statuses)) {
+            $qb->andWhere('t.status != :completedStatus')
+               ->setParameter('completedStatus', TaskStatus::COMPLETED);
+        }
 
         // Apply filters
         if ($filters) {
@@ -432,10 +452,15 @@ class TaskRepository extends ServiceEntityRepository
             ->where('t.user = :user')
             ->andWhere('t.parentTask IS NULL')
             ->andWhere('t.isArchived = false')
-            ->andWhere('t.status != :completedStatus')
             ->andWhere('t.dueDate IS NULL')
-            ->setParameter('user', $user)
-            ->setParameter('completedStatus', TaskStatus::COMPLETED);
+            ->setParameter('user', $user);
+
+        // Apply default status filter only if no status filter is provided
+        $statuses = $filters ? $filters->getStatuses() : null;
+        if (!$statuses || empty($statuses)) {
+            $qb->andWhere('t.status != :completedStatus')
+               ->setParameter('completedStatus', TaskStatus::COMPLETED);
+        }
 
         // Apply filters
         if ($filters) {
@@ -454,7 +479,7 @@ class TaskRepository extends ServiceEntityRepository
 
     /**
      * Apply filters to query builder
-     * 
+     *
      * @param QueryBuilder $qb
      * @param TaskFilterDto $filters
      */
@@ -465,15 +490,17 @@ class TaskRepository extends ServiceEntityRepository
         }
 
         // Filter by tags
-        if ($filters->tags !== null && !empty($filters->tags)) {
+        $tags = $filters->getTags();
+        if ($tags !== null && !empty($tags)) {
             $qb->join('t.tags', 'filter_tag')
                ->andWhere('filter_tag.id IN (:filterTags)')
-               ->setParameter('filterTags', $filters->tags);
+               ->setParameter('filterTags', $tags);
         }
 
         // Filter by completion status
-        if ($filters->completed !== null) {
-            if ($filters->completed) {
+        $completed = $filters->getCompleted();
+        if ($completed !== null) {
+            if ($completed) {
                 $qb->andWhere('t.status = :completedFilterStatus')
                    ->setParameter('completedFilterStatus', TaskStatus::COMPLETED);
             } else {
@@ -483,30 +510,34 @@ class TaskRepository extends ServiceEntityRepository
         }
 
         // Filter by date range
-        if ($filters->dateFrom !== null) {
-            $dateFrom = new \DateTimeImmutable($filters->dateFrom);
+        $dateFrom = $filters->getDateFrom();
+        if ($dateFrom !== null) {
+            $dateFromObj = new \DateTimeImmutable($dateFrom);
             $qb->andWhere('(t.dueDate >= :filterDateFrom OR t.startDate >= :filterDateFrom)')
-               ->setParameter('filterDateFrom', $dateFrom);
+               ->setParameter('filterDateFrom', $dateFromObj);
         }
 
-        if ($filters->dateTo !== null) {
-            $dateTo = new \DateTimeImmutable($filters->dateTo . ' 23:59:59');
+        $dateTo = $filters->getDateTo();
+        if ($dateTo !== null) {
+            $dateToObj = new \DateTimeImmutable($dateTo . ' 23:59:59');
             $qb->andWhere('(t.dueDate <= :filterDateTo OR t.startDate <= :filterDateTo)')
-               ->setParameter('filterDateTo', $dateTo);
+               ->setParameter('filterDateTo', $dateToObj);
         }
 
         // Filter by priorities
-        if ($filters->priorities !== null && !empty($filters->priorities)) {
-            $priorities = array_map(fn($p) => TaskPriority::from($p), $filters->priorities);
+        $priorities = $filters->getPriorities();
+        if ($priorities !== null && !empty($priorities)) {
+            $priorityEnums = array_map(fn($p) => TaskPriority::from($p), $priorities);
             $qb->andWhere('t.priority IN (:filterPriorities)')
-               ->setParameter('filterPriorities', $priorities);
+               ->setParameter('filterPriorities', $priorityEnums);
         }
 
         // Filter by statuses
-        if ($filters->statuses !== null && !empty($filters->statuses)) {
-            $statuses = array_map(fn($s) => TaskStatus::from($s), $filters->statuses);
+        $statuses = $filters->getStatuses();
+        if ($statuses !== null && !empty($statuses)) {
+            $statusEnums = array_map(fn($s) => TaskStatus::from($s), $statuses);
             $qb->andWhere('t.status IN (:filterStatuses)')
-               ->setParameter('filterStatuses', $statuses);
+               ->setParameter('filterStatuses', $statusEnums);
         }
     }
 }
