@@ -187,7 +187,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch, onMounted } from 'vue'
+import { ref, reactive, watch, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Dialog from 'primevue/dialog'
 import InputText from 'primevue/inputtext'
@@ -255,18 +255,18 @@ const errors = reactive({
   title: ''
 })
 
-const statusOptions = [
+const statusOptions = computed(() => [
   { label: t('tasks.status_pending'), value: TaskStatus.PENDING },
   { label: t('tasks.status_in_progress'), value: TaskStatus.IN_PROGRESS },
   { label: t('tasks.status_completed'), value: TaskStatus.COMPLETED }
-]
+])
 
-const priorityOptions = [
+const priorityOptions = computed(() => [
   { label: t('tasks.priority_low'), value: TaskPriority.LOW },
   { label: t('tasks.priority_medium'), value: TaskPriority.MEDIUM },
   { label: t('tasks.priority_high'), value: TaskPriority.HIGH },
   { label: t('tasks.priority_urgent'), value: TaskPriority.URGENT }
-]
+])
 
 watch(() => props.modelValue, (newVal) => {
   visible.value = newVal

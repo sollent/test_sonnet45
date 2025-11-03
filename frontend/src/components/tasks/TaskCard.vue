@@ -50,11 +50,24 @@ const priorityConfig = computed(() => {
       label: t('tasks.priority_urgent')
     }
   }
-  return configs[props.task.priority]
+  
+  const config = configs[props.task.priority] || configs[TaskPriority.MEDIUM]
+  
+  // Override label with backend translation if available
+  if (props.task.priorityLabel) {
+    return { ...config, label: props.task.priorityLabel }
+  }
+  
+  return config
 })
 
 
-const isCompleted = computed(() => props.task.status === TaskStatus.COMPLETED)
+const isCompleted = computed(() => {
+  const statusValue = typeof props.task.status === 'string' 
+    ? props.task.status 
+    : props.task.status.value
+  return statusValue === TaskStatus.COMPLETED || props.task.isCompleted
+})
 
 const isOverdue = computed(() => {
   if (!props.task.dueDate || isCompleted.value) return false
@@ -101,7 +114,14 @@ async function handleToggleComplete(checked: boolean) {
   const optimisticTask = {
     ...props.task,
     isCompleted: checked,
-    status: checked ? TaskStatus.COMPLETED : TaskStatus.PENDING
+    status: checked ? TaskStatus.COMPLETED : TaskStatus.PENDING,
+    // Preserve object structure if status is already an object
+    ...(typeof props.task.status === 'object' ? {
+      status: {
+        ...props.task.status,
+        value: checked ? TaskStatus.COMPLETED : TaskStatus.PENDING
+      }
+    } : {})
   } as Task
   
   emit('task-updated', optimisticTask)
@@ -117,7 +137,13 @@ async function handleToggleComplete(checked: boolean) {
     const revertedTask = {
       ...props.task,
       isCompleted: !checked,
-      status: !checked ? TaskStatus.COMPLETED : TaskStatus.PENDING
+      status: !checked ? TaskStatus.COMPLETED : TaskStatus.PENDING,
+      ...(typeof props.task.status === 'object' ? {
+        status: {
+          ...props.task.status,
+          value: !checked ? TaskStatus.COMPLETED : TaskStatus.PENDING
+        }
+      } : {})
     } as Task
     emit('task-updated', revertedTask)
     // Error is already shown by handleCheckboxChange, so we don't need to rethrow
@@ -379,6 +405,12 @@ async function handleToggleComplete(checked: boolean) {
 
 .task-card__badge i {
   font-size: 0.875rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 0.875rem;
+  height: 0.875rem;
 }
 
 .task-card__due-date {
@@ -397,6 +429,12 @@ async function handleToggleComplete(checked: boolean) {
 
 .task-card__due-date i {
   font-size: 0.875rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 0.875rem;
+  height: 0.875rem;
 }
 
 .task-card__subtasks {
@@ -414,6 +452,12 @@ async function handleToggleComplete(checked: boolean) {
 
 .task-card__subtasks i {
   font-size: 0.875rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 0.875rem;
+  height: 0.875rem;
 }
 
 .task-card__recurrence {
@@ -429,6 +473,12 @@ async function handleToggleComplete(checked: boolean) {
 
 .task-card__recurrence i {
   font-size: 0.875rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 0.875rem;
+  height: 0.875rem;
 }
 
 .task-card__tree-badge {

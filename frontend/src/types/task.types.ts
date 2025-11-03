@@ -86,6 +86,9 @@ export interface Task {
   hasNestedSubtasks?: boolean
   isRecurringTemplate?: boolean
   recurrenceRule?: RecurrenceRule | null
+  // Translated labels from backend
+  priorityLabel?: string
+  statusLabel?: string
 }
 
 export interface CreateTaskRequest {

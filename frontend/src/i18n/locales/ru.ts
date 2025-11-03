@@ -1,4 +1,8 @@
 export default {
+  app: {
+    short_title: 'Задачи',
+  },
+  
   common: {
     app_name: 'Auth App',
     welcome: 'Добро пожаловать',
@@ -14,6 +18,9 @@ export default {
     save: 'Сохранить',
     close: 'Закрыть',
     loading: 'Загрузка...',
+    load_more: 'Загрузить еще',
+    remaining: 'осталось',
+    no_results: 'Ничего не найдено',
     error: 'Ошибка',
     success: 'Успешно',
     info: 'Информация',
@@ -389,8 +396,10 @@ export default {
     status: 'Статус',
     start_date: 'Дата начала',
     due_date: 'Дата завершения',
+    select_date_range: 'Выберите период',
     description: 'Описание',
     tags: 'Теги',
+    search_tags: 'Поиск тегов...',
     tags_placeholder: 'Добавить теги (нажмите Enter)',
     tags_help: 'Нажмите Enter или запятую для добавления тегов',
     popular_tags: 'Популярные теги',
@@ -475,7 +484,6 @@ export default {
     my_tasks: 'Мои задачи',
     unassigned: 'Без исполнителя',
     task_type: 'Тип задач',
-    all_tasks: 'Все задачи',
     active: 'Активные',
     completed: 'Завершенные',
     status_execution: 'Статус выполнения',
@@ -490,7 +498,6 @@ export default {
     hide_filters: 'Скрыть фильтры',
     clear: 'Очистить',
     add_tag: 'Добавить тег',
-    
     // File Attachments
     attachments: 'Вложения',
     choose_files: 'Выбрать файлы',
@@ -522,6 +529,13 @@ export default {
     edit_task_description: 'Измените детали вашей задачи',
     creating_subtask: 'Создание подзадачи для выбранной задачи',
     add_tag_placeholder: 'Добавить теги (нажмите Enter)',
+    
+    // Filter presets
+    all_tasks: 'Все задачи',
+    my_tasks: 'Мои задачи',
+    this_week: 'На этой неделе',
+    important: 'Важные',
+    team: 'Командные',
     
     // Recurrence
     repeat: 'Повторять',
@@ -569,6 +583,13 @@ export default {
     show_archived: 'Показать архивированные',
   },
 
+  quick_filters: {
+    today: 'На сегодня',
+    urgent: 'Срочные',
+    overdue: 'Просроченные',
+    in_progress: 'В процессе',
+  },
+  
   tags: {
     title: 'Теги',
     create_tag: 'Создать тег',

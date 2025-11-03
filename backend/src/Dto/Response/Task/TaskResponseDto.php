@@ -35,6 +35,10 @@ final class TaskResponseDto
     public array $attachments = [];
     public bool $isRecurringTemplate = false;
     public ?array $recurrenceRule = null;
+    
+    // Translated labels (populated by TaskService)
+    public ?string $priorityLabel = null;
+    public ?string $statusLabel = null;
 
     public static function fromEntity(Task $task, bool $includeSubtasks = false, bool $includeMeta = true): self
     {
@@ -106,35 +110,5 @@ final class TaskResponseDto
         }
 
         return $dto;
-    }
-
-    public function getStatusLabel(): string
-    {
-        return $this->status->getLabel();
-    }
-
-    public function getStatusColor(): string
-    {
-        return $this->status->getColor();
-    }
-
-    public function getStatusIcon(): string
-    {
-        return $this->status->getIcon();
-    }
-
-    public function getPriorityLabel(): string
-    {
-        return $this->priority->getLabel();
-    }
-
-    public function getPriorityColor(): string
-    {
-        return $this->priority->getColor();
-    }
-
-    public function getPriorityIcon(): string
-    {
-        return $this->priority->getIcon();
     }
 }

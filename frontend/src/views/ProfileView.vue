@@ -129,7 +129,12 @@ async function changePassword() {
 }
 
 function goBack() {
-  router.push('/dashboard')
+  // Go back to previous page or dashboard
+  if (window.history.length > 1) {
+    router.back()
+  } else {
+    router.push('/dashboard')
+  }
 }
 
 onMounted(() => {

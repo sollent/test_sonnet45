@@ -1,0 +1,16 @@
+# Task Priority translations
+task.priority.low: "Low"
+task.priority.medium: "Medium"
+task.priority.high: "High"
+task.priority.urgent: "Urgent"
+
+# Task Status translations
+task.status.pending: "Pending"
+task.status.in_progress: "In Progress"
+task.status.completed: "Completed"
+task.status.cancelled: "Cancelled"
+task.status.archived: "Archived"
+
+# Additional task-related translations
+task.priority.label: "Priority"
+task.status.label: "Status"

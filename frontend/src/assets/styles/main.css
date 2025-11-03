@@ -126,6 +126,86 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Global icon fix - prevent icons from shifting/disappearing */
+i,
+.pi,
+[class^="pi-"],
+[class*=" pi-"] {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  line-height: 1 !important;
+  vertical-align: middle !important;
+  font-style: normal !important;
+  will-change: transform !important;
+  transform: translateZ(0) !important; /* Force GPU acceleration */
+  backface-visibility: hidden !important; /* Prevent flickering */
+  position: relative !important; /* Create stacking context */
+}
+
+/* Ensure icons don't disappear or shift on hover/transform */
+*:hover i,
+*:hover .pi,
+*:hover [class^="pi-"],
+*:hover [class*=" pi-"],
+*[style*="transform"] i,
+*[style*="transform"] .pi,
+*[style*="transform"] [class^="pi-"],
+*[style*="transform"] [class*=" pi-"] {
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: translateZ(0) !important; /* Reset transform to prevent inheritance */
+}
+
+/* Fix for buttons with transform on hover */
+button:hover i,
+.p-button:hover i,
+a:hover i {
+  transform: translateZ(0) !important;
+}
+
+/* Fix for PrimeVue input icons */
+.p-input-icon-left > i,
+.p-input-icon-right > i,
+.p-input-icon-left > .pi,
+.p-input-icon-right > .pi {
+  position: absolute !important;
+  top: 50% !important;
+  margin-top: -0.5rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.p-input-icon-left > i,
+.p-input-icon-left > .pi {
+  left: 0.75rem !important;
+}
+
+.p-input-icon-right > i,
+.p-input-icon-right > .pi {
+  right: 0.75rem !important;
+}
+
+/* PrimeVue Calendar z-index fix */
+.p-datepicker {
+  z-index: 1200 !important;
+}
+
+.p-datepicker-panel {
+  z-index: 1200 !important;
+}
+
+/* Mobile TouchUI Calendar - must be above everything */
+.p-datepicker-touch-ui {
+  z-index: 100100 !important;
+}
+
+.p-datepicker-mask {
+  z-index: 100099 !important;
+}
+
 /* Focus styles */
 *:focus {
   outline: none;

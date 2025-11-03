@@ -18,34 +18,34 @@ interface QuickFilter {
   count?: number
 }
 
-const quickFilters: QuickFilter[] = [
+const quickFilters = computed(() => [
   {
     id: 'today',
-    label: 'На сегодня',
+    label: t('quick_filters.today'),
     icon: 'pi pi-calendar',
     view: 'today'
   },
   {
     id: 'urgent',
-    label: 'Срочные',
+    label: t('quick_filters.urgent'),
     icon: 'pi pi-bolt',
     view: 'all',
     priority: ['high', 'urgent']
   },
   {
     id: 'overdue',
-    label: 'Просроченные',
+    label: t('quick_filters.overdue'),
     icon: 'pi pi-clock',
     view: 'overdue'
   },
   {
     id: 'in-progress',
-    label: 'В процессе',
+    label: t('quick_filters.in_progress'),
     icon: 'pi pi-play',
     view: 'all',
     status: ['in_progress']
   }
-]
+])
 
 const activeFilters = ref<string[]>([])
 
@@ -65,7 +65,7 @@ function toggleFilter(filter: QuickFilter) {
   }
 
   // Emit all active filters
-  const activeFilterObjects = quickFilters.filter(f => activeFilters.value.includes(f.id))
+  const activeFilterObjects = quickFilters.value.filter(f => activeFilters.value.includes(f.id))
   emit('filters-change', activeFilterObjects)
 }
 
@@ -118,6 +118,12 @@ function isActive(filterId: string): boolean {
 .quick-filter-btn i {
   font-size: 0.875rem;
   color: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1em;
+  height: 1em;
 }
 
 .quick-filter-btn:hover {

@@ -67,7 +67,7 @@
                   <div class="node-meta">
                     <span v-if="slotProps.node.data?.priority" 
                       class="node-priority" 
-                      :class="'priority-' + slotProps.node.data.priority.toLowerCase()">
+                      :class="'priority-' + (typeof slotProps.node.data.priority === 'string' ? slotProps.node.data.priority.toLowerCase() : slotProps.node.data.priority.value.toLowerCase())">
                       {{ getPriorityLabel(slotProps.node.data.priority) }}
                     </span>
                     <span v-if="slotProps.node.data?.dueDate" class="node-date">
@@ -317,17 +317,17 @@ const taskForm = ref({
   tags: [] as string[]
 })
 
-const statusOptions = [
+const statusOptions = computed(() => [
   { label: t('tasks.status_pending'), value: TaskStatus.PENDING },
   { label: t('tasks.status_in_progress'), value: TaskStatus.IN_PROGRESS },
   { label: t('tasks.status_completed'), value: TaskStatus.COMPLETED }
-]
+])
 
-const priorityOptions = [
+const priorityOptions = computed(() => [
   { label: t('tasks.priority_low'), value: TaskPriority.LOW },
   { label: t('tasks.priority_medium'), value: TaskPriority.MEDIUM },
   { label: t('tasks.priority_high'), value: TaskPriority.HIGH }
-]
+])
 
 // Lifecycle
 onMounted(() => {
@@ -462,13 +462,21 @@ function truncateText(text: string, length: number): string {
   return text.substring(0, length) + '...'
 }
 
-function getPriorityLabel(priority: string): string {
+function getPriorityLabel(priority: any): string {
+  // If priority is an object with label, use it
+  if (typeof priority === 'object' && priority.label) {
+    return priority.label
+  }
+  
+  // Otherwise use translation
+  const priorityValue = typeof priority === 'string' ? priority : priority.value
   const map: Record<string, string> = {
     'low': t('tasks.priority_low'),
     'medium': t('tasks.priority_medium'),
-    'high': t('tasks.priority_high')
+    'high': t('tasks.priority_high'),
+    'urgent': t('tasks.priority_urgent')
   }
-  return map[priority.toLowerCase()] || priority
+  return map[priorityValue.toLowerCase()] || priorityValue
 }
 
 // Handlers

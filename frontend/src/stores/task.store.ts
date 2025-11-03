@@ -124,7 +124,9 @@ export const useTaskStore = defineStore('task', () => {
     
     tasks.value.forEach(task => {
       if (!task.isArchived && task.priority) {
-        const priorityKey = task.priority.toLowerCase()
+        const priorityKey = typeof task.priority === 'string' 
+          ? task.priority.toLowerCase() 
+          : task.priority.value.toLowerCase()
         if (grouped[priorityKey]) {
           grouped[priorityKey].push(task)
         }
@@ -297,10 +299,13 @@ export const useTaskStore = defineStore('task', () => {
 
     // If task exists in store, do optimistic update
     if (taskExistsInStore && originalTask) {
+      const newStatus = !originalTask.isCompleted ? 'completed' : 'pending'
       const optimisticTask = {
         ...originalTask,
         isCompleted: !originalTask.isCompleted,
-        status: !originalTask.isCompleted ? 'completed' : 'pending'
+        status: typeof originalTask.status === 'object' 
+          ? { ...originalTask.status, value: newStatus }
+          : newStatus
       } as Task
 
       // Optimistic update - update UI immediately in all locations
@@ -324,6 +329,12 @@ export const useTaskStore = defineStore('task', () => {
     try {
       // Always make API call, even if task is not in store (e.g., calendar tasks)
       const updatedTask = await taskService.toggleTask(id)
+      
+      // Ensure isCompleted is in sync with status
+      const statusValue = typeof updatedTask.status === 'string' 
+        ? updatedTask.status 
+        : updatedTask.status.value
+      updatedTask.isCompleted = statusValue === 'completed'
       
       // Update with real data from server in all locations (if task exists in store)
       const currentTaskIndex = tasks.value.findIndex(t => t.id === id)

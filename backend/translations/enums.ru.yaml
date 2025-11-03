@@ -1,0 +1,16 @@
+# Task Priority translations
+task.priority.low: "Низкий"
+task.priority.medium: "Средний"
+task.priority.high: "Высокий"
+task.priority.urgent: "Срочный"
+
+# Task Status translations
+task.status.pending: "В ожидании"
+task.status.in_progress: "В работе"
+task.status.completed: "Завершено"
+task.status.cancelled: "Отменено"
+task.status.archived: "В архиве"
+
+# Additional task-related translations
+task.priority.label: "Приоритет"
+task.status.label: "Статус"

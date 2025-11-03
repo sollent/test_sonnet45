@@ -28,21 +28,21 @@ const localFilters = ref<TaskFiltersState>({
   statuses: []
 })
 
-// Priority options
-const priorityOptions = [
-  { label: 'Низкий', value: TaskPriority.LOW, color: '#10b981' },
-  { label: 'Средний', value: TaskPriority.MEDIUM, color: '#f59e0b' },
-  { label: 'Высокий', value: TaskPriority.HIGH, color: '#ef4444' },
-  { label: 'Срочный', value: TaskPriority.URGENT, color: '#dc2626' }
-]
+// Priority options with translations
+const priorityOptions = computed(() => [
+  { label: t('tasks.priority_low'), value: TaskPriority.LOW, color: '#10b981' },
+  { label: t('tasks.priority_medium'), value: TaskPriority.MEDIUM, color: '#f59e0b' },
+  { label: t('tasks.priority_high'), value: TaskPriority.HIGH, color: '#ef4444' },
+  { label: t('tasks.priority_urgent'), value: TaskPriority.URGENT, color: '#dc2626' }
+])
 
-// Status options
-const statusOptions = [
-  { label: 'В ожидании', value: TaskStatus.PENDING, color: '#6b7280' },
-  { label: 'В процессе', value: TaskStatus.IN_PROGRESS, color: '#3b82f6' },
-  { label: 'Завершена', value: TaskStatus.COMPLETED, color: '#10b981' },
-  { label: 'Отменена', value: TaskStatus.CANCELLED, color: '#ef4444' }
-]
+// Status options with translations
+const statusOptions = computed(() => [
+  { label: t('tasks.status_pending'), value: TaskStatus.PENDING, color: '#6b7280' },
+  { label: t('tasks.status_in_progress'), value: TaskStatus.IN_PROGRESS, color: '#3b82f6' },
+  { label: t('tasks.status_completed'), value: TaskStatus.COMPLETED, color: '#10b981' },
+  { label: t('tasks.status_cancelled'), value: TaskStatus.CANCELLED, color: '#ef4444' }
+])
 
 // Count active filters
 const activeFiltersCount = computed(() => {

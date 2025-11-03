@@ -46,11 +46,8 @@ function switchLanguage(newLocale: 'ru' | 'en') {
       
       showSuccess(message, title)
       
-      // Reload page to apply PrimeVue Calendar locale changes
-      // This ensures all components (including Calendar) are properly localized
-      setTimeout(() => {
-        window.location.reload()
-      }, 300)
+      // Note: PrimeVue Calendar locale is now updated reactively via updatePrimeVueLocale
+      // in i18n/index.ts, so no page reload is needed
     }
   }
 }

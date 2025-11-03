@@ -18,9 +18,11 @@ use App\Repository\Database\TaskRepository;
 use App\Repository\Database\MediaObjectRepository;
 use App\Entity\MediaObject;
 use App\Service\RecurrenceService;
+use App\Service\TranslationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Doctrine\ORM\Tools\Pagination\Paginator;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 final class TaskService
 {
@@ -29,8 +31,33 @@ final class TaskService
         private readonly TagRepository $tagRepository,
         private readonly EntityManagerInterface $entityManager,
         private readonly MediaObjectRepository $mediaObjectRepository,
-        private readonly ?RecurrenceService $recurrenceService = null
+        private readonly ?RecurrenceService $recurrenceService = null,
+        private readonly ?TranslationService $translationService = null,
+        private readonly ?RequestStack $requestStack = null
     ) {
+    }
+
+    /**
+     * Enrich task DTO with translations
+     */
+    private function enrichDtoWithTranslations(\App\Dto\Response\Task\TaskResponseDto $dto): void
+    {
+        if ($this->translationService === null) {
+            return;
+        }
+        
+        // Get locale from current request
+        $locale = null;
+        if ($this->requestStack !== null) {
+            $request = $this->requestStack->getCurrentRequest();
+            if ($request !== null) {
+                $locale = $request->getLocale();
+            }
+        }
+        
+        // Add translations
+        $dto->priorityLabel = $this->translationService->translatePriority($dto->priority, $locale);
+        $dto->statusLabel = $this->translationService->translateStatus($dto->status, $locale);
     }
 
     /**

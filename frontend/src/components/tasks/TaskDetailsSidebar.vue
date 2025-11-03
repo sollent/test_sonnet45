@@ -83,6 +83,7 @@ const editData = ref<UpdateTaskRequest>({})
 
 // Local task state for optimistic updates
 const localTask = ref<Task | null>(null)
+const isLoadingFullTask = ref(false)
 
 // Computed for v-model compatibility
 const localVisible = computed({
@@ -96,10 +97,24 @@ const localVisible = computed({
 // Use local task if available, otherwise use props
 const currentTask = computed(() => localTask.value || props.selectedTask || props.task)
 
-// Watch for prop changes to sync local task
-watch(() => props.selectedTask || props.task, (newTask) => {
+// Watch for prop changes to sync local task and load full data
+watch(() => props.selectedTask || props.task, async (newTask) => {
   if (newTask) {
     localTask.value = { ...newTask }
+    
+    // Load full task with subtasks if not already loaded
+    if (!newTask.priorityLabel || !newTask.statusLabel) {
+      isLoadingFullTask.value = true
+      try {
+        const fullTask = await taskStore.fetchTask(newTask.id)
+        localTask.value = { ...fullTask }
+      } catch (error) {
+        console.error('Failed to load full task:', error)
+      } finally {
+        isLoadingFullTask.value = false
+      }
+    }
+    
     // Initialize tag suggestions when opening sidebar in edit mode
     if (editMode.value) {
       initializeTagSuggestions(7)
@@ -192,12 +207,18 @@ const priorityOptions = computed(() => [
 
 const priorityConfig = computed(() => {
   if (!currentTask.value) return null
-  return TASK_PRIORITY_CONFIG[currentTask.value.priority]
+  const priorityValue = typeof currentTask.value.priority === 'string' 
+    ? currentTask.value.priority 
+    : currentTask.value.priority.value
+  return TASK_PRIORITY_CONFIG[priorityValue]
 })
 
 const statusConfig = computed(() => {
   if (!currentTask.value) return null
-  return TASK_STATUS_CONFIG[currentTask.value.status]
+  const statusValue = typeof currentTask.value.status === 'string' 
+    ? currentTask.value.status 
+    : currentTask.value.status.value
+  return TASK_STATUS_CONFIG[statusValue]
 })
 
 const completionPercentage = computed(() => {
@@ -257,11 +278,19 @@ watch(() => currentTask.value, (newTask, oldTask) => {
 function resetEditData() {
   if (!currentTask.value) return
   
+  const statusValue = typeof currentTask.value.status === 'string' 
+    ? currentTask.value.status 
+    : currentTask.value.status.value
+    
+  const priorityValue = typeof currentTask.value.priority === 'string' 
+    ? currentTask.value.priority 
+    : currentTask.value.priority.value
+    
   editData.value = {
     title: currentTask.value.title,
     description: currentTask.value.description,
-    status: currentTask.value.status,
-    priority: currentTask.value.priority,
+    status: statusValue,
+    priority: priorityValue,
     startDate: currentTask.value.startDate,
     dueDate: currentTask.value.dueDate,
     tags: currentTask.value.tags.map(tag => tag.name)
@@ -279,11 +308,19 @@ async function openSubtaskEditor(subtaskId: number) {
   try {
     const st = await taskService.getTask(subtaskId)
     currentSubtask.value = st
+    const subtaskStatusValue = typeof st.status === 'string' 
+      ? st.status 
+      : st.status.value
+      
+    const subtaskPriorityValue = typeof st.priority === 'string' 
+      ? st.priority 
+      : st.priority.value
+      
     subtaskEditData.value = {
       title: st.title,
       description: st.description,
-      status: st.status,
-      priority: st.priority,
+      status: subtaskStatusValue,
+      priority: subtaskPriorityValue,
       startDate: st.startDate,
       dueDate: st.dueDate,
       tags: st.tags.map(t => t.name)
@@ -1015,16 +1052,21 @@ function handleFileView(attachment: TaskAttachment) {
     <div v-if="currentTask && !isSubtaskView" class="task-details">
       <!-- Priority and Status Badges -->
       <div class="badges-row">
+        <Skeleton v-if="isLoadingFullTask || !currentTask.priorityLabel" width="120px" height="32px" borderRadius="16px" />
         <Chip
-          :label="t(`tasks.priority_${currentTask.priority}`)"
+          v-else
+          :label="currentTask.priorityLabel"
           :style="{ 
             backgroundColor: priorityConfig?.color + '20',
             color: priorityConfig?.color,
             fontWeight: 600
           }"
         />
+        
+        <Skeleton v-if="isLoadingFullTask || !currentTask.statusLabel" width="120px" height="32px" borderRadius="16px" />
         <Chip
-          :label="t(`tasks.status_${currentTask.status}`)"
+          v-else
+          :label="currentTask.statusLabel"
           :style="{ 
             backgroundColor: statusConfig?.color + '20',
             color: statusConfig?.color,

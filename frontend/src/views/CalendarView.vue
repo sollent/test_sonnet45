@@ -23,7 +23,10 @@
           />
         </div>
         <div class="header-actions">
-          <p v-if="!isMobile" class="header-subtitle">{{ user?.email }}</p>
+          <button v-if="!isMobile" @click="router.push('/profile')" class="profile-button">
+            <i class="pi pi-user"></i>
+            <span class="header-subtitle">{{ user?.email }}</span>
+          </button>
           <Button 
             icon="pi pi-sign-out"
             severity="secondary"
@@ -107,7 +110,7 @@
               :key="task.id"
               class="task-dot"
               :class="[
-                `priority-${task.priority.toLowerCase()}`,
+                `priority-${getPriorityValue(task.priority).toLowerCase()}`,
                 { 'task-dot--completed': task.isCompleted }
               ]"
               :title="task.title"
@@ -143,12 +146,16 @@
           </div>
           <div class="tasks-section__list">
             <TaskCard
-              v-for="task in activeTasks"
+              v-for="task in displayedActiveTasks"
               :key="task.id"
               :task="task"
               @click="selectTask"
               @task-updated="handleToggleComplete"
             />
+            <button v-if="hasMoreActiveTasks" @click="loadMoreActiveTasks" class="load-more-btn">
+              <i class="pi pi-chevron-down" />
+              {{ t('common.load_more') }} ({{ activeTasks.length - activeTasksLimit }} {{ t('common.remaining') }})
+            </button>
           </div>
         </div>
 
@@ -161,12 +168,16 @@
           </div>
           <div class="tasks-section__list">
             <TaskCard
-              v-for="task in completedTasks"
+              v-for="task in displayedCompletedTasks"
               :key="task.id"
               :task="task"
               @click="selectTask"
               @task-updated="handleToggleComplete"
             />
+            <button v-if="hasMoreCompletedTasks" @click="loadMoreCompletedTasks" class="load-more-btn">
+              <i class="pi pi-chevron-down" />
+              {{ t('common.load_more') }} ({{ completedTasks.length - completedTasksLimit }} {{ t('common.remaining') }})
+            </button>
           </div>
         </div>
 
@@ -194,12 +205,18 @@
           </div>
           <div class="day-timeline">
             <div v-for="hour in 24" :key="hour" class="hour-slot" />
-            <div class="tasks-overlay">
+            <div v-if="isLoading" class="tasks-overlay">
+              <!-- Skeleton for loading state -->
+              <Skeleton class="timeline-task-skeleton" height="80px" style="top: 120px;" />
+              <Skeleton class="timeline-task-skeleton" height="60px" style="top: 360px;" />
+              <Skeleton class="timeline-task-skeleton" height="100px" style="top: 600px;" />
+            </div>
+            <div v-else class="tasks-overlay">
               <div
                 v-for="task in getTasksWithPosition(day.tasks)"
                 :key="task.id"
                 class="timeline-task"
-                :class="`priority-${task.priority.toLowerCase()} status-${task.status.toLowerCase()}`"
+                :class="`priority-${getPriorityValue(task.priority).toLowerCase()} status-${getStatusValue(task.status).toLowerCase()}`"
                 :style="getTaskStyle(task)"
                 @click="selectTask(task)"
                 :title="`${task.title}\n${formatTaskTime(task)}`"
@@ -221,7 +238,7 @@
                   v-for="task in day.allDayTasks"
                   :key="task.id"
                   class="all-day-task"
-                  :class="`priority-${task.priority.toLowerCase()}`"
+                  :class="`priority-${getPriorityValue(task.priority).toLowerCase()}`"
                   @click="selectTask(task)"
                 >
                   {{ task.title }}
@@ -260,6 +277,7 @@ import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from 'vue-router'
 import Button from 'primevue/button'
 import Badge from 'primevue/badge'
+import Skeleton from 'primevue/skeleton'
 import TaskCard from '@/components/tasks/TaskCard.vue'
 import TaskDetailsSidebar from '@/components/tasks/TaskDetailsSidebar.vue'
 import TaskDialog from '@/components/tasks/TaskDialog.vue'
@@ -290,14 +308,39 @@ const newTaskDate = ref<Date | null>(null)
 const selectedDaySection = ref<HTMLElement | null>(null)
 
 // Computed properties for active and completed tasks
+// Optimized with memoization
 const activeTasks = computed(() => {
-  if (!selectedDay.value) return []
+  if (!selectedDay.value || !selectedDay.value.tasks) return []
   return selectedDay.value.tasks.filter((task: Task) => !task.isCompleted)
 })
 
 const completedTasks = computed(() => {
-  if (!selectedDay.value) return []
+  if (!selectedDay.value || !selectedDay.value.tasks) return []
   return selectedDay.value.tasks.filter((task: Task) => task.isCompleted)
+})
+
+// Infinite scroll pagination for tasks
+const activeTasksLimit = ref(20)
+const completedTasksLimit = ref(10)
+
+const displayedActiveTasks = computed(() => activeTasks.value.slice(0, activeTasksLimit.value))
+const displayedCompletedTasks = computed(() => completedTasks.value.slice(0, completedTasksLimit.value))
+
+const hasMoreActiveTasks = computed(() => activeTasks.value.length > activeTasksLimit.value)
+const hasMoreCompletedTasks = computed(() => completedTasks.value.length > completedTasksLimit.value)
+
+function loadMoreActiveTasks() {
+  activeTasksLimit.value += 20
+}
+
+function loadMoreCompletedTasks() {
+  completedTasksLimit.value += 10
+}
+
+// Reset limits when day changes
+watch(selectedDay, () => {
+  activeTasksLimit.value = 20
+  completedTasksLimit.value = 10
 })
 
 function normalizeDateValue(value: Date | string): Date {
@@ -330,6 +373,9 @@ async function setSelectedDayByDate(date: Date) {
 }
 
 function updateTaskCollections(updatedTask: Task) {
+  // Clear position cache for this task
+  taskPositionsCache.delete(updatedTask.id)
+  
   const replaceTaskInArray = (source: Task[]): Task[] => {
     const taskIndex = source.findIndex(task => task.id === updatedTask.id)
     if (taskIndex === -1) {
@@ -346,6 +392,14 @@ function updateTaskCollections(updatedTask: Task) {
     const next = replaceTaskInArray(current)
     if (next !== current) {
       target.value = next
+      
+      // Update cache if this is monthTasks
+      if (target === monthTasks && viewMode.value === 'month') {
+        const year = currentDate.value.getFullYear()
+        const month = currentDate.value.getMonth() + 1
+        const cacheKey = `${year}-${month}`
+        monthCache.value.set(cacheKey, next)
+      }
     }
   }
 
@@ -402,6 +456,44 @@ const currentPeriodLabel = computed(() => {
 })
 
 // Calendar days for month view
+// Optimized: Index tasks by date for O(1) lookup
+const tasksByDate = computed(() => {
+  const index = new Map<string, Task[]>()
+  
+  monthTasks.value.forEach(task => {
+    const taskStartDate = task.startDate ? new Date(task.startDate) : null
+    const taskDueDate = task.dueDate ? new Date(task.dueDate) : null
+    
+    if (taskStartDate) {
+      taskStartDate.setHours(0, 0, 0, 0)
+    }
+    if (taskDueDate) {
+      taskDueDate.setHours(0, 0, 0, 0)
+    }
+    
+    // Add task to all dates it spans
+    if (taskStartDate && taskDueDate) {
+      const current = new Date(taskStartDate)
+      while (current <= taskDueDate) {
+        const key = current.toDateString()
+        if (!index.has(key)) index.set(key, [])
+        index.get(key)!.push(task)
+        current.setDate(current.getDate() + 1)
+      }
+    } else if (taskStartDate) {
+      const key = taskStartDate.toDateString()
+      if (!index.has(key)) index.set(key, [])
+      index.get(key)!.push(task)
+    } else if (taskDueDate) {
+      const key = taskDueDate.toDateString()
+      if (!index.has(key)) index.set(key, [])
+      index.get(key)!.push(task)
+    }
+  })
+  
+  return index
+})
+
 const calendarDays = computed(() => {
   const year = currentDate.value.getFullYear()
   const month = currentDate.value.getMonth()
@@ -422,54 +514,8 @@ const calendarDays = computed(() => {
     date.setDate(startDate.getDate() + i)
     date.setHours(0, 0, 0, 0)
     
-    const dayTasks = monthTasks.value.filter(task => {
-      const taskStartDate = task.startDate ? new Date(task.startDate) : null
-      const taskDueDate = task.dueDate ? new Date(task.dueDate) : null
-      
-      // Normalize dates to midnight for comparison (create new Date objects to avoid mutation)
-      let normalizedStart: Date | null = null
-      let normalizedDue: Date | null = null
-      
-      if (taskStartDate) {
-        normalizedStart = new Date(taskStartDate)
-        normalizedStart.setHours(0, 0, 0, 0)
-      }
-      
-      if (taskDueDate) {
-        normalizedDue = new Date(taskDueDate)
-        normalizedDue.setHours(0, 0, 0, 0)
-      }
-      
-      // Task appears on this day if:
-      // 1. It starts on this day
-      if (normalizedStart && normalizedStart.getTime() === date.getTime()) {
-        return true
-      }
-      
-      // 2. It ends on this day
-      if (normalizedDue && normalizedDue.getTime() === date.getTime()) {
-        return true
-      }
-      
-      // 3. It spans across this day (starts before or on this day, ends after or on this day)
-      if (normalizedStart && normalizedDue) {
-        if (normalizedStart.getTime() <= date.getTime() && normalizedDue.getTime() >= date.getTime()) {
-          return true
-        }
-      }
-      
-      // 4. Task has only startDate (no dueDate) and starts on this day
-      if (normalizedStart && !normalizedDue && normalizedStart.getTime() === date.getTime()) {
-        return true
-      }
-      
-      // 5. Task has only dueDate (no startDate) and ends on this day
-      if (!normalizedStart && normalizedDue && normalizedDue.getTime() === date.getTime()) {
-        return true
-      }
-      
-      return false
-    })
+    // Use indexed lookup instead of filter (O(1) vs O(n))
+    const dayTasks = tasksByDate.value.get(date.toDateString()) || []
     
     // Check if all tasks are completed
     const hasOnlyCompletedTasks = dayTasks.length > 0 && dayTasks.every(task => task.isCompleted)
@@ -568,6 +614,14 @@ async function navigateToday() {
 }
 
 // Helper functions
+function getPriorityValue(priority: any): string {
+  return typeof priority === 'string' ? priority : priority.value
+}
+
+function getStatusValue(status: any): string {
+  return typeof status === 'string' ? status : status.value
+}
+
 function getWeekStart(date: Date): Date {
   const d = new Date(date)
   const day = d.getDay()
@@ -614,19 +668,32 @@ function formatTaskTime(task: Task): string {
 }
 
 // Task positioning for week view
+// Memoized task positions cache
+const taskPositionsCache = new Map<number, { startHour: number; duration: number }>()
+
 function getTasksWithPosition(tasks: Task[]): any[] {
   return tasks.map(task => {
+    // Check cache first
+    if (taskPositionsCache.has(task.id)) {
+      return {
+        ...task,
+        ...taskPositionsCache.get(task.id)!
+      }
+    }
+    
     const startDate = task.startDate ? new Date(task.startDate) : new Date(task.dueDate!)
     const endDate = task.dueDate ? new Date(task.dueDate) : startDate
     
     const startHour = startDate.getHours() + startDate.getMinutes() / 60
     const endHour = endDate.getHours() + endDate.getMinutes() / 60
-    const duration = endHour - startHour
+    const duration = Math.max(endHour - startHour, 0.5) // Minimum 30 minutes height
+    
+    const position = { startHour, duration }
+    taskPositionsCache.set(task.id, position)
     
     return {
       ...task,
-      startHour,
-      duration: Math.max(duration, 0.5) // Minimum 30 minutes height
+      ...position
     }
   })
 }
@@ -665,7 +732,11 @@ async function selectTask(task: Task) {
 }
 
 function openNewTaskDialog(date: Date) {
-  newTaskDate.value = date
+  // Ensure date is normalized to local midnight
+  const normalizedDate = new Date(date)
+  normalizedDate.setHours(12, 0, 0, 0) // Set to noon to avoid timezone issues
+  
+  newTaskDate.value = normalizedDate
   editingTask.value = null
   parentTaskId.value = null
   showNewTaskDialog.value = true
@@ -673,6 +744,12 @@ function openNewTaskDialog(date: Date) {
 
 async function handleToggleComplete(updatedTask: Task) {
   try {
+    // Clear cache to ensure fresh data
+    const year = currentDate.value.getFullYear()
+    const month = currentDate.value.getMonth() + 1
+    const cacheKey = `${year}-${month}`
+    monthCache.value.delete(cacheKey)
+    
     // Update local collections immediately with optimistic update
     // This ensures UI updates instantly while API call happens in background
     updateTaskCollections(updatedTask)
@@ -718,6 +795,13 @@ async function handleTaskSaved() {
     ? new Date(newTaskDate.value)
     : null
 
+  // Clear cache for current month to force reload
+  const year = currentDate.value.getFullYear()
+  const month = currentDate.value.getMonth() + 1
+  const cacheKey = `${year}-${month}`
+  monthCache.value.delete(cacheKey)
+
+  // Reload tasks
   await fetchTasks()
 
   if (targetDate) {
@@ -727,6 +811,13 @@ async function handleTaskSaved() {
 
 async function handleTaskUpdated() {
   const selectedDate = selectedDay.value ? new Date(selectedDay.value.date) : null
+  
+  // Clear cache for current month to force reload
+  const year = currentDate.value.getFullYear()
+  const month = currentDate.value.getMonth() + 1
+  const cacheKey = `${year}-${month}`
+  monthCache.value.delete(cacheKey)
+  
   await fetchTasks()
   
   if (selectedDate) {
@@ -750,6 +841,13 @@ async function handleTaskDeleted() {
   showTaskDetails.value = false
   selectedTask.value = null
   const selectedDate = selectedDay.value ? new Date(selectedDay.value.date) : null
+  
+  // Clear cache for current month to force reload
+  const year = currentDate.value.getFullYear()
+  const month = currentDate.value.getMonth() + 1
+  const cacheKey = `${year}-${month}`
+  monthCache.value.delete(cacheKey)
+  
   await fetchTasks()
   
   if (selectedDate) {
@@ -757,7 +855,10 @@ async function handleTaskDeleted() {
   }
 }
 
-// Fetch tasks
+// Cache for loaded months to avoid redundant requests
+const monthCache = ref(new Map<string, Task[]>())
+
+// Fetch tasks with caching
 async function fetchTasks() {
   isLoading.value = true
   try {
@@ -765,18 +866,22 @@ async function fetchTasks() {
       const year = currentDate.value.getFullYear()
       const month = currentDate.value.getMonth() + 1
       
-      // Fetch tasks for current, previous, and next month to ensure proper display across month boundaries
-      const [prevMonthTasks, currentMonthTasks, nextMonthTasks] = await Promise.all([
-        taskService.getTasksForMonth(month === 1 ? year - 1 : year, month === 1 ? 12 : month - 1, true),
-        taskService.getTasksForMonth(year, month, true),
-        taskService.getTasksForMonth(month === 12 ? year + 1 : year, month === 12 ? 1 : month + 1, true)
-      ])
+      // Create cache key
+      const cacheKey = `${year}-${month}`
       
-      const mergedTasks = new Map<number, Task>()
-      ;[...prevMonthTasks, ...currentMonthTasks, ...nextMonthTasks].forEach(task => {
-        mergedTasks.set(task.id, task)
-      })
-      monthTasks.value = Array.from(mergedTasks.values())
+      // Check cache first
+      if (monthCache.value.has(cacheKey)) {
+        monthTasks.value = monthCache.value.get(cacheKey)!
+        isLoading.value = false
+        return
+      }
+      
+      // Fetch only current month (optimized)
+      const currentMonthTasks = await taskService.getTasksForMonth(year, month, true)
+      
+      // Cache the result
+      monthCache.value.set(cacheKey, currentMonthTasks)
+      monthTasks.value = currentMonthTasks
     } else {
       const weekStart = getWeekStart(currentDate.value)
       weekTasks.value = await taskService.getTasksForWeek(weekStart, true)
@@ -788,9 +893,59 @@ async function fetchTasks() {
   }
 }
 
+// Prefetch adjacent months in background (lazy loading)
+async function prefetchAdjacentMonths() {
+  if (viewMode.value !== 'month') return
+  
+  const year = currentDate.value.getFullYear()
+  const month = currentDate.value.getMonth() + 1
+  
+  const prevMonth = month === 1 ? 12 : month - 1
+  const prevYear = month === 1 ? year - 1 : year
+  const nextMonth = month === 12 ? 1 : month + 1
+  const nextYear = month === 12 ? year + 1 : year
+  
+  const prevKey = `${prevYear}-${prevMonth}`
+  const nextKey = `${nextYear}-${nextMonth}`
+  
+  // Prefetch in background without blocking UI
+  setTimeout(async () => {
+    try {
+      if (!monthCache.value.has(prevKey)) {
+        const tasks = await taskService.getTasksForMonth(prevYear, prevMonth, true)
+        monthCache.value.set(prevKey, tasks)
+      }
+    } catch (error) {
+      // Silent fail for background prefetch
+    }
+  }, 100)
+  
+  setTimeout(async () => {
+    try {
+      if (!monthCache.value.has(nextKey)) {
+        const tasks = await taskService.getTasksForMonth(nextYear, nextMonth, true)
+        monthCache.value.set(nextKey, tasks)
+      }
+    } catch (error) {
+      // Silent fail for background prefetch
+    }
+  }, 200)
+}
+
 // Watchers
-watch(viewMode, fetchTasks)
-watch(currentDate, fetchTasks)
+watch(viewMode, async () => {
+  await fetchTasks()
+  if (viewMode.value === 'month') {
+    prefetchAdjacentMonths()
+  }
+})
+
+watch(currentDate, async () => {
+  await fetchTasks()
+  if (viewMode.value === 'month') {
+    prefetchAdjacentMonths()
+  }
+})
 
 // Logout handler
 async function handleLogout() {
@@ -809,10 +964,15 @@ function handleResize() {
 }
 
 // Lifecycle
-onMounted(() => {
-  fetchTasks()
+onMounted(async () => {
+  await fetchTasks()
   navigateToday()
   window.addEventListener('resize', handleResize)
+  
+  // Prefetch adjacent months in background for better UX
+  if (viewMode.value === 'month') {
+    prefetchAdjacentMonths()
+  }
 })
 
 onUnmounted(() => {
@@ -877,6 +1037,30 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 1rem;
+}
+
+.profile-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #64748b;
+}
+
+.profile-button:hover {
+  background: #f8f9fa;
+  border-color: #cbd5e0;
+  color: #1e293b;
+}
+
+.profile-button i {
+  font-size: 0.875rem;
+  color: #6366f1;
 }
 
 .header-subtitle {
@@ -1166,6 +1350,44 @@ onUnmounted(() => {
   gap: 0.75rem;
 }
 
+.load-more-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem;
+  margin-top: 0.75rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  color: #6366f1;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.load-more-btn:hover {
+  background: linear-gradient(135deg, #eef2ff 0%, #f5f8ff 100%);
+  border-color: #6366f1;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.15);
+}
+
+.load-more-btn:active {
+  transform: translateY(0);
+}
+
+.load-more-btn i {
+  font-size: 0.875rem;
+  transition: transform 0.2s;
+}
+
+.load-more-btn:hover i {
+  transform: translateY(2px);
+}
+
 .tasks-section__list :deep(.task-card) {
   width: 100%;
 }
@@ -1266,6 +1488,14 @@ onUnmounted(() => {
   right: 0;
   bottom: 0;
   padding: 0 0.25rem;
+}
+
+.timeline-task-skeleton {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  border-radius: 4px;
+  opacity: 0.7;
 }
 
 .timeline-task {

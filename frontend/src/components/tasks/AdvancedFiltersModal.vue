@@ -1,13 +1,18 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useTaskStore } from '@/stores/task.store'
 import { TaskPriority, TaskStatus, type TaskFiltersState } from '@/types/task.types'
 import Calendar from 'primevue/calendar'
 import Chip from 'primevue/chip'
+import InputText from 'primevue/inputtext'
+import Skeleton from 'primevue/skeleton'
 
 const { t } = useI18n()
 const taskStore = useTaskStore()
+
+// Mobile detection
+const isMobile = ref(window.innerWidth < 768)
 
 const props = defineProps<{
   visible: boolean
@@ -18,14 +23,14 @@ const emit = defineEmits<{
   (e: 'apply'): void
 }>()
 
-// Quick filter presets for modal
-const quickPresets = [
-  { id: 'all', label: 'Все задачи', active: true },
-  { id: 'my', label: 'Мои задачи', active: false },
-  { id: 'week', label: 'На этой неделе', active: false },
-  { id: 'important', label: 'Важные', active: false },
-  { id: 'team', label: 'Командные', active: false }
-]
+// Quick filter presets for modal with translations
+const quickPresets = computed(() => [
+  { id: 'all', label: t('tasks.all_tasks') },
+  { id: 'my', label: t('tasks.my_tasks') },
+  { id: 'week', label: t('tasks.this_week') },
+  { id: 'important', label: t('tasks.important') },
+  { id: 'team', label: t('tasks.team') }
+])
 
 const activePreset = ref('all')
 
@@ -40,28 +45,63 @@ const localFilters = ref<TaskFiltersState>({
 })
 
 const taskType = ref<'all' | 'active' | 'completed'>('all')
-const dateFrom = ref<Date | null>(null)
-const dateTo = ref<Date | null>(null)
+const dateRange = ref<Date[] | null>(null)
 
-// Computed minimum date for dateTo (should be >= dateFrom)
-const minDateTo = computed(() => dateFrom.value || undefined)
+// Extract dateFrom and dateTo from range
+const dateFrom = computed(() => dateRange.value?.[0] || null)
+const dateTo = computed(() => dateRange.value?.[1] || null)
 
-// Options
-const priorityOptions = [
-  { label: 'Низкий', value: TaskPriority.LOW, color: '#10b981' },
-  { label: 'Средний', value: TaskPriority.MEDIUM, color: '#f59e0b' },
-  { label: 'Высокий', value: TaskPriority.HIGH, color: '#ef4444' },
-  { label: 'Срочный', value: TaskPriority.URGENT, color: '#dc2626' }
-]
+// Options with translations
+const priorityOptions = computed(() => [
+  { label: t('tasks.priority_low'), value: TaskPriority.LOW, color: '#10b981' },
+  { label: t('tasks.priority_medium'), value: TaskPriority.MEDIUM, color: '#f59e0b' },
+  { label: t('tasks.priority_high'), value: TaskPriority.HIGH, color: '#ef4444' },
+  { label: t('tasks.priority_urgent'), value: TaskPriority.URGENT, color: '#dc2626' }
+])
 
-const statusOptions = [
-  { label: 'Ожидание', value: TaskStatus.PENDING, color: '#6b7280' },
-  { label: 'В процессе', value: TaskStatus.IN_PROGRESS, color: '#3b82f6' },
-  { label: 'Завершена', value: TaskStatus.COMPLETED, color: '#10b981' },
-  { label: 'Отменена', value: TaskStatus.CANCELLED, color: '#ef4444' }
-]
+const statusOptions = computed(() => [
+  { label: t('tasks.status_pending'), value: TaskStatus.PENDING, color: '#6b7280' },
+  { label: t('tasks.status_in_progress'), value: TaskStatus.IN_PROGRESS, color: '#3b82f6' },
+  { label: t('tasks.status_completed'), value: TaskStatus.COMPLETED, color: '#10b981' },
+  { label: t('tasks.status_cancelled'), value: TaskStatus.CANCELLED, color: '#ef4444' }
+])
 
-const popularTags = computed(() => taskStore.tags.slice(0, 5))
+const popularTags = computed(() => taskStore.tags.slice(0, 8))
+
+// Tag search
+const tagSearchQuery = ref('')
+const searchedTags = ref<any[]>([])
+const isSearchingTags = ref(false)
+
+// Debounce timer for tag search
+let tagSearchTimeout: ReturnType<typeof setTimeout> | null = null
+
+async function handleTagSearch() {
+  if (tagSearchTimeout) {
+    clearTimeout(tagSearchTimeout)
+  }
+  
+  const query = tagSearchQuery.value.trim()
+  
+  if (!query) {
+    searchedTags.value = []
+    return
+  }
+  
+  tagSearchTimeout = setTimeout(async () => {
+    isSearchingTags.value = true
+    try {
+      // Search in all tags
+      searchedTags.value = taskStore.tags.filter(tag => 
+        tag.name.toLowerCase().includes(query.toLowerCase())
+      )
+    } catch (error) {
+      console.error('Error searching tags:', error)
+    } finally {
+      isSearchingTags.value = false
+    }
+  }, 300)
+}
 
 // Count active filters
 const activeCount = computed(() => {
@@ -103,24 +143,33 @@ function toggleTag(tagId: number) {
 }
 
 function close() {
+  // Clear tag search on close
+  tagSearchQuery.value = ''
+  searchedTags.value = []
+  if (tagSearchTimeout) {
+    clearTimeout(tagSearchTimeout)
+  }
+  
   emit('update:visible', false)
 }
 
 function apply() {
-  // Format dates
-  if (dateFrom.value) {
-    const year = dateFrom.value.getFullYear()
-    const month = String(dateFrom.value.getMonth() + 1).padStart(2, '0')
-    const day = String(dateFrom.value.getDate()).padStart(2, '0')
+  // Format dates from range
+  if (dateRange.value && dateRange.value[0]) {
+    const start = dateRange.value[0]
+    const year = start.getFullYear()
+    const month = String(start.getMonth() + 1).padStart(2, '0')
+    const day = String(start.getDate()).padStart(2, '0')
     localFilters.value.dateFrom = `${year}-${month}-${day}`
   } else {
     localFilters.value.dateFrom = null
   }
 
-  if (dateTo.value) {
-    const year = dateTo.value.getFullYear()
-    const month = String(dateTo.value.getMonth() + 1).padStart(2, '0')
-    const day = String(dateTo.value.getDate()).padStart(2, '0')
+  if (dateRange.value && dateRange.value[1]) {
+    const end = dateRange.value[1]
+    const year = end.getFullYear()
+    const month = String(end.getMonth() + 1).padStart(2, '0')
+    const day = String(end.getDate()).padStart(2, '0')
     localFilters.value.dateTo = `${year}-${month}-${day}`
   } else {
     localFilters.value.dateTo = null
@@ -149,15 +198,84 @@ function clearAll() {
     priorities: [],
     statuses: []
   }
-  dateFrom.value = null
-  dateTo.value = null
+  dateRange.value = null
   taskType.value = 'all'
   activePreset.value = 'all'
+  
+  // Clear tag search
+  tagSearchQuery.value = ''
+  searchedTags.value = []
+  if (tagSearchTimeout) {
+    clearTimeout(tagSearchTimeout)
+  }
 }
 
 function removeTag(tagId: number) {
   toggleTag(tagId)
 }
+
+function clearDateRange() {
+  dateRange.value = null
+}
+
+function formatDateRange(start: Date | null, end: Date | null): string {
+  if (!start) return ''
+  
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString(t('app.locale') === 'ru' ? 'ru-RU' : 'en-US', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    })
+  }
+  
+  if (!end || start.getTime() === end.getTime()) {
+    return formatDate(start)
+  }
+  
+  return `${formatDate(start)} - ${formatDate(end)}`
+}
+
+// Handle window resize
+function handleResize() {
+  isMobile.value = window.innerWidth < 768
+}
+
+// Lifecycle
+onMounted(() => {
+  window.addEventListener('resize', handleResize)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
+})
+
+// Watch for modal visibility changes
+watch(() => props.visible, (newVisible) => {
+  if (newVisible) {
+    // Load current filters when opening
+    localFilters.value = { ...taskStore.activeFilters }
+    
+    // Load date range
+    const hasDateFrom = taskStore.activeFilters.dateFrom
+    const hasDateTo = taskStore.activeFilters.dateTo
+    
+    if (hasDateFrom || hasDateTo) {
+      const start = hasDateFrom ? new Date(taskStore.activeFilters.dateFrom!) : null
+      const end = hasDateTo ? new Date(taskStore.activeFilters.dateTo!) : null
+      dateRange.value = start && end ? [start, end] : (start ? [start] : null)
+    } else {
+      dateRange.value = null
+    }
+  } else {
+    // Clear tag search when closing
+    tagSearchQuery.value = ''
+    searchedTags.value = []
+    if (tagSearchTimeout) {
+      clearTimeout(tagSearchTimeout)
+    }
+  }
+})
 </script>
 
 <template>
@@ -240,6 +358,19 @@ function removeTag(tagId: number) {
             <section class="filter-section">
               <h3 class="section-title">{{ t('tasks.tags') }}</h3>
               
+              <!-- Tag Search -->
+              <div class="tag-search-wrapper">
+                <span class="p-input-icon-left" style="width: 100%;">
+                  <i class="pi pi-search" />
+                  <InputText
+                    v-model="tagSearchQuery"
+                    :placeholder="t('tasks.search_tags')"
+                    class="tag-search-input"
+                    @input="handleTagSearch"
+                  />
+                </span>
+              </div>
+              
               <!-- Selected Tags -->
               <div v-if="localFilters.tags.length > 0" class="selected-tags">
                 <Chip
@@ -250,58 +381,77 @@ function removeTag(tagId: number) {
                   @remove="removeTag(tagId)"
                   class="tag-chip-selected"
                 />
-                <button @click="localFilters.tags = []" class="add-tag-btn">
-                  + {{ t('tasks.add_tag') }}
-                </button>
               </div>
               
-              <!-- Popular Tags -->
-              <div class="tags-grid">
-                <button
-                  v-for="tag in popularTags"
-                  :key="tag.id"
-                  :class="['tag-option', { active: localFilters.tags.includes(tag.id) }]"
-                  @click="toggleTag(tag.id)"
-                >
-                  <span class="tag-avatar" :style="{ background: tag.color }">
-                    {{ tag.name.charAt(0).toUpperCase() }}
-                  </span>
-                  {{ tag.name }}
-                </button>
+              <!-- Search Results -->
+              <div v-if="tagSearchQuery" class="search-results-section">
+                <div v-if="isSearchingTags" class="tags-loading">
+                  <Skeleton v-for="i in 3" :key="i" height="40px" borderRadius="8px" />
+                </div>
+                <div v-else-if="searchedTags.length > 0" class="tags-grid search-results">
+                  <button
+                    v-for="tag in searchedTags"
+                    :key="tag.id"
+                    :class="['tag-option', { active: localFilters.tags.includes(tag.id) }]"
+                    @click="toggleTag(tag.id)"
+                  >
+                    <span class="tag-avatar" :style="{ background: tag.color }">
+                      {{ tag.name.charAt(0).toUpperCase() }}
+                    </span>
+                    {{ tag.name }}
+                  </button>
+                </div>
+                <div v-else class="no-results">
+                  <i class="pi pi-search" />
+                  <p>{{ t('common.no_results') }}</p>
+                </div>
+              </div>
+              
+              <!-- Popular Tags (always visible) -->
+              <div v-if="!tagSearchQuery || searchedTags.length > 0" class="popular-tags-section">
+                <h4 class="popular-tags-title">{{ t('tasks.popular_tags') }}</h4>
+                <div class="tags-grid">
+                  <button
+                    v-for="tag in popularTags"
+                    :key="tag.id"
+                    :class="['tag-option', { active: localFilters.tags.includes(tag.id) }]"
+                    @click="toggleTag(tag.id)"
+                  >
+                    <span class="tag-avatar" :style="{ background: tag.color }">
+                      {{ tag.name.charAt(0).toUpperCase() }}
+                    </span>
+                    {{ tag.name }}
+                  </button>
+                </div>
               </div>
             </section>
 
             <!-- Period -->
             <section class="filter-section">
               <h3 class="section-title">{{ t('tasks.period') }}</h3>
-              <div class="date-range-row">
-                <div class="date-field-wrapper">
-                  <label class="date-label">{{ t('tasks.date_from') }}</label>
-                  <Calendar
-                    v-model="dateFrom"
-                    placeholder="Начало"
-                    dateFormat="dd.mm.yy"
-                    :showIcon="true"
-                    :manualInput="false"
-                    appendTo="body"
-                    class="date-input"
-                  />
-                </div>
-                <div class="date-separator">
-                  <i class="pi pi-arrow-right"></i>
-                </div>
-                <div class="date-field-wrapper">
-                  <label class="date-label">{{ t('tasks.date_to') }}</label>
-                  <Calendar
-                    v-model="dateTo"
-                    placeholder="Конец"
-                    dateFormat="dd.mm.yy"
-                    :showIcon="true"
-                    :manualInput="false"
-                    :minDate="minDateTo"
-                    appendTo="body"
-                    class="date-input"
-                  />
+              <div class="date-range-wrapper">
+                <Calendar
+                  v-model="dateRange"
+                  selectionMode="range"
+                  :placeholder="t('tasks.select_date_range')"
+                  dateFormat="dd.mm.yy"
+                  :showIcon="true"
+                  :manualInput="false"
+                  :numberOfMonths="isMobile ? 1 : 2"
+                  :inline="false"
+                  :touchUI="isMobile"
+                  class="date-range-input"
+                  :showButtonBar="true"
+                  panelClass="custom-date-panel"
+                />
+                <div v-if="dateRange && dateRange[0]" class="selected-range-display">
+                  <i class="pi pi-calendar" />
+                  <span>
+                    {{ formatDateRange(dateRange[0], dateRange[1]) }}
+                  </span>
+                  <button @click="clearDateRange" class="clear-date-btn">
+                    <i class="pi pi-times" />
+                  </button>
                 </div>
               </div>
             </section>
@@ -332,7 +482,7 @@ function removeTag(tagId: number) {
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 100000;
+  z-index: 1100;
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -575,10 +725,106 @@ function removeTag(tagId: number) {
   background: #f8f9fc;
 }
 
+.tag-search-wrapper {
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+.tag-search-wrapper .p-input-icon-left {
+  width: 100%;
+  display: block;
+}
+
+.tag-search-wrapper .p-input-icon-left > i {
+  position: absolute;
+  left: 0.875rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  font-size: 0.875rem;
+}
+
+.tag-search-input {
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  padding: 0.625rem 0.875rem 0.625rem 2.5rem !important;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+
+.tag-search-input:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.search-results-section {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.popular-tags-section {
+  margin-top: 1rem;
+}
+
+.popular-tags-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #94a3b8;
+  margin: 0 0 0.75rem 0;
+}
+
+.tags-loading {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.no-results {
+  text-align: center;
+  padding: 1.5rem 1rem;
+  color: #94a3b8;
+}
+
+.no-results i {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  opacity: 0.5;
+}
+
+.no-results p {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
 .tags-grid {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 0.25rem;
+}
+
+.tags-grid::-webkit-scrollbar {
+  width: 6px;
+}
+
+.tags-grid::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.tags-grid::-webkit-scrollbar-thumb {
+  background: #cbd5e0;
+  border-radius: 3px;
+}
+
+.tags-grid::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 .tag-option {
@@ -625,42 +871,131 @@ function removeTag(tagId: number) {
 }
 
 /* Date Range */
-.date-range-row {
+.date-range-wrapper {
   display: flex;
-  align-items: flex-end;
+  flex-direction: column;
   gap: 0.75rem;
 }
 
-.date-field-wrapper {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+.date-range-input {
+  width: 100%;
 }
 
-.date-label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #6c757d;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
+.date-range-input :deep(.p-calendar) {
+  width: 100%;
 }
 
-.date-separator {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding-bottom: 0.5rem;
-  color: #adb5bd;
+.date-range-input :deep(.p-inputtext) {
+  width: 100%;
+  padding: 0.625rem 2.5rem 0.625rem 0.875rem;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
   font-size: 0.875rem;
 }
 
-.date-input :deep(.p-calendar) {
-  width: 100%;
+.date-range-input :deep(.p-inputtext:focus) {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
-.date-input :deep(.p-calendar-w-btn) {
-  width: 100%;
+.selected-range-display {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, #eef2ff 0%, #f5f8ff 100%);
+  border: 1px solid #c7d2fe;
+  border-radius: 8px;
+  color: #4f46e5;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.selected-range-display i {
+  color: #6366f1;
+  font-size: 0.875rem;
+}
+
+.clear-date-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #94a3b8;
+  transition: all 0.2s;
+}
+
+.clear-date-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+/* Ensure Calendar panel appears above modal */
+.date-range-input :deep(.p-datepicker) {
+  z-index: 1200 !important;
+}
+
+/* Mobile Calendar Touch UI */
+.date-range-input :deep(.p-datepicker-touch-ui) {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: 90vw !important;
+  max-width: 400px !important;
+  z-index: 100100 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Touch UI Mask/Overlay */
+:deep(.p-datepicker-mask) {
+  z-index: 100099 !important;
+  background: rgba(0, 0, 0, 0.6) !important;
+}
+
+.date-range-input :deep(.p-datepicker-touch-ui .p-datepicker-header) {
+  padding: 1rem !important;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
+  border-radius: 16px 16px 0 0 !important;
+  color: white !important;
+}
+
+.date-range-input :deep(.p-datepicker-touch-ui .p-datepicker-title) {
+  color: white !important;
+}
+
+.date-range-input :deep(.p-datepicker-touch-ui .p-datepicker-prev),
+.date-range-input :deep(.p-datepicker-touch-ui .p-datepicker-next) {
+  color: white !important;
+}
+
+.date-range-input :deep(.p-datepicker-touch-ui .p-datepicker-prev:hover),
+.date-range-input :deep(.p-datepicker-touch-ui .p-datepicker-next:hover) {
+  background: rgba(255, 255, 255, 0.2) !important;
+}
+
+.date-range-input :deep(.p-datepicker-touch-ui td > span) {
+  width: 2.5rem !important;
+  height: 2.5rem !important;
+  font-size: 0.875rem !important;
+  border-radius: 8px !important;
+}
+
+.date-range-input :deep(.p-datepicker-touch-ui td > span.p-highlight) {
+  background: #6366f1 !important;
+  color: white !important;
+}
+
+.date-range-input :deep(.p-datepicker-touch-ui .p-datepicker-buttonbar) {
+  padding: 0.75rem 1rem !important;
+  border-radius: 0 0 16px 16px !important;
 }
 
 .date-input :deep(.p-inputtext) {

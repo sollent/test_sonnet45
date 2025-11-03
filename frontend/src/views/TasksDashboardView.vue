@@ -78,9 +78,10 @@ async function handleQuickFilterChange(filters: Array<{ id: string; view: string
   // MULTIPLE filters selected - need to combine data
   console.log('Multiple filters selected - combining data')
 
-  // Collect all priorities and statuses
+  // Collect all unique priorities and statuses
   const allPriorities: string[] = []
   const allStatuses: string[] = []
+  const hasOverdueFilter = filters.some(f => f.view === 'overdue')
 
   filters.forEach(filter => {
     if (filter.priority && filter.priority.length > 0) {
@@ -95,11 +96,12 @@ async function handleQuickFilterChange(filters: Array<{ id: string; view: string
   const uniqueStatuses = [...new Set(allStatuses)]
 
   try {
-    // Load tasks from ALL selected filters SEQUENTIALLY to prevent data overwriting
-    console.log('Loading multiple filters sequentially...')
+    // Load tasks from ALL selected filters in parallel for better performance
+    console.log('Loading multiple filters in parallel...')
     const allResults: Task[] = []
 
-    for (const filter of filters) {
+    // Use Promise.all for parallel loading
+    const filterPromises = filters.map(async (filter) => {
       const queryFilters = {
         view: filter.view,
         priorities: filter.priority || [],
@@ -114,13 +116,13 @@ async function handleQuickFilterChange(filters: Array<{ id: string; view: string
 
       let filterTasks: Task[] = []
 
-      // Load based on view type and COPY data immediately
+      // Load based on view type
       if (filter.view === 'overdue') {
-        await taskStore.fetchOverdueTasksPaginated(1, 100, queryFilters)
+        await taskStore.fetchOverdueTasksPaginated(1, 1000, queryFilters)
         filterTasks = [...taskStore.overdueTasksPaginated.tasks]
         console.log(`✓ Loaded ${filterTasks.length} overdue tasks`)
       } else if (filter.view === 'unscheduled') {
-        await taskStore.fetchUnscheduledTasksPaginated(1, 100, queryFilters)
+        await taskStore.fetchUnscheduledTasksPaginated(1, 1000, queryFilters)
         filterTasks = [...taskStore.unscheduledTasksPaginated.tasks]
         console.log(`✓ Loaded ${filterTasks.length} unscheduled tasks`)
       } else if (filter.view === 'today') {
@@ -138,9 +140,11 @@ async function handleQuickFilterChange(filters: Array<{ id: string; view: string
         console.log(`✓ Loaded ${filterTasks.length} all tasks`)
       }
 
-      // Add to combined results
-      allResults.push(...filterTasks)
-    }
+      return filterTasks
+    })
+
+    const resultsArrays = await Promise.all(filterPromises)
+    resultsArrays.forEach(tasks => allResults.push(...tasks))
 
     console.log(`Total tasks collected: ${allResults.length}`)
 
@@ -472,7 +476,9 @@ async function handleTaskDeleted() {
             aria-label="Open filters"
             class="mobile-filter-button"
           />
-          <h1 class="header-title">{{ t('tasks.my_tasks') }}</h1>
+          <h1 class="header-title" :class="{ 'header-title--mobile': isMobile }">
+            {{ isMobile ? t('app.short_title') : t('tasks.my_tasks') }}
+          </h1>
         </div>
         <div class="header-nav">
           <Button
@@ -898,6 +904,11 @@ async function handleTaskDeleted() {
   margin: 0;
 }
 
+.header-title--mobile {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
 .profile-button {
   display: flex;
   align-items: center;
@@ -1240,8 +1251,21 @@ async function handleTaskDeleted() {
   .header-content {
     padding: 0 1rem;
   }
+  
+  .dashboard-header {
+    padding: 0.75rem 0;
+  }
+  
+  .header-left {
+    gap: 0.5rem;
+  }
+  
   .header-title {
-    font-size: 1.5rem;
+    font-size: 1.25rem !important;
+    font-weight: 600 !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .header-subtitle {
     display: none;

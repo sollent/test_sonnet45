@@ -97,7 +97,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import InputText from 'primevue/inputtext'
 import Textarea from 'primevue/textarea'
@@ -139,18 +139,18 @@ const errors = reactive({
 
 const isSubmitting = ref(false)
 
-const statusOptions = [
+const statusOptions = computed(() => [
   { label: t('tasks.status_pending'), value: TaskStatus.PENDING },
   { label: t('tasks.status_in_progress'), value: TaskStatus.IN_PROGRESS },
   { label: t('tasks.status_completed'), value: TaskStatus.COMPLETED }
-]
+])
 
-const priorityOptions = [
+const priorityOptions = computed(() => [
   { label: t('tasks.priority_low'), value: TaskPriority.LOW },
   { label: t('tasks.priority_medium'), value: TaskPriority.MEDIUM },
   { label: t('tasks.priority_high'), value: TaskPriority.HIGH },
   { label: t('tasks.priority_urgent'), value: TaskPriority.URGENT }
-]
+])
 
 function validateForm(): boolean {
   errors.title = ''

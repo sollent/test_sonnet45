@@ -1,4 +1,8 @@
 export default {
+  app: {
+    short_title: 'Tasks',
+  },
+  
   common: {
     app_name: 'Auth App',
     welcome: 'Welcome',
@@ -14,6 +18,9 @@ export default {
     save: 'Save',
     close: 'Close',
     loading: 'Loading...',
+    load_more: 'Load more',
+    remaining: 'remaining',
+    no_results: 'No results found',
     error: 'Error',
     success: 'Success',
     info: 'Info',
@@ -389,8 +396,10 @@ export default {
     status: 'Status',
     start_date: 'Start Date',
     due_date: 'Due Date',
+    select_date_range: 'Select date range',
     description: 'Description',
     tags: 'Tags',
+    search_tags: 'Search tags...',
     tags_placeholder: 'Add tags (press Enter)',
     tags_help: 'Press Enter or comma to add tags',
     popular_tags: 'Popular tags',
@@ -468,7 +477,6 @@ export default {
     my_tasks: 'My Tasks',
     unassigned: 'Unassigned',
     task_type: 'Task Type',
-    all_tasks: 'All Tasks',
     active: 'Active',
     completed: 'Completed',
     status_execution: 'Execution Status',
@@ -483,7 +491,6 @@ export default {
     hide_filters: 'Hide Filters',
     clear: 'Clear',
     add_tag: 'Add Tag',
-    
     // File Attachments
     attachments: 'Attachments',
     choose_files: 'Choose Files',
@@ -526,6 +533,13 @@ export default {
     edit_task_description: 'Edit your task details',
     creating_subtask: 'Creating subtask for selected task',
     add_tag_placeholder: 'Add tags (press Enter)',
+    
+    // Filter presets
+    all_tasks: 'All Tasks',
+    my_tasks: 'My Tasks',
+    this_week: 'This Week',
+    important: 'Important',
+    team: 'Team',
     
     // Recurrence
     repeat: 'Repeat',
@@ -573,6 +587,13 @@ export default {
     show_archived: 'Show archived',
   },
 
+  quick_filters: {
+    today: 'Today',
+    urgent: 'Urgent',
+    overdue: 'Overdue',
+    in_progress: 'In Progress',
+  },
+  
   tags: {
     title: 'Tags',
     create_tag: 'Create Tag',

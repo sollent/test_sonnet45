@@ -12,6 +12,7 @@ use App\Entity\Task;
 use App\Enum\TaskStatus;
 use App\Repository\Database\TaskRepository;
 use App\Service\TaskService;
+use App\Service\TranslationService;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -35,8 +36,40 @@ class TaskController extends AbstractController
     public function __construct(
         private readonly TaskService $taskService,
         private readonly TaskRepository $taskRepository,
-        private readonly UserRepository $userRepository
+        private readonly UserRepository $userRepository,
+        private readonly TranslationService $translationService
     ) {
+    }
+    
+    /**
+     * Enrich task DTO with translations (including subtasks)
+     */
+    private function enrichDtoWithTranslations(TaskResponseDto $dto, Request $request): TaskResponseDto
+    {
+        $locale = $request->getLocale();
+        
+        $dto->priorityLabel = $this->translationService->translatePriority($dto->priority, $locale);
+        $dto->statusLabel = $this->translationService->translateStatus($dto->status, $locale);
+        
+        // Recursively enrich subtasks
+        if (!empty($dto->subtasks)) {
+            foreach ($dto->subtasks as $subtask) {
+                $this->enrichDtoWithTranslations($subtask, $request);
+            }
+        }
+        
+        return $dto;
+    }
+    
+    /**
+     * Enrich multiple task DTOs with translations
+     */
+    private function enrichDtosWithTranslations(array $dtos, Request $request): array
+    {
+        foreach ($dtos as $dto) {
+            $this->enrichDtoWithTranslations($dto, $request);
+        }
+        return $dtos;
     }
 
     #[Route('', name: 'list', methods: ['GET'])]
@@ -131,7 +164,9 @@ class TaskController extends AbstractController
             fn(Task $task) => TaskResponseDto::fromEntity($task, false, false),
             $tasks
         );
-
+        
+        $response = $this->enrichDtosWithTranslations($response, $request);
+        
         return $this->json($response);
     }
 
@@ -164,6 +199,7 @@ class TaskController extends AbstractController
             fn(Task $task) => TaskResponseDto::fromEntity($task, false, false),
             $data['tasks']
         );
+        $data['tasks'] = $this->enrichDtosWithTranslations($data['tasks'], $request);
 
         return $this->json($data, Response::HTTP_OK);
     }
@@ -197,6 +233,7 @@ class TaskController extends AbstractController
             fn(Task $task) => TaskResponseDto::fromEntity($task, false, false),
             $data['tasks']
         );
+        $data['tasks'] = $this->enrichDtosWithTranslations($data['tasks'], $request);
 
         return $this->json($data, Response::HTTP_OK);
     }
@@ -269,7 +306,7 @@ class TaskController extends AbstractController
             new OA\Response(response: 404, description: 'Task not found')
         ]
     )]
-    public function show(int $id): JsonResponse
+    public function show(int $id, Request $request): JsonResponse
     {
         $task = $this->taskRepository->findWithSubtasks($id);
         
@@ -279,7 +316,10 @@ class TaskController extends AbstractController
         
         $this->denyAccessUnlessGranted('view', $task);
         
-        return $this->json(TaskResponseDto::fromEntity($task, true));
+        $dto = TaskResponseDto::fromEntity($task, true);
+        $this->enrichDtoWithTranslations($dto, $request);
+        
+        return $this->json($dto);
     }
 
     #[Route('', name: 'api_task_create', methods: ['POST'])]
@@ -298,14 +338,14 @@ class TaskController extends AbstractController
             new OA\Response(response: 400, description: 'Invalid input')
         ]
     )]
-    public function create(#[MapRequestPayload] CreateTaskDto $dto): JsonResponse
+    public function create(#[MapRequestPayload] CreateTaskDto $dto, Request $request): JsonResponse
     {
         $task = $this->taskService->createTask($dto, $this->getUser());
         
-        return $this->json(
-            TaskResponseDto::fromEntity($task, true),
-            Response::HTTP_CREATED
-        );
+        $responseDto = TaskResponseDto::fromEntity($task, true);
+        $this->enrichDtoWithTranslations($responseDto, $request);
+        
+        return $this->json($responseDto, Response::HTTP_CREATED);
     }
 
     #[Route('/{id}', name: 'api_task_update', methods: ['PUT', 'PATCH'])]
@@ -325,13 +365,16 @@ class TaskController extends AbstractController
             new OA\Response(response: 403, description: 'Access denied')
         ]
     )]
-    public function update(Task $task, #[MapRequestPayload] UpdateTaskDto $dto): JsonResponse
+    public function update(Task $task, #[MapRequestPayload] UpdateTaskDto $dto, Request $request): JsonResponse
     {
         $this->denyAccessUnlessGranted('edit', $task);
         
         $updatedTask = $this->taskService->updateTask($task, $dto, $this->getUser());
         
-        return $this->json(TaskResponseDto::fromEntity($updatedTask, true));
+        $responseDto = TaskResponseDto::fromEntity($updatedTask, true);
+        $this->enrichDtoWithTranslations($responseDto, $request);
+        
+        return $this->json($responseDto);
     }
 
     #[Route('/{id}', name: 'api_task_delete', methods: ['DELETE'])]
@@ -365,13 +408,16 @@ class TaskController extends AbstractController
             new OA\Response(response: 403, description: 'Access denied')
         ]
     )]
-    public function complete(Task $task): JsonResponse
+    public function complete(Task $task, Request $request): JsonResponse
     {
         $this->denyAccessUnlessGranted('edit', $task);
         
         $completedTask = $this->taskService->completeTask($task, $this->getUser());
         
-        return $this->json(TaskResponseDto::fromEntity($completedTask, true));
+        $dto = TaskResponseDto::fromEntity($completedTask, true);
+        $this->enrichDtoWithTranslations($dto, $request);
+        
+        return $this->json($dto);
     }
 
     #[Route('/{id}/toggle', name: 'api_task_toggle', methods: ['POST'])]
@@ -387,13 +433,16 @@ class TaskController extends AbstractController
             new OA\Response(response: 403, description: 'Access denied')
         ]
     )]
-    public function toggle(Task $task): JsonResponse
+    public function toggle(Task $task, Request $request): JsonResponse
     {
         $this->denyAccessUnlessGranted('edit', $task);
         
         $toggledTask = $this->taskService->toggleTaskCompletion($task, $this->getUser());
         
-        return $this->json(TaskResponseDto::fromEntity($toggledTask, true));
+        $dto = TaskResponseDto::fromEntity($toggledTask, true);
+        $this->enrichDtoWithTranslations($dto, $request);
+        
+        return $this->json($dto);
     }
 
     #[Route('/{id}/archive', name: 'api_task_archive', methods: ['POST'])]
@@ -409,13 +458,16 @@ class TaskController extends AbstractController
             new OA\Response(response: 403, description: 'Access denied')
         ]
     )]
-    public function archive(Task $task): JsonResponse
+    public function archive(Task $task, Request $request): JsonResponse
     {
         $this->denyAccessUnlessGranted('edit', $task);
         
         $archivedTask = $this->taskService->archiveTask($task, $this->getUser());
         
-        return $this->json(TaskResponseDto::fromEntity($archivedTask, true));
+        $dto = TaskResponseDto::fromEntity($archivedTask, true);
+        $this->enrichDtoWithTranslations($dto, $request);
+        
+        return $this->json($dto);
     }
 
     #[Route('/{id}/unarchive', name: 'api_task_unarchive', methods: ['POST'])]
@@ -431,13 +483,16 @@ class TaskController extends AbstractController
             new OA\Response(response: 403, description: 'Access denied')
         ]
     )]
-    public function unarchive(Task $task): JsonResponse
+    public function unarchive(Task $task, Request $request): JsonResponse
     {
         $this->denyAccessUnlessGranted('edit', $task);
         
         $unarchivedTask = $this->taskService->unarchiveTask($task, $this->getUser());
         
-        return $this->json(TaskResponseDto::fromEntity($unarchivedTask, true));
+        $dto = TaskResponseDto::fromEntity($unarchivedTask, true);
+        $this->enrichDtoWithTranslations($dto, $request);
+        
+        return $this->json($dto);
     }
 
     #[Route('/calendar/month', name: 'api_tasks_calendar_month', methods: ['GET'])]
@@ -467,7 +522,10 @@ class TaskController extends AbstractController
         
         $tasks = $this->taskRepository->findTasksForMonth($this->getUser(), $year, $month, $includeCompleted);
         
-        return $this->json(array_map(fn($task) => TaskResponseDto::fromEntity($task, false), $tasks));
+        $dtos = array_map(fn($task) => TaskResponseDto::fromEntity($task, false), $tasks);
+        $dtos = $this->enrichDtosWithTranslations($dtos, $request);
+        
+        return $this->json($dtos);
     }
 
     #[Route('/calendar/week', name: 'api_tasks_calendar_week', methods: ['GET'])]
@@ -496,7 +554,10 @@ class TaskController extends AbstractController
         
         $tasks = $this->taskRepository->findTasksForWeek($this->getUser(), $weekStart, $includeCompleted);
         
-        return $this->json(array_map(fn($task) => TaskResponseDto::fromEntity($task, false), $tasks));
+        $dtos = array_map(fn($task) => TaskResponseDto::fromEntity($task, false), $tasks);
+        $dtos = $this->enrichDtosWithTranslations($dtos, $request);
+        
+        return $this->json($dtos);
     }
 
     #[Route('/calendar/day', name: 'api_tasks_calendar_day', methods: ['GET'])]
@@ -525,6 +586,9 @@ class TaskController extends AbstractController
         
         $tasks = $this->taskRepository->findTasksByDay($this->getUser(), $date, $includeCompleted);
         
-        return $this->json(array_map(fn($task) => TaskResponseDto::fromEntity($task, false), $tasks));
+        $dtos = array_map(fn($task) => TaskResponseDto::fromEntity($task, false), $tasks);
+        $dtos = $this->enrichDtosWithTranslations($dtos, $request);
+        
+        return $this->json($dtos);
     }
 }
