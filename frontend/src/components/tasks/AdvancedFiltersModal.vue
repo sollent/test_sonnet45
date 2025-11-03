@@ -43,6 +43,9 @@ const taskType = ref<'all' | 'active' | 'completed'>('all')
 const dateFrom = ref<Date | null>(null)
 const dateTo = ref<Date | null>(null)
 
+// Computed minimum date for dateTo (should be >= dateFrom)
+const minDateTo = computed(() => dateFrom.value || undefined)
+
 // Options
 const priorityOptions = [
   { label: 'Низкий', value: TaskPriority.LOW, color: '#10b981' },
@@ -110,15 +113,19 @@ function apply() {
     const month = String(dateFrom.value.getMonth() + 1).padStart(2, '0')
     const day = String(dateFrom.value.getDate()).padStart(2, '0')
     localFilters.value.dateFrom = `${year}-${month}-${day}`
+  } else {
+    localFilters.value.dateFrom = null
   }
-  
+
   if (dateTo.value) {
     const year = dateTo.value.getFullYear()
     const month = String(dateTo.value.getMonth() + 1).padStart(2, '0')
     const day = String(dateTo.value.getDate()).padStart(2, '0')
     localFilters.value.dateTo = `${year}-${month}-${day}`
+  } else {
+    localFilters.value.dateTo = null
   }
-  
+
   // Set completed based on task type
   if (taskType.value === 'completed') {
     localFilters.value.completed = true
@@ -127,7 +134,7 @@ function apply() {
   } else {
     localFilters.value.completed = null
   }
-  
+
   taskStore.setFilters(localFilters.value)
   emit('apply')
   close()
@@ -267,24 +274,35 @@ function removeTag(tagId: number) {
             <!-- Period -->
             <section class="filter-section">
               <h3 class="section-title">{{ t('tasks.period') }}</h3>
-              <div class="date-group">
-                <Calendar
-                  v-model="dateFrom"
-                  :placeholder="t('tasks.date_from')"
-                  dateFormat="dd.mm.yy"
-                  showIcon
-                  iconDisplay="input"
-                  class="date-field"
-                />
-                <span class="date-sep">—</span>
-                <Calendar
-                  v-model="dateTo"
-                  :placeholder="t('tasks.date_to')"
-                  dateFormat="dd.mm.yy"
-                  showIcon
-                  iconDisplay="input"
-                  class="date-field"
-                />
+              <div class="date-range-row">
+                <div class="date-field-wrapper">
+                  <label class="date-label">{{ t('tasks.date_from') }}</label>
+                  <Calendar
+                    v-model="dateFrom"
+                    placeholder="Начало"
+                    dateFormat="dd.mm.yy"
+                    :showIcon="true"
+                    :manualInput="false"
+                    appendTo="body"
+                    class="date-input"
+                  />
+                </div>
+                <div class="date-separator">
+                  <i class="pi pi-arrow-right"></i>
+                </div>
+                <div class="date-field-wrapper">
+                  <label class="date-label">{{ t('tasks.date_to') }}</label>
+                  <Calendar
+                    v-model="dateTo"
+                    placeholder="Конец"
+                    dateFormat="dd.mm.yy"
+                    :showIcon="true"
+                    :manualInput="false"
+                    :minDate="minDateTo"
+                    appendTo="body"
+                    class="date-input"
+                  />
+                </div>
               </div>
             </section>
           </div>
@@ -329,6 +347,8 @@ function removeTag(tagId: number) {
   display: flex;
   flex-direction: column;
   box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.15);
+  position: relative;
+  z-index: 100000;
 }
 
 /* Header */
@@ -604,22 +624,46 @@ function removeTag(tagId: number) {
   background: rgba(255, 255, 255, 0.25) !important;
 }
 
-/* Date Group */
-.date-group {
+/* Date Range */
+.date-range-row {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 0.75rem;
 }
 
-.date-field {
+.date-field-wrapper {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
-.date-field :deep(.p-calendar) {
+.date-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.date-separator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 0.5rem;
+  color: #adb5bd;
+  font-size: 0.875rem;
+}
+
+.date-input :deep(.p-calendar) {
   width: 100%;
 }
 
-.date-field :deep(.p-inputtext) {
+.date-input :deep(.p-calendar-w-btn) {
+  width: 100%;
+}
+
+.date-input :deep(.p-inputtext) {
   width: 100%;
   padding: 0.625rem 1rem;
   background: #f8f9fa;
@@ -627,21 +671,37 @@ function removeTag(tagId: number) {
   border-radius: 10px;
   font-size: 0.875rem;
   transition: all 0.15s ease;
+  cursor: pointer;
 }
 
-.date-field :deep(.p-inputtext:focus) {
+.date-input :deep(.p-inputtext:hover) {
+  background: #ffffff;
+  border-color: #dee2e6;
+}
+
+.date-input :deep(.p-inputtext:focus) {
   background: white;
   border-color: #6366f1;
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  outline: none;
 }
 
-.date-field :deep(.p-datepicker-trigger) {
+.date-input :deep(.p-datepicker-trigger) {
   color: #6366f1;
+  cursor: pointer;
+  transition: color 0.15s ease;
 }
 
-.date-sep {
-  color: #adb5bd;
-  font-weight: 500;
+.date-input :deep(.p-datepicker-trigger:hover) {
+  color: #5558e3;
+}
+
+.date-input :deep(.p-button.p-datepicker-trigger) {
+  background: transparent;
+  border: none;
+  color: #6366f1;
+  width: 2.5rem;
+  height: 2.5rem;
 }
 
 /* Footer */
@@ -751,13 +811,18 @@ function removeTag(tagId: number) {
     font-size: 0.813rem;
   }
 
-  .date-group {
+  .date-range-row {
     flex-direction: column;
-    gap: 0.625rem;
+    align-items: stretch;
+    gap: 0.75rem;
   }
 
-  .date-sep {
+  .date-separator {
     display: none;
+  }
+
+  .date-input :deep(.p-inputtext) {
+    font-size: 0.813rem;
   }
 }
 
@@ -796,7 +861,7 @@ function removeTag(tagId: number) {
     color: var(--p-text-color);
   }
 
-  .date-field :deep(.p-inputtext) {
+  .date-input :deep(.p-inputtext) {
     background: var(--p-surface-800);
     border-color: var(--p-surface-700);
     color: var(--p-text-color);

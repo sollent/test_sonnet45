@@ -13,6 +13,8 @@ interface QuickFilter {
   label: string
   icon: string
   view: string
+  priority?: string[]
+  status?: string[]
   count?: number
 }
 
@@ -27,7 +29,8 @@ const quickFilters: QuickFilter[] = [
     id: 'urgent',
     label: 'Срочные',
     icon: 'pi pi-bolt',
-    view: 'urgent'
+    view: 'all',
+    priority: ['high', 'urgent']
   },
   {
     id: 'overdue',
@@ -39,19 +42,35 @@ const quickFilters: QuickFilter[] = [
     id: 'in-progress',
     label: 'В процессе',
     icon: 'pi pi-play',
-    view: 'in-progress'
+    view: 'all',
+    status: ['in_progress']
   }
 ]
 
-const activeFilter = ref<string | null>(null)
+const activeFilters = ref<string[]>([])
 
 const emit = defineEmits<{
-  (e: 'filter-change', view: string): void
+  (e: 'filters-change', filters: QuickFilter[]): void
 }>()
 
-function selectFilter(filter: QuickFilter) {
-  activeFilter.value = filter.id
-  emit('filter-change', filter.view)
+function toggleFilter(filter: QuickFilter) {
+  const index = activeFilters.value.indexOf(filter.id)
+
+  if (index > -1) {
+    // Remove filter (отжать кнопку)
+    activeFilters.value.splice(index, 1)
+  } else {
+    // Add filter (нажать кнопку)
+    activeFilters.value.push(filter.id)
+  }
+
+  // Emit all active filters
+  const activeFilterObjects = quickFilters.filter(f => activeFilters.value.includes(f.id))
+  emit('filters-change', activeFilterObjects)
+}
+
+function isActive(filterId: string): boolean {
+  return activeFilters.value.includes(filterId)
 }
 </script>
 
@@ -60,8 +79,8 @@ function selectFilter(filter: QuickFilter) {
     <button
       v-for="filter in quickFilters"
       :key="filter.id"
-      :class="['quick-filter-btn', { active: activeFilter === filter.id }]"
-      @click="selectFilter(filter)"
+      :class="['quick-filter-btn', { active: isActive(filter.id) }]"
+      @click="toggleFilter(filter)"
     >
       <i :class="filter.icon"></i>
       <span>{{ filter.label }}</span>
@@ -74,29 +93,30 @@ function selectFilter(filter: QuickFilter) {
 .quick-filters {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.625rem;
-  padding: 0.5rem 0;
+  gap: 0.5rem;
+  padding: 0;
 }
 
 .quick-filter-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.625rem 1.125rem;
+  gap: 0.375rem;
+  padding: 0.5rem 0.875rem;
   background: white;
   border: 1.5px solid #e9ecef;
-  border-radius: 12px;
-  font-size: 0.875rem;
+  border-radius: 20px;
+  font-size: 0.8125rem;
   font-weight: 500;
   color: #495057;
   white-space: nowrap;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   flex-shrink: 0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .quick-filter-btn i {
-  font-size: 1rem;
+  font-size: 0.875rem;
   color: inherit;
 }
 
@@ -107,12 +127,17 @@ function selectFilter(filter: QuickFilter) {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
+.quick-filter-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
 .quick-filter-btn.active {
-  background: #6366f1;
-  border-color: #6366f1;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  border-color: transparent;
   color: white;
   font-weight: 600;
-  box-shadow: 0 2px 12px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
 }
 
 .quick-filter-btn.active i {
@@ -123,12 +148,12 @@ function selectFilter(filter: QuickFilter) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 1.375rem;
-  height: 1.375rem;
-  padding: 0 0.375rem;
-  background: rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
-  font-size: 0.75rem;
+  min-width: 1.125rem;
+  height: 1.125rem;
+  padding: 0 0.25rem;
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 6px;
+  font-size: 0.6875rem;
   font-weight: 700;
 }
 
@@ -137,31 +162,28 @@ function selectFilter(filter: QuickFilter) {
   color: white;
 }
 
-/* Mobile */
+/* Mobile - компактный wrap дизайн */
 @media (max-width: 768px) {
   .quick-filters {
-    flex-direction: column;
-    gap: 0.625rem;
-    padding: 0.5rem 0;
+    gap: 0.5rem;
+    padding: 0;
   }
 
   .quick-filter-btn {
-    width: 100%;
-    justify-content: flex-start;
-    padding: 0.75rem 1rem;
-    font-size: 0.875rem;
-    border-radius: 12px;
+    padding: 0.5rem 0.875rem;
+    font-size: 0.8125rem;
+    border-radius: 16px;
+    gap: 0.375rem;
   }
 
   .quick-filter-btn i {
-    font-size: 1rem;
+    font-size: 0.875rem;
   }
 
   .count-badge {
-    margin-left: auto;
-    min-width: 1.5rem;
-    height: 1.5rem;
-    font-size: 0.75rem;
+    min-width: 1.125rem;
+    height: 1.125rem;
+    font-size: 0.6875rem;
   }
 }
 

@@ -49,40 +49,126 @@ const activeFiltersCount = computed(() => {
   return count
 })
 
-// Handle quick filter change
-function handleQuickFilterChange(view: string) {
-  console.log('Quick filter changed:', view)
+// Handle quick filter change - now supports multiple filters with combined views
+async function handleQuickFilterChange(filters: Array<{ id: string; view: string; priority?: string[]; status?: string[] }>) {
+  console.log('Quick filters changed:', filters)
 
-  // Map quick filter views to actual view names
-  const viewMapping: Record<string, string> = {
-    'today': 'today',
-    'urgent': 'all', // Will be filtered by priority on frontend
-    'overdue': 'overdue',
-    'in-progress': 'all' // Will be filtered by status on frontend
-  }
-
-  const actualView = viewMapping[view] || view
-
-  // Apply additional filters for special cases
-  if (view === 'urgent') {
-    // Filter by high priority
-    taskStore.setFilters({
-      ...taskStore.activeFilters,
-      priorities: ['high', 'urgent']
-    })
-  } else if (view === 'in-progress') {
-    // Filter by in_progress status
-    taskStore.setFilters({
-      ...taskStore.activeFilters,
-      statuses: ['in_progress']
-    })
-  } else {
-    // Clear filters for standard views
+  // If no filters are active, clear filters and show 'all' view
+  if (filters.length === 0) {
     taskStore.clearFilters()
+    selectView('all')
+    return
   }
 
-  // Select the actual view
-  selectView(actualView)
+  // If only ONE filter is active, use simple logic
+  if (filters.length === 1) {
+    const filter = filters[0]
+
+    // Set priority/status filters if they exist
+    taskStore.setFilters({
+      ...taskStore.activeFilters,
+      priorities: filter.priority || [],
+      statuses: filter.status || []
+    })
+
+    selectView(filter.view)
+    return
+  }
+
+  // MULTIPLE filters selected - need to combine data
+  console.log('Multiple filters selected - combining data')
+
+  // Collect all priorities and statuses
+  const allPriorities: string[] = []
+  const allStatuses: string[] = []
+
+  filters.forEach(filter => {
+    if (filter.priority && filter.priority.length > 0) {
+      allPriorities.push(...filter.priority)
+    }
+    if (filter.status && filter.status.length > 0) {
+      allStatuses.push(...filter.status)
+    }
+  })
+
+  const uniquePriorities = [...new Set(allPriorities)]
+  const uniqueStatuses = [...new Set(allStatuses)]
+
+  try {
+    // Load tasks from ALL selected filters SEQUENTIALLY to prevent data overwriting
+    console.log('Loading multiple filters sequentially...')
+    const allResults: Task[] = []
+
+    for (const filter of filters) {
+      const queryFilters = {
+        view: filter.view,
+        priorities: filter.priority || [],
+        statuses: filter.status || [],
+        tags: taskStore.activeFilters.tags,
+        completed: taskStore.activeFilters.completed,
+        dateFrom: taskStore.activeFilters.dateFrom,
+        dateTo: taskStore.activeFilters.dateTo
+      }
+
+      console.log(`Loading filter "${filter.id}" with view "${filter.view}"`, queryFilters)
+
+      let filterTasks: Task[] = []
+
+      // Load based on view type and COPY data immediately
+      if (filter.view === 'overdue') {
+        await taskStore.fetchOverdueTasksPaginated(1, 100, queryFilters)
+        filterTasks = [...taskStore.overdueTasksPaginated.tasks]
+        console.log(`✓ Loaded ${filterTasks.length} overdue tasks`)
+      } else if (filter.view === 'unscheduled') {
+        await taskStore.fetchUnscheduledTasksPaginated(1, 100, queryFilters)
+        filterTasks = [...taskStore.unscheduledTasksPaginated.tasks]
+        console.log(`✓ Loaded ${filterTasks.length} unscheduled tasks`)
+      } else if (filter.view === 'today') {
+        await taskStore.fetchTasks(queryFilters)
+        filterTasks = [...taskStore.todayTasks]
+        console.log(`✓ Loaded ${filterTasks.length} today tasks`)
+      } else if (filter.view === 'upcoming') {
+        await taskStore.fetchTasks(queryFilters)
+        filterTasks = [...taskStore.upcomingTasks]
+        console.log(`✓ Loaded ${filterTasks.length} upcoming tasks`)
+      } else {
+        // view === 'all'
+        await taskStore.fetchTasks(queryFilters)
+        filterTasks = [...taskStore.tasks]
+        console.log(`✓ Loaded ${filterTasks.length} all tasks`)
+      }
+
+      // Add to combined results
+      allResults.push(...filterTasks)
+    }
+
+    console.log(`Total tasks collected: ${allResults.length}`)
+
+    // Remove duplicates by id
+    const uniqueTasks = Array.from(
+      new Map(allResults.map(task => [task.id, task])).values()
+    )
+
+    console.log(`After deduplication: ${uniqueTasks.length} unique tasks`)
+
+    // Store combined tasks in the main tasks array
+    taskStore.tasks = uniqueTasks
+
+    // Update active filters
+    taskStore.setFilters({
+      ...taskStore.activeFilters,
+      priorities: uniquePriorities,
+      statuses: uniqueStatuses
+    })
+
+    // Set view to 'all' to display combined data
+    selectedView.value = 'all'
+
+    console.log('✅ Combined filters loaded successfully!')
+  } catch (error) {
+    console.error('❌ Error loading combined filters:', error)
+    showError(t('errors.fetch_failed'))
+  }
 }
 
 // Handle filters apply
@@ -405,8 +491,11 @@ async function handleTaskDeleted() {
           />
         </div>
         <div class="header-actions">
-           <p class="header-subtitle">{{ user?.email }}</p>
-          <Button 
+          <button @click="$router.push('/profile')" class="profile-button">
+            <i class="pi pi-user"></i>
+            <span class="header-subtitle">{{ user?.email }}</span>
+          </button>
+          <Button
             icon="pi pi-sign-out"
             severity="secondary"
             text
@@ -443,18 +532,6 @@ async function handleTaskDeleted() {
         <main class="main-content">
           <!-- Top Controls Bar -->
           <div class="top-controls">
-            <!-- Filters Button (Mobile) -->
-            <Button
-              v-if="isMobile"
-              icon="pi pi-filter"
-              :label="t('tasks.filters')"
-              severity="secondary"
-              outlined
-              @click="isFiltersPanelVisible = true"
-              :badge="taskStore.hasActiveFilters() ? String(taskStore.activeFilters.tags.length + taskStore.activeFilters.priorities.length + taskStore.activeFilters.statuses.length + (taskStore.activeFilters.completed !== null ? 1 : 0) + (taskStore.activeFilters.dateFrom || taskStore.activeFilters.dateTo ? 1 : 0)) : undefined"
-              badgeClass="p-badge-danger"
-            />
-            
             <!-- Desktop View Toggle -->
             <div v-if="!isMobile" class="view-toggle">
               <Button
@@ -474,24 +551,31 @@ async function handleTaskDeleted() {
             </div>
           </div>
           
-          <!-- Mobile Search -->
-          <div v-if="isMobile" class="mobile-search-container">
-            <span class="p-input-icon-left w-full">
-              <i class="pi pi-search" />
-              <InputText 
-                v-model="searchQuery"
-                :placeholder="t('tasks.search_placeholder')"
-                class="w-full"
-              />
-            </span>
+          <!-- Mobile Search + Filters Button -->
+          <div v-if="isMobile" class="mobile-search-row">
+            <div class="mobile-search-container">
+              <span class="p-input-icon-left">
+                <i class="pi pi-search" />
+                <InputText
+                  v-model="searchQuery"
+                  :placeholder="t('tasks.search_placeholder')"
+                />
+              </span>
+            </div>
+            <button @click="isFiltersPanelVisible = true" class="mobile-filters-btn">
+              <i class="pi pi-sliders-h"></i>
+              <span v-if="taskStore.hasActiveFilters()" class="filters-count">
+                {{ activeFiltersCount }}
+              </span>
+            </button>
           </div>
-          
+
         <!-- Quick Filters Row (Desktop & Mobile) -->
         <div class="filters-row">
           <div class="quick-filters-wrapper">
-            <QuickFilters @filter-change="handleQuickFilterChange" />
+            <QuickFilters @filters-change="handleQuickFilterChange" />
           </div>
-          <button @click="isFiltersPanelVisible = true" class="advanced-filters-btn">
+          <button v-if="!isMobile" @click="isFiltersPanelVisible = true" class="advanced-filters-btn">
             <i class="pi pi-sliders-h"></i>
             <span class="btn-text">{{ t('tasks.filters') }}</span>
             <span v-if="taskStore.hasActiveFilters()" class="filters-count">
@@ -656,38 +740,42 @@ async function handleTaskDeleted() {
 /* Filters Row */
 .filters-row {
   display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
+  align-items: center;
+  gap: 0.625rem;
+  margin-bottom: 1rem;
 }
 
 .quick-filters-wrapper {
   flex: 1;
   min-width: 0;
+  overflow: hidden;
 }
 
 .advanced-filters-btn {
+  position: relative;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
   padding: 0.625rem 1.125rem;
   background: white;
-  border: 1.5px dashed #dee2e6;
+  border: 1.5px solid #e9ecef;
   border-radius: 12px;
   font-size: 0.875rem;
   font-weight: 500;
   color: #495057;
   white-space: nowrap;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   flex-shrink: 0;
-  align-self: flex-start;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .advanced-filters-btn i {
   font-size: 1rem;
   color: #6366f1;
   flex-shrink: 0;
+  transition: transform 0.25s ease;
 }
 
 .btn-text {
@@ -697,57 +785,47 @@ async function handleTaskDeleted() {
 .advanced-filters-btn:hover {
   background: #f8f9fa;
   border-color: #6366f1;
-  border-style: solid;
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+}
+
+.advanced-filters-btn:hover i {
+  transform: rotate(90deg);
+}
+
+.advanced-filters-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.1);
 }
 
 .filters-count {
+  position: absolute;
+  top: -0.375rem;
+  right: -0.375rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   min-width: 1.25rem;
   height: 1.25rem;
   padding: 0 0.313rem;
-  background: #6366f1;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
   color: white;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 0.688rem;
   font-weight: 700;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+  border: 2px solid white;
 }
 
-/* Mobile specific overrides */
+/* Mobile - супер минималистичный дизайн */
 @media (max-width: 768px) {
   .filters-row {
-    flex-direction: row;
-    align-items: flex-start;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
   }
 
   .quick-filters-wrapper {
-    flex: 1;
-  }
-
-  .advanced-filters-btn {
-    padding: 0.625rem;
-    min-width: 3.5rem;
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-
-  .advanced-filters-btn .btn-text {
-    display: none;
-  }
-
-  .advanced-filters-btn i {
-    font-size: 1.25rem;
-  }
-
-  .filters-count {
-    position: absolute;
-    top: -0.375rem;
-    right: -0.375rem;
+    width: 100%;
   }
 }
 
@@ -820,6 +898,30 @@ async function handleTaskDeleted() {
   margin: 0;
 }
 
+.profile-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: white;
+  border: 1.5px solid #e9ecef;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.profile-button:hover {
+  background: #f8f9fa;
+  border-color: #6366f1;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.15);
+}
+
+.profile-button i {
+  font-size: 1rem;
+  color: #6366f1;
+}
+
 .header-subtitle {
   color: #718096;
   margin: 0;
@@ -864,10 +966,68 @@ async function handleTaskDeleted() {
   }
 }
 
-/* ===== Mobile Search ===== */
+/* ===== Mobile Search Row ===== */
+.mobile-search-row {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  margin-bottom: 0.75rem;
+}
+
 .mobile-search-container {
-  margin-bottom: 1.5rem;
+  flex: 1;
   position: relative;
+}
+
+.mobile-filters-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+.mobile-filters-btn i {
+  font-size: 1.125rem;
+  color: white;
+  transition: transform 0.25s ease;
+}
+
+.mobile-filters-btn:active {
+  transform: scale(0.95);
+  box-shadow: 0 1px 4px rgba(99, 102, 241, 0.2);
+}
+
+.mobile-filters-btn:hover i {
+  transform: rotate(90deg);
+}
+
+.mobile-filters-btn .filters-count {
+  position: absolute;
+  top: -0.25rem;
+  right: -0.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.125rem;
+  height: 1.125rem;
+  padding: 0 0.313rem;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border-radius: 10px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+  border: 2px solid white;
 }
 
 /* ===== Desktop View Toggle ===== */
@@ -885,20 +1045,32 @@ async function handleTaskDeleted() {
   justify-content: center;
 }
 
-.mobile-search-container :deep(.p-inputtext) {
-  border-radius: 12px;
-  border: 2px solid #e2e8f0;
-  padding-left: 2.75rem;
-  font-size: 1rem;
+.mobile-search-container :deep(.p-input-icon-left) {
   width: 100%;
+}
+
+.mobile-search-container :deep(.p-inputtext) {
+  border-radius: 14px;
+  border: 1.5px solid #e2e8f0;
+  padding: 0.675rem 1rem 0.675rem 2.75rem;
+  font-size: 0.9375rem;
+  width: 100%;
+  background: white;
+  transition: all 0.25s ease;
+}
+
+.mobile-search-container :deep(.p-inputtext:focus) {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
 .mobile-search-container :deep(.p-input-icon-left > i) {
   left: 1rem;
-  color: #a0aec0;
+  color: #94a3b8;
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
+  font-size: 1rem;
 }
 
 
