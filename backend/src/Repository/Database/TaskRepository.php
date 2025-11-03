@@ -545,4 +545,394 @@ class TaskRepository extends ServiceEntityRepository
                ->setParameter('filterStatuses', $statusEnums);
         }
     }
+
+    // ==================== ANALYTICS METHODS ====================
+
+    /**
+     * Find tasks created between dates
+     */
+    public function findTasksCreatedBetween(User $user, \DateTimeInterface $start, \DateTimeInterface $end): array
+    {
+        return $this->createQueryBuilder('t')
+            ->where('t.user = :user')
+            ->andWhere('t.parentTask IS NULL')
+            ->andWhere('t.createdAt BETWEEN :start AND :end')
+            ->setParameter('user', $user)
+            ->setParameter('start', $start)
+            ->setParameter('end', $end)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Find tasks completed between dates
+     */
+    public function findTasksCompletedBetween(User $user, \DateTimeInterface $start, \DateTimeInterface $end): array
+    {
+        return $this->createQueryBuilder('t')
+            ->where('t.user = :user')
+            ->andWhere('t.parentTask IS NULL')
+            ->andWhere('t.completedAt BETWEEN :start AND :end')
+            ->setParameter('user', $user)
+            ->setParameter('start', $start)
+            ->setParameter('end', $end)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Get average completion time in days
+     */
+    public function getAverageCompletionTime(User $user): float
+    {
+        $tasks = $this->createQueryBuilder('t')
+            ->where('t.user = :user')
+            ->andWhere('t.parentTask IS NULL')
+            ->andWhere('t.completedAt IS NOT NULL')
+            ->andWhere('t.createdAt IS NOT NULL')
+            ->setParameter('user', $user)
+            ->getQuery()
+            ->getResult();
+        
+        if (count($tasks) === 0) {
+            return 0;
+        }
+        
+        $totalDays = 0;
+        foreach ($tasks as $task) {
+            $created = $task->getCreatedAt();
+            $completed = $task->getCompletedAt();
+            if ($created && $completed) {
+                $diff = $completed->diff($created);
+                $totalDays += $diff->days;
+            }
+        }
+        
+        return round($totalDays / count($tasks), 1);
+    }
+
+    /**
+     * Get on-time completion rate (percentage)
+     */
+    public function getOnTimeCompletionRate(User $user): int
+    {
+        $qb = $this->createQueryBuilder('t');
+        
+        $totalWithDueDate = $qb
+            ->select('COUNT(t.id)')
+            ->where('t.user = :user')
+            ->andWhere('t.parentTask IS NULL')
+            ->andWhere('t.dueDate IS NOT NULL')
+            ->andWhere('t.completedAt IS NOT NULL')
+            ->setParameter('user', $user)
+            ->getQuery()
+            ->getSingleScalarResult();
+        
+        if ($totalWithDueDate == 0) {
+            return 100;
+        }
+        
+        $qb = $this->createQueryBuilder('t');
+        $onTime = $qb
+            ->select('COUNT(t.id)')
+            ->where('t.user = :user')
+            ->andWhere('t.parentTask IS NULL')
+            ->andWhere('t.dueDate IS NOT NULL')
+            ->andWhere('t.completedAt IS NOT NULL')
+            ->andWhere('t.completedAt <= t.dueDate')
+            ->setParameter('user', $user)
+            ->getQuery()
+            ->getSingleScalarResult();
+        
+        return (int)round(($onTime / $totalWithDueDate) * 100);
+    }
+
+    /**
+     * Get most productive day of week
+     */
+    public function getMostProductiveDay(User $user): ?string
+    {
+        $tasks = $this->createQueryBuilder('t')
+            ->where('t.user = :user')
+            ->andWhere('t.parentTask IS NULL')
+            ->andWhere('t.completedAt IS NOT NULL')
+            ->setParameter('user', $user)
+            ->getQuery()
+            ->getResult();
+        
+        if (count($tasks) === 0) {
+            return null;
+        }
+        
+        $dayCount = [];
+        foreach ($tasks as $task) {
+            if ($task->getCompletedAt()) {
+                $dayName = $task->getCompletedAt()->format('l'); // Monday, Tuesday, etc.
+                $dayCount[$dayName] = ($dayCount[$dayName] ?? 0) + 1;
+            }
+        }
+        
+        if (empty($dayCount)) {
+            return null;
+        }
+        
+        arsort($dayCount);
+        return array_key_first($dayCount);
+    }
+
+    /**
+     * Get completion timeline data for chart
+     */
+    public function getCompletionTimelineData(User $user, \DateTimeInterface $start, \DateTimeInterface $end): array
+    {
+        $dates = [];
+        $created = [];
+        $completed = [];
+        $overdue = [];
+        
+        $current = \DateTimeImmutable::createFromInterface($start);
+        $endDate = \DateTimeImmutable::createFromInterface($end);
+        
+        while ($current <= $endDate) {
+            $dayStart = $current->setTime(0, 0);
+            $dayEnd = $current->setTime(23, 59, 59);
+            
+            $dates[] = $current->format('Y-m-d');
+            
+            // Created tasks
+            $createdCount = $this->createQueryBuilder('t')
+                ->select('COUNT(t.id)')
+                ->where('t.user = :user')
+                ->andWhere('t.parentTask IS NULL')
+                ->andWhere('t.createdAt BETWEEN :start AND :end')
+                ->setParameter('user', $user)
+                ->setParameter('start', $dayStart)
+                ->setParameter('end', $dayEnd)
+                ->getQuery()
+                ->getSingleScalarResult();
+            
+            // Completed tasks
+            $completedCount = $this->createQueryBuilder('t')
+                ->select('COUNT(t.id)')
+                ->where('t.user = :user')
+                ->andWhere('t.parentTask IS NULL')
+                ->andWhere('t.completedAt BETWEEN :start AND :end')
+                ->setParameter('user', $user)
+                ->setParameter('start', $dayStart)
+                ->setParameter('end', $dayEnd)
+                ->getQuery()
+                ->getSingleScalarResult();
+            
+            // Overdue tasks
+            $overdueCount = $this->createQueryBuilder('t')
+                ->select('COUNT(t.id)')
+                ->where('t.user = :user')
+                ->andWhere('t.parentTask IS NULL')
+                ->andWhere('t.dueDate < :date')
+                ->andWhere('t.status != :completed')
+                ->andWhere('t.createdAt <= :date')
+                ->setParameter('user', $user)
+                ->setParameter('date', $dayEnd)
+                ->setParameter('completed', TaskStatus::COMPLETED)
+                ->getQuery()
+                ->getSingleScalarResult();
+            
+            $created[] = (int)$createdCount;
+            $completed[] = (int)$completedCount;
+            $overdue[] = (int)$overdueCount;
+            
+            $current = $current->modify('+1 day');
+        }
+        
+        return [
+            'dates' => $dates,
+            'created' => $created,
+            'completed' => $completed,
+            'overdue' => $overdue
+        ];
+    }
+
+    /**
+     * Get priority breakdown with completion stats
+     */
+    public function getPriorityBreakdown(User $user): array
+    {
+        $result = [];
+        
+        foreach (\App\Enum\TaskPriority::cases() as $priority) {
+            $total = $this->createQueryBuilder('t')
+                ->select('COUNT(t.id)')
+                ->where('t.user = :user')
+                ->andWhere('t.parentTask IS NULL')
+                ->andWhere('t.priority = :priority')
+                ->andWhere('t.isArchived = false')
+                ->setParameter('user', $user)
+                ->setParameter('priority', $priority)
+                ->getQuery()
+                ->getSingleScalarResult();
+            
+            $completed = $this->createQueryBuilder('t')
+                ->select('COUNT(t.id)')
+                ->where('t.user = :user')
+                ->andWhere('t.parentTask IS NULL')
+                ->andWhere('t.priority = :priority')
+                ->andWhere('t.status = :completedStatus')
+                ->andWhere('t.isArchived = false')
+                ->setParameter('user', $user)
+                ->setParameter('priority', $priority)
+                ->setParameter('completedStatus', TaskStatus::COMPLETED)
+                ->getQuery()
+                ->getSingleScalarResult();
+            
+            $inProgress = $this->createQueryBuilder('t')
+                ->select('COUNT(t.id)')
+                ->where('t.user = :user')
+                ->andWhere('t.parentTask IS NULL')
+                ->andWhere('t.priority = :priority')
+                ->andWhere('t.status = :inProgressStatus')
+                ->andWhere('t.isArchived = false')
+                ->setParameter('user', $user)
+                ->setParameter('priority', $priority)
+                ->setParameter('inProgressStatus', TaskStatus::IN_PROGRESS)
+                ->getQuery()
+                ->getSingleScalarResult();
+            
+            $result[strtolower($priority->value)] = [
+                'total' => (int)$total,
+                'completed' => (int)$completed,
+                'inProgress' => (int)$inProgress,
+                'pending' => (int)$total - (int)$completed - (int)$inProgress
+            ];
+        }
+        
+        return $result;
+    }
+
+    /**
+     * Get productivity heatmap (GitHub-style)
+     */
+    public function getProductivityHeatmap(User $user, int $year): array
+    {
+        $startDate = new \DateTimeImmutable("{$year}-01-01");
+        $endDate = new \DateTimeImmutable("{$year}-12-31");
+        
+        $qb = $this->createQueryBuilder('t');
+        $tasks = $qb
+            ->where('t.user = :user')
+            ->andWhere('t.parentTask IS NULL')
+            ->andWhere('t.completedAt BETWEEN :start AND :end')
+            ->setParameter('user', $user)
+            ->setParameter('start', $startDate)
+            ->setParameter('end', $endDate)
+            ->getQuery()
+            ->getResult();
+        
+        $heatmap = [];
+        foreach ($tasks as $task) {
+            if ($task->getCompletedAt()) {
+                $date = $task->getCompletedAt()->format('Y-m-d');
+                $heatmap[$date] = ($heatmap[$date] ?? 0) + 1;
+            }
+        }
+        
+        return $heatmap;
+    }
+
+    /**
+     * Get weekday productivity (Monday-Sunday)
+     */
+    public function getWeekdayProductivity(User $user): array
+    {
+        $tasks = $this->createQueryBuilder('t')
+            ->where('t.user = :user')
+            ->andWhere('t.parentTask IS NULL')
+            ->andWhere('t.completedAt IS NOT NULL')
+            ->setParameter('user', $user)
+            ->getQuery()
+            ->getResult();
+        
+        $days = ['Monday' => 0, 'Tuesday' => 0, 'Wednesday' => 0, 'Thursday' => 0, 'Friday' => 0, 'Saturday' => 0, 'Sunday' => 0];
+        
+        foreach ($tasks as $task) {
+            if ($task->getCompletedAt()) {
+                $dayName = $task->getCompletedAt()->format('l'); // Monday, Tuesday, etc.
+                if (isset($days[$dayName])) {
+                    $days[$dayName]++;
+                }
+            }
+        }
+        
+        return $days;
+    }
+
+    /**
+     * Get most productive hour of day
+     */
+    public function getMostProductiveHour(User $user): ?int
+    {
+        $tasks = $this->createQueryBuilder('t')
+            ->where('t.user = :user')
+            ->andWhere('t.parentTask IS NULL')
+            ->andWhere('t.completedAt IS NOT NULL')
+            ->setParameter('user', $user)
+            ->getQuery()
+            ->getResult();
+        
+        if (count($tasks) === 0) {
+            return null;
+        }
+        
+        $hourCount = [];
+        foreach ($tasks as $task) {
+            if ($task->getCompletedAt()) {
+                $hour = (int)$task->getCompletedAt()->format('G'); // 0-23
+                $hourCount[$hour] = ($hourCount[$hour] ?? 0) + 1;
+            }
+        }
+        
+        if (empty($hourCount)) {
+            return null;
+        }
+        
+        arsort($hourCount);
+        return array_key_first($hourCount);
+    }
+
+    /**
+     * Get tag completion statistics
+     */
+    public function getTagCompletionStats(User $user, int $tagId): array
+    {
+        $total = $this->createQueryBuilder('t')
+            ->select('COUNT(t.id)')
+            ->join('t.tags', 'tag')
+            ->where('t.user = :user')
+            ->andWhere('t.parentTask IS NULL')
+            ->andWhere('tag.id = :tagId')
+            ->setParameter('user', $user)
+            ->setParameter('tagId', $tagId)
+            ->getQuery()
+            ->getSingleScalarResult();
+        
+        $completed = $this->createQueryBuilder('t')
+            ->select('COUNT(t.id)')
+            ->join('t.tags', 'tag')
+            ->where('t.user = :user')
+            ->andWhere('t.parentTask IS NULL')
+            ->andWhere('tag.id = :tagId')
+            ->andWhere('t.status = :completedStatus')
+            ->setParameter('user', $user)
+            ->setParameter('tagId', $tagId)
+            ->setParameter('completedStatus', TaskStatus::COMPLETED)
+            ->getQuery()
+            ->getSingleScalarResult();
+        
+        $completionRate = $total > 0 ? (int)round(($completed / $total) * 100) : 0;
+        
+        return [
+            'total' => (int)$total,
+            'completed' => (int)$completed,
+            'completionRate' => $completionRate
+        ];
+    }
 }

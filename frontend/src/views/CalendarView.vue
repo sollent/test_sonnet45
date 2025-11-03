@@ -21,6 +21,13 @@
             text
             @click="$router.push('/calendar')"
           />
+          <Button
+            :label="!isMobile ? t('analytics.title') : ''"
+            icon="pi pi-chart-bar"
+            :severity="$route.name === 'Analytics' ? 'primary' : 'secondary'"
+            text
+            @click="$router.push('/analytics')"
+          />
         </div>
         <div class="header-actions">
           <button v-if="!isMobile" @click="router.push('/profile')" class="profile-button">
