@@ -107,6 +107,7 @@ export default {
 
   profile: {
     title: 'User Profile',
+    settings_title: 'Profile Settings',
     your_info: 'Your Information',
     account_details: 'Account Details',
     google_account: 'Google Account',
@@ -118,6 +119,65 @@ export default {
     google_name: 'Google Name',
     created_at: 'Created At',
     updated_at: 'Updated At',
+
+    // Navigation sections
+    general: 'General',
+    security: 'Security',
+    notifications: 'Notifications',
+
+    // General settings
+    general_settings: 'General Settings',
+    personal_info: 'Personal Information',
+    name_label: 'Name',
+    name_placeholder: 'Enter your name',
+    email_label: 'Email',
+    email_cannot_change: 'Email cannot be changed',
+
+    // Security section
+    security_settings: 'Security',
+    change_password: 'Change Password',
+    create_password: 'Create Password',
+    current_password: 'Current Password',
+    current_password_placeholder: 'Enter current password',
+    new_password: 'New Password',
+    new_password_placeholder: 'Enter new password',
+    confirm_password: 'Confirm Password',
+    confirm_password_placeholder: 'Repeat new password',
+    google_auth_info: 'You logged in via Google. Create a password to enable email and password login.',
+    login_methods: 'Login Methods',
+    email_password: 'Email and Password',
+    google: 'Google',
+    active: 'Active',
+    not_configured: 'Not Configured',
+    enabled: 'Enabled',
+    disabled: 'Disabled',
+    connected: 'Connected',
+    not_connected: 'Not Connected',
+
+    // Notifications section
+    notifications_settings: 'Notification Settings',
+    email_notifications: 'Email Notifications',
+    email_notifications_desc: 'Receive notifications via email',
+    push_notifications: 'Push Notifications',
+    push_notifications_desc: 'Receive push notifications in browser',
+    task_reminders: 'Task Reminders',
+    task_reminders_desc: 'Reminders for upcoming tasks',
+    task_assignments: 'Task Assignments',
+    task_assignments_desc: 'Notifications about new tasks',
+    task_completion: 'Task Completion',
+    task_completion_desc: 'Notifications about completed tasks',
+    weekly_digest: 'Weekly Digest',
+    weekly_digest_desc: 'Receive weekly report',
+
+    // Messages
+    profile_updated: 'Profile successfully updated',
+    profile_update_failed: 'Failed to save profile',
+    password_changed: 'Password successfully changed',
+    password_created: 'Password successfully created',
+    password_change_failed: 'Failed to change password',
+    passwords_not_match: 'Passwords do not match',
+    password_min_length: 'Password must be at least 8 characters',
+    profile_load_failed: 'Failed to load profile',
   },
 
   dashboard: {

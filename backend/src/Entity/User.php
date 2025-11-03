@@ -34,6 +34,31 @@ class User extends AbstractEntity implements UserInterface, PasswordAuthenticate
     #[ORM\Column(type: 'string', nullable: true)]
     protected ?string $googleUserName = null;
 
+    #[ORM\Column(type: 'string', nullable: true)]
+    protected ?string $name = null;
+
+    #[ORM\Column(type: 'string', nullable: true)]
+    protected ?string $avatar = null;
+
+    #[ORM\Column(type: 'string', length: 20, options: ['default' => 'light'])]
+    protected string $theme = 'light';
+
+    #[ORM\Column(type: 'string', length: 10, options: ['default' => 'ru'])]
+    protected string $language = 'ru';
+
+    #[ORM\Column(type: 'string', length: 50, options: ['default' => 'Europe/Moscow'])]
+    protected string $timezone = 'Europe/Moscow';
+
+    #[ORM\Column(type: 'json', name: 'notification_settings')]
+    protected array $notificationSettings = [
+        'email' => true,
+        'push' => true,
+        'taskReminders' => true,
+        'taskAssignments' => true,
+        'taskCompletion' => true,
+        'weeklyDigest' => false,
+    ];
+
     #[ORM\OneToMany(targetEntity: Task::class, mappedBy: 'user', cascade: ['remove'], orphanRemoval: true)]
     private Collection $tasks;
 
@@ -215,5 +240,79 @@ class User extends AbstractEntity implements UserInterface, PasswordAuthenticate
         }
 
         return $this;
+    }
+
+    public function getName(): ?string
+    {
+        return $this->name;
+    }
+
+    public function setName(?string $name): self
+    {
+        $this->name = $name;
+        return $this;
+    }
+
+    public function getAvatar(): ?string
+    {
+        return $this->avatar;
+    }
+
+    public function setAvatar(?string $avatar): self
+    {
+        $this->avatar = $avatar;
+        return $this;
+    }
+
+    public function getTheme(): string
+    {
+        return $this->theme;
+    }
+
+    public function setTheme(string $theme): self
+    {
+        $this->theme = $theme;
+        return $this;
+    }
+
+    public function getLanguage(): string
+    {
+        return $this->language;
+    }
+
+    public function setLanguage(string $language): self
+    {
+        $this->language = $language;
+        return $this;
+    }
+
+    public function getTimezone(): string
+    {
+        return $this->timezone;
+    }
+
+    public function setTimezone(string $timezone): self
+    {
+        $this->timezone = $timezone;
+        return $this;
+    }
+
+    public function getNotificationSettings(): array
+    {
+        return $this->notificationSettings;
+    }
+
+    public function setNotificationSettings(array $notificationSettings): self
+    {
+        $this->notificationSettings = $notificationSettings;
+        return $this;
+    }
+
+    /**
+     * Check if user has a password set
+     */
+    public function hasPassword(): bool
+    {
+        return $this->password !== null;
     }
 }

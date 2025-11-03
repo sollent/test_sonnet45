@@ -107,6 +107,7 @@ export default {
 
   profile: {
     title: 'Профиль пользователя',
+    settings_title: 'Настройки профиля',
     your_info: 'Ваша информация',
     account_details: 'Детали аккаунта',
     google_account: 'Google аккаунт',
@@ -118,6 +119,65 @@ export default {
     google_name: 'Имя в Google',
     created_at: 'Дата создания',
     updated_at: 'Дата обновления',
+
+    // Navigation sections
+    general: 'Общие',
+    security: 'Безопасность',
+    notifications: 'Уведомления',
+
+    // General settings
+    general_settings: 'Общие настройки',
+    personal_info: 'Личная информация',
+    name_label: 'Имя',
+    name_placeholder: 'Введите ваше имя',
+    email_label: 'Email',
+    email_cannot_change: 'Email нельзя изменить',
+
+    // Security section
+    security_settings: 'Безопасность',
+    change_password: 'Изменить пароль',
+    create_password: 'Создать пароль',
+    current_password: 'Текущий пароль',
+    current_password_placeholder: 'Введите текущий пароль',
+    new_password: 'Новый пароль',
+    new_password_placeholder: 'Введите новый пароль',
+    confirm_password: 'Подтвердите пароль',
+    confirm_password_placeholder: 'Повторите новый пароль',
+    google_auth_info: 'Вы вошли через Google. Создайте пароль, чтобы иметь возможность входа по email и паролю.',
+    login_methods: 'Способы входа',
+    email_password: 'Email и пароль',
+    google: 'Google',
+    active: 'Активно',
+    not_configured: 'Не настроено',
+    enabled: 'Включено',
+    disabled: 'Отключено',
+    connected: 'Подключено',
+    not_connected: 'Не подключено',
+
+    // Notifications section
+    notifications_settings: 'Настройки уведомлений',
+    email_notifications: 'Email уведомления',
+    email_notifications_desc: 'Получать уведомления на email',
+    push_notifications: 'Push уведомления',
+    push_notifications_desc: 'Получать push уведомления в браузере',
+    task_reminders: 'Напоминания о задачах',
+    task_reminders_desc: 'Напоминания о предстоящих задачах',
+    task_assignments: 'Назначение задач',
+    task_assignments_desc: 'Уведомления о новых задачах',
+    task_completion: 'Завершение задач',
+    task_completion_desc: 'Уведомления о завершенных задачах',
+    weekly_digest: 'Еженедельная сводка',
+    weekly_digest_desc: 'Получать еженедельный отчет',
+
+    // Messages
+    profile_updated: 'Профиль успешно обновлен',
+    profile_update_failed: 'Не удалось сохранить профиль',
+    password_changed: 'Пароль успешно изменен',
+    password_created: 'Пароль успешно создан',
+    password_change_failed: 'Не удалось изменить пароль',
+    passwords_not_match: 'Пароли не совпадают',
+    password_min_length: 'Пароль должен содержать минимум 8 символов',
+    profile_load_failed: 'Не удалось загрузить профиль',
   },
 
   dashboard: {

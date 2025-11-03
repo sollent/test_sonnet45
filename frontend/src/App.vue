@@ -11,6 +11,13 @@ const authStore = useAuthStore()
 const loaderStore = useLoaderStore()
 const isAppLoaded = ref(false)
 
+// Проверяем, нужно ли пропустить лоадер (при разлогине)
+const skipInitialLoader = sessionStorage.getItem('skip_loader') === 'true'
+if (skipInitialLoader) {
+  sessionStorage.removeItem('skip_loader')
+  isAppLoaded.value = true
+}
+
 onMounted(async () => {
   await authStore.initializeAuth()
 })
