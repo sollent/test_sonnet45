@@ -13,6 +13,27 @@ framework:
         default_path: '%kernel.project_dir%/translations'
         fallbacks: 'ru'
 
+    # Cache Configuration
+    cache:
+        # Default cache app
+        app: cache.adapter.filesystem
+        system: cache.adapter.system
+        default_redis_provider: '%env(REDIS_URL)%'
+
+        pools:
+            # Analytics cache for dashboard data
+            cache.analytics:
+                adapter: cache.adapter.redis
+                default_lifetime: 900  # 15 minutes
+            # Doctrine system caches
+            doctrine.metadata_cache_pool:
+                adapter: cache.adapter.filesystem
+            doctrine.query_cache_pool:
+                adapter: cache.adapter.filesystem
+            doctrine.result_cache_pool:
+                adapter: cache.adapter.redis
+                default_lifetime: 900  # 15 minutes
+
 when@test:
     framework:
         test: true

@@ -26,12 +26,15 @@ services:
       - ./dev/php/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
     environment:
       PHP_IDE_CONFIG: "serverName=docker.backend-app"
+      REDIS_URL: "redis://redis:6379"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     dns:
       - 8.8.8.8
       - 8.8.4.4
       - 1.1.1.1
+    depends_on:
+      - redis
     networks:
       - nginx-php83-psql16
   psql16:
@@ -58,6 +61,16 @@ services:
       RABBITMQ_DEFAULT_PASS: password # пароль
     networks:
       - nginx-php83-psql16
+  redis:
+    image: redis:7-alpine
+    container_name: backend-redis
+    ports:
+      - "16379:6379"  # порт для Redis
+    command: redis-server --appendonly yes
+    networks:
+      - nginx-php83-psql16
+    volumes:
+      - redisdata:/data
   
   cron:
     container_name: backend-cron
@@ -86,3 +99,4 @@ networks:
   nginx-php83-psql16:
 volumes:
   pgdata:
+  redisdata:

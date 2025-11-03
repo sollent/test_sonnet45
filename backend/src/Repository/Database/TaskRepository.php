@@ -252,34 +252,37 @@ class TaskRepository extends ServiceEntityRepository
      */
     public function getUserTaskStatistics(User $user): array
     {
-        $qb = $this->createQueryBuilder('t');
-        
-        $stats = $qb
-            ->select('t.status, COUNT(t.id) as count')
-            ->where('t.user = :user')
-            ->andWhere('t.parentTask IS NULL')
-            ->andWhere('t.isArchived = false')
-            ->setParameter('user', $user)
-            ->groupBy('t.status')
-            ->getQuery()
-            ->getResult();
-        
-        $result = [
-            'total' => 0,
-            TaskStatus::PENDING->value => 0,
-            TaskStatus::IN_PROGRESS->value => 0,
-            TaskStatus::COMPLETED->value => 0,
-            TaskStatus::CANCELLED->value => 0,
-            'overdue' => count($this->findOverdueTasks($user)),
+        // OPTIMIZATION: Single query with conditional aggregation for all stats including overdue
+        $data = $this->getEntityManager()->getConnection()->executeQuery(
+            'SELECT
+                COUNT(*) as total,
+                COUNT(CASE WHEN t.status = :pending THEN 1 END) as pending_count,
+                COUNT(CASE WHEN t.status = :in_progress THEN 1 END) as in_progress_count,
+                COUNT(CASE WHEN t.status = :completed THEN 1 END) as completed_count,
+                COUNT(CASE WHEN t.status = :cancelled THEN 1 END) as cancelled_count,
+                COUNT(CASE WHEN t.status != :completed AND t.due_date < :now THEN 1 END) as overdue_count
+             FROM task t
+             WHERE t.user_id = :user_id
+               AND t.parent_task_id IS NULL
+               AND t.is_archived = false',
+            [
+                'user_id' => $user->getId(),
+                'pending' => TaskStatus::PENDING->value,
+                'in_progress' => TaskStatus::IN_PROGRESS->value,
+                'completed' => TaskStatus::COMPLETED->value,
+                'cancelled' => TaskStatus::CANCELLED->value,
+                'now' => (new \DateTimeImmutable())->format('Y-m-d H:i:s')
+            ]
+        )->fetchAssociative();
+
+        return [
+            'total' => (int)$data['total'],
+            TaskStatus::PENDING->value => (int)$data['pending_count'],
+            TaskStatus::IN_PROGRESS->value => (int)$data['in_progress_count'],
+            TaskStatus::COMPLETED->value => (int)$data['completed_count'],
+            TaskStatus::CANCELLED->value => (int)$data['cancelled_count'],
+            'overdue' => (int)$data['overdue_count'],
         ];
-        
-        foreach ($stats as $stat) {
-            $statusValue = $stat['status'] instanceof TaskStatus ? $stat['status']->value : $stat['status'];
-            $result[$statusValue] = (int) $stat['count'];
-            $result['total'] += (int) $stat['count'];
-        }
-        
-        return $result;
     }
 
     /**
@@ -581,107 +584,94 @@ class TaskRepository extends ServiceEntityRepository
     }
 
     /**
-     * Get average completion time in days
+     * Get average completion time in days - OPTIMIZED VERSION
+     * Uses direct SQL calculation instead of loading entities
      */
     public function getAverageCompletionTime(User $user): float
     {
-        $tasks = $this->createQueryBuilder('t')
-            ->where('t.user = :user')
-            ->andWhere('t.parentTask IS NULL')
-            ->andWhere('t.completedAt IS NOT NULL')
-            ->andWhere('t.createdAt IS NOT NULL')
-            ->setParameter('user', $user)
-            ->getQuery()
-            ->getResult();
-        
-        if (count($tasks) === 0) {
-            return 0;
-        }
-        
-        $totalDays = 0;
-        foreach ($tasks as $task) {
-            $created = $task->getCreatedAt();
-            $completed = $task->getCompletedAt();
-            if ($created && $completed) {
-                $diff = $completed->diff($created);
-                $totalDays += $diff->days;
-            }
-        }
-        
-        return round($totalDays / count($tasks), 1);
+        // OPTIMIZATION: Direct SQL calculation
+        $data = $this->getEntityManager()->getConnection()->executeQuery(
+            'SELECT AVG(EXTRACT(EPOCH FROM (t.completed_at - t.created_at)) / 86400) as avg_days
+             FROM task t
+             WHERE t.user_id = :user_id
+               AND t.parent_task_id IS NULL
+               AND t.completed_at IS NOT NULL
+               AND t.created_at IS NOT NULL',
+            [
+                'user_id' => $user->getId()
+            ]
+        )->fetchAssociative();
+
+        return round((float)($data['avg_days'] ?? 0), 1);
     }
 
     /**
-     * Get on-time completion rate (percentage)
+     * Get on-time completion rate (percentage) - OPTIMIZED VERSION
+     * Uses single query with conditional aggregation
      */
     public function getOnTimeCompletionRate(User $user): int
     {
-        $qb = $this->createQueryBuilder('t');
-        
-        $totalWithDueDate = $qb
-            ->select('COUNT(t.id)')
-            ->where('t.user = :user')
-            ->andWhere('t.parentTask IS NULL')
-            ->andWhere('t.dueDate IS NOT NULL')
-            ->andWhere('t.completedAt IS NOT NULL')
-            ->setParameter('user', $user)
-            ->getQuery()
-            ->getSingleScalarResult();
-        
-        if ($totalWithDueDate == 0) {
+        // OPTIMIZATION: Single query with conditional aggregation
+        $data = $this->getEntityManager()->getConnection()->executeQuery(
+            'SELECT
+                COUNT(*) as total,
+                COUNT(CASE WHEN t.completed_at <= t.due_date THEN 1 END) as on_time
+             FROM task t
+             WHERE t.user_id = :user_id
+               AND t.parent_task_id IS NULL
+               AND t.due_date IS NOT NULL
+               AND t.completed_at IS NOT NULL',
+            [
+                'user_id' => $user->getId()
+            ]
+        )->fetchAssociative();
+
+        $total = (int)$data['total'];
+        if ($total == 0) {
             return 100;
         }
-        
-        $qb = $this->createQueryBuilder('t');
-        $onTime = $qb
-            ->select('COUNT(t.id)')
-            ->where('t.user = :user')
-            ->andWhere('t.parentTask IS NULL')
-            ->andWhere('t.dueDate IS NOT NULL')
-            ->andWhere('t.completedAt IS NOT NULL')
-            ->andWhere('t.completedAt <= t.dueDate')
-            ->setParameter('user', $user)
-            ->getQuery()
-            ->getSingleScalarResult();
-        
-        return (int)round(($onTime / $totalWithDueDate) * 100);
+
+        $onTime = (int)$data['on_time'];
+        return (int)round(($onTime / $total) * 100);
     }
 
     /**
-     * Get most productive day of week
+     * Get most productive day of week - OPTIMIZED VERSION
+     * Uses direct SQL with day extraction and ordering
      */
     public function getMostProductiveDay(User $user): ?string
     {
-        $tasks = $this->createQueryBuilder('t')
-            ->where('t.user = :user')
-            ->andWhere('t.parentTask IS NULL')
-            ->andWhere('t.completedAt IS NOT NULL')
-            ->setParameter('user', $user)
-            ->getQuery()
-            ->getResult();
-        
-        if (count($tasks) === 0) {
-            return null;
-        }
-        
-        $dayCount = [];
-        foreach ($tasks as $task) {
-            if ($task->getCompletedAt()) {
-                $dayName = $task->getCompletedAt()->format('l'); // Monday, Tuesday, etc.
-                $dayCount[$dayName] = ($dayCount[$dayName] ?? 0) + 1;
-            }
-        }
-        
-        if (empty($dayCount)) {
-            return null;
-        }
-        
-        arsort($dayCount);
-        return array_key_first($dayCount);
+        // OPTIMIZATION: Direct SQL query with day extraction and ordering
+        $data = $this->getEntityManager()->getConnection()->executeQuery(
+            'SELECT
+                CASE EXTRACT(DOW FROM t.completed_at)
+                    WHEN 0 THEN \'Sunday\'
+                    WHEN 1 THEN \'Monday\'
+                    WHEN 2 THEN \'Tuesday\'
+                    WHEN 3 THEN \'Wednesday\'
+                    WHEN 4 THEN \'Thursday\'
+                    WHEN 5 THEN \'Friday\'
+                    WHEN 6 THEN \'Saturday\'
+                END as day_name,
+                COUNT(*) as count
+             FROM task t
+             WHERE t.user_id = :user_id
+               AND t.parent_task_id IS NULL
+               AND t.completed_at IS NOT NULL
+             GROUP BY EXTRACT(DOW FROM t.completed_at)
+             ORDER BY count DESC, EXTRACT(DOW FROM t.completed_at) ASC
+             LIMIT 1',
+            [
+                'user_id' => $user->getId()
+            ]
+        )->fetchAssociative();
+
+        return $data ? $data['day_name'] : null;
     }
 
     /**
-     * Get completion timeline data for chart
+     * Get completion timeline data for chart - OPTIMIZED VERSION
+     * Uses single queries with date grouping instead of multiple queries per day
      */
     public function getCompletionTimelineData(User $user, \DateTimeInterface $start, \DateTimeInterface $end): array
     {
@@ -689,61 +679,83 @@ class TaskRepository extends ServiceEntityRepository
         $created = [];
         $completed = [];
         $overdue = [];
-        
+
         $current = \DateTimeImmutable::createFromInterface($start);
         $endDate = \DateTimeImmutable::createFromInterface($end);
-        
+
+        // OPTIMIZATION: Generate all dates first
         while ($current <= $endDate) {
-            $dayStart = $current->setTime(0, 0);
-            $dayEnd = $current->setTime(23, 59, 59);
-            
             $dates[] = $current->format('Y-m-d');
-            
-            // Created tasks
-            $createdCount = $this->createQueryBuilder('t')
-                ->select('COUNT(t.id)')
-                ->where('t.user = :user')
-                ->andWhere('t.parentTask IS NULL')
-                ->andWhere('t.createdAt BETWEEN :start AND :end')
-                ->setParameter('user', $user)
-                ->setParameter('start', $dayStart)
-                ->setParameter('end', $dayEnd)
-                ->getQuery()
-                ->getSingleScalarResult();
-            
-            // Completed tasks
-            $completedCount = $this->createQueryBuilder('t')
-                ->select('COUNT(t.id)')
-                ->where('t.user = :user')
-                ->andWhere('t.parentTask IS NULL')
-                ->andWhere('t.completedAt BETWEEN :start AND :end')
-                ->setParameter('user', $user)
-                ->setParameter('start', $dayStart)
-                ->setParameter('end', $dayEnd)
-                ->getQuery()
-                ->getSingleScalarResult();
-            
-            // Overdue tasks
-            $overdueCount = $this->createQueryBuilder('t')
-                ->select('COUNT(t.id)')
-                ->where('t.user = :user')
-                ->andWhere('t.parentTask IS NULL')
-                ->andWhere('t.dueDate < :date')
-                ->andWhere('t.status != :completed')
-                ->andWhere('t.createdAt <= :date')
-                ->setParameter('user', $user)
-                ->setParameter('date', $dayEnd)
-                ->setParameter('completed', TaskStatus::COMPLETED)
-                ->getQuery()
-                ->getSingleScalarResult();
-            
-            $created[] = (int)$createdCount;
-            $completed[] = (int)$completedCount;
-            $overdue[] = (int)$overdueCount;
-            
             $current = $current->modify('+1 day');
         }
-        
+
+        $startDate = $start->format('Y-m-d 00:00:00');
+        $endDateStr = $end->format('Y-m-d 23:59:59');
+
+        // OPTIMIZATION: Single query for created tasks with date grouping
+        $createdData = $this->getEntityManager()->getConnection()->executeQuery(
+            'SELECT DATE(t.created_at) as date, COUNT(*) as count
+             FROM task t
+             WHERE t.user_id = :user_id
+               AND t.parent_task_id IS NULL
+               AND t.created_at BETWEEN :start_date AND :end_date
+             GROUP BY DATE(t.created_at)
+             ORDER BY DATE(t.created_at)',
+            [
+                'user_id' => $user->getId(),
+                'start_date' => $startDate,
+                'end_date' => $endDateStr
+            ]
+        )->fetchAllAssociative();
+
+        // OPTIMIZATION: Single query for completed tasks with date grouping
+        $completedData = $this->getEntityManager()->getConnection()->executeQuery(
+            'SELECT DATE(t.completed_at) as date, COUNT(*) as count
+             FROM task t
+             WHERE t.user_id = :user_id
+               AND t.parent_task_id IS NULL
+               AND t.completed_at BETWEEN :start_date AND :end_date
+             GROUP BY DATE(t.completed_at)
+             ORDER BY DATE(t.completed_at)',
+            [
+                'user_id' => $user->getId(),
+                'start_date' => $startDate,
+                'end_date' => $endDateStr
+            ]
+        )->fetchAllAssociative();
+
+        // OPTIMIZATION: Single query for overdue tasks calculation per day
+        $overdueData = $this->getEntityManager()->getConnection()->executeQuery(
+            'SELECT
+                DATE(t.due_date) as due_date,
+                COUNT(*) as count
+             FROM task t
+             WHERE t.user_id = :user_id
+               AND t.parent_task_id IS NULL
+               AND t.status != :completed_status
+               AND t.due_date BETWEEN :start_date AND :end_date
+             GROUP BY DATE(t.due_date)
+             ORDER BY DATE(t.due_date)',
+            [
+                'user_id' => $user->getId(),
+                'completed_status' => TaskStatus::COMPLETED->value,
+                'start_date' => $startDate,
+                'end_date' => $endDateStr
+            ]
+        )->fetchAllAssociative();
+
+        // OPTIMIZATION: Convert results to arrays indexed by date
+        $createdMap = array_column($createdData, 'count', 'date');
+        $completedMap = array_column($completedData, 'count', 'date');
+        $overdueMap = array_column($overdueData, 'count', 'due_date');
+
+        // OPTIMIZATION: Fill arrays with data or zeros
+        foreach ($dates as $date) {
+            $created[] = (int)($createdMap[$date] ?? 0);
+            $completed[] = (int)($completedMap[$date] ?? 0);
+            $overdue[] = (int)($overdueMap[$date] ?? 0);
+        }
+
         return [
             'dates' => $dates,
             'created' => $created,
@@ -753,185 +765,176 @@ class TaskRepository extends ServiceEntityRepository
     }
 
     /**
-     * Get priority breakdown with completion stats
+     * Get priority breakdown with completion stats - OPTIMIZED VERSION
+     * Uses single query with conditional aggregation instead of multiple queries
      */
     public function getPriorityBreakdown(User $user): array
     {
+        // OPTIMIZATION: Single query with conditional aggregation
+        $data = $this->getEntityManager()->getConnection()->executeQuery(
+            'SELECT
+                LOWER(t.priority) as priority,
+                COUNT(*) as total,
+                COUNT(CASE WHEN t.status = :completed THEN 1 END) as completed,
+                COUNT(CASE WHEN t.status = :in_progress THEN 1 END) as in_progress
+             FROM task t
+             WHERE t.user_id = :user_id
+               AND t.parent_task_id IS NULL
+               AND t.is_archived = false
+             GROUP BY t.priority',
+            [
+                'user_id' => $user->getId(),
+                'completed' => TaskStatus::COMPLETED->value,
+                'in_progress' => TaskStatus::IN_PROGRESS->value
+            ]
+        )->fetchAllAssociative();
+
         $result = [];
-        
-        foreach (\App\Enum\TaskPriority::cases() as $priority) {
-            $total = $this->createQueryBuilder('t')
-                ->select('COUNT(t.id)')
-                ->where('t.user = :user')
-                ->andWhere('t.parentTask IS NULL')
-                ->andWhere('t.priority = :priority')
-                ->andWhere('t.isArchived = false')
-                ->setParameter('user', $user)
-                ->setParameter('priority', $priority)
-                ->getQuery()
-                ->getSingleScalarResult();
-            
-            $completed = $this->createQueryBuilder('t')
-                ->select('COUNT(t.id)')
-                ->where('t.user = :user')
-                ->andWhere('t.parentTask IS NULL')
-                ->andWhere('t.priority = :priority')
-                ->andWhere('t.status = :completedStatus')
-                ->andWhere('t.isArchived = false')
-                ->setParameter('user', $user)
-                ->setParameter('priority', $priority)
-                ->setParameter('completedStatus', TaskStatus::COMPLETED)
-                ->getQuery()
-                ->getSingleScalarResult();
-            
-            $inProgress = $this->createQueryBuilder('t')
-                ->select('COUNT(t.id)')
-                ->where('t.user = :user')
-                ->andWhere('t.parentTask IS NULL')
-                ->andWhere('t.priority = :priority')
-                ->andWhere('t.status = :inProgressStatus')
-                ->andWhere('t.isArchived = false')
-                ->setParameter('user', $user)
-                ->setParameter('priority', $priority)
-                ->setParameter('inProgressStatus', TaskStatus::IN_PROGRESS)
-                ->getQuery()
-                ->getSingleScalarResult();
-            
-            $result[strtolower($priority->value)] = [
-                'total' => (int)$total,
-                'completed' => (int)$completed,
-                'inProgress' => (int)$inProgress,
-                'pending' => (int)$total - (int)$completed - (int)$inProgress
+        foreach ($data as $row) {
+            $result[$row['priority']] = [
+                'total' => (int)$row['total'],
+                'completed' => (int)$row['completed'],
+                'inProgress' => (int)$row['in_progress'],
+                'pending' => (int)$row['total'] - (int)$row['completed'] - (int)$row['in_progress']
             ];
         }
-        
+
+        // OPTIMIZATION: Ensure all priority types are present (even with zero counts)
+        foreach (\App\Enum\TaskPriority::cases() as $priority) {
+            $key = strtolower($priority->value);
+            if (!isset($result[$key])) {
+                $result[$key] = [
+                    'total' => 0,
+                    'completed' => 0,
+                    'inProgress' => 0,
+                    'pending' => 0
+                ];
+            }
+        }
+
         return $result;
     }
 
     /**
-     * Get productivity heatmap (GitHub-style)
+     * Get productivity heatmap (GitHub-style) - OPTIMIZED VERSION
+     * Uses direct SQL query with grouping instead of loading all entities
      */
     public function getProductivityHeatmap(User $user, int $year): array
     {
-        $startDate = new \DateTimeImmutable("{$year}-01-01");
-        $endDate = new \DateTimeImmutable("{$year}-12-31");
-        
-        $qb = $this->createQueryBuilder('t');
-        $tasks = $qb
-            ->where('t.user = :user')
-            ->andWhere('t.parentTask IS NULL')
-            ->andWhere('t.completedAt BETWEEN :start AND :end')
-            ->setParameter('user', $user)
-            ->setParameter('start', $startDate)
-            ->setParameter('end', $endDate)
-            ->getQuery()
-            ->getResult();
-        
-        $heatmap = [];
-        foreach ($tasks as $task) {
-            if ($task->getCompletedAt()) {
-                $date = $task->getCompletedAt()->format('Y-m-d');
-                $heatmap[$date] = ($heatmap[$date] ?? 0) + 1;
-            }
-        }
-        
-        return $heatmap;
+        // OPTIMIZATION: Direct SQL with date grouping
+        $data = $this->getEntityManager()->getConnection()->executeQuery(
+            'SELECT DATE(t.completed_at) as date, COUNT(*) as count
+             FROM task t
+             WHERE t.user_id = :user_id
+               AND t.parent_task_id IS NULL
+               AND EXTRACT(YEAR FROM t.completed_at) = :year
+             GROUP BY DATE(t.completed_at)
+             ORDER BY DATE(t.completed_at)',
+            [
+                'user_id' => $user->getId(),
+                'year' => $year
+            ]
+        )->fetchAllAssociative();
+
+        // OPTIMIZATION: Convert to associative array
+        return array_column($data, 'count', 'date');
     }
 
     /**
-     * Get weekday productivity (Monday-Sunday)
+     * Get weekday productivity (Monday-Sunday) - OPTIMIZED VERSION
+     * Uses direct SQL with EXTRACT(DOW) for weekday calculation
      */
     public function getWeekdayProductivity(User $user): array
     {
-        $tasks = $this->createQueryBuilder('t')
-            ->where('t.user = :user')
-            ->andWhere('t.parentTask IS NULL')
-            ->andWhere('t.completedAt IS NOT NULL')
-            ->setParameter('user', $user)
-            ->getQuery()
-            ->getResult();
-        
+        // OPTIMIZATION: Direct SQL query with weekday extraction
+        $data = $this->getEntityManager()->getConnection()->executeQuery(
+            'SELECT
+                CASE EXTRACT(DOW FROM t.completed_at)
+                    WHEN 0 THEN \'Sunday\'
+                    WHEN 1 THEN \'Monday\'
+                    WHEN 2 THEN \'Tuesday\'
+                    WHEN 3 THEN \'Wednesday\'
+                    WHEN 4 THEN \'Thursday\'
+                    WHEN 5 THEN \'Friday\'
+                    WHEN 6 THEN \'Saturday\'
+                END as day_name,
+                COUNT(*) as count
+             FROM task t
+             WHERE t.user_id = :user_id
+               AND t.parent_task_id IS NULL
+               AND t.completed_at IS NOT NULL
+             GROUP BY EXTRACT(DOW FROM t.completed_at)
+             ORDER BY EXTRACT(DOW FROM t.completed_at)',
+            [
+                'user_id' => $user->getId()
+            ]
+        )->fetchAllAssociative();
+
+        // OPTIMIZATION: Initialize all days with zero
         $days = ['Monday' => 0, 'Tuesday' => 0, 'Wednesday' => 0, 'Thursday' => 0, 'Friday' => 0, 'Saturday' => 0, 'Sunday' => 0];
-        
-        foreach ($tasks as $task) {
-            if ($task->getCompletedAt()) {
-                $dayName = $task->getCompletedAt()->format('l'); // Monday, Tuesday, etc.
-                if (isset($days[$dayName])) {
-                    $days[$dayName]++;
-                }
-            }
+
+        // OPTIMIZATION: Fill with actual data
+        foreach ($data as $row) {
+            $days[$row['day_name']] = (int)$row['count'];
         }
-        
+
         return $days;
     }
 
     /**
-     * Get most productive hour of day
+     * Get most productive hour of day - OPTIMIZED VERSION
+     * Uses direct SQL with hour extraction and ordering
      */
     public function getMostProductiveHour(User $user): ?int
     {
-        $tasks = $this->createQueryBuilder('t')
-            ->where('t.user = :user')
-            ->andWhere('t.parentTask IS NULL')
-            ->andWhere('t.completedAt IS NOT NULL')
-            ->setParameter('user', $user)
-            ->getQuery()
-            ->getResult();
-        
-        if (count($tasks) === 0) {
-            return null;
-        }
-        
-        $hourCount = [];
-        foreach ($tasks as $task) {
-            if ($task->getCompletedAt()) {
-                $hour = (int)$task->getCompletedAt()->format('G'); // 0-23
-                $hourCount[$hour] = ($hourCount[$hour] ?? 0) + 1;
-            }
-        }
-        
-        if (empty($hourCount)) {
-            return null;
-        }
-        
-        arsort($hourCount);
-        return array_key_first($hourCount);
+        // OPTIMIZATION: Direct SQL query with hour extraction and ordering
+        $data = $this->getEntityManager()->getConnection()->executeQuery(
+            'SELECT EXTRACT(HOUR FROM t.completed_at) as hour, COUNT(*) as count
+             FROM task t
+             WHERE t.user_id = :user_id
+               AND t.parent_task_id IS NULL
+               AND t.completed_at IS NOT NULL
+             GROUP BY EXTRACT(HOUR FROM t.completed_at)
+             ORDER BY count DESC, EXTRACT(HOUR FROM t.completed_at) ASC
+             LIMIT 1',
+            [
+                'user_id' => $user->getId()
+            ]
+        )->fetchAssociative();
+
+        return $data ? (int)$data['hour'] : null;
     }
 
     /**
-     * Get tag completion statistics
+     * Get tag completion statistics - OPTIMIZED VERSION
+     * Uses single query with conditional aggregation
      */
     public function getTagCompletionStats(User $user, int $tagId): array
     {
-        $total = $this->createQueryBuilder('t')
-            ->select('COUNT(t.id)')
-            ->join('t.tags', 'tag')
-            ->where('t.user = :user')
-            ->andWhere('t.parentTask IS NULL')
-            ->andWhere('tag.id = :tagId')
-            ->setParameter('user', $user)
-            ->setParameter('tagId', $tagId)
-            ->getQuery()
-            ->getSingleScalarResult();
-        
-        $completed = $this->createQueryBuilder('t')
-            ->select('COUNT(t.id)')
-            ->join('t.tags', 'tag')
-            ->where('t.user = :user')
-            ->andWhere('t.parentTask IS NULL')
-            ->andWhere('tag.id = :tagId')
-            ->andWhere('t.status = :completedStatus')
-            ->setParameter('user', $user)
-            ->setParameter('tagId', $tagId)
-            ->setParameter('completedStatus', TaskStatus::COMPLETED)
-            ->getQuery()
-            ->getSingleScalarResult();
-        
+        // OPTIMIZATION: Single query with conditional aggregation
+        $data = $this->getEntityManager()->getConnection()->executeQuery(
+            'SELECT
+                COUNT(*) as total,
+                COUNT(CASE WHEN t.status = :completed THEN 1 END) as completed
+             FROM task t
+             INNER JOIN task_tags tt ON t.id = tt.task_id
+             WHERE t.user_id = :user_id
+               AND t.parent_task_id IS NULL
+               AND tt.tag_id = :tag_id',
+            [
+                'user_id' => $user->getId(),
+                'tag_id' => $tagId,
+                'completed' => TaskStatus::COMPLETED->value
+            ]
+        )->fetchAssociative();
+
+        $total = (int)($data['total'] ?? 0);
+        $completed = (int)($data['completed'] ?? 0);
         $completionRate = $total > 0 ? (int)round(($completed / $total) * 100) : 0;
-        
+
         return [
-            'total' => (int)$total,
-            'completed' => (int)$completed,
+            'total' => $total,
+            'completed' => $completed,
             'completionRate' => $completionRate
         ];
     }
