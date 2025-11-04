@@ -49,3 +49,4 @@ final readonly class AnalyticsCache
         return $this->cache->hasItem($key);
     }
 }
+

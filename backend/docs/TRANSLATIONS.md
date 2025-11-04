@@ -81,3 +81,4 @@ docker compose exec php83-fpm php bin/console cache:clear
 - ✅ Fallback механизм на frontend
 - ✅ Нет необходимости в перезагрузке страницы при смене языка
 
+

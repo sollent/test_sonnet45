@@ -154,3 +154,4 @@ i, .pi, [class^="pi-"], [class*=" pi-"] {
 3. Добавьте `transform: translateZ(0)` для иконки
 4. Проверьте CSS specificity - может понадобиться `!important`
 
+

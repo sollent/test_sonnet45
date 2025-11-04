@@ -780,3 +780,4 @@ class GenerateUserJourneyCommand extends Command
     }
 }
 
+

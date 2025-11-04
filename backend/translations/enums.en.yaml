@@ -14,3 +14,4 @@ task.status.archived: "Archived"
 # Additional task-related translations
 task.priority.label: "Priority"
 task.status.label: "Status"
+

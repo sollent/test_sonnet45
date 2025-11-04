@@ -159,3 +159,4 @@ final readonly class TaskCache
         return sprintf('tasks_*_%d*', $user->getId());
     }
 }
+

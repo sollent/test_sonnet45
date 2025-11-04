@@ -14,3 +14,4 @@ task.status.archived: "В архиве"
 # Additional task-related translations
 task.priority.label: "Приоритет"
 task.status.label: "Статус"
+
