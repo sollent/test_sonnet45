@@ -6,121 +6,173 @@ namespace App\EventListener;
 
 use App\Entity\Task;
 use App\Entity\Tag;
-use App\Entity\User;
-use App\Service\Cache\AnalyticsCache;
-use App\Service\Cache\TaskCache;
+use App\Service\Cache\TaskCacheService;
+use App\Service\Cache\AnalyticsCacheService;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;
 use Doctrine\ORM\Event\PostPersistEventArgs;
 use Doctrine\ORM\Event\PostRemoveEventArgs;
 use Doctrine\ORM\Event\PostUpdateEventArgs;
 use Doctrine\ORM\Events;
-use Psr\Cache\CacheItemPoolInterface;
+use Psr\Log\LoggerInterface;
 
+/**
+ * Professional Cache Invalidation Listener
+ * Uses intelligent selective invalidation instead of clearing everything
+ */
 #[AsDoctrineListener(event: Events::postPersist)]
 #[AsDoctrineListener(event: Events::postUpdate)]
 #[AsDoctrineListener(event: Events::postRemove)]
 final readonly class CacheInvalidationListener
 {
     public function __construct(
-        private CacheItemPoolInterface $resultCache,
-        private AnalyticsCache $analyticsCache,
-        private TaskCache $taskCache,
+        private TaskCacheService $taskCache,
+        private AnalyticsCacheService $analyticsCache,
+        private LoggerInterface $logger,
     ) {
     }
 
     public function postPersist(PostPersistEventArgs $args): void
     {
-        $this->invalidateAnalyticsCache($args->getObject());
+        $this->handleCacheInvalidation($args->getObject(), 'persist');
     }
 
     public function postUpdate(PostUpdateEventArgs $args): void
     {
-        $this->invalidateAnalyticsCache($args->getObject());
+        $this->handleCacheInvalidation($args->getObject(), 'update');
     }
 
     public function postRemove(PostRemoveEventArgs $args): void
     {
-        $this->invalidateAnalyticsCache($args->getObject());
+        $this->handleCacheInvalidation($args->getObject(), 'remove');
     }
 
-    private function invalidateAnalyticsCache(object $entity): void
+    private function handleCacheInvalidation(object $entity, string $operation): void
     {
-        // Invalidate cache only for Task and Tag entities that affect analytics
-        if ($entity instanceof Task) {
-            $this->invalidateTaskCaches($entity);
-        } elseif ($entity instanceof Tag) {
-            $this->invalidateTagCaches($entity);
-        }
-    }
-
-    private function invalidateTaskCaches(Task $task): void
-    {
-        // Clear Doctrine result cache
         try {
-            $this->resultCache->clear();
-        } catch (\Throwable $e) {
-            // Ignore cache clearing errors
-        }
-
-        // Clear analytics cache
-        $cacheKeys = [
-            'analytics_dashboard',
-            'analytics_overview',
-            'analytics_timeline',
-            'analytics_status_distribution',
-            'analytics_priority_breakdown',
-            'analytics_productivity_heatmap',
-            'analytics_weekday_productivity',
-            'analytics_top_tags',
-            'analytics_insights'
-        ];
-
-        foreach ($cacheKeys as $key) {
-            try {
-                $this->analyticsCache->delete($key);
-            } catch (\Throwable $e) {
-                // Ignore cache deletion errors
+            if ($entity instanceof Task) {
+                $this->invalidateTaskCache($entity, $operation);
+            } elseif ($entity instanceof Tag) {
+                $this->invalidateTagCache($entity, $operation);
             }
-        }
-
-        // Clear task caches for the user
-        if ($task->getUser()) {
-            // Delete specific task cache first
-            $this->taskCache->deleteTaskCache($task->getUser(), $task->getId());
-
-            // Then invalidate all user caches
-            $this->taskCache->invalidateUserCache($task->getUser());
+        } catch (\Throwable $e) {
+            // Log but don't fail the request
+            $this->logger->error('Cache invalidation failed', [
+                'entity' => get_class($entity),
+                'operation' => $operation,
+                'error' => $e->getMessage()
+            ]);
         }
     }
 
-    private function invalidateTagCaches(Tag $tag): void
+    /**
+     * Intelligently invalidate task-related caches
+     */
+    private function invalidateTaskCache(Task $task, string $operation): void
     {
-        // Clear Doctrine result cache
-        try {
-            $this->resultCache->clear();
-        } catch (\Throwable $e) {
-            // Ignore cache clearing errors
+        $user = $task->getUser();
+        if (!$user) {
+            return;
         }
 
-        // Clear analytics cache (tags affect analytics)
-        $cacheKeys = [
-            'analytics_dashboard',
-            'analytics_top_tags'
+        // Always invalidate specific task cache
+        if ($operation !== 'persist') {
+            $this->taskCache->invalidateTask($user, $task->getId());
+        }
+
+        // Invalidate task lists (they need to reflect the new/updated/removed task)
+        $this->taskCache->invalidateTaskLists($user);
+
+        // Invalidate dynamic views (today, overdue, upcoming)
+        $this->taskCache->invalidateDynamicViews($user);
+
+        // Invalidate statistics
+        $this->taskCache->invalidateStatistics($user);
+
+        // Invalidate analytics - but selectively
+        $this->invalidateAnalyticsForTask($user, $task, $operation);
+
+        $this->logger->info('Task cache invalidated', [
+            'user_id' => $user->getId(),
+            'task_id' => $task->getId(),
+            'operation' => $operation
+        ]);
+    }
+
+    /**
+     * Selectively invalidate analytics based on what changed
+     */
+    private function invalidateAnalyticsForTask($user, Task $task, string $operation): void
+    {
+        // Always invalidate overview and distributions
+        $this->analyticsCache->invalidate($user, 'overview');
+        $this->analyticsCache->invalidateDistributions($user);
+
+        // If task is completed/uncompleted, invalidate time-based analytics
+        if ($task->isCompleted() || $operation === 'remove') {
+            $this->analyticsCache->invalidateTimeBased($user);
+        }
+
+        // Invalidate top tags if task has tags
+        if (!$task->getTags()->isEmpty()) {
+            $this->analyticsCache->invalidate($user, 'top_tags');
+        }
+
+        // Always invalidate insights (they depend on many factors)
+        $this->analyticsCache->invalidate($user, 'insights');
+
+        // Invalidate dashboard (aggregates everything)
+        $pattern = $user->getId() . '_dashboard';
+        $this->analyticsCache->invalidate($user, 'dashboard');
+    }
+
+    /**
+     * Invalidate caches when tag changes
+     */
+    private function invalidateTagCache(Tag $tag, string $operation): void
+    {
+        $user = $tag->getUser();
+        if (!$user) {
+            return;
+        }
+
+        // Tags affect task lists (if tasks are filtered by tags)
+        // We need to invalidate task lists that might include this tag
+        $this->taskCache->invalidateTaskLists($user);
+
+        // Tags affect analytics
+        $this->analyticsCache->invalidate($user, 'top_tags');
+        $this->analyticsCache->invalidate($user, 'insights');
+
+        // Invalidate dashboard
+        $this->analyticsCache->invalidate($user, 'dashboard');
+
+        $this->logger->info('Tag cache invalidated', [
+            'user_id' => $user->getId(),
+            'tag_id' => $tag->getId(),
+            'operation' => $operation
+        ]);
+    }
+
+    /**
+     * Manual cache clear for specific user (useful for admin operations)
+     */
+    public function clearUserCache($user): array
+    {
+        return [
+            'tasks' => $this->taskCache->invalidateUserCache($user),
+            'analytics' => $this->analyticsCache->invalidateAll($user)
         ];
+    }
 
-        foreach ($cacheKeys as $key) {
-            try {
-                $this->analyticsCache->delete($key);
-            } catch (\Throwable $e) {
-                // Ignore cache deletion errors
-            }
-        }
+    /**
+     * Manual warm-up for specific user (useful after login)
+     */
+    public function warmUpUserCache($user, callable $taskListCallback, callable $statsCallback, callable $dashboardCallback): void
+    {
+        // Warm up task caches
+        $this->taskCache->warmUp($user, $taskListCallback, $statsCallback);
 
-        // Clear task caches for users who have this tag
-        // Note: This is complex to implement efficiently, so we'll clear caches on tag changes
-        // In production, you might want to track which users use which tags
-        if ($tag->getUser()) {
-            $this->taskCache->invalidateUserCache($tag->getUser());
-        }
+        // Warm up analytics dashboard
+        $this->analyticsCache->warmUpDashboard($user, $dashboardCallback);
     }
 }

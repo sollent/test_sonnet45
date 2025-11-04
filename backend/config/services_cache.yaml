@@ -1,0 +1,60 @@
+# Professional Redis Cache Services Configuration
+# Include this in your main services.yaml
+
+services:
+    # Redis Key Manager
+    App\Service\Cache\RedisKeyManager:
+        arguments:
+            $environment: '%kernel.environment%'
+
+    # Main Redis Cache Service
+    App\Service\Cache\RedisCacheService:
+        arguments:
+            $redisAdapter: '@cache.adapter.redis'
+            $keyManager: '@App\Service\Cache\RedisKeyManager'
+            $logger: '@logger'
+            $defaultTtl: 900
+
+    # Alias for interface
+    App\Service\Cache\Interface\CacheServiceInterface:
+        alias: App\Service\Cache\RedisCacheService
+
+    App\Service\Cache\Interface\CacheKeyManagerInterface:
+        alias: App\Service\Cache\RedisKeyManager
+
+    # Task Cache Service (uses new architecture)
+    App\Service\Cache\TaskCacheService:
+        arguments:
+            $cacheService: '@App\Service\Cache\RedisCacheService'
+            $keyManager: '@App\Service\Cache\RedisKeyManager'
+
+    # Analytics Cache Service (uses new architecture)
+    App\Service\Cache\AnalyticsCacheService:
+        arguments:
+            $cacheService: '@App\Service\Cache\RedisCacheService'
+            $keyManager: '@App\Service\Cache\RedisKeyManager'
+
+    # Updated Cache Invalidation Listener
+    App\EventListener\CacheInvalidationListener:
+        arguments:
+            $taskCache: '@App\Service\Cache\TaskCacheService'
+            $analyticsCache: '@App\Service\Cache\AnalyticsCacheService'
+            $logger: '@logger'
+        tags:
+            - { name: 'doctrine.event_listener', event: 'postPersist' }
+            - { name: 'doctrine.event_listener', event: 'postUpdate' }
+            - { name: 'doctrine.event_listener', event: 'postRemove' }
+
+    # Task Repository with new cache
+    App\Repository\Database\TaskRepository:
+        arguments:
+            $registry: '@doctrine'
+            $taskCache: '@App\Service\Cache\TaskCacheService'
+        tags: ['doctrine.repository_service']
+
+    # Analytics Service with new cache
+    App\Service\AnalyticsService:
+        arguments:
+            $taskRepository: '@App\Repository\Database\TaskRepository'
+            $tagRepository: '@App\Repository\Database\TagRepository'
+            $analyticsCache: '@App\Service\Cache\AnalyticsCacheService'

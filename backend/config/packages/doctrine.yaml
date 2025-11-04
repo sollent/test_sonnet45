@@ -63,14 +63,8 @@ when@prod:
                 doctrine.system_cache_pool:
                     adapter: cache.system
 
-# Doctrine Cache Services Configuration
-services:
-    # Analytics cache service for dashboard data
-    App\Service\Cache\AnalyticsCache:
-        arguments:
-            $cache: '@cache.analytics'
-
-    # Task cache service for user-specific task data
-    App\Service\Cache\TaskCache:
-        arguments:
-            $cache: '@cache.tasks'
+# REMOVED OLD CACHE SERVICES - NOW USING config/services_cache.yaml
+# Old Grok Code services removed:
+# - App\Service\Cache\AnalyticsCache (replaced with AnalyticsCacheService)
+# - App\Service\Cache\TaskCache (replaced with TaskCacheService)
+# New professional Redis cache services configured in config/services_cache.yaml
