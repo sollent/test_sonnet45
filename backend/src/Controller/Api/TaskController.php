@@ -308,13 +308,14 @@ class TaskController extends AbstractController
     )]
     public function show(int $id, Request $request): JsonResponse
     {
-        $task = $this->taskRepository->findWithSubtasks($id);
-        
+        /** @var User $user */
+        $user = $this->getUser();
+
+        $task = $this->taskRepository->findWithSubtasks($id, $user);
+
         if (!$task) {
             throw $this->createNotFoundException('Task not found');
         }
-        
-        $this->denyAccessUnlessGranted('view', $task);
         
         $dto = TaskResponseDto::fromEntity($task, true);
         $this->enrichDtoWithTranslations($dto, $request);

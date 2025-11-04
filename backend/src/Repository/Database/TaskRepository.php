@@ -9,6 +9,7 @@ use App\Entity\Task;
 use App\Entity\User;
 use App\Enum\TaskStatus;
 use App\Enum\TaskPriority;
+use App\Service\Cache\TaskCache;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\ORM\Tools\Pagination\Paginator;
@@ -24,8 +25,10 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class TaskRepository extends ServiceEntityRepository
 {
-    public function __construct(ManagerRegistry $registry)
-    {
+    public function __construct(
+        ManagerRegistry $registry,
+        private readonly TaskCache $taskCache
+    ) {
         parent::__construct($registry, Task::class);
     }
 
@@ -40,29 +43,37 @@ class TaskRepository extends ServiceEntityRepository
         ?bool $includeArchived = false,
         ?bool $onlyParentTasks = true
     ): array {
-        $qb = $this->createQueryBuilder('t')
-            ->where('t.user = :user')
-            ->setParameter('user', $user);
+        $filters = [
+            'status' => $status?->value,
+            'includeArchived' => $includeArchived,
+            'onlyParentTasks' => $onlyParentTasks,
+        ];
 
-        if ($onlyParentTasks) {
-            $qb->andWhere('t.parentTask IS NULL');
-        }
+        return $this->taskCache->getTaskList($user, $filters, function () use ($user, $status, $includeArchived, $onlyParentTasks) {
+            $qb = $this->createQueryBuilder('t')
+                ->where('t.user = :user')
+                ->setParameter('user', $user);
 
-        if ($status !== null) {
-            $qb->andWhere('t.status = :status')
-                ->setParameter('status', $status);
-        }
+            if ($onlyParentTasks) {
+                $qb->andWhere('t.parentTask IS NULL');
+            }
 
-        if (!$includeArchived) {
-            $qb->andWhere('t.isArchived = :archived')
-                ->setParameter('archived', false);
-        }
+            if ($status !== null) {
+                $qb->andWhere('t.status = :status')
+                    ->setParameter('status', $status);
+            }
 
-        $qb->orderBy('t.sortOrder', 'ASC')
-            ->addOrderBy('t.priority', 'DESC')
-            ->addOrderBy('t.dueDate', 'ASC');
+            if (!$includeArchived) {
+                $qb->andWhere('t.isArchived = :archived')
+                    ->setParameter('archived', false);
+            }
 
-        return $qb->getQuery()->getResult();
+            $qb->orderBy('t.sortOrder', 'ASC')
+                ->addOrderBy('t.priority', 'DESC')
+                ->addOrderBy('t.dueDate', 'ASC');
+
+            return $qb->getQuery()->getResult();
+        });
     }
 
     /**
@@ -252,62 +263,68 @@ class TaskRepository extends ServiceEntityRepository
      */
     public function getUserTaskStatistics(User $user): array
     {
-        // OPTIMIZATION: Single query with conditional aggregation for all stats including overdue
-        $data = $this->getEntityManager()->getConnection()->executeQuery(
-            'SELECT
-                COUNT(*) as total,
-                COUNT(CASE WHEN t.status = :pending THEN 1 END) as pending_count,
-                COUNT(CASE WHEN t.status = :in_progress THEN 1 END) as in_progress_count,
-                COUNT(CASE WHEN t.status = :completed THEN 1 END) as completed_count,
-                COUNT(CASE WHEN t.status = :cancelled THEN 1 END) as cancelled_count,
-                COUNT(CASE WHEN t.status != :completed AND t.due_date < :now THEN 1 END) as overdue_count
-             FROM task t
-             WHERE t.user_id = :user_id
-               AND t.parent_task_id IS NULL
-               AND t.is_archived = false',
-            [
-                'user_id' => $user->getId(),
-                'pending' => TaskStatus::PENDING->value,
-                'in_progress' => TaskStatus::IN_PROGRESS->value,
-                'completed' => TaskStatus::COMPLETED->value,
-                'cancelled' => TaskStatus::CANCELLED->value,
-                'now' => (new \DateTimeImmutable())->format('Y-m-d H:i:s')
-            ]
-        )->fetchAssociative();
+        return $this->taskCache->getTaskStatistics($user, function () use ($user) {
+            // OPTIMIZATION: Single query with conditional aggregation for all stats including overdue
+            $data = $this->getEntityManager()->getConnection()->executeQuery(
+                'SELECT
+                    COUNT(*) as total,
+                    COUNT(CASE WHEN t.status = :pending THEN 1 END) as pending_count,
+                    COUNT(CASE WHEN t.status = :in_progress THEN 1 END) as in_progress_count,
+                    COUNT(CASE WHEN t.status = :completed THEN 1 END) as completed_count,
+                    COUNT(CASE WHEN t.status = :cancelled THEN 1 END) as cancelled_count,
+                    COUNT(CASE WHEN t.status != :completed AND t.due_date < :now THEN 1 END) as overdue_count
+                 FROM task t
+                 WHERE t.user_id = :user_id
+                   AND t.parent_task_id IS NULL
+                   AND t.is_archived = false',
+                [
+                    'user_id' => $user->getId(),
+                    'pending' => TaskStatus::PENDING->value,
+                    'in_progress' => TaskStatus::IN_PROGRESS->value,
+                    'completed' => TaskStatus::COMPLETED->value,
+                    'cancelled' => TaskStatus::CANCELLED->value,
+                    'now' => (new \DateTimeImmutable())->format('Y-m-d H:i:s')
+                ]
+            )->fetchAssociative();
 
-        return [
-            'total' => (int)$data['total'],
-            TaskStatus::PENDING->value => (int)$data['pending_count'],
-            TaskStatus::IN_PROGRESS->value => (int)$data['in_progress_count'],
-            TaskStatus::COMPLETED->value => (int)$data['completed_count'],
-            TaskStatus::CANCELLED->value => (int)$data['cancelled_count'],
-            'overdue' => (int)$data['overdue_count'],
-        ];
+            return [
+                'total' => (int)$data['total'],
+                TaskStatus::PENDING->value => (int)$data['pending_count'],
+                TaskStatus::IN_PROGRESS->value => (int)$data['in_progress_count'],
+                TaskStatus::COMPLETED->value => (int)$data['completed_count'],
+                TaskStatus::CANCELLED->value => (int)$data['cancelled_count'],
+                'overdue' => (int)$data['overdue_count'],
+            ];
+        });
     }
 
     /**
-     * Find task with all nested subtasks loaded
+     * Find task with all nested subtasks loaded for a specific user
      */
-    public function findWithSubtasks(int $id): ?Task
+    public function findWithSubtasks(int $id, User $user): ?Task
     {
-        $task = $this->createQueryBuilder('t')
-            ->leftJoin('t.subtasks', 's')
-            ->leftJoin('t.tags', 'tag')
-            ->addSelect('s')
-            ->addSelect('tag')
-            ->where('t.id = :id')
-            ->setParameter('id', $id)
-            ->getQuery()
-            ->getOneOrNullResult();
-            
-        // If task has subtasks, load their subtasks recursively
-        if ($task && $task->getSubtasks()->count() > 0) {
-            foreach ($task->getSubtasks() as $subtask) {
-                $this->loadSubtasksRecursively($subtask);
+        return $this->taskCache->getTask($user, $id, function () use ($id, $user) {
+            $task = $this->createQueryBuilder('t')
+                ->leftJoin('t.subtasks', 's')
+                ->leftJoin('t.tags', 'tag')
+                ->addSelect('s')
+                ->addSelect('tag')
+                ->where('t.id = :id')
+                ->andWhere('t.user = :user')
+                ->setParameter('id', $id)
+                ->setParameter('user', $user)
+                ->getQuery()
+                ->getOneOrNullResult();
+
+            // If task has subtasks, load their subtasks recursively
+            if ($task && $task->getSubtasks()->count() > 0) {
+                foreach ($task->getSubtasks() as $subtask) {
+                    $this->loadSubtasksRecursively($subtask);
+                }
             }
-        }
-        
-        return $task;
+
+            return $task;
+        });
     }
     
     /**

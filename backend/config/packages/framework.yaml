@@ -25,6 +25,10 @@ framework:
             cache.analytics:
                 adapter: cache.adapter.redis
                 default_lifetime: 900  # 15 minutes
+            # Task cache for user-specific data
+            cache.tasks:
+                adapter: cache.adapter.redis
+                default_lifetime: 300  # 5 minutes
             # Doctrine system caches
             doctrine.metadata_cache_pool:
                 adapter: cache.adapter.filesystem
