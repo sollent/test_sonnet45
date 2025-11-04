@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Controller\Api;
 
-use App\Entity\Enum\TaskPriority;
-use App\Entity\Enum\TaskStatus;
+use App\Enum\TaskPriority;
+use App\Enum\TaskStatus;
 use App\Service\EnumTranslatorService;
 use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
