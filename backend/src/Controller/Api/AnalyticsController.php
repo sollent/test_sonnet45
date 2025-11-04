@@ -18,7 +18,7 @@ use App\Entity\User;
 #[Route('/api/analytics', name: 'api_analytics_')]
 #[IsGranted('ROLE_USER')]
 #[OA\Tag(name: 'Analytics')]
-final class AnalyticsController extends AbstractController
+final class  AnalyticsController extends AbstractController
 {
     public function __construct(
         private readonly AnalyticsService $analyticsService
