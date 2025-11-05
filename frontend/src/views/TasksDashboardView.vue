@@ -11,6 +11,7 @@ import Skeleton from 'primevue/skeleton'
 import InputText from 'primevue/inputtext'
 import Paginator, { type PageState } from 'primevue/paginator'
 import TaskCard from '@/components/tasks/TaskCard.vue'
+import CompletedTasksList from '@/components/tasks/CompletedTasksList.vue'
 import TaskDetailsSidebar from '@/components/tasks/TaskDetailsSidebar.vue'
 import FloatingActionButton from '@/components/ui/FloatingActionButton.vue'
 import TaskFilters from '@/components/tasks/TaskFilters.vue'
@@ -355,7 +356,12 @@ const displayedTasks = computed(() => {
 })
 
 const groupedTasks = computed(() => {
-  const groups: Record<string, { label: string; tasks: Task[] }> = {}
+  const groups: Record<string, {
+    label: string;
+    tasks: Task[];
+    uncompletedTasks: Task[];
+    completedTasks: Task[]
+  }> = {}
 
   console.log('[GroupedTasks] Starting grouping, total tasks:', displayedTasks.value.length)
 
@@ -396,9 +402,22 @@ const groupedTasks = computed(() => {
     }
 
     if (!groups[groupKey]) {
-      groups[groupKey] = { label: groupLabel, tasks: [] }
+      groups[groupKey] = {
+        label: groupLabel,
+        tasks: [],
+        uncompletedTasks: [],
+        completedTasks: []
+      }
     }
+
     groups[groupKey]!.tasks.push(task)
+
+    // Separate completed and uncompleted tasks
+    if (task.isCompleted) {
+      groups[groupKey]!.completedTasks.push(task)
+    } else {
+      groups[groupKey]!.uncompletedTasks.push(task)
+    }
   })
 
   // The backend already sorts tasks properly (uncompleted first, then completed)
@@ -768,16 +787,28 @@ async function handleTaskDeleted() {
                 {{ group.label }}
                 <span class="task-group-count">{{ group.tasks.length }}</span>
               </h3>
-              <div class="task-group-list">
-                <TaskCard
-                  v-for="task in group.tasks"
-                  :key="`${task.id}:${task.isCompleted ? 1 : 0}`"
-                  :task="task"
-                  :selected="selectedTask?.id === task.id"
-                  @click="handleTaskClick"
-                  @task-updated="handleTaskCardUpdated"
-                />
+
+              <!-- Uncompleted Tasks as Cards -->
+              <div v-if="group.uncompletedTasks.length > 0" class="task-group-list">
+                <TransitionGroup name="task-move">
+                  <TaskCard
+                    v-for="task in group.uncompletedTasks"
+                    :key="`task-${task.id}`"
+                    :task="task"
+                    :selected="selectedTask?.id === task.id"
+                    @click="handleTaskClick"
+                    @task-updated="handleTaskCardUpdated"
+                  />
+                </TransitionGroup>
               </div>
+
+              <!-- Completed Tasks with new compact design -->
+              <CompletedTasksList
+                v-if="group.completedTasks.length > 0"
+                :tasks="group.completedTasks"
+                @toggle-complete="handleToggleTask"
+                @task-click="handleTaskClick"
+              />
             </div>
 
             <!-- Infinite Scroll Sentinel & Loader -->
@@ -800,45 +831,59 @@ async function handleTaskDeleted() {
                 <span class="group-date-label">{{ group.label }}</span>
                 <span class="task-group-count">{{ group.tasks.length }}</span>
               </div>
-              <div class="tasks-list">
-                <div
-                  v-for="task in group.tasks"
-                  :key="`${task.id}:${task.isCompleted ? 1 : 0}`"
-                  :class="['task-item', { 'task-completed': task.isCompleted }]"
-                  @click="handleTaskClick(task)"
-                >
-                  <input
-                    type="checkbox"
-                    :checked="task.isCompleted"
-                    @click.stop
-                    @change="handleToggleTask(task)"
-                    class="task-checkbox"
-                  />
-                  <div class="task-content">
-                    <div class="task-title-row">
-                      <span :class="['task-title', { 'completed': task.isCompleted }]">
-                        {{ task.title }}
-                      </span>
-                      <i class="pi pi-angle-right task-arrow" />
+
+              <!-- Uncompleted tasks in list view -->
+              <div v-if="group.uncompletedTasks.length > 0" class="tasks-list">
+                <TransitionGroup name="task-move">
+                  <div
+                    v-for="task in group.uncompletedTasks"
+                    :key="`task-list-${task.id}`"
+                    class="task-item"
+                    @click="handleTaskClick(task)"
+                  >
+                    <input
+                      type="checkbox"
+                      :checked="false"
+                      @click.stop
+                      @change="handleToggleTask(task)"
+                      class="task-checkbox"
+                    />
+                    <div class="task-content">
+                      <div class="task-title-row">
+                        <span class="task-title">
+                          {{ task.title }}
+                        </span>
+                        <i class="pi pi-angle-right task-arrow" />
+                      </div>
+                      <div class="task-meta">
+                        <span
+                          v-for="tag in task.tags"
+                          :key="tag.id"
+                          class="task-tag"
+                        >
+                          # {{ tag.name }}
+                        </span>
+                        <span v-if="(task.subtaskCount ?? 0) > 0" class="task-subtasks">
+                          {{ task.completedSubtaskCount ?? 0 }}/{{ task.subtaskCount ?? 0 }}
+                        </span>
+                      </div>
                     </div>
-                    <div v-if="!task.isCompleted" class="task-meta">
-                      <span
-                        v-for="tag in task.tags"
-                        :key="tag.id"
-                        class="task-tag"
-                      >
-                        # {{ tag.name }}
-                      </span>
-                      <span v-if="(task.subtaskCount ?? 0) > 0" class="task-subtasks">
-                        {{ task.completedSubtaskCount ?? 0 }}/{{ task.subtaskCount ?? 0 }}
-                      </span>
+                    <div class="task-time">
+                      {{ task.dueDate ? new Date(task.dueDate).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) : '' }}
                     </div>
                   </div>
-                  <div class="task-time">{{ task.dueDate ? new Date(task.dueDate).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) : '' }}</div>
-                  </div>
-                </div>
+                </TransitionGroup>
               </div>
+
+              <!-- Completed tasks with new compact design -->
+              <CompletedTasksList
+                v-if="group.completedTasks.length > 0"
+                :tasks="group.completedTasks"
+                @toggle-complete="handleToggleTask"
+                @task-click="handleTaskClick"
+              />
             </div>
+          </div>
 
           <!-- Paginator for Paginated Views -->
           <div v-if="['overdue', 'unscheduled'].includes(selectedView)" class="paginator-wrapper">
@@ -1634,5 +1679,27 @@ async function handleTaskDeleted() {
     color: #fff;
     box-shadow: 0 12px 26px rgba(99, 102, 241, 0.48);
   }
+}
+
+/* Task animation transitions */
+.task-move-enter-active,
+.task-move-leave-active,
+.task-move-move {
+  transition: all 0.3s cubic-bezier(0.55, 0, 0.1, 1);
+}
+
+.task-move-enter-from {
+  opacity: 0;
+  transform: translateY(-20px);
+}
+
+.task-move-leave-to {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.task-move-leave-active {
+  position: absolute;
+  width: 100%;
 }
 </style>
