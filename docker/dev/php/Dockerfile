@@ -15,8 +15,6 @@ RUN apt-get update \
     && docker-php-ext-enable amqp \
     && pecl install apcu \
     && docker-php-ext-enable apcu \
-    && pecl install redis \
-    && docker-php-ext-enable redis \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/bin/

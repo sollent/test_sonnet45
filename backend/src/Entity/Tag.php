@@ -13,16 +13,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: TagRepository::class)]
-#[ORM\Table(
-    name: '`tag`',
-    indexes: [
-        // User + usage count for most used tags ordering
-        new ORM\Index(name: 'idx_tag_user_usage', columns: ['user_id', 'usage_count']),
-
-        // User + name for searching and uniqueness
-        new ORM\Index(name: 'idx_tag_user_name', columns: ['user_id', 'name']),
-    ]
-)]
+#[ORM\Table(name: '`tag`')]
 #[ORM\UniqueConstraint(name: 'unique_tag_per_user', columns: ['name', 'user_id'])]
 #[UniqueEntity(
     fields: ['name', 'user'],

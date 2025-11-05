@@ -7,7 +7,6 @@ namespace App\Service;
 use App\Entity\User;
 use App\Repository\Database\TaskRepository;
 use App\Repository\Database\TagRepository;
-use App\Service\Cache\AnalyticsCache;
 
 /**
  * Analytics Service - Business logic for task analytics and insights
@@ -16,8 +15,7 @@ final class AnalyticsService
 {
     public function __construct(
         private readonly TaskRepository $taskRepository,
-        private readonly TagRepository $tagRepository,
-        private readonly AnalyticsCache $analyticsCache
+        private readonly TagRepository $tagRepository
     ) {
     }
 
@@ -241,54 +239,32 @@ final class AnalyticsService
     }
 
     /**
-     * Calculate current streak (consecutive days with completed tasks) - OPTIMIZED VERSION
-     * Uses single SQL query instead of 365 individual queries
+     * Calculate current streak (consecutive days with completed tasks)
      */
     private function calculateStreak(User $user): int
     {
-        // OPTIMIZATION: Single query to get all completed dates within last year
-        $completedDates = $this->taskRepository->getEntityManager()->getConnection()->executeQuery(
-            'SELECT DISTINCT DATE(t.completed_at) as completed_date
-             FROM task t
-             WHERE t.user_id = :user_id
-               AND t.parent_task_id IS NULL
-               AND t.completed_at IS NOT NULL
-               AND t.completed_at >= :one_year_ago
-             ORDER BY DATE(t.completed_at) DESC',
-            [
-                'user_id' => $user->getId(),
-                'one_year_ago' => (new \DateTimeImmutable())->modify('-365 days')->format('Y-m-d')
-            ]
-        )->fetchAllAssociative();
-
-        if (empty($completedDates)) {
-            return 0;
-        }
-
-        // OPTIMIZATION: Convert to date strings for easy lookup
-        $completedDateMap = array_column($completedDates, 'completed_date', 'completed_date');
-
         $streak = 0;
         $currentDate = new \DateTimeImmutable('today');
-
-        // OPTIMIZATION: Check consecutive days using the pre-loaded data
+        
         for ($i = 0; $i < 365; $i++) {
-            $checkDate = $currentDate->modify("-{$i} days")->format('Y-m-d');
-
-            if (isset($completedDateMap[$checkDate])) {
+            $dayStart = $currentDate->modify("-{$i} days")->setTime(0, 0);
+            $dayEnd = $dayStart->setTime(23, 59, 59);
+            
+            $completedTasks = $this->taskRepository->findTasksCompletedBetween($user, $dayStart, $dayEnd);
+            
+            if (count($completedTasks) > 0) {
                 $streak++;
             } else {
-                break; // Streak broken
+                break;
             }
         }
-
+        
         return $streak;
     }
 
     /**
      * Get complete dashboard data in a single optimized request
      * Combines all analytics data to minimize database queries
-     * Uses caching for improved performance
      */
     public function getDashboardData(User $user, array $params): array
     {
@@ -297,26 +273,6 @@ final class AnalyticsService
         $dateTo = $params['dateTo'];
         $year = $params['year'] ?? (int)date('Y');
 
-        // Create cache key based on user and parameters
-        $cacheKey = sprintf(
-            'analytics_dashboard_%d_%s_%s_%s_%d',
-            $user->getId(),
-            $period,
-            $dateFrom ?: 'null',
-            $dateTo ?: 'null',
-            $year
-        );
-
-        return $this->analyticsCache->get($cacheKey, function () use ($user, $period, $dateFrom, $dateTo, $year) {
-            return $this->computeDashboardData($user, $period, $dateFrom, $dateTo, $year);
-        }, 900); // Cache for 15 minutes
-    }
-
-    /**
-     * Compute dashboard data (extracted for caching)
-     */
-    private function computeDashboardData(User $user, int $period, ?string $dateFrom, ?string $dateTo, int $year): array
-    {
         // OPTIMIZATION: Get core statistics once and reuse
         $stats = $this->taskRepository->getUserTaskStatistics($user);
 
@@ -335,17 +291,17 @@ final class AnalyticsService
 
         // OPTIMIZATION: Get timeline data (can be expensive)
         if ($dateFrom && $dateTo) {
-            $timelineStartDate = new \DateTimeImmutable($dateFrom);
+            $timelineStart = new \DateTimeImmutable($dateFrom);
             $timelineEnd = new \DateTimeImmutable($dateTo);
         } else {
             $timelineEnd = new \DateTimeImmutable();
             if ($period >= 365) {
-                $timelineStartDate = $timelineEnd->modify('-6 months');
+                $timelineStart = $timelineEnd->modify('-6 months');
             } else {
-                $timelineStartDate = $timelineEnd->modify("-{$period} days");
+                $timelineStart = $timelineEnd->modify("-{$period} days");
             }
         }
-        $timelineData = $this->taskRepository->getCompletionTimelineData($user, $timelineStartDate, $timelineEnd);
+        $timelineData = $this->taskRepository->getCompletionTimelineData($user, $timelineStart, $timelineEnd);
 
         // OPTIMIZATION: Get all required data in parallel-like execution
         $priorityBreakdown = $this->taskRepository->getPriorityBreakdown($user);
@@ -406,8 +362,7 @@ final class AnalyticsService
                 'dateFrom' => $dateFrom,
                 'dateTo' => $dateTo,
                 'year' => $year,
-                'generatedAt' => (new \DateTimeImmutable())->format('c'),
-                'cached' => true
+                'generatedAt' => (new \DateTimeImmutable())->format('c')
             ]
         ];
     }

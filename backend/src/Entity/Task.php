@@ -15,44 +15,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: TaskRepository::class)]
-#[ORM\Table(
-    name: '`task`',
-    indexes: [
-        // Core user + parent task index (most common pattern)
-        new ORM\Index(name: 'idx_task_user_parent', columns: ['user_id', 'parent_task_id']),
-
-        // User + status for statistics and filtering
-        new ORM\Index(name: 'idx_task_user_status', columns: ['user_id', 'status']),
-
-        // User + created date for timeline and analytics
-        new ORM\Index(name: 'idx_task_user_created_at', columns: ['user_id', 'created_at']),
-
-        // User + completed date for analytics and productivity tracking
-        new ORM\Index(name: 'idx_task_user_completed_at', columns: ['user_id', 'completed_at']),
-
-        // User + due date for deadline filtering
-        new ORM\Index(name: 'idx_task_user_due_date', columns: ['user_id', 'due_date']),
-
-        // User + priority for grouping
-        new ORM\Index(name: 'idx_task_user_priority', columns: ['user_id', 'priority']),
-
-        // User + archived status
-        new ORM\Index(name: 'idx_task_user_archived', columns: ['user_id', 'is_archived']),
-
-        // Complex index for user + parent + archived (common in lists)
-        new ORM\Index(name: 'idx_task_user_parent_archived', columns: ['user_id', 'parent_task_id', 'is_archived']),
-
-        // Complex index for analytics queries
-        new ORM\Index(name: 'idx_task_user_parent_status', columns: ['user_id', 'parent_task_id', 'status']),
-
-        // Timeline optimization indexes
-        new ORM\Index(name: 'idx_task_user_parent_created', columns: ['user_id', 'parent_task_id', 'created_at']),
-        new ORM\Index(name: 'idx_task_user_parent_completed', columns: ['user_id', 'parent_task_id', 'completed_at']),
-
-        // Sort order for user task lists
-        new ORM\Index(name: 'idx_task_user_sort_order', columns: ['user_id', 'sort_order']),
-    ]
-)]
+#[ORM\Table(name: '`task`')]
 #[ORM\HasLifecycleCallbacks]
 class Task extends AbstractEntity
 {
