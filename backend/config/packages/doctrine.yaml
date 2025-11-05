@@ -69,8 +69,3 @@ services:
     App\Service\Cache\AnalyticsCache:
         arguments:
             $cache: '@cache.analytics'
-
-    # Task cache service for user-specific task data
-    App\Service\Cache\TaskCache:
-        arguments:
-            $cache: '@cache.tasks'

@@ -7,10 +7,10 @@ namespace App\Service\Cache;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 
-final readonly class AnalyticsCache
+final class AnalyticsCache
 {
     public function __construct(
-        private CacheInterface $cache
+        private readonly CacheInterface $cache
     ) {
     }
 
