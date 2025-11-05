@@ -191,7 +191,6 @@ export const useTaskStore = defineStore('task', () => {
     try {
       const newTask = await taskService.createTask(taskData)
       tasks.value.unshift(newTask)
-      await fetchStatistics()
       return newTask
     } catch (err: any) {
       error.value = err.message || 'Failed to create task'
@@ -207,17 +206,16 @@ export const useTaskStore = defineStore('task', () => {
 
     try {
       const updatedTask = await taskService.updateTask(id, taskData)
-      
+
       const index = tasks.value.findIndex(t => t.id === id)
       if (index !== -1) {
         tasks.value[index] = updatedTask
       }
-      
+
       if (selectedTask.value?.id === id) {
         selectedTask.value = updatedTask
       }
-      
-      await fetchStatistics()
+
       return updatedTask
     } catch (err: any) {
       error.value = err.message || 'Failed to update task'
@@ -261,9 +259,6 @@ export const useTaskStore = defineStore('task', () => {
     try {
       // Make API call in background
       await taskService.deleteTask(id)
-      
-      // Update statistics
-      await fetchStatistics()
     } catch (err: any) {
       // Rollback on error
       tasks.value = originalTasks
@@ -272,7 +267,7 @@ export const useTaskStore = defineStore('task', () => {
       unscheduledTasksPaginated.value.tasks = originalUnscheduledTasks
       unscheduledTasksPaginated.value.total = originalUnscheduledTasks.length
       selectedTask.value = originalSelectedTask
-      
+
       error.value = err.message || 'Failed to delete task'
       throw err
     }
@@ -355,8 +350,6 @@ export const useTaskStore = defineStore('task', () => {
       if (selectedTask.value?.id === id) {
         selectedTask.value = updatedTask
       }
-      
-      await fetchStatistics()
     } catch (err: any) {
       // Rollback on error only if task was in store
       if (taskExistsInStore && originalTask) {

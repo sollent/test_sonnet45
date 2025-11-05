@@ -372,12 +372,6 @@ async function handleTaskCardUpdated(updatedTask: Task) {
   if (selectedTask.value?.id === updatedTask.id) {
     selectedTask.value = updatedTask
   }
-
-  try {
-    await taskStore.fetchStatistics()
-  } catch (error) {
-    console.error('Failed to refresh task statistics', error)
-  }
 }
 
 function handleTaskClick(task: Task) {
@@ -403,12 +397,10 @@ function handleCreateTask() {
 
 async function handleTaskCreated() {
   await refreshCurrentView()
-  await taskStore.fetchStatistics()
 }
 
 async function handleTaskSaved() {
   await refreshCurrentView()
-  await taskStore.fetchStatistics()
   isCreateDialogVisible.value = false
 }
 
@@ -419,19 +411,19 @@ async function handleTaskUpdated() {
     try {
       const updatedTask = await taskStore.fetchTask(selectedTask.value.id)
       selectedTask.value = updatedTask
-      
+
       // Update task in store if it exists there
       const taskIndex = taskStore.tasks.findIndex(t => t.id === updatedTask.id)
       if (taskIndex !== -1) {
         taskStore.tasks[taskIndex] = updatedTask
       }
-      
+
       // Also update in paginated lists if exists
       const overdueIndex = taskStore.overdueTasksPaginated.tasks.findIndex(t => t.id === updatedTask.id)
       if (overdueIndex !== -1) {
         taskStore.overdueTasksPaginated.tasks[overdueIndex] = updatedTask
       }
-      
+
       const unscheduledIndex = taskStore.unscheduledTasksPaginated.tasks.findIndex(t => t.id === updatedTask.id)
       if (unscheduledIndex !== -1) {
         taskStore.unscheduledTasksPaginated.tasks[unscheduledIndex] = updatedTask
@@ -440,18 +432,12 @@ async function handleTaskUpdated() {
       console.error('Failed to refresh selected task', error)
     }
   }
-  
-  // Update statistics in background (without blocking)
-  taskStore.fetchStatistics().catch(error => {
-    console.error('Failed to refresh task statistics', error)
-  })
 }
 
 async function handleTaskDeleted() {
   isDetailsOpen.value = false
   selectedTask.value = null
   await refreshCurrentView()
-  await taskStore.fetchStatistics()
 }
 </script>
 

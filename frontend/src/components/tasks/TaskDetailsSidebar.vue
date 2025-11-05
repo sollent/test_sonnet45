@@ -342,14 +342,14 @@ async function handleSaveSubtask() {
   if (!currentSubtask.value) return
   isSubtaskSubmitting.value = true
   try {
-    await taskStore.updateTask(currentSubtask.value.id, subtaskEditData.value)
+    const updatedSubtask = await taskStore.updateTask(currentSubtask.value.id, subtaskEditData.value)
     showSuccess(t('tasks.task_updated'))
-    // Refresh parent task to reflect changes in localTask
-    if (currentTask.value) {
-      const updatedTask = await taskStore.fetchTask(currentTask.value.id)
-      // Update localTask to sync with server
-      if (localTask.value) {
-        localTask.value = { ...updatedTask }
+
+    // Update the subtask in localTask without refetching parent
+    if (localTask.value?.subtasks) {
+      const subtaskIndex = localTask.value.subtasks.findIndex(s => s.id === updatedSubtask.id)
+      if (subtaskIndex !== -1) {
+        localTask.value.subtasks[subtaskIndex] = updatedSubtask
         if (props.selectedTask) {
           emit('update:selectedTask', localTask.value)
         }
@@ -358,6 +358,7 @@ async function handleSaveSubtask() {
         }
       }
     }
+
     // Don't emit task-updated for subtask operations - they don't affect the main task list
     closeSubtaskEditor()
   } catch (e: any) {
@@ -369,11 +370,8 @@ async function handleSaveSubtask() {
 
 // Handler for tree modal updates
 async function handleTreeUpdate() {
-  // Refresh the current task data
-  if (currentTask.value) {
-    await taskStore.fetchTask(currentTask.value.id)
-    emit('task-updated')
-  }
+  // Just emit task-updated - the tree modal already handles optimistic updates
+  emit('task-updated')
 }
 
 async function handleSave() {
@@ -422,13 +420,13 @@ async function handleToggleComplete() {
   // Make API call in background
   try {
     await taskStore.toggleTaskCompletion(currentTask.value.id)
-    
-    // Fetch updated task to get all changes (including subtasks completion)
-    const updatedTask = await taskStore.fetchTask(currentTask.value.id)
-    
+
+    // Get updated task from store (it's already updated by toggleTaskCompletion)
+    const updatedTask = taskStore.selectedTask || originalTask
+
     // Update localTask with real data from server
     localTask.value = { ...updatedTask }
-    
+
     // Update props with real data
     if (props.selectedTask) {
       emit('update:selectedTask', updatedTask)
@@ -436,19 +434,19 @@ async function handleToggleComplete() {
     if (props.task) {
       emit('update:task', updatedTask)
     }
-    
+
     emit('task-updated')
   } catch (error: any) {
     // Rollback on error - restore original task
     localTask.value = { ...originalTask }
-    
+
     if (props.selectedTask) {
       emit('update:selectedTask', originalTask)
     }
     if (props.task) {
       emit('update:task', originalTask)
     }
-    
+
     showError(error.message || t('errors.unknown_error'))
   }
 }
@@ -658,24 +656,25 @@ async function handleToggleSubtask(subtaskId: number) {
     
     // Use the new completion handler with confirmation
     await toggleTaskCompletion(fullSubtask, async () => {
-      // Fetch updated parent task to sync with server
-      if (currentTask.value) {
-        const updatedTask = await taskStore.fetchTask(currentTask.value.id)
-        
-        // Update localTask but preserve order and keep optimistic updates
-        if (localTask.value?.subtasks) {
-          const subtasks = localTask.value.subtasks.map(s => {
-            const serverSubtask = updatedTask.subtasks?.find(ss => ss.id === s.id)
-            return serverSubtask || s
-          })
-          
-          localTask.value = {
-            ...localTask.value,
-            subtasks: [...subtasks],
-            subtaskCount: updatedTask.subtaskCount || localTask.value.subtaskCount,
-            completedSubtaskCount: updatedTask.completedSubtaskCount || localTask.value.completedSubtaskCount
+      // Update subtask locally without refetching parent
+      if (localTask.value?.subtasks) {
+        const subtaskIndex = localTask.value.subtasks.findIndex(s => s.id === subtaskId)
+        if (subtaskIndex !== -1) {
+          // Toggle the subtask completion status
+          const updatedSubtask = {
+            ...localTask.value.subtasks[subtaskIndex],
+            isCompleted: !localTask.value.subtasks[subtaskIndex].isCompleted,
+            status: !localTask.value.subtasks[subtaskIndex].isCompleted ? TaskStatus.COMPLETED : TaskStatus.PENDING
           }
-          
+          localTask.value.subtasks[subtaskIndex] = updatedSubtask
+
+          // Update counts
+          if (localTask.value.completedSubtaskCount !== undefined) {
+            localTask.value.completedSubtaskCount = updatedSubtask.isCompleted
+              ? localTask.value.completedSubtaskCount + 1
+              : Math.max(0, localTask.value.completedSubtaskCount - 1)
+          }
+
           // Update props
           if (props.selectedTask) {
             emit('update:selectedTask', localTask.value)
@@ -780,31 +779,24 @@ async function saveEditSubtask() {
 
   // Make API call in background
   try {
-    await taskStore.updateTask(subtaskId, { title: newTitle })
-    
-    // Fetch updated task to sync with server
-    if (currentTask.value) {
-      const updatedTask = await taskStore.fetchTask(currentTask.value.id)
-      // Update localTask but preserve order
-      if (localTask.value?.subtasks) {
-        const serverSubtask = updatedTask.subtasks?.find(s => s.id === subtaskId)
-        if (serverSubtask) {
-          const subtasks = localTask.value.subtasks.map(s => 
-            s.id === subtaskId ? { ...serverSubtask } : s
-          )
-          localTask.value = {
-            ...localTask.value,
-            subtasks: [...subtasks]
-          }
-          
-          // Update props
-          if (props.selectedTask) {
-            emit('update:selectedTask', localTask.value)
-          }
-          if (props.task) {
-            emit('update:task', localTask.value)
-          }
-        }
+    const updatedSubtask = await taskStore.updateTask(subtaskId, { title: newTitle })
+
+    // Update subtask in localTask without refetching parent
+    if (localTask.value?.subtasks) {
+      const subtasks = localTask.value.subtasks.map(s =>
+        s.id === subtaskId ? { ...updatedSubtask } : s
+      )
+      localTask.value = {
+        ...localTask.value,
+        subtasks: [...subtasks]
+      }
+
+      // Update props
+      if (props.selectedTask) {
+        emit('update:selectedTask', localTask.value)
+      }
+      if (props.task) {
+        emit('update:task', localTask.value)
       }
     }
     
@@ -870,33 +862,26 @@ async function handleDeleteSubtask(subtaskId: number) {
       // Make API call in background
       try {
         await taskStore.deleteTask(subtaskId)
-        
-        // Sync with server (but preserve order if subtask was already removed)
-        if (currentTask.value && deletedSubtask) {
-          const updatedTask = await taskStore.fetchTask(currentTask.value.id)
-          // Update localTask but preserve order - only update if subtask still exists in our list
-          if (localTask.value?.subtasks) {
-            const serverSubtask = updatedTask.subtasks?.find(s => s.id === subtaskId)
-            if (!serverSubtask) {
-              // Subtask was deleted on server, our optimistic update was correct
-              // Just sync other fields if needed
-              localTask.value = {
-                ...localTask.value,
-                subtaskCount: updatedTask.subtaskCount || localTask.value.subtaskCount,
-                completedSubtaskCount: updatedTask.completedSubtaskCount || localTask.value.completedSubtaskCount
-              }
-              
-              // Update props
-              if (props.selectedTask) {
-                emit('update:selectedTask', localTask.value)
-              }
-              if (props.task) {
-                emit('update:task', localTask.value)
-              }
-            }
+
+        // Update counts locally (no need to refetch)
+        if (localTask.value) {
+          localTask.value = {
+            ...localTask.value,
+            subtaskCount: Math.max(0, (localTask.value.subtaskCount || 0) - 1),
+            completedSubtaskCount: deletedSubtask?.isCompleted
+              ? Math.max(0, (localTask.value.completedSubtaskCount || 0) - 1)
+              : localTask.value.completedSubtaskCount
+          }
+
+          // Update props
+          if (props.selectedTask) {
+            emit('update:selectedTask', localTask.value)
+          }
+          if (props.task) {
+            emit('update:task', localTask.value)
           }
         }
-        
+
         // Don't emit task-updated for subtask operations - they don't affect the main task list
       } catch (error: any) {
         // Rollback on error
