@@ -12,6 +12,7 @@ import InputText from 'primevue/inputtext'
 import Paginator, { type PageState } from 'primevue/paginator'
 import TaskCard from '@/components/tasks/TaskCard.vue'
 import CompletedTasksList from '@/components/tasks/CompletedTasksList.vue'
+import DayHeaderWithProgress from '@/components/tasks/DayHeaderWithProgress.vue'
 import TaskDetailsSidebar from '@/components/tasks/TaskDetailsSidebar.vue'
 import FloatingActionButton from '@/components/ui/FloatingActionButton.vue'
 import TaskFilters from '@/components/tasks/TaskFilters.vue'
@@ -783,10 +784,14 @@ async function handleTaskDeleted() {
           <!-- Cards/Grid View -->
           <div v-else-if="displayMode === 'cards'" class="tasks-container">
             <div v-for="group in groupedTasks" :key="group.key" class="task-group">
-              <h3 class="task-group-title">
-                {{ group.label }}
-                <span class="task-group-count">{{ group.tasks.length }}</span>
-              </h3>
+              <!-- New Modern Day Header with Progress -->
+              <DayHeaderWithProgress
+                :label="group.label"
+                :tasks="group.tasks"
+                :uncompleted-tasks="group.uncompletedTasks"
+                :completed-tasks="group.completedTasks"
+                :is-sticky="true"
+              />
 
               <!-- Uncompleted Tasks as Cards -->
               <div v-if="group.uncompletedTasks.length > 0" class="task-group-list">
@@ -827,10 +832,14 @@ async function handleTaskDeleted() {
           <!-- List View -->
           <div v-else class="list-container">
             <div v-for="group in groupedTasks" :key="group.key" class="list-group">
-              <div class="group-date-header">
-                <span class="group-date-label">{{ group.label }}</span>
-                <span class="task-group-count">{{ group.tasks.length }}</span>
-              </div>
+              <!-- New Modern Day Header with Progress -->
+              <DayHeaderWithProgress
+                :label="group.label"
+                :tasks="group.tasks"
+                :uncompleted-tasks="group.uncompletedTasks"
+                :completed-tasks="group.completedTasks"
+                :is-sticky="true"
+              />
 
               <!-- Uncompleted tasks in list view -->
               <div v-if="group.uncompletedTasks.length > 0" class="tasks-list">
@@ -1347,33 +1356,11 @@ async function handleTaskDeleted() {
 .task-group {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.5rem;
+  position: relative;
 }
 
-.task-group-title {
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: #2d3748;
-  margin: 0;
-  padding: 0.5rem 0;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  position: sticky;
-  top: 85px; /* Adjust based on header height */
-  background: linear-gradient(to bottom, #f8f9fa 80%, transparent 100%);
-  z-index: 10;
-}
-
-.task-group-count {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #667eea;
-  background: #eef2ff;
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-}
-
+/* DayHeaderWithProgress component handles all header styling now */
 .task-group-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
