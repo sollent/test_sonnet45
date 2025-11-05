@@ -503,6 +503,26 @@ export default {
     archive: 'Archive',
     unarchive: 'Unarchive',
     duplicate: 'Duplicate',
+
+    // Completion loader
+    completing_task: 'Completing Task',
+    completing_task_message: 'Completing task "{title}"',
+    completing_task_with_subtasks_message: 'Completing task "{title}" and {count} subtask(s)',
+    reopening_task: 'Reopening Task',
+    reopening_task_message: 'Reopening task "{title}"',
+    updating_task: 'Updating Task',
+    updating_task_message: 'Please wait. The task is being updated',
+    adding_subtask: 'Adding Subtask',
+    adding_subtask_message: 'Adding subtask "{title}"',
+    editing_subtask: 'Editing Subtask',
+    editing_subtask_message: 'Editing subtask "{title}"',
+    toggling_subtask: 'Changing Status',
+    toggling_subtask_message: 'Changing status of subtask "{title}"',
+    deleting_subtask: 'Deleting Subtask',
+    deleting_subtask_message: 'Deleting subtask "{title}"',
+    updating_tags: 'Updating Tags',
+    updating_tags_message: 'Updating tags for task "{title}"',
+    completing_subtasks_message: 'Please wait. The task and all its subtasks are being updated automatically',
     
     // Views
     all_tasks: 'All Tasks',
@@ -517,6 +537,8 @@ export default {
     table_view: 'Table View',
     tasks: 'task(s)',
     unscheduled_tasks: 'Unscheduled',
+    all_tasks_loaded: 'All tasks loaded ({count} total)',
+    max_tasks_loaded: 'Maximum limit reached ({count} tasks loaded)',
     
     // Filters
     filters: 'Filters',

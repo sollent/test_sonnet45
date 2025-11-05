@@ -167,7 +167,7 @@ class TaskRepository extends ServiceEntityRepository
         return $qb->getQuery()->getResult();
     }
 
-    public function findActiveTasks(User $user, ?TaskFilterDto $filters = null): array
+    public function findActiveTasks(User $user, ?TaskFilterDto $filters = null, ?int $limit = null, ?int $offset = null): array
     {
         $todayStart = new \DateTimeImmutable('today');
 
@@ -175,30 +175,71 @@ class TaskRepository extends ServiceEntityRepository
             ->where('t.user = :user')
             ->andWhere('t.parentTask IS NULL')
             ->andWhere('t.isArchived = false')
+            ->andWhere('t.status != :cancelledStatus')  // Exclude cancelled tasks
             ->andWhere('(
                 (t.dueDate IS NOT NULL AND t.dueDate >= :todayStart) OR
                 (t.startDate IS NOT NULL AND t.startDate >= :todayStart)
             )')
             ->setParameter('user', $user)
-            ->setParameter('todayStart', $todayStart);
-
-        // Apply default status filter only if no status or completed filter is provided
-        $statuses = $filters ? $filters->getStatuses() : null;
-        $completed = $filters ? $filters->getCompleted() : null;
-        if ((!$statuses || empty($statuses)) && $completed === null) {
-            $qb->andWhere('t.status != :completed')
-               ->setParameter('completed', TaskStatus::COMPLETED);
-        }
+            ->setParameter('todayStart', $todayStart)
+            ->setParameter('cancelledStatus', TaskStatus::CANCELLED);
 
         // Apply filters
         if ($filters) {
             $this->applyFilters($qb, $filters);
         }
 
-        $qb->orderBy('t.dueDate', 'ASC')
+        // Sort by DATE (day only) first, then by completion status within each day
+        // Using custom DATE() DQL function to extract just the date part (ignore time)
+        // This ensures tasks are grouped by day, with uncompleted tasks first within each day
+        $qb->addSelect('DATE(t.dueDate) AS HIDDEN dateOnly')
+           ->addSelect('CASE WHEN t.status = :completedStatus THEN 1 ELSE 0 END AS HIDDEN completedOrder')
+           ->setParameter('completedStatus', TaskStatus::COMPLETED)
+           // First sort by DATE only (groups tasks into days, ignoring time)
+           ->orderBy('dateOnly', 'ASC')
+           // Then sort by completion status (0=uncompleted first, 1=completed after)
+           ->addOrderBy('completedOrder', 'ASC')
+           // Finally by priority within same completion status
            ->addOrderBy('t.priority', 'DESC');
 
+        // Apply pagination
+        if ($limit !== null) {
+            $qb->setMaxResults($limit);
+        }
+        if ($offset !== null) {
+            $qb->setFirstResult($offset);
+        }
+
         return $qb->getQuery()->getResult();
+    }
+
+    /**
+     * Count total active tasks for pagination
+     */
+    public function countActiveTasks(User $user, ?TaskFilterDto $filters = null): int
+    {
+        $todayStart = new \DateTimeImmutable('today');
+
+        $qb = $this->createQueryBuilder('t')
+            ->select('COUNT(t.id)')
+            ->where('t.user = :user')
+            ->andWhere('t.parentTask IS NULL')
+            ->andWhere('t.isArchived = false')
+            ->andWhere('t.status != :cancelledStatus')  // Exclude cancelled tasks
+            ->andWhere('(
+                (t.dueDate IS NOT NULL AND t.dueDate >= :todayStart) OR
+                (t.startDate IS NOT NULL AND t.startDate >= :todayStart)
+            )')
+            ->setParameter('user', $user)
+            ->setParameter('todayStart', $todayStart)
+            ->setParameter('cancelledStatus', TaskStatus::CANCELLED);
+
+        // Apply filters
+        if ($filters) {
+            $this->applyFilters($qb, $filters);
+        }
+
+        return (int) $qb->getQuery()->getSingleScalarResult();
     }
 
     /**

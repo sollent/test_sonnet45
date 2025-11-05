@@ -239,11 +239,29 @@ final class TaskService
             $task->setStatus(TaskStatus::PENDING);
         } else {
             $task->setStatus(TaskStatus::COMPLETED);
+
+            // Automatically complete all subtasks when parent is completed
+            $this->completeSubtasksRecursively($task);
         }
 
         $this->entityManager->flush();
 
         return $task;
+    }
+
+    /**
+     * Complete all subtasks recursively
+     */
+    private function completeSubtasksRecursively(Task $task): void
+    {
+        foreach ($task->getSubtasks() as $subtask) {
+            if (!$subtask->isCompleted()) {
+                $subtask->setStatus(TaskStatus::COMPLETED);
+
+                // Recursively complete nested subtasks
+                $this->completeSubtasksRecursively($subtask);
+            }
+        }
     }
 
     /**
@@ -313,9 +331,14 @@ final class TaskService
         return $this->taskRepository->findUpcomingTasks($user, $days, $filters);
     }
 
-    public function getActiveTasks(User $user, ?TaskFilterDto $filters = null): array
+    public function getActiveTasks(User $user, ?TaskFilterDto $filters = null, ?int $limit = null, ?int $offset = null): array
     {
-        return $this->taskRepository->findActiveTasks($user, $filters);
+        return $this->taskRepository->findActiveTasks($user, $filters, $limit, $offset);
+    }
+
+    public function countActiveTasks(User $user, ?TaskFilterDto $filters = null): int
+    {
+        return $this->taskRepository->countActiveTasks($user, $filters);
     }
 
     public function getUnscheduledTasksPaginated(User $user, int $page, int $limit, ?TaskFilterDto $filters = null): array

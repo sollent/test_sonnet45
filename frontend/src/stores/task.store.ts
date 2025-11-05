@@ -141,13 +141,25 @@ export const useTaskStore = defineStore('task', () => {
   )
 
   // Actions
-  async function fetchTasks(filters?: TaskFilters): Promise<void> {
+  async function fetchTasks(filters?: TaskFilters, append: boolean = false, limit?: number, offset?: number): Promise<number> {
     isLoading.value = true
     error.value = null
     currentFilter.value = filters || {}
 
     try {
-      tasks.value = await taskService.getTasks(filters)
+      const newTasks = await taskService.getTasks(filters, limit, offset)
+
+      if (append) {
+        // Append new tasks, avoiding duplicates
+        const existingIds = new Set(tasks.value.map(t => t.id))
+        const uniqueNewTasks = newTasks.filter(t => !existingIds.has(t.id))
+        tasks.value = [...tasks.value, ...uniqueNewTasks]
+      } else {
+        // Replace tasks
+        tasks.value = newTasks
+      }
+
+      return newTasks.length
     } catch (err: any) {
       error.value = err.message || 'Failed to fetch tasks'
       throw err

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useTaskStore } from '@/stores/task.store'
@@ -36,6 +36,16 @@ const isFiltersPanelVisible = ref(false)
 const displayMode = ref<'cards' | 'list'>('cards')
 const overduePage = ref(1)
 const overdueLimit = ref(20)
+
+// Infinite scroll state
+const PAGE_SIZE = 50
+const MAX_TASKS_LIMIT = 500  // Maximum tasks to load
+const currentOffset = ref(0)
+const totalLoadedTasks = ref(0)  // Track total loaded tasks
+const isLoadingMore = ref(false)
+const hasMoreTasks = ref(true)
+const sentinelElement = ref<HTMLElement | null>(null)
+let observer: IntersectionObserver | null = null
 
 // Active filters count
 const activeFiltersCount = computed(() => {
@@ -190,6 +200,110 @@ const currentLoading = computed(() => {
   return taskStore.isLoading
 })
 
+// Load more tasks for infinite scroll
+async function loadMoreTasks() {
+  if (isLoadingMore.value || !hasMoreTasks.value || selectedView.value !== 'all') {
+    console.log('[Infinite Scroll] Skipping load:', { isLoadingMore: isLoadingMore.value, hasMoreTasks: hasMoreTasks.value, view: selectedView.value })
+    return
+  }
+
+  // Check if we've reached the maximum limit
+  if (totalLoadedTasks.value >= MAX_TASKS_LIMIT) {
+    hasMoreTasks.value = false
+    console.log('[Infinite Scroll] Reached maximum task limit:', MAX_TASKS_LIMIT)
+    return
+  }
+
+  console.log('[Infinite Scroll] Loading more tasks, offset:', currentOffset.value, 'totalLoaded:', totalLoadedTasks.value)
+  console.log('[Infinite Scroll] Current tasks count in store:', taskStore.tasks.length)
+  isLoadingMore.value = true
+
+  try {
+    // Build filters, explicitly removing completed if it's null
+    const filters: any = {
+      view: 'all',
+      tags: taskStore.activeFilters.tags,
+      dateFrom: taskStore.activeFilters.dateFrom,
+      dateTo: taskStore.activeFilters.dateTo,
+      priorities: taskStore.activeFilters.priorities,
+      statuses: taskStore.activeFilters.statuses
+    }
+
+    // Only add completed if it's explicitly set (not null)
+    if (taskStore.activeFilters.completed !== null) {
+      filters.completed = taskStore.activeFilters.completed
+    }
+
+    console.log('[Infinite Scroll] Filters:', filters)
+    console.log('[Infinite Scroll] activeFilters.completed:', taskStore.activeFilters.completed)
+    console.log('[Infinite Scroll] Requesting with limit:', PAGE_SIZE, 'offset:', currentOffset.value)
+
+    const loadedCount = await taskStore.fetchTasks(filters, true, PAGE_SIZE, currentOffset.value)
+
+    console.log('[Infinite Scroll] Loaded', loadedCount, 'new tasks')
+    console.log('[Infinite Scroll] Tasks in store after load:', taskStore.tasks.length)
+
+    totalLoadedTasks.value += loadedCount
+    console.log('[Infinite Scroll] Total loaded so far:', totalLoadedTasks.value)
+
+    // If we loaded fewer tasks than requested, there are no more tasks
+    if (loadedCount < PAGE_SIZE) {
+      hasMoreTasks.value = false
+      console.log('[Infinite Scroll] Loaded fewer than PAGE_SIZE (' + loadedCount + ' < ' + PAGE_SIZE + '), assuming no more tasks')
+    } else if (totalLoadedTasks.value >= MAX_TASKS_LIMIT) {
+      hasMoreTasks.value = false
+      console.log('[Infinite Scroll] Reached maximum limit of', MAX_TASKS_LIMIT, 'tasks')
+    } else if (loadedCount === 0) {
+      hasMoreTasks.value = false
+      console.log('[Infinite Scroll] No tasks loaded, stopping')
+    } else {
+      currentOffset.value += loadedCount
+      console.log('[Infinite Scroll] New offset:', currentOffset.value, 'continuing to load more')
+    }
+  } catch (error: any) {
+    console.error('[Infinite Scroll] Error:', error)
+    showError(error.message || t('errors.unknown_error'))
+  } finally {
+    isLoadingMore.value = false
+  }
+}
+
+// Setup Intersection Observer for infinite scroll
+function setupInfiniteScroll() {
+  // Clean up existing observer
+  if (observer) {
+    observer.disconnect()
+    observer = null
+  }
+
+  // Wait for element to be ready
+  nextTick(() => {
+    if (!sentinelElement.value) {
+      console.log('[Infinite Scroll] Sentinel element not found, retrying...')
+      setTimeout(setupInfiniteScroll, 100)
+      return
+    }
+
+    console.log('[Infinite Scroll] Setting up observer')
+
+    observer = new IntersectionObserver(
+      (entries) => {
+        console.log('[Infinite Scroll] Intersection detected:', entries[0]?.isIntersecting)
+        if (entries[0]?.isIntersecting) {
+          loadMoreTasks()
+        }
+      },
+      {
+        rootMargin: '200px', // Start loading earlier
+        threshold: 0.1
+      }
+    )
+
+    observer.observe(sentinelElement.value)
+    console.log('[Infinite Scroll] Observer attached to sentinel')
+  })
+}
+
 // Simple breakpoint detection
 const isMobile = ref(window.innerWidth < 1024)
 const onResize = () => {
@@ -198,10 +312,23 @@ const onResize = () => {
 
 onMounted(() => {
   window.addEventListener('resize', onResize)
-  // Fetch data
+  // Fetch initial data
   selectView(selectedView.value)
   taskStore.fetchStatistics()
   taskStore.fetchTags()
+
+  // Setup infinite scroll after data is loaded
+  setTimeout(() => {
+    setupInfiniteScroll()
+  }, 500)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', onResize)
+  if (observer) {
+    observer.disconnect()
+    observer = null
+  }
 })
 
 const displayedTasks = computed(() => {
@@ -239,21 +366,23 @@ const displayedTasks = computed(() => {
 
 const groupedTasks = computed(() => {
   const groups: Record<string, { label: string; tasks: Task[] }> = {}
-  
+
+  console.log('[GroupedTasks] Starting grouping, total tasks:', displayedTasks.value.length)
+
   displayedTasks.value.forEach(task => {
     let groupKey = 'no-date'
     let groupLabel = t('tasks.no_due_date')
-    
+
     if (task.dueDate) {
       const dueDate = new Date(task.dueDate)
       const today = new Date()
       today.setHours(0, 0, 0, 0)
       const tomorrow = new Date(today)
       tomorrow.setDate(tomorrow.getDate() + 1)
-      
+
       const dueDateStart = new Date(dueDate)
       dueDateStart.setHours(0, 0, 0, 0)
-      
+
       if (dueDateStart.getTime() === today.getTime()) {
         groupKey = 'today'
         groupLabel = t('tasks.today_tasks')
@@ -267,20 +396,24 @@ const groupedTasks = computed(() => {
         const isoDate = dueDate.toISOString().split('T')[0]
         groupKey = isoDate || 'no-date'
         const currentLocale = locale.value
-        groupLabel = dueDate.toLocaleDateString(currentLocale === 'ru' ? 'ru-RU' : 'en-US', { 
-          weekday: 'long', 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric' 
+        groupLabel = dueDate.toLocaleDateString(currentLocale === 'ru' ? 'ru-RU' : 'en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
         })
       }
     }
-    
+
     if (!groups[groupKey]) {
       groups[groupKey] = { label: groupLabel, tasks: [] }
     }
     groups[groupKey]!.tasks.push(task)
   })
+
+  // The backend already sorts tasks properly (uncompleted first, then completed)
+  // We should NOT re-sort them here as it breaks the backend's order
+  // Backend sorts by: dueDate ASC, completedOrder ASC (0=uncompleted, 1=completed), priority DESC
   
   const sortedGroups = Object.entries(groups).sort(([keyA], [keyB]) => {
     const order = ['overdue', 'today', 'tomorrow']
@@ -310,10 +443,24 @@ function handleLogout() {
 function selectView(viewId: string) {
   selectedView.value = viewId
 
-  // Build query filters from active filters
-  const queryFilters = {
+  // Reset infinite scroll state when changing view
+  currentOffset.value = 0
+  totalLoadedTasks.value = 0
+  hasMoreTasks.value = true
+
+  // Build query filters, explicitly excluding completed if it's null
+  const queryFilters: any = {
     view: viewId === 'all' ? 'all' : viewId,
-    ...taskStore.activeFilters
+    tags: taskStore.activeFilters.tags,
+    dateFrom: taskStore.activeFilters.dateFrom,
+    dateTo: taskStore.activeFilters.dateTo,
+    priorities: taskStore.activeFilters.priorities,
+    statuses: taskStore.activeFilters.statuses
+  }
+
+  // Only add completed if it's explicitly set (not null)
+  if (taskStore.activeFilters.completed !== null) {
+    queryFilters.completed = taskStore.activeFilters.completed
   }
 
   if (viewId === 'overdue') {
@@ -322,6 +469,31 @@ function selectView(viewId: string) {
   } else if (viewId === 'unscheduled') {
     unscheduledPage.value = 1
     taskStore.fetchUnscheduledTasksPaginated(unscheduledPage.value, unscheduledLimit.value)
+  } else if (viewId === 'all') {
+    // Use pagination for 'all' view with initial load
+    console.log('[View Change] Loading initial tasks for view=all with filters:', queryFilters)
+    console.log('[View Change] activeFilters.completed:', taskStore.activeFilters.completed)
+    taskStore.fetchTasks(queryFilters, false, PAGE_SIZE, 0).then(loadedCount => {
+      currentOffset.value = loadedCount
+      totalLoadedTasks.value = loadedCount
+      console.log('[View Change] Initial load complete. Loaded:', loadedCount, 'tasks')
+      console.log('[View Change] Tasks in store:', taskStore.tasks.length)
+
+      // Only set hasMoreTasks to false if we loaded fewer than requested AND not zero
+      if (loadedCount < PAGE_SIZE && loadedCount > 0) {
+        hasMoreTasks.value = false
+        console.log('[View Change] Loaded fewer than PAGE_SIZE, no more tasks available')
+      } else if (loadedCount === 0) {
+        hasMoreTasks.value = false
+        console.log('[View Change] No tasks loaded')
+      } else {
+        hasMoreTasks.value = true
+        console.log('[View Change] More tasks available, hasMoreTasks =', hasMoreTasks.value)
+      }
+
+      // Re-setup observer after data load
+      setTimeout(() => setupInfiniteScroll(), 300)
+    })
   } else {
     taskStore.fetchTasks(queryFilters)
   }
@@ -615,6 +787,20 @@ async function handleTaskDeleted() {
                   @click="handleTaskClick"
                   @task-updated="handleTaskCardUpdated"
                 />
+              </div>
+            </div>
+
+            <!-- Infinite Scroll Sentinel & Loader -->
+            <div v-if="selectedView === 'all'" ref="sentinelElement" class="infinite-scroll-sentinel">
+              <div v-if="isLoadingMore" class="infinite-scroll-loader">
+                <Skeleton height="120px" class="mb-4" borderRadius="16px" />
+                <Skeleton height="120px" class="mb-4" borderRadius="16px" />
+                <Skeleton height="120px" class="mb-4" borderRadius="16px" />
+              </div>
+              <div v-else-if="!hasMoreTasks && displayedTasks.length > 0" class="end-message">
+                {{ totalLoadedTasks >= MAX_TASKS_LIMIT
+                  ? t('tasks.max_tasks_loaded', { count: totalLoadedTasks })
+                  : t('tasks.all_tasks_loaded', { count: totalLoadedTasks }) }}
               </div>
             </div>
           </div>
@@ -1267,6 +1453,33 @@ async function handleTaskDeleted() {
     grid-template-columns: 1fr;
   gap: 0.75rem;
   }
+
+  .infinite-scroll-loader {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+}
+
+/* ===== Infinite Scroll Styles ===== */
+.infinite-scroll-sentinel {
+  padding: 2rem 0;
+  min-height: 100px;
+}
+
+.infinite-scroll-loader {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.25rem;
+}
+
+.end-message {
+  text-align: center;
+  padding: 2rem;
+  font-size: 0.9375rem;
+  color: #94a3b8;
+  font-weight: 500;
+  border-top: 1px solid #e2e8f0;
+  margin-top: 1rem;
 }
 
 .paginator-wrapper {

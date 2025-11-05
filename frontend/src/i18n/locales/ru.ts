@@ -503,6 +503,26 @@ export default {
     archive: 'Архивировать',
     unarchive: 'Разархивировать',
     duplicate: 'Дублировать',
+
+    // Completion loader
+    completing_task: 'Завершение задачи',
+    completing_task_message: 'Завершаем задачу "{title}"',
+    completing_task_with_subtasks_message: 'Завершаем задачу "{title}" и {count} подзадач(и)',
+    reopening_task: 'Возврат задачи',
+    reopening_task_message: 'Возвращаем задачу "{title}" в незавершенное состояние',
+    updating_task: 'Обновление задачи',
+    updating_task_message: 'Пожалуйста, подождите. Задача обновляется',
+    adding_subtask: 'Добавление подзадачи',
+    adding_subtask_message: 'Добавляем подзадачу "{title}"',
+    editing_subtask: 'Редактирование подзадачи',
+    editing_subtask_message: 'Редактируем подзадачу "{title}"',
+    toggling_subtask: 'Изменение статуса',
+    toggling_subtask_message: 'Изменяем статус подзадачи "{title}"',
+    deleting_subtask: 'Удаление подзадачи',
+    deleting_subtask_message: 'Удаляем подзадачу "{title}"',
+    updating_tags: 'Обновление тегов',
+    updating_tags_message: 'Обновляем теги для задачи "{title}"',
+    completing_subtasks_message: 'Пожалуйста, подождите. Задача и все ее подзадачи обновляются автоматически',
     
     // Views
     all_tasks: 'Все задачи',
@@ -516,6 +536,8 @@ export default {
     cards_view: 'Вид карточек',
     table_view: 'Вид таблицы',
     tasks: 'задач(и)',
+    all_tasks_loaded: 'Все задачи загружены ({count} всего)',
+    max_tasks_loaded: 'Достигнут максимальный лимит ({count} задач загружено)',
     
     // Statistics
     total_tasks: 'Всего задач',

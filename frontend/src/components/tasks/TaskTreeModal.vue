@@ -94,32 +94,23 @@
               </div>
               
               <div class="node-actions">
-                <Button 
-                  icon="pi pi-plus" 
+                <Button
+                  icon="pi pi-plus"
                   severity="secondary"
-                  text 
-                  rounded 
+                  text
+                  rounded
                   size="small"
-                  @click.stop="handleAddChild(slotProps.node)" 
+                  @click.stop="handleAddChild(slotProps.node)"
                   v-tooltip="t('tasks.add_subtask')"
                 />
-                <Button 
-                  icon="pi pi-pencil" 
-                  severity="secondary"
-                  text 
-                  rounded 
-                  size="small"
-                  @click.stop="handleEditNode(slotProps.node)" 
-                  v-tooltip="t('tasks.edit_task')"
-                />
-                <Button 
+                <Button
                   v-if="slotProps.node.type !== 'root'"
-                  icon="pi pi-trash" 
+                  icon="pi pi-trash"
                   severity="danger"
-                  text 
-                  rounded 
+                  text
+                  rounded
                   size="small"
-                  @click.stop="handleDeleteNode(slotProps.node)" 
+                  @click.stop="handleDeleteNode(slotProps.node)"
                   v-tooltip="t('tasks.delete_task')"
                 />
               </div>
@@ -140,15 +131,44 @@
             <i class="pi pi-check-circle" style="color: #10b981;" />
           </span>
         </div>
-        <Button 
-          icon="pi pi-times" 
-          severity="secondary" 
+        <Button
+          icon="pi pi-times"
+          severity="secondary"
           text
           rounded
-          @click="visible = false" 
+          @click="visible = false"
           v-tooltip="t('common.close')"
         />
       </div>
+
+      <!-- Completion Loader Overlay -->
+      <Transition name="fade">
+        <div v-if="isCompletingTask" class="completion-overlay">
+          <div class="completion-card">
+            <div class="completion-icon">
+              <div class="spinner-ring"></div>
+              <i class="pi pi-check" />
+            </div>
+
+            <div class="completion-content">
+              <h3 class="completion-title">{{ completingTaskTitle }}</h3>
+              <p class="completion-subtitle">{{ completingTaskSubtitle }}</p>
+
+              <div class="completion-progress">
+                <div class="progress-bar-container">
+                  <div class="progress-bar-fill" :style="{ width: completionProgress + '%' }"></div>
+                </div>
+                <div class="progress-info">
+                  <span class="progress-percentage">{{ completionProgress }}%</span>
+                  <span class="progress-count">
+                    {{ completedSubtasksCount }} / {{ totalSubtasksToComplete }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Transition>
     </div>
   </Dialog>
 
@@ -264,7 +284,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:modelValue': [value: boolean]
-  'task-updated': []
+  'task-updated': [task?: Task]
 }>()
 
 const visible = computed({
@@ -284,6 +304,14 @@ const selectedTask = ref<Task | null>(null)
 const isSaving = ref(false)
 const isMobile = ref(false)
 const windowWidth = ref(window.innerWidth)
+
+// Completion loading state
+const isCompletingTask = ref(false)
+const completingTaskTitle = ref('')
+const completingTaskSubtitle = ref('') // subtitle/description for loader
+const completionProgress = ref(0)
+const totalSubtasksToComplete = ref(0)
+const completedSubtasksCount = ref(0)
 
 // Store completed states locally as a Map for better performance
 const completedStatesMap = ref(new Map<number, boolean>())
@@ -344,7 +372,7 @@ watch(() => props.task, (newTask) => {
   if (newTask) {
     initializeCompletedStates(newTask)
   }
-}, { immediate: true, deep: false })
+}, { immediate: true, deep: true })
 
 function initializeCompletedStates(task: Task) {
   const newMap = new Map<number, boolean>()
@@ -367,6 +395,33 @@ function handleResize() {
 
 function checkMobile() {
   isMobile.value = window.innerWidth < 768
+}
+
+// Lock/unlock height to prevent UI jumps during updates
+function lockContentHeight() {
+  if (treeContent.value) {
+    const currentHeight = treeContent.value.offsetHeight
+    // Disable transitions and lock height
+    treeContent.value.style.transition = 'none'
+    treeContent.value.style.minHeight = `${currentHeight}px`
+    treeContent.value.style.maxHeight = `${currentHeight}px`
+    treeContent.value.style.overflow = 'hidden'
+  }
+}
+
+function unlockContentHeight() {
+  if (treeContent.value) {
+    // Remove height locks
+    treeContent.value.style.minHeight = ''
+    treeContent.value.style.maxHeight = ''
+    treeContent.value.style.overflow = ''
+    // Re-enable transitions after a frame
+    requestAnimationFrame(() => {
+      if (treeContent.value) {
+        treeContent.value.style.transition = ''
+      }
+    })
+  }
 }
 
 // Get node completed status
@@ -463,13 +518,8 @@ function truncateText(text: string, length: number): string {
 }
 
 function getPriorityLabel(priority: any): string {
-  // If priority is an object with label, use it
-  if (typeof priority === 'object' && priority.label) {
-    return priority.label
-  }
-  
-  // Otherwise use translation
-  const priorityValue = typeof priority === 'string' ? priority : priority.value
+  // Always use translation for correct locale
+  const priorityValue = typeof priority === 'string' ? priority : (priority.value || priority)
   const map: Record<string, string> = {
     'low': t('tasks.priority_low'),
     'medium': t('tasks.priority_medium'),
@@ -489,51 +539,179 @@ function handleNodeClick(node: any) {
 
 async function handleToggleComplete(node: any, checked: boolean) {
   if (!node.data) return
-  
+
   const taskId = node.data.id
-  
-  // For unchecking, just update immediately
+  const task = node.data as Task
+
+  // For unchecking, show loader and update
   if (!checked) {
+    // Lock height before updates
+    lockContentHeight()
+
+    // Show loader for unchecking (reopening task)
+    isCompletingTask.value = true
+    completingTaskTitle.value = t('tasks.reopening_task')
+    completingTaskSubtitle.value = t('tasks.reopening_task_message', { title: task.title })
+    totalSubtasksToComplete.value = 1
+    completedSubtasksCount.value = 0
+    completionProgress.value = 0
+
+    // Quick progress animation
+    const interval = setInterval(() => {
+      if (completionProgress.value < 100) {
+        completionProgress.value += 25
+        completedSubtasksCount.value = Math.min(1, Math.ceil(completionProgress.value / 100))
+      } else {
+        clearInterval(interval)
+      }
+    }, 60)
+
     // Update local state immediately
     const newMap = new Map(completedStatesMap.value)
     newMap.set(taskId, checked)
     completedStatesMap.value = newMap
-    
+
     // Show success notification immediately (before API call)
     showSuccess(t('tasks.task_reopened'))
-    
+
     try {
       await taskService.toggleTask(taskId)
       await refreshTask()
+
+      // Delay to let async updates settle and keep loader visible
+      await new Promise(resolve => setTimeout(resolve, 400))
     } catch (error: any) {
       // Revert on error
       const revertMap = new Map(completedStatesMap.value)
       revertMap.set(taskId, !checked)
       completedStatesMap.value = revertMap
       showError(error.message || t('errors.unknown_error'))
+    } finally {
+      // Hide loader
+      clearInterval(interval)
+      isCompletingTask.value = false
+      completingTaskTitle.value = ''
+      completingTaskSubtitle.value = ''
+      completionProgress.value = 0
+      completedSubtasksCount.value = 0
+      totalSubtasksToComplete.value = 0
+
+      // Small delay before unlocking
+      await new Promise(resolve => setTimeout(resolve, 100))
+      unlockContentHeight()
     }
     return
   }
-  
+
   // For checking (completing), use the confirmation flow
-  const task = node.data as Task
-  
+
   // Temporarily update UI to show intent
   const newMap = new Map(completedStatesMap.value)
   newMap.set(taskId, true)
   completedStatesMap.value = newMap
-  
-  // Use the completion handler with confirmation
-  await toggleTaskCompletion(task, async () => {
-    await refreshTask()
-  })
-  
-  // If user cancelled, revert the checkbox
-  const currentTask = await taskStore.fetchTask(taskId)
-  if (!currentTask.isCompleted) {
+
+  // Count uncompleted subtasks
+  const countUncompletedSubtasks = (t: Task): number => {
+    if (!t.subtasks || t.subtasks.length === 0) return 0
+    let count = 0
+    for (const subtask of t.subtasks) {
+      if (!subtask.isCompleted) {
+        count += 1 + countUncompletedSubtasks(subtask)
+      }
+    }
+    return count
+  }
+
+  const uncompletedCount = countUncompletedSubtasks(task)
+  let progressInterval: ReturnType<typeof setInterval> | null = null
+
+  try {
+    // Use the completion handler with confirmation
+    await toggleTaskCompletion(
+      task,
+      // onSuccess: called AFTER completion
+      async () => {
+        await refreshTask()
+
+        // Add delay before hiding loader to mask any UI jumps
+        // This gives time for all async updates to settle
+        await new Promise(resolve => setTimeout(resolve, 500))
+
+        // Hide loader
+        if (progressInterval) clearInterval(progressInterval)
+        isCompletingTask.value = false
+        completingTaskTitle.value = ''
+        completingTaskSubtitle.value = ''
+        completionProgress.value = 0
+        completedSubtasksCount.value = 0
+        totalSubtasksToComplete.value = 0
+
+        // Unlock height after loader is hidden
+        await new Promise(resolve => setTimeout(resolve, 100))
+        unlockContentHeight()
+      },
+      // onBeforeComplete: called IMMEDIATELY after "Да" click, BEFORE requests
+      () => {
+        // Lock height to prevent UI jumps during update
+        lockContentHeight()
+
+        // Always show loader to mask any UI jumps
+        isCompletingTask.value = true
+        completingTaskTitle.value = t('tasks.completing_task')
+
+        if (uncompletedCount > 0) {
+          // Task has subtasks - show full progress
+          completingTaskSubtitle.value = t('tasks.completing_task_with_subtasks_message', { title: task.title, count: uncompletedCount })
+          totalSubtasksToComplete.value = uncompletedCount + 1 // +1 for the main task
+          completedSubtasksCount.value = 0
+          completionProgress.value = 0
+
+          // Simulate progress updates
+          progressInterval = setInterval(() => {
+            if (completedSubtasksCount.value < totalSubtasksToComplete.value) {
+              completedSubtasksCount.value++
+              completionProgress.value = Math.round((completedSubtasksCount.value / totalSubtasksToComplete.value) * 100)
+            } else {
+              if (progressInterval) clearInterval(progressInterval)
+            }
+          }, 150) // Faster interval for smoother animation
+        } else {
+          // Task has no subtasks - show simple loader without progress
+          completingTaskSubtitle.value = t('tasks.completing_task_message', { title: task.title })
+          totalSubtasksToComplete.value = 1
+          completedSubtasksCount.value = 0
+          completionProgress.value = 0
+
+          // Quick progress to 100%
+          progressInterval = setInterval(() => {
+            if (completionProgress.value < 100) {
+              completionProgress.value += 20
+              completedSubtasksCount.value = Math.min(1, Math.ceil(completionProgress.value / 100))
+            } else {
+              if (progressInterval) clearInterval(progressInterval)
+            }
+          }, 80) // Fast progress for simple tasks
+        }
+      }
+    )
+  } catch (error) {
+    // User cancelled or error occurred
+    // Revert the checkbox
     const revertMap = new Map(completedStatesMap.value)
     revertMap.set(taskId, false)
     completedStatesMap.value = revertMap
+
+    // Hide loader in case it was shown
+    if (progressInterval) clearInterval(progressInterval)
+    isCompletingTask.value = false
+    completingTaskTitle.value = ''
+    completingTaskSubtitle.value = ''
+    completionProgress.value = 0
+    completedSubtasksCount.value = 0
+    totalSubtasksToComplete.value = 0
+
+    // Unlock height on error/cancel
+    unlockContentHeight()
   }
 }
 
@@ -600,10 +778,84 @@ function handleDeleteNode(node: any) {
 }
 
 // Handle task updates from sidebar
-async function handleTaskUpdated() {
-  showTaskDetails.value = false
-  selectedTask.value = null
-  await refreshTask()
+async function handleTaskUpdated(updateInfo?: {
+  type: 'subtask-added' | 'subtask-edited' | 'subtask-toggled' | 'subtask-deleted' | 'tags-updated'
+  title?: string
+  taskTitle?: string
+}) {
+  // Lock height before updates
+  lockContentHeight()
+
+  // Show loader with context-specific text
+  isCompletingTask.value = true
+
+  // Set loader title and subtitle based on operation type
+  if (updateInfo) {
+    switch (updateInfo.type) {
+      case 'subtask-added':
+        completingTaskTitle.value = t('tasks.adding_subtask')
+        completingTaskSubtitle.value = t('tasks.adding_subtask_message', { title: updateInfo.title || '' })
+        break
+      case 'subtask-edited':
+        completingTaskTitle.value = t('tasks.editing_subtask')
+        completingTaskSubtitle.value = t('tasks.editing_subtask_message', { title: updateInfo.taskTitle || '' })
+        break
+      case 'subtask-toggled':
+        completingTaskTitle.value = t('tasks.toggling_subtask')
+        completingTaskSubtitle.value = t('tasks.toggling_subtask_message', { title: updateInfo.taskTitle || '' })
+        break
+      case 'subtask-deleted':
+        completingTaskTitle.value = t('tasks.deleting_subtask')
+        completingTaskSubtitle.value = t('tasks.deleting_subtask_message', { title: updateInfo.taskTitle || '' })
+        break
+      case 'tags-updated':
+        completingTaskTitle.value = t('tasks.updating_tags')
+        completingTaskSubtitle.value = t('tasks.updating_tags_message', { title: updateInfo.taskTitle || '' })
+        break
+    }
+  } else {
+    completingTaskTitle.value = t('tasks.updating_task')
+    completingTaskSubtitle.value = t('tasks.updating_task_message')
+  }
+
+  totalSubtasksToComplete.value = 1
+  completedSubtasksCount.value = 0
+  completionProgress.value = 0
+
+  // Quick progress animation
+  const interval = setInterval(() => {
+    if (completionProgress.value < 100) {
+      completionProgress.value += 20
+      completedSubtasksCount.value = Math.min(1, Math.ceil(completionProgress.value / 100))
+    } else {
+      clearInterval(interval)
+    }
+  }, 80)
+
+  try {
+    // Close sidebar
+    showTaskDetails.value = false
+    selectedTask.value = null
+
+    // Refresh task data
+    await refreshTask()
+
+    // Keep loader visible for smooth UX
+    await new Promise(resolve => setTimeout(resolve, 400))
+  } finally {
+    // Hide loader
+    clearInterval(interval)
+    isCompletingTask.value = false
+    completingTaskTitle.value = ''
+    completingTaskSubtitle.value = ''
+    completionProgress.value = 0
+    completedSubtasksCount.value = 0
+    totalSubtasksToComplete.value = 0
+
+    // Small delay before unlocking
+    await new Promise(resolve => setTimeout(resolve, 100))
+    unlockContentHeight()
+  }
 }
 
 // Handle task deletion from sidebar
@@ -651,9 +903,9 @@ async function saveTask() {
 async function refreshTask() {
   if (props.task) {
     const freshTask = await taskStore.fetchTask(props.task.id)
-    // Reinitialize completed states with fresh data
+    // Update completed states IMMEDIATELY to prevent flickering
     initializeCompletedStates(freshTask)
-    emit('task-updated')
+    emit('task-updated', freshTask)
   }
 }
 </script>
@@ -749,6 +1001,11 @@ async function refreshTask() {
 .full-task-org-chart {
   width: 100%;
   min-height: 100%;
+}
+
+/* Disable transitions to prevent height jumps during updates */
+.full-task-org-chart :deep(*) {
+  transition: none !important;
 }
 
 .full-task-org-chart :deep(.p-organizationchart-table) {
@@ -1120,14 +1377,253 @@ async function refreshTask() {
   .task-tree-modal :deep(.p-dialog-header) {
     padding: 0.5rem 0.75rem !important;
   }
-  
+
   .task-tree-modal :deep(.p-dialog-title) {
     font-size: 0.9375rem !important;
   }
-  
+
   .task-tree-modal :deep(.p-dialog-header-icon) {
     width: 1.5rem !important;
     height: 1.5rem !important;
+  }
+}
+
+/* Completion Loader Overlay */
+.completion-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+.completion-card {
+  background: white;
+  border-radius: 16px;
+  padding: 2.5rem 2rem;
+  max-width: 440px;
+  width: 90%;
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: center;
+}
+
+.completion-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1.5rem;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spinner-ring {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border: 4px solid #e2e8f0;
+  border-top-color: #6366f1;
+  border-right-color: #6366f1;
+  border-radius: 50%;
+  animation: spin 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}
+
+.completion-icon i {
+  font-size: 2rem;
+  color: #6366f1;
+  z-index: 1;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.completion-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.completion-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+
+.completion-subtitle {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0;
+  font-weight: 500;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0 1rem;
+}
+
+.completion-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 12px;
+  background: #f1f5f9;
+  border-radius: 100px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);
+  border-radius: 100px;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-bar-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 100%
+  );
+  animation: shimmer 1.5s infinite;
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.875rem;
+}
+
+.progress-percentage {
+  font-weight: 700;
+  color: #6366f1;
+  font-size: 1.125rem;
+}
+
+.progress-count {
+  color: #64748b;
+  font-weight: 600;
+}
+
+.completion-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: #64748b;
+  margin: 0.5rem 0 0;
+  padding: 0.75rem 1rem;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+
+.completion-message i {
+  color: #6366f1;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* Mobile responsive */
+@media (max-width: 640px) {
+  .completion-card {
+    padding: 2rem 1.5rem;
+    max-width: 90%;
+  }
+
+  .completion-icon {
+    width: 64px;
+    height: 64px;
+  }
+
+  .completion-title {
+    font-size: 1.125rem;
+  }
+
+  .progress-percentage {
+    font-size: 1rem;
   }
 }
 </style>

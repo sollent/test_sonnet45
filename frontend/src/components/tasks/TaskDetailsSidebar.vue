@@ -31,12 +31,18 @@ interface Props {
   task?: Task | null
 }
 
+interface TaskUpdateInfo {
+  type: 'subtask-added' | 'subtask-edited' | 'subtask-toggled' | 'subtask-deleted' | 'tags-updated'
+  title?: string
+  taskTitle?: string
+}
+
 interface Emits {
   (e: 'update:showSidebar', value: boolean): void
   (e: 'update:selectedTask', value: Task | null): void
   (e: 'update:visible', value: boolean): void
   (e: 'update:task', value: Task | null): void
-  (e: 'task-updated'): void
+  (e: 'task-updated', info?: TaskUpdateInfo): void
   (e: 'task-deleted'): void
 }
 
@@ -100,27 +106,35 @@ const currentTask = computed(() => localTask.value || props.selectedTask || prop
 // Watch for prop changes to sync local task and load full data
 watch(() => props.selectedTask || props.task, async (newTask) => {
   if (newTask) {
-    localTask.value = { ...newTask }
-    
-    // Load full task with subtasks if not already loaded
-    if (!newTask.priorityLabel || !newTask.statusLabel) {
-      isLoadingFullTask.value = true
-      try {
-        const fullTask = await taskStore.fetchTask(newTask.id)
-        localTask.value = { ...fullTask }
-      } catch (error) {
-        console.error('Failed to load full task:', error)
-      } finally {
-        isLoadingFullTask.value = false
-      }
+    // Set loading state FIRST, before setting localTask
+    isLoadingFullTask.value = true
+
+    // Set basic task data without subtasks
+    localTask.value = {
+      ...newTask,
+      subtasks: undefined // Clear subtasks to show skeletons
     }
-    
+
+    // Always load full task with subtasks when opening sidebar
+    // This ensures we have the latest data including subtasks
+    try {
+      const fullTask = await taskStore.fetchTask(newTask.id)
+      localTask.value = { ...fullTask }
+    } catch (error) {
+      console.error('Failed to load full task:', error)
+      // Restore original task on error
+      localTask.value = { ...newTask }
+    } finally {
+      isLoadingFullTask.value = false
+    }
+
     // Initialize tag suggestions when opening sidebar in edit mode
     if (editMode.value) {
       initializeTagSuggestions(7)
     }
   } else {
     localTask.value = null
+    isLoadingFullTask.value = false
   }
 }, { immediate: true, deep: true })
 
@@ -359,7 +373,18 @@ async function handleSaveSubtask() {
       }
     }
 
-    // Don't emit task-updated for subtask operations - they don't affect the main task list
+    // Check if only tags were updated
+    const originalTags = currentSubtask.value.tags.map(t => t.name).sort().join(',')
+    const newTags = (subtaskEditData.value.tags || []).sort().join(',')
+    const onlyTagsChanged = originalTags !== newTags &&
+      subtaskEditData.value.title === currentSubtask.value.title &&
+      subtaskEditData.value.description === currentSubtask.value.description
+
+    // Emit task-updated to notify TaskTreeModal of changes
+    emit('task-updated', {
+      type: onlyTagsChanged ? 'tags-updated' : 'subtask-edited',
+      taskTitle: currentSubtask.value.title
+    })
     closeSubtaskEditor()
   } catch (e: any) {
     showError(e.message || t('errors.unknown_error'))
@@ -369,8 +394,12 @@ async function handleSaveSubtask() {
 }
 
 // Handler for tree modal updates
-async function handleTreeUpdate() {
-  // Just emit task-updated - the tree modal already handles optimistic updates
+async function handleTreeUpdate(updatedTask?: Task) {
+  // Update localTask with fresh data from tree modal to prevent flickering
+  if (updatedTask && localTask.value?.id === updatedTask.id) {
+    localTask.value = { ...updatedTask }
+  }
+  // Emit task-updated for parent components
   emit('task-updated')
 }
 
@@ -571,8 +600,13 @@ async function handleAddSubtask() {
         emit('update:task', localTask.value)
       }
     }
-    
-    // Don't emit task-updated for subtask operations - they don't affect the main task list
+
+    // Emit task-updated to notify TaskTreeModal of changes
+    emit('task-updated', {
+      type: 'subtask-added',
+      title: subtaskTitle,
+      taskTitle: currentTask.value.title
+    })
   } catch (error: any) {
     // Rollback on error
     if (localTask.value) {
@@ -581,7 +615,7 @@ async function handleAddSubtask() {
         subtasks: originalSubtasks,
         subtaskCount: originalSubtasks.length
       }
-      
+
       // Restore input
       newSubtaskTitle.value = subtaskTitle
       
@@ -602,115 +636,124 @@ async function handleAddSubtask() {
 
 async function handleToggleSubtask(subtaskId: number) {
   if (!localTask.value?.subtasks) return
-  
+
   // Find subtask in localTask
-  const subtask = localTask.value.subtasks.find(s => s.id === subtaskId)
-  if (!subtask) return
+  const subtaskIndex = localTask.value.subtasks.findIndex(s => s.id === subtaskId)
+  if (subtaskIndex === -1) return
 
-  // Store original subtask for rollback
+  const subtask = localTask.value.subtasks[subtaskIndex]
+
+  // Store original state for rollback
   const originalSubtask = { ...subtask }
-  const newIsCompleted = !subtask.isCompleted
-  const newStatus = newIsCompleted ? TaskStatus.COMPLETED : TaskStatus.PENDING
+  const originalCompletedCount = localTask.value.completedSubtaskCount || 0
 
-  // Optimistic update - update subtask state immediately
-  if (localTask.value.subtasks) {
-    const wasCompleted = subtask.isCompleted
-    const subtasks = localTask.value.subtasks.map(s => 
-      s.id === subtaskId 
-        ? { 
-            ...s, 
-            isCompleted: newIsCompleted, 
-            status: newStatus 
-          } 
-        : s
-    )
-    
-    // Update completed count based on state change
-    let newCompletedCount = localTask.value.completedSubtaskCount || 0
-    if (newIsCompleted && !wasCompleted) {
-      // Was not completed, now completing - increment
-      newCompletedCount += 1
-    } else if (!newIsCompleted && wasCompleted) {
-      // Was completed, now uncompleting - decrement
-      newCompletedCount = Math.max(0, newCompletedCount - 1)
-    }
-    
-    localTask.value = {
-      ...localTask.value,
-      subtasks: [...subtasks],
-      completedSubtaskCount: newCompletedCount
-    }
-    
-    // Update props
-    if (props.selectedTask) {
-      emit('update:selectedTask', localTask.value)
-    }
-    if (props.task) {
-      emit('update:task', localTask.value)
+  const newIsCompleted = !subtask.isCompleted
+
+  // Check if subtask has nested subtasks and we're trying to complete it
+  const hasNestedSubtasks = subtask.subtaskCount && subtask.subtaskCount > 0
+
+  if (newIsCompleted && hasNestedSubtasks) {
+    // Show confirmation modal for completing task with subtasks
+    const uncompletedCount = subtask.subtaskCount - (subtask.completedSubtaskCount || 0)
+
+    if (uncompletedCount > 0) {
+      confirm.require({
+        message: t('tasks.complete_with_subtasks_message', { count: uncompletedCount }),
+        header: t('tasks.complete_with_subtasks_title'),
+        icon: 'pi pi-exclamation-triangle',
+        acceptClass: 'p-button-success',
+        acceptLabel: t('common.yes'),
+        rejectLabel: t('common.no'),
+        accept: async () => {
+          await performToggleSubtask(subtaskId, subtask, originalSubtask, originalCompletedCount, newIsCompleted)
+        }
+      })
+      return
     }
   }
 
+  // No confirmation needed - proceed directly
+  await performToggleSubtask(subtaskId, subtask, originalSubtask, originalCompletedCount, newIsCompleted)
+}
+
+async function performToggleSubtask(
+  subtaskId: number,
+  subtask: Task,
+  originalSubtask: Task,
+  originalCompletedCount: number,
+  newIsCompleted: boolean
+) {
+  if (!localTask.value?.subtasks) return
+
+  const newStatus = newIsCompleted ? TaskStatus.COMPLETED : TaskStatus.PENDING
+
+  // Optimistic update - update subtask state immediately
+  const updatedSubtasks = localTask.value.subtasks.map(s =>
+    s.id === subtaskId
+      ? { ...s, isCompleted: newIsCompleted, status: newStatus }
+      : s
+  )
+
+  // Update completed count
+  let newCompletedCount = originalCompletedCount
+  if (newIsCompleted && !originalSubtask.isCompleted) {
+    newCompletedCount += 1
+  } else if (!newIsCompleted && originalSubtask.isCompleted) {
+    newCompletedCount = Math.max(0, newCompletedCount - 1)
+  }
+
+  localTask.value = {
+    ...localTask.value,
+    subtasks: updatedSubtasks,
+    completedSubtaskCount: newCompletedCount
+  }
+
+  // Update props
+  if (props.selectedTask) {
+    emit('update:selectedTask', localTask.value)
+  }
+  if (props.task) {
+    emit('update:task', localTask.value)
+  }
+
+  // Show success message
+  showSuccess(newIsCompleted ? t('tasks.task_completed') : t('tasks.task_reopened'))
+
   try {
-    // Fetch the subtask to check if it has its own subtasks (for confirmation dialog)
-    const fullSubtask = await taskStore.fetchTask(subtaskId)
-    
-    // Use the new completion handler with confirmation
-    await toggleTaskCompletion(fullSubtask, async () => {
-      // Update subtask locally without refetching parent
-      if (localTask.value?.subtasks) {
-        const subtaskIndex = localTask.value.subtasks.findIndex(s => s.id === subtaskId)
-        if (subtaskIndex !== -1) {
-          // Toggle the subtask completion status
-          const updatedSubtask = {
-            ...localTask.value.subtasks[subtaskIndex],
-            isCompleted: !localTask.value.subtasks[subtaskIndex].isCompleted,
-            status: !localTask.value.subtasks[subtaskIndex].isCompleted ? TaskStatus.COMPLETED : TaskStatus.PENDING
-          }
-          localTask.value.subtasks[subtaskIndex] = updatedSubtask
+    // Call toggle API
+    await taskStore.toggleTaskCompletion(subtaskId)
 
-          // Update counts
-          if (localTask.value.completedSubtaskCount !== undefined) {
-            localTask.value.completedSubtaskCount = updatedSubtask.isCompleted
-              ? localTask.value.completedSubtaskCount + 1
-              : Math.max(0, localTask.value.completedSubtaskCount - 1)
-          }
+    // Reload full task data to get updated subtask counts
+    if (localTask.value) {
+      const freshTask = await taskStore.fetchTask(localTask.value.id)
+      localTask.value = { ...freshTask }
 
-          // Update props
-          if (props.selectedTask) {
-            emit('update:selectedTask', localTask.value)
-          }
-          if (props.task) {
-            emit('update:task', localTask.value)
-          }
-        }
+      if (props.selectedTask) {
+        emit('update:selectedTask', localTask.value)
       }
-      // Don't emit task-updated for subtask operations - they don't affect the main task list
+      if (props.task) {
+        emit('update:task', localTask.value)
+      }
+    }
+
+    // Success - emit task-updated to notify TaskTreeModal
+    emit('task-updated', {
+      type: 'subtask-toggled',
+      taskTitle: subtask.title
     })
   } catch (error: any) {
-    // Rollback on error
+    // Rollback on error - restore original state
     if (localTask.value?.subtasks) {
-      const wasCompleted = originalSubtask.isCompleted
-      
-      const subtasks = localTask.value.subtasks.map(s => 
+      const restoredSubtasks = localTask.value.subtasks.map(s =>
         s.id === subtaskId ? { ...originalSubtask } : s
       )
-      
-      // Restore completed count - reverse what we did
-      let restoredCompletedCount = localTask.value.completedSubtaskCount || 0
-      if (newIsCompleted && !wasCompleted) {
-        // We tried to complete (incremented), but failed - decrement back
-        restoredCompletedCount = Math.max(0, restoredCompletedCount - 1)
-      } else if (!newIsCompleted && wasCompleted) {
-        // We tried to uncomplete (decremented), but failed - increment back
-        restoredCompletedCount += 1
-      }
-      
+
       localTask.value = {
         ...localTask.value,
-        subtasks: [...subtasks],
-        completedSubtaskCount: restoredCompletedCount
+        subtasks: restoredSubtasks,
+        completedSubtaskCount: originalCompletedCount
       }
-      
+
       // Update props
       if (props.selectedTask) {
         emit('update:selectedTask', localTask.value)
@@ -719,7 +762,7 @@ async function handleToggleSubtask(subtaskId: number) {
         emit('update:task', localTask.value)
       }
     }
-    
+
     showError(error.message || t('errors.unknown_error'))
   }
 }
@@ -799,12 +842,16 @@ async function saveEditSubtask() {
         emit('update:task', localTask.value)
       }
     }
-    
-    // Don't emit task-updated for subtask operations - they don't affect the main task list
+
+    // Emit task-updated to notify TaskTreeModal of changes
+    emit('task-updated', {
+      type: 'subtask-edited',
+      taskTitle: originalSubtask.title
+    })
   } catch (error: any) {
     // Rollback on error
     if (localTask.value?.subtasks && originalSubtask) {
-      const subtasks = localTask.value.subtasks.map(s => 
+      const subtasks = localTask.value.subtasks.map(s =>
         s.id === subtaskId ? { ...originalSubtask } : s
       )
       
@@ -882,7 +929,11 @@ async function handleDeleteSubtask(subtaskId: number) {
           }
         }
 
-        // Don't emit task-updated for subtask operations - they don't affect the main task list
+        // Emit task-updated to notify TaskTreeModal of changes
+        emit('task-updated', {
+          type: 'subtask-deleted',
+          taskTitle: deletedSubtask?.title || ''
+        })
       } catch (error: any) {
         // Rollback on error
         if (localTask.value && deletedSubtask) {
@@ -1228,18 +1279,26 @@ function handleFileView(attachment: TaskAttachment) {
         <div class="subtasks-header">
           <label class="detail-label">
             {{ t('tasks.subtasks') }}
-            <span v-if="currentTask.subtasks && currentTask.subtasks.length > 0" class="subtasks-count">
+            <span v-if="!isLoadingFullTask && currentTask.subtasks && currentTask.subtasks.length > 0" class="subtasks-count">
               {{ currentTask.completedSubtaskCount ?? currentTask.subtasks.filter(s => s.isCompleted).length }} /
               {{ currentTask.subtaskCount ?? currentTask.subtasks.length }}
             </span>
           </label>
-          <div v-if="currentTask.subtasks && currentTask.subtasks.length > 0" class="progress-bar">
+          <div v-if="!isLoadingFullTask && currentTask.subtasks && currentTask.subtasks.length > 0" class="progress-bar">
             <div class="progress-fill" :style="{ width: completionPercentage + '%' }" />
           </div>
         </div>
 
+        <!-- Loading Skeletons -->
+        <div v-if="isLoadingFullTask" class="subtasks-loading">
+          <div v-for="i in 3" :key="i" class="subtask-skeleton">
+            <div class="skeleton-checkbox"></div>
+            <div class="skeleton-text"></div>
+          </div>
+        </div>
+
         <!-- Subtasks List -->
-        <div v-if="currentTask?.subtasks && currentTask.subtasks.length > 0" class="subtasks-list">
+        <div v-else-if="currentTask?.subtasks && currentTask.subtasks.length > 0" class="subtasks-list">
           <div
             v-for="subtask in currentTask.subtasks"
             :key="subtask.id"
@@ -1279,8 +1338,8 @@ function handleFileView(attachment: TaskAttachment) {
           </div>
         </div>
 
-        <!-- Add Subtask -->
-        <div class="add-subtask-form">
+        <!-- Add Subtask (hidden during loading) -->
+        <div v-if="!isLoadingFullTask" class="add-subtask-form">
           <InputText
             v-model="newSubtaskTitle"
             :placeholder="t('tasks.add_subtask')"
@@ -1728,6 +1787,73 @@ function handleFileView(attachment: TaskAttachment) {
   gap: 0.5rem;
   align-items: center;
   margin-top: 0.5rem;
+}
+
+/* Subtasks Loading Skeletons */
+.subtasks-loading {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.subtask-skeleton {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: #f7fafc;
+  border-radius: 8px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.skeleton-checkbox {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #e2e8f0 25%, #cbd5e0 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+.skeleton-text {
+  flex: 1;
+  height: 16px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #e2e8f0 25%, #cbd5e0 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+.subtask-skeleton:nth-child(1) .skeleton-text {
+  width: 70%;
+}
+
+.subtask-skeleton:nth-child(2) .skeleton-text {
+  width: 85%;
+}
+
+.subtask-skeleton:nth-child(3) .skeleton-text {
+  width: 60%;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
 }
 
 .metadata {

@@ -38,9 +38,9 @@ class TaskService {
   /**
    * Get list of tasks with filters
    */
-  async getTasks(filters?: TaskFilters): Promise<Task[]> {
+  async getTasks(filters?: TaskFilters, limit?: number, offset?: number): Promise<Task[]> {
     const params = new URLSearchParams()
-    
+
     if (filters?.status) {
       params.append('status', filters.status)
     }
@@ -56,7 +56,7 @@ class TaskService {
     if (filters?.view) {
       params.append('view', filters.view)
     }
-    
+
     // New filter parameters
     if (filters?.tags && filters.tags.length > 0) {
       filters.tags.forEach(tagId => params.append('tags[]', String(tagId)))
@@ -75,6 +75,14 @@ class TaskService {
     }
     if (filters?.statuses && filters.statuses.length > 0) {
       filters.statuses.forEach(status => params.append('statuses[]', status))
+    }
+
+    // Pagination parameters
+    if (limit !== undefined) {
+      params.append('limit', String(limit))
+    }
+    if (offset !== undefined) {
+      params.append('offset', String(offset))
     }
 
     const queryString = params.toString()

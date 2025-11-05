@@ -142,6 +142,10 @@ class TaskController extends AbstractController
     ): JsonResponse {
         $user = $this->getUser();
         
+        // Get pagination parameters
+        $limit = $request->query->get('limit') ? (int)$request->query->get('limit') : null;
+        $offset = $request->query->get('offset') ? (int)$request->query->get('offset') : null;
+
         // Handle search
         $search = $request->query->get('search');
         if ($search) {
@@ -150,13 +154,13 @@ class TaskController extends AbstractController
         // Handle view filters
         else {
             $view = $request->query->get('view', 'all');
-            
+
             $tasks = match ($view) {
                 'today' => $this->taskService->getTodayTasks($user, $filters),
                 'overdue' => $this->taskService->getOverdueTasksPaginated($user, 1, 50, $filters)['tasks'],
                 'upcoming' => $this->taskService->getUpcomingTasks($user, 30, $filters),
                 'unscheduled' => $this->taskService->getUnscheduledTasksPaginated($user, 1, 50, $filters)['tasks'],
-                default => $this->taskService->getActiveTasks($user, $filters)
+                default => $this->taskService->getActiveTasks($user, $filters, $limit, $offset)
             };
         }
 
