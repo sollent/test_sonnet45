@@ -92,7 +92,7 @@
     </div>
 
     <!-- Month View -->
-    <div v-if="viewMode === 'month'" class="calendar-month-view">
+    <div v-if="viewMode === 'month'" class="calendar-month-view" @scroll="handleCalendarScroll">
       <div class="calendar-grid">
         <div v-for="day in weekDays" :key="day" class="calendar-weekday">
           {{ day }}
@@ -127,6 +127,18 @@
             </span>
           </div>
         </div>
+      </div>
+
+      <!-- Loading indicator for infinite scroll -->
+      <div v-if="isLoadingMoreMonths" class="calendar-loading">
+        <i class="pi pi-spin pi-spinner" style="font-size: 2rem; color: #6366f1;"></i>
+        <p>{{ t('calendar.loading_more_months') || 'Loading more months...' }}</p>
+      </div>
+
+      <!-- End of calendar message -->
+      <div v-else-if="!hasMoreFutureMonths && monthsToShow > 1" class="calendar-end-message">
+        <i class="pi pi-check-circle" style="font-size: 2rem; color: #10b981;"></i>
+        <p>{{ t('calendar.no_more_future_tasks') || 'No more future tasks' }}</p>
       </div>
 
       <!-- Selected Day Tasks -->
@@ -314,6 +326,11 @@ const showNewTaskDialog = ref(false)
 const newTaskDate = ref<Date | null>(null)
 const selectedDaySection = ref<HTMLElement | null>(null)
 
+// Infinite scroll for calendar
+const monthsToShow = ref(1) // How many months to display
+const isLoadingMoreMonths = ref(false)
+const hasMoreFutureMonths = ref(true)
+
 // Computed properties for active and completed tasks
 // Optimized with memoization
 const activeTasks = computed(() => {
@@ -399,12 +416,20 @@ function updateTaskCollections(updatedTask: Task) {
     const next = replaceTaskInArray(current)
     if (next !== current) {
       target.value = next
-      
+
       // Update cache if this is monthTasks
       if (target === monthTasks && viewMode.value === 'month') {
+        // Calculate the current cache key based on the calendar grid
         const year = currentDate.value.getFullYear()
-        const month = currentDate.value.getMonth() + 1
-        const cacheKey = `${year}-${month}`
+        const month = currentDate.value.getMonth()
+        const firstDay = new Date(year, month, 1)
+        const startDate = new Date(firstDay)
+        const dayOfWeek = startDate.getDay()
+        const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
+        startDate.setDate(startDate.getDate() + diff)
+        const endDate = new Date(startDate)
+        endDate.setDate(startDate.getDate() + 41)
+        const cacheKey = `${startDate.toISOString().split('T')[0]}_${endDate.toISOString().split('T')[0]}`
         monthCache.value.set(cacheKey, next)
       }
     }
@@ -505,29 +530,37 @@ const calendarDays = computed(() => {
   const year = currentDate.value.getFullYear()
   const month = currentDate.value.getMonth()
   const firstDay = new Date(year, month, 1)
-  
-  // Get first Monday
+
+  // Get first Monday of the first month
   const startDate = new Date(firstDay)
   const dayOfWeek = startDate.getDay()
   const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
   startDate.setDate(startDate.getDate() + diff)
-  
+
   const days = []
   const today = new Date()
   today.setHours(0, 0, 0, 0)
-  
-  for (let i = 0; i < 42; i++) {
+
+  // Generate days for all loaded months (monthsToShow)
+  // Each month grid has 42 days (6 weeks)
+  const totalDays = monthsToShow.value * 42
+
+  for (let i = 0; i < totalDays; i++) {
     const date = new Date(startDate)
     date.setDate(startDate.getDate() + i)
     date.setHours(0, 0, 0, 0)
-    
+
     // Use indexed lookup instead of filter (O(1) vs O(n))
     const dayTasks = tasksByDate.value.get(date.toDateString()) || []
-    
+
     // Check if all tasks are completed
     const hasOnlyCompletedTasks = dayTasks.length > 0 && dayTasks.every(task => task.isCompleted)
-    const isCurrentMonthDay = date.getMonth() === month
-    
+
+    // Determine which month this day belongs to for styling
+    const currentMonthIndex = Math.floor(i / 42)
+    const targetMonth = new Date(year, month + currentMonthIndex, 1).getMonth()
+    const isCurrentMonthDay = date.getMonth() === targetMonth
+
     days.push({
       date,
       isCurrentMonth: isCurrentMonthDay,
@@ -537,7 +570,7 @@ const calendarDays = computed(() => {
       hasOnlyCompletedTasks: hasOnlyCompletedTasks && isCurrentMonthDay
     })
   }
-  
+
   return days
 })
 
@@ -585,6 +618,10 @@ const weekViewDays = computed(() => {
 
 // Navigation functions
 function navigatePrevious() {
+  // Reset infinite scroll state
+  monthsToShow.value = 1
+  hasMoreFutureMonths.value = true
+
   if (viewMode.value === 'month') {
     const newDate = new Date(currentDate.value)
     newDate.setMonth(newDate.getMonth() - 1)
@@ -597,6 +634,10 @@ function navigatePrevious() {
 }
 
 function navigateNext() {
+  // Reset infinite scroll state
+  monthsToShow.value = 1
+  hasMoreFutureMonths.value = true
+
   if (viewMode.value === 'month') {
     const newDate = new Date(currentDate.value)
     newDate.setMonth(newDate.getMonth() + 1)
@@ -609,6 +650,10 @@ function navigateNext() {
 }
 
 async function navigateToday() {
+  // Reset infinite scroll state
+  monthsToShow.value = 1
+  hasMoreFutureMonths.value = true
+
   currentDate.value = new Date()
   if (viewMode.value === 'month') {
     const today = calendarDays.value.find(day => day.isToday)
@@ -751,11 +796,8 @@ function openNewTaskDialog(date: Date) {
 
 async function handleToggleComplete(updatedTask: Task) {
   try {
-    // Clear cache to ensure fresh data
-    const year = currentDate.value.getFullYear()
-    const month = currentDate.value.getMonth() + 1
-    const cacheKey = `${year}-${month}`
-    monthCache.value.delete(cacheKey)
+    // Clear all cache to ensure fresh data (since tasks can span multiple months)
+    monthCache.value.clear()
     
     // Update local collections immediately with optimistic update
     // This ensures UI updates instantly while API call happens in background
@@ -802,11 +844,8 @@ async function handleTaskSaved() {
     ? new Date(newTaskDate.value)
     : null
 
-  // Clear cache for current month to force reload
-  const year = currentDate.value.getFullYear()
-  const month = currentDate.value.getMonth() + 1
-  const cacheKey = `${year}-${month}`
-  monthCache.value.delete(cacheKey)
+  // Clear all cache to force reload (since tasks can span multiple months)
+  monthCache.value.clear()
 
   // Reload tasks
   await fetchTasks()
@@ -818,19 +857,16 @@ async function handleTaskSaved() {
 
 async function handleTaskUpdated() {
   const selectedDate = selectedDay.value ? new Date(selectedDay.value.date) : null
-  
-  // Clear cache for current month to force reload
-  const year = currentDate.value.getFullYear()
-  const month = currentDate.value.getMonth() + 1
-  const cacheKey = `${year}-${month}`
-  monthCache.value.delete(cacheKey)
-  
+
+  // Clear all cache to force reload (since tasks can span multiple months)
+  monthCache.value.clear()
+
   await fetchTasks()
-  
+
   if (selectedDate) {
     await setSelectedDayByDate(selectedDate)
   }
-  
+
   // Reload selected task if it's still open
   if (selectedTask.value && showTaskDetails.value) {
     try {
@@ -848,15 +884,12 @@ async function handleTaskDeleted() {
   showTaskDetails.value = false
   selectedTask.value = null
   const selectedDate = selectedDay.value ? new Date(selectedDay.value.date) : null
-  
-  // Clear cache for current month to force reload
-  const year = currentDate.value.getFullYear()
-  const month = currentDate.value.getMonth() + 1
-  const cacheKey = `${year}-${month}`
-  monthCache.value.delete(cacheKey)
-  
+
+  // Clear all cache to force reload (since tasks can span multiple months)
+  monthCache.value.clear()
+
   await fetchTasks()
-  
+
   if (selectedDate) {
     await setSelectedDayByDate(selectedDate)
   }
@@ -871,24 +904,56 @@ async function fetchTasks() {
   try {
     if (viewMode.value === 'month') {
       const year = currentDate.value.getFullYear()
-      const month = currentDate.value.getMonth() + 1
-      
-      // Create cache key
-      const cacheKey = `${year}-${month}`
-      
+      const month = currentDate.value.getMonth()
+
+      // Calculate the date range for all loaded months
+      const firstDay = new Date(year, month, 1)
+      const startDate = new Date(firstDay)
+      const dayOfWeek = startDate.getDay()
+      const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
+      startDate.setDate(startDate.getDate() + diff)
+
+      // End date is based on monthsToShow (each month = 42 days)
+      const totalDays = monthsToShow.value * 42
+      const endDate = new Date(startDate)
+      endDate.setDate(startDate.getDate() + totalDays - 1)
+
+      // Create cache key based on start and end dates
+      const cacheKey = `${startDate.toISOString().split('T')[0]}_${endDate.toISOString().split('T')[0]}`
+
       // Check cache first
       if (monthCache.value.has(cacheKey)) {
         monthTasks.value = monthCache.value.get(cacheKey)!
         isLoading.value = false
         return
       }
-      
-      // Fetch only current month (optimized)
-      const currentMonthTasks = await taskService.getTasksForMonth(year, month, true)
-      
+
+      // Fetch tasks for all months that appear in the calendar grid
+      const monthsToFetch = new Set<string>()
+      const currentGridDate = new Date(startDate)
+
+      for (let i = 0; i < totalDays; i++) {
+        const monthKey = `${currentGridDate.getFullYear()}-${currentGridDate.getMonth() + 1}`
+        monthsToFetch.add(monthKey)
+        currentGridDate.setDate(currentGridDate.getDate() + 1)
+      }
+
+      // Fetch all required months in parallel
+      const fetchPromises = Array.from(monthsToFetch).map(monthKey => {
+        const parts = monthKey.split('-').map(Number)
+        const fetchYear = parts[0]!
+        const fetchMonth = parts[1]!
+        return taskService.getTasksForMonth(fetchYear, fetchMonth, true)
+      })
+
+      const results = await Promise.all(fetchPromises)
+
+      // Combine all tasks
+      const allTasks = results.flat()
+
       // Cache the result
-      monthCache.value.set(cacheKey, currentMonthTasks)
-      monthTasks.value = currentMonthTasks
+      monthCache.value.set(cacheKey, allTasks)
+      monthTasks.value = allTasks
     } else {
       const weekStart = getWeekStart(currentDate.value)
       weekTasks.value = await taskService.getTasksForWeek(weekStart, true)
@@ -900,38 +965,112 @@ async function fetchTasks() {
   }
 }
 
+// Load more months for infinite scroll
+async function loadMoreMonths() {
+  if (isLoadingMoreMonths.value || !hasMoreFutureMonths.value) return
+
+  isLoadingMoreMonths.value = true
+  try {
+    const year = currentDate.value.getFullYear()
+    const month = currentDate.value.getMonth()
+
+    // Calculate the next month to load
+    const nextMonthIndex = monthsToShow.value
+    const nextMonthDate = new Date(year, month + nextMonthIndex, 1)
+    const nextYear = nextMonthDate.getFullYear()
+    const nextMonth = nextMonthDate.getMonth() + 1
+
+    // Fetch tasks for the next month
+    const nextMonthTasks = await taskService.getTasksForMonth(nextYear, nextMonth, true)
+
+    // Check if there are any tasks in the future for this month
+    const now = new Date()
+    now.setHours(0, 0, 0, 0)
+    const hasFutureTasks = nextMonthTasks.some(task => {
+      const taskDate = task.dueDate ? new Date(task.dueDate) : task.startDate ? new Date(task.startDate) : null
+      return taskDate && taskDate >= now
+    })
+
+    if (hasFutureTasks || nextMonthTasks.length > 0) {
+      // Increment months to show
+      monthsToShow.value += 1
+
+      // Reload tasks to include the new month
+      await fetchTasks()
+    } else {
+      // No more future tasks, stop loading
+      hasMoreFutureMonths.value = false
+    }
+  } catch (error: any) {
+    showError(error.message || t('errors.fetch_failed'))
+  } finally {
+    isLoadingMoreMonths.value = false
+  }
+}
+
+// Handle scroll event for infinite loading
+function handleCalendarScroll(event: Event) {
+  if (viewMode.value !== 'month') return
+
+  const target = event.target as HTMLElement
+  const scrollTop = target.scrollTop
+  const scrollHeight = target.scrollHeight
+  const clientHeight = target.clientHeight
+
+  // Load more when scrolled to 80% of the content
+  const scrollPercentage = (scrollTop + clientHeight) / scrollHeight
+  if (scrollPercentage > 0.8 && !isLoadingMoreMonths.value && hasMoreFutureMonths.value) {
+    loadMoreMonths()
+  }
+}
+
 // Prefetch adjacent months in background (lazy loading)
 async function prefetchAdjacentMonths() {
   if (viewMode.value !== 'month') return
-  
+
+  // Calculate date ranges for previous and next calendar grids
   const year = currentDate.value.getFullYear()
-  const month = currentDate.value.getMonth() + 1
-  
-  const prevMonth = month === 1 ? 12 : month - 1
-  const prevYear = month === 1 ? year - 1 : year
-  const nextMonth = month === 12 ? 1 : month + 1
-  const nextYear = month === 12 ? year + 1 : year
-  
-  const prevKey = `${prevYear}-${prevMonth}`
-  const nextKey = `${nextYear}-${nextMonth}`
-  
+  const month = currentDate.value.getMonth()
+
+  // Previous month grid
+  const prevMonthDate = new Date(year, month - 1, 1)
+  const prevFirstDay = new Date(prevMonthDate.getFullYear(), prevMonthDate.getMonth(), 1)
+  const prevStartDate = new Date(prevFirstDay)
+  const prevDayOfWeek = prevStartDate.getDay()
+  const prevDiff = prevDayOfWeek === 0 ? -6 : 1 - prevDayOfWeek
+  prevStartDate.setDate(prevStartDate.getDate() + prevDiff)
+  const prevEndDate = new Date(prevStartDate)
+  prevEndDate.setDate(prevStartDate.getDate() + 41)
+  const prevKey = `${prevStartDate.toISOString().split('T')[0]}_${prevEndDate.toISOString().split('T')[0]}`
+
+  // Next month grid
+  const nextMonthDate = new Date(year, month + 1, 1)
+  const nextFirstDay = new Date(nextMonthDate.getFullYear(), nextMonthDate.getMonth(), 1)
+  const nextStartDate = new Date(nextFirstDay)
+  const nextDayOfWeek = nextStartDate.getDay()
+  const nextDiff = nextDayOfWeek === 0 ? -6 : 1 - nextDayOfWeek
+  nextStartDate.setDate(nextStartDate.getDate() + nextDiff)
+  const nextEndDate = new Date(nextStartDate)
+  nextEndDate.setDate(nextStartDate.getDate() + 41)
+  const nextKey = `${nextStartDate.toISOString().split('T')[0]}_${nextEndDate.toISOString().split('T')[0]}`
+
   // Prefetch in background without blocking UI
   setTimeout(async () => {
     try {
       if (!monthCache.value.has(prevKey)) {
-        const tasks = await taskService.getTasksForMonth(prevYear, prevMonth, true)
-        monthCache.value.set(prevKey, tasks)
+        // We don't need to fetch here - it will be fetched when user navigates
+        // This was just for optimization, but with new approach we fetch on demand
       }
     } catch (error) {
       // Silent fail for background prefetch
     }
   }, 100)
-  
+
   setTimeout(async () => {
     try {
       if (!monthCache.value.has(nextKey)) {
-        const tasks = await taskService.getTasksForMonth(nextYear, nextMonth, true)
-        monthCache.value.set(nextKey, tasks)
+        // We don't need to fetch here - it will be fetched when user navigates
+        // This was just for optimization, but with new approach we fetch on demand
       }
     } catch (error) {
       // Silent fail for background prefetch
@@ -941,6 +1080,10 @@ async function prefetchAdjacentMonths() {
 
 // Watchers
 watch(viewMode, async () => {
+  // Reset infinite scroll state when switching views
+  monthsToShow.value = 1
+  hasMoreFutureMonths.value = true
+
   await fetchTasks()
   if (viewMode.value === 'month') {
     prefetchAdjacentMonths()
@@ -1122,6 +1265,8 @@ onUnmounted(() => {
   flex-direction: column;
   padding: 1.5rem;
   gap: 1.5rem;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .calendar-grid {
@@ -1243,6 +1388,30 @@ onUnmounted(() => {
 .more-tasks {
   font-size: 0.75rem;
   color: #64748b;
+  font-weight: 500;
+}
+
+/* Infinite scroll indicators */
+.calendar-loading,
+.calendar-end-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  gap: 1rem;
+  text-align: center;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-top: 1rem;
+}
+
+.calendar-loading p,
+.calendar-end-message p {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.875rem;
   font-weight: 500;
 }
 

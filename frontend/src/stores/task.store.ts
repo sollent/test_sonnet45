@@ -149,17 +149,20 @@ export const useTaskStore = defineStore('task', () => {
     try {
       const newTasks = await taskService.getTasks(filters, limit, offset)
 
+      let addedCount = newTasks.length
+
       if (append) {
         // Append new tasks, avoiding duplicates
         const existingIds = new Set(tasks.value.map(t => t.id))
         const uniqueNewTasks = newTasks.filter(t => !existingIds.has(t.id))
         tasks.value = [...tasks.value, ...uniqueNewTasks]
+        addedCount = uniqueNewTasks.length
       } else {
         // Replace tasks
         tasks.value = newTasks
       }
 
-      return newTasks.length
+      return addedCount
     } catch (err: any) {
       error.value = err.message || 'Failed to fetch tasks'
       throw err

@@ -39,7 +39,6 @@ const overdueLimit = ref(20)
 
 // Infinite scroll state
 const PAGE_SIZE = 50
-const MAX_TASKS_LIMIT = 500  // Maximum tasks to load
 const currentOffset = ref(0)
 const totalLoadedTasks = ref(0)  // Track total loaded tasks
 const isLoadingMore = ref(false)
@@ -207,13 +206,6 @@ async function loadMoreTasks() {
     return
   }
 
-  // Check if we've reached the maximum limit
-  if (totalLoadedTasks.value >= MAX_TASKS_LIMIT) {
-    hasMoreTasks.value = false
-    console.log('[Infinite Scroll] Reached maximum task limit:', MAX_TASKS_LIMIT)
-    return
-  }
-
   console.log('[Infinite Scroll] Loading more tasks, offset:', currentOffset.value, 'totalLoaded:', totalLoadedTasks.value)
   console.log('[Infinite Scroll] Current tasks count in store:', taskStore.tasks.length)
   isLoadingMore.value = true
@@ -246,17 +238,15 @@ async function loadMoreTasks() {
     totalLoadedTasks.value += loadedCount
     console.log('[Infinite Scroll] Total loaded so far:', totalLoadedTasks.value)
 
-    // If we loaded fewer tasks than requested, there are no more tasks
-    if (loadedCount < PAGE_SIZE) {
-      hasMoreTasks.value = false
-      console.log('[Infinite Scroll] Loaded fewer than PAGE_SIZE (' + loadedCount + ' < ' + PAGE_SIZE + '), assuming no more tasks')
-    } else if (totalLoadedTasks.value >= MAX_TASKS_LIMIT) {
-      hasMoreTasks.value = false
-      console.log('[Infinite Scroll] Reached maximum limit of', MAX_TASKS_LIMIT, 'tasks')
-    } else if (loadedCount === 0) {
+    // Stop loading only when we receive 0 tasks OR fewer tasks than requested
+    if (loadedCount === 0) {
       hasMoreTasks.value = false
       console.log('[Infinite Scroll] No tasks loaded, stopping')
+    } else if (loadedCount < PAGE_SIZE) {
+      hasMoreTasks.value = false
+      console.log('[Infinite Scroll] Loaded fewer than PAGE_SIZE (' + loadedCount + ' < ' + PAGE_SIZE + '), all tasks loaded')
     } else {
+      // Continue loading - update offset and keep hasMoreTasks = true
       currentOffset.value += loadedCount
       console.log('[Infinite Scroll] New offset:', currentOffset.value, 'continuing to load more')
     }
@@ -798,9 +788,7 @@ async function handleTaskDeleted() {
                 <Skeleton height="120px" class="mb-4" borderRadius="16px" />
               </div>
               <div v-else-if="!hasMoreTasks && displayedTasks.length > 0" class="end-message">
-                {{ totalLoadedTasks >= MAX_TASKS_LIMIT
-                  ? t('tasks.max_tasks_loaded', { count: totalLoadedTasks })
-                  : t('tasks.all_tasks_loaded', { count: totalLoadedTasks }) }}
+                {{ t('tasks.all_tasks_loaded', { count: totalLoadedTasks }) }}
               </div>
             </div>
           </div>

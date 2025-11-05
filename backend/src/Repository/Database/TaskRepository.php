@@ -191,16 +191,19 @@ class TaskRepository extends ServiceEntityRepository
 
         // Sort by DATE (day only) first, then by completion status within each day
         // Using custom DATE() DQL function to extract just the date part (ignore time)
+        // COALESCE ensures we use startDate if dueDate is null
         // This ensures tasks are grouped by day, with uncompleted tasks first within each day
-        $qb->addSelect('DATE(t.dueDate) AS HIDDEN dateOnly')
+        $qb->addSelect('DATE(COALESCE(t.dueDate, t.startDate)) AS HIDDEN dateOnly')
            ->addSelect('CASE WHEN t.status = :completedStatus THEN 1 ELSE 0 END AS HIDDEN completedOrder')
            ->setParameter('completedStatus', TaskStatus::COMPLETED)
            // First sort by DATE only (groups tasks into days, ignoring time)
            ->orderBy('dateOnly', 'ASC')
            // Then sort by completion status (0=uncompleted first, 1=completed after)
            ->addOrderBy('completedOrder', 'ASC')
-           // Finally by priority within same completion status
-           ->addOrderBy('t.priority', 'DESC');
+           // Then by priority within same completion status
+           ->addOrderBy('t.priority', 'DESC')
+           // Finally by ID to ensure stable order for pagination
+           ->addOrderBy('t.id', 'ASC');
 
         // Apply pagination
         if ($limit !== null) {
