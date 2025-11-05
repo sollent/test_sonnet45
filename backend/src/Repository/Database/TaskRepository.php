@@ -9,7 +9,7 @@ use App\Entity\Task;
 use App\Entity\User;
 use App\Enum\TaskStatus;
 use App\Enum\TaskPriority;
-use App\Service\Cache\TaskCache;
+use App\Service\Cache\TaskCacheService;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\ORM\Tools\Pagination\Paginator;
@@ -27,7 +27,7 @@ class TaskRepository extends ServiceEntityRepository
 {
     public function __construct(
         ManagerRegistry $registry,
-        private readonly TaskCache $taskCache
+        private readonly TaskCacheService $taskCache
     ) {
         parent::__construct($registry, Task::class);
     }
@@ -77,139 +77,171 @@ class TaskRepository extends ServiceEntityRepository
     }
 
     /**
-     * Find today's tasks for a user
+     * Find today's tasks for a user - CACHED
      *
      * @return Task[]
      */
     public function findTodayTasks(User $user, ?TaskFilterDto $filters = null): array
     {
-        $todayStart = new \DateTimeImmutable('today');
-        $todayEnd = new \DateTimeImmutable('today 23:59:59');
+        $filterArray = $filters ? [
+            'statuses' => $filters->getStatuses(),
+            'completed' => $filters->getCompleted(),
+            'priorities' => $filters->getPriorities(),
+            'tags' => $filters->getTags(),
+        ] : [];
 
-        $qb = $this->createQueryBuilder('t')
-            ->where('t.user = :user')
-            ->andWhere('t.parentTask IS NULL')
-            ->andWhere('t.isArchived = false')
-            ->andWhere(
-                '(t.dueDate BETWEEN :todayStart AND :todayEnd) OR (t.startDate BETWEEN :todayStart AND :todayEnd)'
-            )
-            ->setParameter('user', $user)
-            ->setParameter('todayStart', $todayStart)
-            ->setParameter('todayEnd', $todayEnd);
+        return $this->taskCache->getTodayTasks($user, $filterArray, function () use ($user, $filters) {
+            $todayStart = new \DateTimeImmutable('today');
+            $todayEnd = new \DateTimeImmutable('today 23:59:59');
 
-        // Apply default status filter only if no status or completed filter is provided
-        $statuses = $filters ? $filters->getStatuses() : null;
-        $completed = $filters ? $filters->getCompleted() : null;
-        if ((!$statuses || empty($statuses)) && $completed === null) {
-            $qb->andWhere('t.status != :completedStatus')
-               ->setParameter('completedStatus', TaskStatus::COMPLETED);
-        }
+            $qb = $this->createQueryBuilder('t')
+                ->where('t.user = :user')
+                ->andWhere('t.parentTask IS NULL')
+                ->andWhere('t.isArchived = false')
+                ->andWhere(
+                    '(t.dueDate BETWEEN :todayStart AND :todayEnd) OR (t.startDate BETWEEN :todayStart AND :todayEnd)'
+                )
+                ->setParameter('user', $user)
+                ->setParameter('todayStart', $todayStart)
+                ->setParameter('todayEnd', $todayEnd);
 
-        // Apply filters
-        if ($filters) {
-            $this->applyFilters($qb, $filters);
-        }
+            // Apply default status filter only if no status or completed filter is provided
+            $statuses = $filters ? $filters->getStatuses() : null;
+            $completed = $filters ? $filters->getCompleted() : null;
+            if ((!$statuses || empty($statuses)) && $completed === null) {
+                $qb->andWhere('t.status != :completedStatus')
+                   ->setParameter('completedStatus', TaskStatus::COMPLETED);
+            }
 
-        $qb->orderBy('t.priority', 'DESC')
-           ->addOrderBy('t.dueDate', 'ASC');
+            // Apply filters
+            if ($filters) {
+                $this->applyFilters($qb, $filters);
+            }
 
-        return $qb->getQuery()->getResult();
+            $qb->orderBy('t.priority', 'DESC')
+               ->addOrderBy('t.dueDate', 'ASC');
+
+            return $qb->getQuery()->getResult();
+        });
     }
 
     /**
-     * Find overdue tasks for a user
+     * Find overdue tasks for a user - CACHED
      *
      * @return Task[]
      */
     public function findOverdueTasks(User $user): array
     {
-        $now = new \DateTimeImmutable();
+        return $this->taskCache->getOverdueTasks($user, function () use ($user) {
+            $now = new \DateTimeImmutable();
 
-        return $this->createQueryBuilder('t')
-            ->where('t.user = :user')
-            ->andWhere('t.parentTask IS NULL')
-            ->andWhere('t.isArchived = false')
-            ->andWhere('t.status != :completed')
-            ->andWhere('t.dueDate < :now')
-            ->setParameter('user', $user)
-            ->setParameter('completed', TaskStatus::COMPLETED)
-            ->setParameter('now', $now)
-            ->orderBy('t.dueDate', 'ASC')
-            ->addOrderBy('t.priority', 'DESC')
-            ->getQuery()
-            ->getResult();
+            return $this->createQueryBuilder('t')
+                ->where('t.user = :user')
+                ->andWhere('t.parentTask IS NULL')
+                ->andWhere('t.isArchived = false')
+                ->andWhere('t.status != :completed')
+                ->andWhere('t.dueDate < :now')
+                ->setParameter('user', $user)
+                ->setParameter('completed', TaskStatus::COMPLETED)
+                ->setParameter('now', $now)
+                ->orderBy('t.dueDate', 'ASC')
+                ->addOrderBy('t.priority', 'DESC')
+                ->getQuery()
+                ->getResult();
+        });
     }
 
     /**
-     * Find upcoming tasks for a user (next 7 days)
+     * Find upcoming tasks for a user (next 7 days) - CACHED
      *
      * @return Task[]
      */
     public function findUpcomingTasks(User $user, int $days = 7, ?TaskFilterDto $filters = null): array
     {
-        $tomorrow = new \DateTimeImmutable('tomorrow');
-        $endDate = new \DateTimeImmutable("+{$days} days");
+        $filterArray = $filters ? [
+            'statuses' => $filters->getStatuses(),
+            'completed' => $filters->getCompleted(),
+            'priorities' => $filters->getPriorities(),
+            'tags' => $filters->getTags(),
+        ] : [];
 
-        $qb = $this->createQueryBuilder('t')
-            ->where('t.user = :user')
-            ->andWhere('t.parentTask IS NULL')
-            ->andWhere('t.isArchived = false')
-            ->andWhere('(t.startDate >= :tomorrow AND t.startDate <= :endDate) OR (t.dueDate >= :tomorrow AND t.dueDate <= :endDate)')
-            ->setParameter('user', $user)
-            ->setParameter('tomorrow', $tomorrow)
-            ->setParameter('endDate', $endDate);
+        return $this->taskCache->getUpcomingTasks($user, $days, $filterArray, function () use ($user, $days, $filters) {
+            $tomorrow = new \DateTimeImmutable('tomorrow');
+            $endDate = new \DateTimeImmutable("+{$days} days");
 
-        // Apply default status filter only if no status or completed filter is provided
-        $statuses = $filters ? $filters->getStatuses() : null;
-        $completed = $filters ? $filters->getCompleted() : null;
-        if ((!$statuses || empty($statuses)) && $completed === null) {
-            $qb->andWhere('t.status != :completed')
-               ->setParameter('completed', TaskStatus::COMPLETED);
-        }
+            $qb = $this->createQueryBuilder('t')
+                ->where('t.user = :user')
+                ->andWhere('t.parentTask IS NULL')
+                ->andWhere('t.isArchived = false')
+                ->andWhere('(t.startDate >= :tomorrow AND t.startDate <= :endDate) OR (t.dueDate >= :tomorrow AND t.dueDate <= :endDate)')
+                ->setParameter('user', $user)
+                ->setParameter('tomorrow', $tomorrow)
+                ->setParameter('endDate', $endDate);
 
-        // Apply filters
-        if ($filters) {
-            $this->applyFilters($qb, $filters);
-        }
+            // Apply default status filter only if no status or completed filter is provided
+            $statuses = $filters ? $filters->getStatuses() : null;
+            $completed = $filters ? $filters->getCompleted() : null;
+            if ((!$statuses || empty($statuses)) && $completed === null) {
+                $qb->andWhere('t.status != :completed')
+                   ->setParameter('completed', TaskStatus::COMPLETED);
+            }
 
-        $qb->orderBy('t.dueDate', 'ASC')
-           ->addOrderBy('t.priority', 'DESC');
+            // Apply filters
+            if ($filters) {
+                $this->applyFilters($qb, $filters);
+            }
 
-        return $qb->getQuery()->getResult();
+            $qb->orderBy('t.dueDate', 'ASC')
+               ->addOrderBy('t.priority', 'DESC');
+
+            return $qb->getQuery()->getResult();
+        });
     }
 
     public function findActiveTasks(User $user, ?TaskFilterDto $filters = null): array
     {
-        $todayStart = new \DateTimeImmutable('today');
+        $filterArray = $filters ? [
+            'statuses' => $filters->getStatuses(),
+            'completed' => $filters->getCompleted(),
+            'priorities' => $filters->getPriorities(),
+            'tags' => $filters->getTags(),
+            'dateFrom' => $filters->getDateFrom()?->format('Y-m-d'),
+            'dateTo' => $filters->getDateTo()?->format('Y-m-d'),
+        ] : [];
 
-        $qb = $this->createQueryBuilder('t')
-            ->where('t.user = :user')
-            ->andWhere('t.parentTask IS NULL')
-            ->andWhere('t.isArchived = false')
-            ->andWhere('(
-                (t.dueDate IS NOT NULL AND t.dueDate >= :todayStart) OR
-                (t.startDate IS NOT NULL AND t.startDate >= :todayStart)
-            )')
-            ->setParameter('user', $user)
-            ->setParameter('todayStart', $todayStart);
+        // Use cache for active tasks
+        return $this->taskCache->getTaskList($user, array_merge($filterArray, ['type' => 'active']), function () use ($user, $filters) {
+            $todayStart = new \DateTimeImmutable('today');
 
-        // Apply default status filter only if no status or completed filter is provided
-        $statuses = $filters ? $filters->getStatuses() : null;
-        $completed = $filters ? $filters->getCompleted() : null;
-        if ((!$statuses || empty($statuses)) && $completed === null) {
-            $qb->andWhere('t.status != :completed')
-               ->setParameter('completed', TaskStatus::COMPLETED);
-        }
+            $qb = $this->createQueryBuilder('t')
+                ->where('t.user = :user')
+                ->andWhere('t.parentTask IS NULL')
+                ->andWhere('t.isArchived = false')
+                ->andWhere('(
+                    (t.dueDate IS NOT NULL AND t.dueDate >= :todayStart) OR
+                    (t.startDate IS NOT NULL AND t.startDate >= :todayStart)
+                )')
+                ->setParameter('user', $user)
+                ->setParameter('todayStart', $todayStart);
 
-        // Apply filters
-        if ($filters) {
-            $this->applyFilters($qb, $filters);
-        }
+            // Apply default status filter only if no status or completed filter is provided
+            $statuses = $filters ? $filters->getStatuses() : null;
+            $completed = $filters ? $filters->getCompleted() : null;
+            if ((!$statuses || empty($statuses)) && $completed === null) {
+                $qb->andWhere('t.status != :completed')
+                   ->setParameter('completed', TaskStatus::COMPLETED);
+            }
 
-        $qb->orderBy('t.dueDate', 'ASC')
-           ->addOrderBy('t.priority', 'DESC');
+            // Apply filters
+            if ($filters) {
+                $this->applyFilters($qb, $filters);
+            }
 
-        return $qb->getQuery()->getResult();
+            $qb->orderBy('t.dueDate', 'ASC')
+               ->addOrderBy('t.priority', 'DESC');
+
+            return $qb->getQuery()->getResult();
+        });
     }
 
     /**

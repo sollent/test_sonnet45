@@ -244,58 +244,64 @@ onMounted(() => {
 
         <!-- Security Settings -->
         <div v-else-if="activeSection === 'security'" class="content-section">
-          <h2 class="section-title">{{ t('profile.security_settings') }}</h2>
-
-          <div class="settings-card">
+          <div class="settings-card security-card">
             <div class="card-header">
-              <i class="pi pi-lock card-icon"></i>
-              <h3>{{ profile?.hasPassword ? t('profile.change_password') : t('profile.create_password') }}</h3>
+              <i class="pi pi-shield card-icon"></i>
+              <h3>{{ t('profile.security_settings') }}</h3>
             </div>
             <div class="card-content">
-              <p v-if="!profile?.hasPassword" class="info-message">
-                <i class="pi pi-info-circle"></i>
-                {{ t('profile.google_auth_info') }}
-              </p>
+              <div class="password-section">
+                <div class="password-section-header">
+                  <i class="pi pi-lock password-icon"></i>
+                  <h4>{{ profile?.hasPassword ? t('profile.change_password') : t('profile.create_password') }}</h4>
+                </div>
+                <div class="password-section-content">
+                  <p v-if="!profile?.hasPassword" class="info-message">
+                    <i class="pi pi-info-circle"></i>
+                    {{ t('profile.google_auth_info') }}
+                  </p>
 
-              <div v-if="profile?.hasPassword" class="form-field">
-                <label>{{ t('profile.current_password') }}</label>
-                <Password
-                  v-model="passwordForm.currentPassword"
-                  :placeholder="t('profile.current_password_placeholder')"
-                  :feedback="false"
-                  toggleMask
-                  class="field-input"
-                />
+                  <div v-if="profile?.hasPassword" class="form-field">
+                    <label>{{ t('profile.current_password') }}</label>
+                    <Password
+                      v-model="passwordForm.currentPassword"
+                      :placeholder="t('profile.current_password_placeholder')"
+                      :feedback="false"
+                      toggleMask
+                      class="field-input"
+                    />
+                  </div>
+
+                  <div class="form-field">
+                    <label>{{ t('profile.new_password') }}</label>
+                    <Password
+                      v-model="passwordForm.newPassword"
+                      :placeholder="t('profile.new_password_placeholder')"
+                      toggleMask
+                      class="field-input"
+                    />
+                  </div>
+
+                  <div class="form-field">
+                    <label>{{ t('profile.confirm_password') }}</label>
+                    <Password
+                      v-model="passwordForm.confirmPassword"
+                      :placeholder="t('profile.confirm_password_placeholder')"
+                      :feedback="false"
+                      toggleMask
+                      class="field-input"
+                    />
+                  </div>
+
+                  <Button
+                    @click="changePassword"
+                    :label="profile?.hasPassword ? t('profile.change_password') : t('profile.create_password')"
+                    :loading="isSaving"
+                    icon="pi pi-lock"
+                    class="action-button"
+                  />
+                </div>
               </div>
-
-              <div class="form-field">
-                <label>{{ t('profile.new_password') }}</label>
-                <Password
-                  v-model="passwordForm.newPassword"
-                  :placeholder="t('profile.new_password_placeholder')"
-                  toggleMask
-                  class="field-input"
-                />
-              </div>
-
-              <div class="form-field">
-                <label>{{ t('profile.confirm_password') }}</label>
-                <Password
-                  v-model="passwordForm.confirmPassword"
-                  :placeholder="t('profile.confirm_password_placeholder')"
-                  :feedback="false"
-                  toggleMask
-                  class="field-input"
-                />
-              </div>
-
-              <Button
-                @click="changePassword"
-                :label="profile?.hasPassword ? t('profile.change_password') : t('profile.create_password')"
-                :loading="isSaving"
-                icon="pi pi-lock"
-                class="action-button"
-              />
             </div>
           </div>
 
@@ -309,27 +315,27 @@ onMounted(() => {
               <div class="login-method">
                 <div class="method-info">
                   <i class="pi pi-envelope method-icon"></i>
-                  <div>
+                  <div class="method-text">
                     <p class="method-name">{{ t('profile.email_password') }}</p>
                     <p class="method-status">{{ profile?.hasPassword ? t('profile.active') : t('profile.not_configured') }}</p>
                   </div>
+                  <span :class="['status-badge', { active: profile?.hasPassword }]">
+                    {{ profile?.hasPassword ? t('profile.enabled') : t('profile.disabled') }}
+                  </span>
                 </div>
-                <span :class="['status-badge', { active: profile?.hasPassword }]">
-                  {{ profile?.hasPassword ? t('profile.enabled') : t('profile.disabled') }}
-                </span>
               </div>
 
               <div class="login-method">
                 <div class="method-info">
                   <i class="pi pi-google method-icon"></i>
-                  <div>
+                  <div class="method-text">
                     <p class="method-name">{{ t('profile.google') }}</p>
                     <p class="method-status">{{ profile?.isGoogleAuth ? t('profile.connected') : t('profile.not_connected') }}</p>
                   </div>
+                  <span :class="['status-badge', { active: profile?.isGoogleAuth }]">
+                    {{ profile?.isGoogleAuth ? t('profile.enabled') : t('profile.disabled') }}
+                  </span>
                 </div>
-                <span :class="['status-badge', { active: profile?.isGoogleAuth }]">
-                  {{ profile?.isGoogleAuth ? t('profile.enabled') : t('profile.disabled') }}
-                </span>
               </div>
             </div>
           </div>
@@ -653,6 +659,15 @@ onMounted(() => {
   color: #667eea;
 }
 
+.security-card .card-icon {
+  color: rgba(102, 126, 234, 0.8);
+}
+
+.security-card .card-header h3 {
+  color: #475569;
+  font-weight: 600;
+}
+
 .card-header h3 {
   font-size: 1.125rem;
   font-weight: 600;
@@ -771,9 +786,6 @@ onMounted(() => {
 
 /* Login Methods */
 .login-method {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   padding: 1rem;
   background: #f8f9fa;
   border-radius: 12px;
@@ -783,11 +795,17 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 1rem;
+  width: 100%;
+}
+
+.method-text {
+  flex: 1;
 }
 
 .method-icon {
   font-size: 1.5rem;
   color: #667eea;
+  flex-shrink: 0;
 }
 
 .method-name {
@@ -809,11 +827,45 @@ onMounted(() => {
   font-weight: 600;
   background: #e2e8f0;
   color: #64748b;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .status-badge.active {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
+}
+
+/* Password Section */
+.password-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.password-section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.password-icon {
+  font-size: 1.25rem;
+  color: #667eea;
+}
+
+.password-section-header h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1a202c;
+  margin: 0;
+}
+
+.password-section-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 /* Theme Selector */
@@ -873,38 +925,56 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem 0;
+  padding: 0.875rem 0;
+  gap: 1rem;
 }
 
 .notification-info {
   display: flex;
-  align-items: flex-start;
-  gap: 1rem;
+  align-items: center;
+  gap: 0.875rem;
   flex: 1;
+  min-width: 0;
 }
 
 .notification-info i {
-  font-size: 1.25rem;
+  font-size: 1.125rem;
   color: #667eea;
-  margin-top: 0.125rem;
+  flex-shrink: 0;
+}
+
+.notification-info > div {
+  flex: 1;
+  min-width: 0;
 }
 
 .notification-name {
   font-weight: 600;
   color: #1a202c;
-  margin: 0 0 0.25rem 0;
+  margin: 0 0 0.125rem 0;
+  font-size: 0.9375rem;
 }
 
 .notification-desc {
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   color: #64748b;
   margin: 0;
+  line-height: 1.4;
+}
+
+.notification-item :deep(.p-inputswitch) {
+  flex-shrink: 0;
 }
 
 .divider {
   height: 1px;
   background: #e2e8f0;
   margin: 0.5rem 0;
+}
+
+/* Уменьшаем gap для карточки уведомлений */
+.content-section:has(.notification-item) .settings-card .card-content {
+  gap: 0.5rem;
 }
 
 /* Loading State */
@@ -926,25 +996,47 @@ onMounted(() => {
   }
 
   .sidebar-nav {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    display: flex;
+    flex-direction: row;
     gap: 0.5rem;
+    background: rgba(248, 250, 252, 0.8);
+    padding: 0.375rem;
+    border-radius: 12px;
   }
 
   .nav-item {
+    flex: 1;
     flex-direction: column;
-    gap: 0.5rem;
-    padding: 1rem 0.75rem;
+    gap: 0.375rem;
+    padding: 0.625rem 0.5rem;
     text-align: center;
-    font-size: 0.875rem;
+    font-size: 0.75rem;
+    border-radius: 10px;
+    background: transparent;
   }
 
   .nav-item i {
-    font-size: 1.5rem;
+    font-size: 1.125rem;
   }
 
   .nav-item span {
-    font-size: 0.8125rem;
+    font-size: 0.6875rem;
+    font-weight: 500;
+  }
+
+  .nav-item.active {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.12) 0%, rgba(118, 75, 162, 0.12) 100%);
+    color: #667eea;
+    box-shadow: 0 1px 3px rgba(102, 126, 234, 0.1);
+  }
+
+  .nav-item.active i {
+    color: #667eea;
+  }
+
+  .nav-item.active span {
+    font-weight: 600;
+    color: #667eea;
   }
 }
 
@@ -1003,12 +1095,32 @@ onMounted(() => {
   }
 
   .section-title {
-    font-size: 1.25rem;
+    display: none;
+  }
+
+  .content-section:has(.security-card) .section-title {
+    display: none;
   }
 
   .settings-card {
     padding: 1.25rem;
     border-radius: 12px;
+  }
+
+  .security-card .card-header {
+    margin-bottom: 1.25rem;
+  }
+
+  .security-card .card-icon {
+    color: rgba(102, 126, 234, 0.7);
+  }
+
+  .security-card .card-header h3 {
+    color: #64748b;
+  }
+
+  .password-icon {
+    color: rgba(102, 126, 234, 0.7);
   }
 
   .card-header {
@@ -1022,13 +1134,35 @@ onMounted(() => {
     flex: 1;
   }
 
+  .password-section {
+    gap: 0.75rem;
+  }
+
+  .password-section-header {
+    margin-bottom: 0.75rem;
+  }
+
+  .password-section-content {
+    gap: 0.875rem;
+  }
+
   .form-field {
-    margin-bottom: 1.25rem;
+    margin-bottom: 0;
+    gap: 0.375rem;
   }
 
   .form-field label {
-    font-size: 0.875rem;
-    margin-bottom: 0.5rem;
+    font-size: 0.8125rem;
+    margin-bottom: 0;
+    align-self: flex-start;
+  }
+
+  .form-field :deep(.p-password) {
+    width: 100%;
+  }
+
+  .form-field :deep(.p-password-input) {
+    width: 100%;
   }
 
   .field-input {
@@ -1036,34 +1170,42 @@ onMounted(() => {
   }
 
   .notification-item {
-    flex-wrap: wrap;
-    gap: 1rem;
-    padding: 1rem;
-    background: #f8f9fa;
-    border-radius: 10px;
-    margin-bottom: 0.5rem;
+    padding: 0.75rem 0;
+    gap: 0.75rem;
   }
 
   .notification-info {
-    flex: 1 1 100%;
-    gap: 0.875rem;
+    gap: 0.75rem;
+    align-items: center;
   }
 
   .notification-info i {
-    font-size: 1.125rem;
+    font-size: 1rem;
   }
 
   .notification-name {
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
+    margin-bottom: 0.125rem;
   }
 
   .notification-desc {
-    font-size: 0.8125rem;
+    font-size: 0.6875rem;
+    line-height: 1.3;
+  }
+
+  .notification-item :deep(.p-inputswitch) {
+    flex-shrink: 0;
+  }
+
+  .divider {
+    margin: 0.375rem 0;
+  }
+
+  .settings-card .card-content {
+    gap: 0.375rem;
   }
 
   .login-method {
-    flex-wrap: wrap;
-    gap: 1rem;
     padding: 1rem;
     background: #f8f9fa;
     border-radius: 10px;
@@ -1071,7 +1213,31 @@ onMounted(() => {
   }
 
   .method-info {
-    flex: 1 1 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    width: 100%;
+  }
+
+  .method-text {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .method-icon {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+  }
+
+  .status-badge {
+    flex-shrink: 0;
+    margin-left: auto;
+    padding: 0.3125rem 0.75rem;
+    font-size: 0.75rem;
+  }
+
+  .status-badge.active {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.9) 0%, rgba(5, 150, 105, 0.9) 100%);
   }
 
   .divider {
@@ -1117,19 +1283,20 @@ onMounted(() => {
 
   .sidebar-nav {
     gap: 0.25rem;
+    padding: 0.25rem;
   }
 
   .nav-item {
-    padding: 0.75rem 0.375rem;
-    gap: 0.375rem;
+    padding: 0.5rem 0.25rem;
+    gap: 0.25rem;
   }
 
   .nav-item i {
-    font-size: 1.25rem;
+    font-size: 1rem;
   }
 
   .nav-item span {
-    font-size: 0.6875rem;
+    font-size: 0.625rem;
   }
 
   .content-section {
@@ -1137,7 +1304,19 @@ onMounted(() => {
   }
 
   .section-title {
-    font-size: 1.125rem;
+    display: none;
+  }
+
+  .password-section {
+    gap: 0.625rem;
+  }
+
+  .password-section-content {
+    gap: 0.75rem;
+  }
+
+  .form-field {
+    gap: 0.25rem;
   }
 
   .settings-card {
@@ -1168,7 +1347,24 @@ onMounted(() => {
   }
 
   .notification-item {
-    padding: 0.875rem;
+    padding: 0.625rem 0;
+    gap: 0.625rem;
+  }
+
+  .notification-info {
+    gap: 0.625rem;
+  }
+
+  .notification-info i {
+    font-size: 0.9375rem;
+  }
+
+  .notification-name {
+    font-size: 0.8125rem;
+  }
+
+  .notification-desc {
+    font-size: 0.625rem;
   }
 
   .login-method {

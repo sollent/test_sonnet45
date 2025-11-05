@@ -5,11 +5,10 @@ declare(strict_types=1);
 namespace App\Service\Cache;
 
 use App\Entity\User;
-use App\Service\Cache\Interface\CacheServiceInterface;
 
 /**
  * Professional Task Cache Service
- * Handles all task-related caching with Redis
+ * Handles all task-related caching with Redis using SimpleRedisCache
  */
 final readonly class TaskCacheService
 {
@@ -21,7 +20,7 @@ final readonly class TaskCacheService
     private const TTL_OVERDUE_TASKS = 120;  // 2 minutes
 
     public function __construct(
-        private CacheServiceInterface $cacheService,
+        private SimpleRedisCache $cacheService,
         private RedisKeyManager $keyManager,
     ) {
     }
@@ -110,7 +109,39 @@ final readonly class TaskCacheService
     }
 
     /**
-     * Invalidate task list caches (when task list changes)
+     * UPDATE: Update all task list caches with fresh data
+     * This is MORE PERFORMANT than invalidate - user gets instant fresh data!
+     */
+    public function updateTaskListsCache(User $user, callable $fetchCallback): int
+    {
+        $pattern = $this->keyManager->buildUserPattern($user, 'tasks_list');
+
+        // Find all existing cache keys for task lists
+        $redis = $this->cacheService->getRedis();
+        $keys = $redis->keys($this->cacheService->getPrefix() . $pattern);
+
+        if (empty($keys)) {
+            return 0; // No caches to update
+        }
+
+        // Fetch fresh data ONCE
+        $freshTasks = $fetchCallback();
+
+        // Update ALL existing cache keys with fresh data
+        $updated = 0;
+        foreach ($keys as $fullKey) {
+            $serialized = serialize($freshTasks);
+            if ($redis->setex($fullKey, self::TTL_TASK_LIST, $serialized)) {
+                $updated++;
+            }
+        }
+
+        return $updated;
+    }
+
+    /**
+     * LEGACY: Invalidate task list caches (delete approach - slower)
+     * Use updateTaskListsCache() for better performance!
      */
     public function invalidateTaskLists(User $user): int
     {
@@ -120,7 +151,21 @@ final readonly class TaskCacheService
     }
 
     /**
-     * Invalidate task statistics
+     * UPDATE: Update statistics cache with fresh data
+     */
+    public function updateStatisticsCache(User $user, callable $fetchCallback): bool
+    {
+        $key = $this->keyManager->buildTaskStatsKey($user);
+
+        // Fetch fresh statistics
+        $freshStats = $fetchCallback();
+
+        // Update cache
+        return $this->cacheService->set($key, $freshStats, self::TTL_TASK_STATS);
+    }
+
+    /**
+     * LEGACY: Invalidate task statistics
      */
     public function invalidateStatistics(User $user): bool
     {
@@ -130,7 +175,62 @@ final readonly class TaskCacheService
     }
 
     /**
-     * Invalidate dynamic task views (today, overdue, upcoming)
+     * UPDATE: Update dynamic views caches with fresh data
+     */
+    public function updateDynamicViewsCache(User $user, array $callbacks): int
+    {
+        $updated = 0;
+
+        // Update today's tasks if callback provided
+        if (isset($callbacks['today'])) {
+            $pattern = $this->keyManager->buildUserPattern($user, 'tasks_today');
+            $keys = $this->cacheService->getRedis()->keys($this->cacheService->getPrefix() . $pattern);
+
+            if (!empty($keys)) {
+                $freshData = $callbacks['today']();
+                foreach ($keys as $fullKey) {
+                    if ($this->cacheService->getRedis()->setex($fullKey, self::TTL_TODAY_TASKS, serialize($freshData))) {
+                        $updated++;
+                    }
+                }
+            }
+        }
+
+        // Update overdue tasks if callback provided
+        if (isset($callbacks['overdue'])) {
+            $pattern = $this->keyManager->buildUserPattern($user, 'tasks_overdue');
+            $keys = $this->cacheService->getRedis()->keys($this->cacheService->getPrefix() . $pattern);
+
+            if (!empty($keys)) {
+                $freshData = $callbacks['overdue']();
+                foreach ($keys as $fullKey) {
+                    if ($this->cacheService->getRedis()->setex($fullKey, self::TTL_OVERDUE_TASKS, serialize($freshData))) {
+                        $updated++;
+                    }
+                }
+            }
+        }
+
+        // Update upcoming tasks if callback provided
+        if (isset($callbacks['upcoming'])) {
+            $pattern = $this->keyManager->buildUserPattern($user, 'tasks_upcoming');
+            $keys = $this->cacheService->getRedis()->keys($this->cacheService->getPrefix() . $pattern);
+
+            if (!empty($keys)) {
+                $freshData = $callbacks['upcoming']();
+                foreach ($keys as $fullKey) {
+                    if ($this->cacheService->getRedis()->setex($fullKey, self::TTL_TASK_LIST, serialize($freshData))) {
+                        $updated++;
+                    }
+                }
+            }
+        }
+
+        return $updated;
+    }
+
+    /**
+     * LEGACY: Invalidate dynamic task views (today, overdue, upcoming)
      */
     public function invalidateDynamicViews(User $user): int
     {

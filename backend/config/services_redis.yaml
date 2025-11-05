@@ -1,0 +1,12 @@
+# Simple Redis Cache Configuration
+# Использует нативный PHP Redis extension
+
+services:
+    # Простой Redis Cache Service
+    App\Service\Cache\SimpleRedisCache:
+        public: true
+        arguments:
+            $logger: '@logger'
+            $redisUrl: '%env(REDIS_URL)%'
+            $prefix: 'app:'
+            $defaultTtl: 900  # 15 minutes

@@ -19,6 +19,8 @@ use App\Repository\Database\MediaObjectRepository;
 use App\Entity\MediaObject;
 use App\Service\RecurrenceService;
 use App\Service\TranslationService;
+use App\Service\Cache\TaskCacheService;
+use App\Service\Cache\AnalyticsCacheService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Doctrine\ORM\Tools\Pagination\Paginator;
@@ -31,6 +33,8 @@ final class TaskService
         private readonly TagRepository $tagRepository,
         private readonly EntityManagerInterface $entityManager,
         private readonly MediaObjectRepository $mediaObjectRepository,
+        private readonly TaskCacheService $taskCache,
+        private readonly AnalyticsCacheService $analyticsCache,
         private readonly ?RecurrenceService $recurrenceService = null,
         private readonly ?TranslationService $translationService = null,
         private readonly ?RequestStack $requestStack = null
@@ -113,11 +117,14 @@ final class TaskService
 
         // Handle recurrence if specified
         if ($dto->recurrence !== null && $this->recurrenceService !== null) {
-            $this->recurrenceService->createRecurrenceRule($task, 
+            $this->recurrenceService->createRecurrenceRule($task,
                 $dto->recurrence['recurrenceType'] ?? 'daily',
                 $dto->recurrence
             );
         }
+
+        // UPDATE cache after creation (instant fresh data!)
+        $this->updateTaskCache($user);
 
         return $task;
     }
@@ -198,6 +205,9 @@ final class TaskService
         // Update tag usage counts
         $this->tagRepository->updateUsageCounts($user);
 
+        // UPDATE cache after update (instant fresh data!)
+        $this->updateTaskCache($user);
+
         return $task;
     }
 
@@ -213,6 +223,9 @@ final class TaskService
 
         // Update tag usage counts
         $this->tagRepository->updateUsageCounts($user);
+
+        // UPDATE cache after deletion (instant fresh data!)
+        $this->updateTaskCache($user);
     }
 
     /**
@@ -224,6 +237,9 @@ final class TaskService
 
         $task->setStatus(TaskStatus::COMPLETED);
         $this->entityManager->flush();
+
+        // UPDATE cache after completion (instant fresh data!)
+        $this->updateTaskCache($user);
 
         return $task;
     }
@@ -243,6 +259,9 @@ final class TaskService
 
         $this->entityManager->flush();
 
+        // UPDATE cache after modification (instant fresh data!)
+        $this->updateTaskCache($user);
+
         return $task;
     }
 
@@ -256,6 +275,9 @@ final class TaskService
         $task->setIsArchived(true);
         $this->entityManager->flush();
 
+        // UPDATE cache after archiving (instant fresh data!)
+        $this->updateTaskCache($user);
+
         return $task;
     }
 
@@ -268,6 +290,9 @@ final class TaskService
 
         $task->setIsArchived(false);
         $this->entityManager->flush();
+
+        // UPDATE cache after unarchiving (instant fresh data!)
+        $this->updateTaskCache($user);
 
         return $task;
     }
@@ -390,7 +415,7 @@ final class TaskService
 
     /**
      * Ensure user can modify the task
-     * 
+     *
      * @throws TaskAccessDeniedException
      */
     private function ensureUserCanModifyTask(Task $task, User $user): void
@@ -398,5 +423,60 @@ final class TaskService
         if ($task->getUser() !== $user) {
             throw new TaskAccessDeniedException('You do not have permission to modify this task.');
         }
+    }
+
+    /**
+     * UPDATE task caches after modification (HIGH PERFORMANCE approach!)
+     *
+     * STRATEGY:
+     * - TASKS: UPDATE cache with fresh data (instant access, no delay!)
+     * - ANALYTICS: INVALIDATE cache (complex queries, recalculate on demand)
+     */
+    private function updateTaskCache(User $user): void
+    {
+        // UPDATE task lists with fresh data (NO DELAY for user!)
+        $this->taskCache->updateTaskListsCache($user, function () use ($user) {
+            return $this->taskRepository->findUserTasks($user);
+        });
+
+        // UPDATE dynamic views with fresh data
+        $this->taskCache->updateDynamicViewsCache($user, [
+            'today' => fn() => $this->taskRepository->findTodayTasks($user),
+            'overdue' => fn() => $this->taskRepository->findOverdueTasks($user),
+            'upcoming' => fn() => $this->taskRepository->findUpcomingTasks($user, 7),
+        ]);
+
+        // UPDATE statistics with fresh data
+        $this->taskCache->updateStatisticsCache($user, function () use ($user) {
+            return $this->taskRepository->getUserTaskStatistics($user);
+        });
+
+        // INVALIDATE analytics (complex, will recalculate on demand)
+        $this->analyticsCache->invalidate($user, 'overview');
+        $this->analyticsCache->invalidate($user, 'dashboard');
+        $this->analyticsCache->invalidateDistributions($user);
+        $this->analyticsCache->invalidateTimeBased($user);
+    }
+
+    /**
+     * LEGACY: Old invalidate approach (kept for compatibility)
+     * Use updateTaskCache() for better performance!
+     */
+    private function invalidateTaskCache(User $user): void
+    {
+        // Invalidate task lists
+        $this->taskCache->invalidateTaskLists($user);
+
+        // Invalidate dynamic views
+        $this->taskCache->invalidateDynamicViews($user);
+
+        // Invalidate statistics
+        $this->taskCache->invalidateStatistics($user);
+
+        // Invalidate analytics
+        $this->analyticsCache->invalidate($user, 'overview');
+        $this->analyticsCache->invalidate($user, 'dashboard');
+        $this->analyticsCache->invalidateDistributions($user);
+        $this->analyticsCache->invalidateTimeBased($user);
     }
 }

@@ -8,7 +8,10 @@ use App\Service\Cache\Interface\CacheServiceInterface;
 use App\Service\Cache\Interface\CacheKeyManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Cache\Adapter\RedisAdapter;
+use Symfony\Component\Cache\Adapter\TagAwareAdapter;
+use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
+use Symfony\Contracts\Cache\TagAwareCacheInterface;
 
 /**
  * Professional Redis Cache Service
@@ -21,7 +24,7 @@ final class RedisCacheService implements CacheServiceInterface
     private int $misses = 0;
 
     public function __construct(
-        private readonly RedisAdapter $redisAdapter,
+        private readonly TagAwareCacheInterface $redisAdapter,
         private readonly CacheKeyManagerInterface $keyManager,
         private readonly LoggerInterface $logger,
         private readonly int $defaultTtl = 900,
@@ -34,29 +37,62 @@ final class RedisCacheService implements CacheServiceInterface
      */
     private function initializeRedisConnection(): void
     {
-        try {
-            // Get native Redis connection from adapter
-            $this->redis = $this->redisAdapter->getConnection();
-        } catch (\Throwable $e) {
-            $this->logger->error('Failed to initialize Redis connection', [
-                'error' => $e->getMessage()
-            ]);
-            $this->redis = null;
-        }
+        // TEMPORARY FIX: Disable native Redis connection initialization
+        // The RedisAdapter::getConnection() method may block or cause issues
+        // We'll use only Symfony's RedisAdapter which works fine
+        // Pattern operations (deleteByPattern) will be disabled but cache will work
+
+        $this->redis = null;
+
+        // Original code commented out:
+        // try {
+        //     $this->redis = $this->redisAdapter->getConnection();
+        // } catch (\Throwable $e) {
+        //     $this->logger->error('Failed to initialize Redis connection', [
+        //         'error' => $e->getMessage()
+        //     ]);
+        //     $this->redis = null;
+        // }
     }
 
     public function get(string $key, callable $callback, ?int $ttl = null): mixed
     {
         try {
-            return $this->redisAdapter->get($key, function (ItemInterface $item) use ($callback, $ttl) {
-                $item->expiresAfter($ttl ?? $this->defaultTtl);
-                $this->misses++;
-                return $callback();
-            });
+            // Force commit any deferred items first
+            $this->redisAdapter->commit();
+
+            $item = $this->redisAdapter->getItem($key);
+
+            if ($item->isHit()) {
+                $this->hits++;
+                $this->logger->debug('Cache hit', ['key' => $key]);
+                return $item->get();
+            }
+
+            // Cache miss - compute value
+            $this->misses++;
+            $this->logger->debug('Cache miss', ['key' => $key]);
+            $value = $callback();
+
+            $item->set($value);
+            $item->expiresAfter($ttl ?? $this->defaultTtl);
+
+            // Force immediate save to Redis
+            $saved = $this->redisAdapter->save($item);
+            $this->redisAdapter->commit(); // Force commit to ensure it's in Redis
+
+            $this->logger->debug('Cache save result', [
+                'key' => $key,
+                'saved' => $saved,
+                'ttl' => $ttl ?? $this->defaultTtl
+            ]);
+
+            return $value;
         } catch (\Throwable $e) {
             $this->logger->error('Cache get failed', [
                 'key' => $key,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
             // Fallback to direct computation
             return $callback();
@@ -70,7 +106,10 @@ final class RedisCacheService implements CacheServiceInterface
             $item->set($value);
             $item->expiresAfter($ttl ?? $this->defaultTtl);
 
-            return $this->redisAdapter->save($item);
+            $result = $this->redisAdapter->save($item);
+            $this->redisAdapter->commit(); // Force commit to ensure it's in Redis
+
+            return $result;
         } catch (\Throwable $e) {
             $this->logger->error('Cache set failed', [
                 'key' => $key,

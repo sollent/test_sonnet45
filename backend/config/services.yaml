@@ -6,6 +6,7 @@
 
 imports:
     - { resource: services_cache.yaml }
+    - { resource: services_redis.yaml }
 
 parameters:
 
@@ -28,3 +29,28 @@ services:
     # please note that last definitions always *replace* previous ones
 
     App\Security\GoogleAuthenticator: ~
+
+    # Make TaskService public for testing
+    App\Service\TaskService:
+        public: true
+
+    # Make SimpleRedisCache public for testing
+    App\Service\Cache\SimpleRedisCache:
+        public: true
+
+    # Make TaskCacheService public for testing
+    App\Service\Cache\TaskCacheService:
+        public: true
+
+    # Make AnalyticsCacheService public for testing
+    App\Service\Cache\AnalyticsCacheService:
+        public: true
+
+    # Make AnalyticsService public for testing
+    App\Service\AnalyticsService:
+        public: true
+
+    # Cache Invalidation Event Subscriber
+    App\EventSubscriber\CacheInvalidationSubscriber:
+        tags:
+            - { name: doctrine.event_subscriber }

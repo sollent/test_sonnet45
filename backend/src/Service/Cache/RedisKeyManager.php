@@ -93,10 +93,22 @@ final class RedisKeyManager implements CacheKeyManagerInterface
     public function buildUserPattern(User $user, ?string $type = null): string
     {
         if ($type === null) {
-            return $this->buildPattern('user_*', ['uid' => $user->getId()]);
+            // Match all user keys: app:prod:user_*:uid_1*
+            return implode(self::KEY_SEPARATOR, [
+                self::APP_PREFIX,
+                $this->environment,
+                'user_*',
+                "uid_{$user->getId()}*"
+            ]);
         }
 
-        return $this->buildPattern("user_{$type}", ['uid' => $user->getId(), '*' => '*']);
+        // Match specific type: app:prod:user_tasks_list:*:uid_1* or app:prod:user_tasks_list:*uid_1*
+        return implode(self::KEY_SEPARATOR, [
+            self::APP_PREFIX,
+            $this->environment,
+            "user_{$type}",
+            '*'
+        ]) . "*uid_{$user->getId()}*";
     }
 
     public function generateTags(string $namespace, array $params): array

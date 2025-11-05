@@ -5,11 +5,10 @@ declare(strict_types=1);
 namespace App\Service\Cache;
 
 use App\Entity\User;
-use App\Service\Cache\Interface\CacheServiceInterface;
 
 /**
  * Professional Analytics Cache Service
- * Handles all analytics-related caching with Redis
+ * Handles all analytics-related caching with Redis using SimpleRedisCache
  * Caches ALL analytics methods, not just dashboard
  */
 final readonly class AnalyticsCacheService
@@ -27,7 +26,7 @@ final readonly class AnalyticsCacheService
     private const TTL_STREAK = 300;                  // 5 minutes
 
     public function __construct(
-        private CacheServiceInterface $cacheService,
+        private SimpleRedisCache $cacheService,
         private RedisKeyManager $keyManager,
     ) {
     }
@@ -166,11 +165,21 @@ final readonly class AnalyticsCacheService
 
     /**
      * Invalidate specific analytics cache
+     * For types with parameters (like dashboard), uses pattern matching
      */
-    public function invalidate(User $user, string $type): bool
+    public function invalidate(User $user, string $type): bool|int
     {
-        $key = $this->keyManager->buildAnalyticsKey($user, $type);
+        // Dashboard and other parametrized types should use pattern matching
+        $typesWithParams = ['dashboard', 'heatmap', 'timeline', 'timeline_range', 'top_tags'];
 
+        if (in_array($type, $typesWithParams, true)) {
+            // Use pattern to delete all variations
+            $pattern = $this->keyManager->buildUserPattern($user, "analytics_{$type}");
+            return $this->cacheService->deleteByPattern($pattern);
+        }
+
+        // Simple types use exact key
+        $key = $this->keyManager->buildAnalyticsKey($user, $type);
         return $this->cacheService->delete($key);
     }
 

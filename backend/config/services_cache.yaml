@@ -2,6 +2,22 @@
 # Include this in your main services.yaml
 
 services:
+    # Redis connection - create the actual Redis/RedisCluster connection
+    redis.connection:
+        class: Redis
+        factory: ['Symfony\Component\Cache\Adapter\RedisAdapter', 'createConnection']
+        arguments:
+            - '%env(REDIS_URL)%'
+
+    # Custom Redis adapter that we'll use directly
+    app.redis.adapter:
+        class: Symfony\Component\Cache\Adapter\RedisTagAwareAdapter
+        public: true
+        arguments:
+            - '@redis.connection'
+            - 'app_cache_'  # namespace prefix
+            - 900 # default lifetime
+
     # Redis Key Manager
     App\Service\Cache\RedisKeyManager:
         arguments:
@@ -9,8 +25,9 @@ services:
 
     # Main Redis Cache Service
     App\Service\Cache\RedisCacheService:
+        public: true  # Make it public for testing
         arguments:
-            $redisAdapter: '@cache.adapter.redis'
+            $redisAdapter: '@app.redis.adapter'  # Use our custom Redis adapter
             $keyManager: '@App\Service\Cache\RedisKeyManager'
             $logger: '@logger'
             $defaultTtl: 900
@@ -22,39 +39,16 @@ services:
     App\Service\Cache\Interface\CacheKeyManagerInterface:
         alias: App\Service\Cache\RedisKeyManager
 
-    # Task Cache Service (uses new architecture)
+    # Task Cache Service (uses SimpleRedisCache)
     App\Service\Cache\TaskCacheService:
+        public: true  # Make it public for testing
         arguments:
-            $cacheService: '@App\Service\Cache\RedisCacheService'
+            $cacheService: '@App\Service\Cache\SimpleRedisCache'
             $keyManager: '@App\Service\Cache\RedisKeyManager'
 
-    # Analytics Cache Service (uses new architecture)
+    # Analytics Cache Service (uses SimpleRedisCache)
     App\Service\Cache\AnalyticsCacheService:
+        public: true  # Make it public for testing
         arguments:
-            $cacheService: '@App\Service\Cache\RedisCacheService'
+            $cacheService: '@App\Service\Cache\SimpleRedisCache'
             $keyManager: '@App\Service\Cache\RedisKeyManager'
-
-    # Updated Cache Invalidation Listener
-    App\EventListener\CacheInvalidationListener:
-        arguments:
-            $taskCache: '@App\Service\Cache\TaskCacheService'
-            $analyticsCache: '@App\Service\Cache\AnalyticsCacheService'
-            $logger: '@logger'
-        tags:
-            - { name: 'doctrine.event_listener', event: 'postPersist' }
-            - { name: 'doctrine.event_listener', event: 'postUpdate' }
-            - { name: 'doctrine.event_listener', event: 'postRemove' }
-
-    # Task Repository with new cache
-    App\Repository\Database\TaskRepository:
-        arguments:
-            $registry: '@doctrine'
-            $taskCache: '@App\Service\Cache\TaskCacheService'
-        tags: ['doctrine.repository_service']
-
-    # Analytics Service with new cache
-    App\Service\AnalyticsService:
-        arguments:
-            $taskRepository: '@App\Repository\Database\TaskRepository'
-            $tagRepository: '@App\Repository\Database\TagRepository'
-            $analyticsCache: '@App\Service\Cache\AnalyticsCacheService'

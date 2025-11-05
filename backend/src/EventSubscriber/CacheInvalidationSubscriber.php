@@ -2,33 +2,43 @@
 
 declare(strict_types=1);
 
-namespace App\EventListener;
+namespace App\EventSubscriber;
 
 use App\Entity\Task;
 use App\Entity\Tag;
 use App\Service\Cache\TaskCacheService;
 use App\Service\Cache\AnalyticsCacheService;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;
+use Doctrine\Common\EventSubscriber;
+use Doctrine\ORM\Events;
 use Doctrine\ORM\Event\PostPersistEventArgs;
 use Doctrine\ORM\Event\PostRemoveEventArgs;
 use Doctrine\ORM\Event\PostUpdateEventArgs;
-use Doctrine\ORM\Events;
 use Psr\Log\LoggerInterface;
 
 /**
- * Professional Cache Invalidation Listener
+ * Professional Cache Invalidation Subscriber
  * Uses intelligent selective invalidation instead of clearing everything
  */
-#[AsDoctrineListener(event: Events::postPersist)]
-#[AsDoctrineListener(event: Events::postUpdate)]
-#[AsDoctrineListener(event: Events::postRemove)]
-final readonly class CacheInvalidationListener
+final readonly class CacheInvalidationSubscriber implements EventSubscriber
 {
     public function __construct(
         private TaskCacheService $taskCache,
         private AnalyticsCacheService $analyticsCache,
         private LoggerInterface $logger,
     ) {
+    }
+
+    /**
+     * Returns list of events this subscriber is listening to
+     */
+    public function getSubscribedEvents(): array
+    {
+        return [
+            Events::postPersist,
+            Events::postUpdate,
+            Events::postRemove,
+        ];
     }
 
     public function postPersist(PostPersistEventArgs $args): void
@@ -38,7 +48,12 @@ final readonly class CacheInvalidationListener
 
     public function postUpdate(PostUpdateEventArgs $args): void
     {
-        $this->handleCacheInvalidation($args->getObject(), 'update');
+        $entity = $args->getObject();
+        $this->logger->info('[CacheInvalidation] postUpdate triggered', [
+            'entity' => get_class($entity),
+            'entity_id' => method_exists($entity, 'getId') ? $entity->getId() : 'N/A'
+        ]);
+        $this->handleCacheInvalidation($entity, 'update');
     }
 
     public function postRemove(PostRemoveEventArgs $args): void
@@ -121,7 +136,6 @@ final readonly class CacheInvalidationListener
         $this->analyticsCache->invalidate($user, 'insights');
 
         // Invalidate dashboard (aggregates everything)
-        $pattern = $user->getId() . '_dashboard';
         $this->analyticsCache->invalidate($user, 'dashboard');
     }
 
