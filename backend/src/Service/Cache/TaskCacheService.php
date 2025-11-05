@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Service\Cache;
 
+use App\Dto\Response\Task\TaskResponseDto;
+use App\Entity\Task;
 use App\Entity\User;
 
 /**
@@ -27,12 +29,60 @@ final readonly class TaskCacheService
 
     /**
      * Get or compute task list for user
+     *
+     * Strategy: JSON serialization for optimal storage and readability
+     *
+     * Flow:
+     * 1. Cache HIT:  Redis JSON → Array → TaskResponseDto[]
+     * 2. Cache MISS: DB Task[] → TaskResponseDto[] → JSON → Redis
+     *
+     * @param User $user The user to fetch tasks for
+     * @param array $filters Filter parameters for the task list
+     * @param callable $callback Callback that returns Task[] entities from database
+     * @return TaskResponseDto[] Array of task response DTOs
      */
-    public function getTaskList(User $user, array $filters, callable $callback): mixed
+    public function getTaskList(User $user, array $filters, callable $callback): array
     {
         $key = $this->keyManager->buildTaskListKey($user, $filters);
+        $redis = $this->cacheService->getRedis();
+        $fullKey = $this->cacheService->getPrefix() . $key;
 
-        return $this->cacheService->get($key, $callback, self::TTL_TASK_LIST);
+        // Try to get from cache
+        $cached = $redis->get($fullKey);
+
+        if ($cached !== false) {
+            // Cache HIT: Deserialize JSON → Array → TaskResponseDto[]
+            $tasksArray = json_decode($cached, true);
+
+            if (json_last_error() === JSON_ERROR_NONE && is_array($tasksArray)) {
+                // Convert array to TaskResponseDto objects (SOLID: Single Responsibility)
+                return array_map(
+                    fn(array $taskData) => TaskResponseDto::fromArray($taskData),
+                    $tasksArray
+                );
+            }
+        }
+
+        // Cache MISS: Fetch from database
+        /** @var Task[] $tasks */
+        $tasks = $callback();
+
+        // Convert Entity → DTO (SOLID: Dependency Inversion - callback provides entities)
+        // IMPORTANT: includeSubtasks: FALSE for list views to prevent memory exhaustion
+        // Subtasks are loaded separately when user opens a specific task (GET /api/tasks/{id}?includeSubtasks=true)
+        $taskDtos = array_map(
+            fn(Task $task) => TaskResponseDto::fromEntity($task, includeSubtasks: false, includeMeta: true),
+            $tasks
+        );
+
+        // Serialize DTO → JSON (human-readable format for Redis)
+        // Using json_encode() directly since DTOs are simple data containers with public properties
+        $json = json_encode($taskDtos, JSON_THROW_ON_ERROR);
+
+        // Store in cache
+        $redis->setex($fullKey, self::TTL_TASK_LIST, $json);
+
+        return $taskDtos;
     }
 
     /**
@@ -110,7 +160,13 @@ final readonly class TaskCacheService
 
     /**
      * UPDATE: Update all task list caches with fresh data
+     *
+     * Strategy: Fetch once, serialize once, update all cache entries
      * This is MORE PERFORMANT than invalidate - user gets instant fresh data!
+     *
+     * @param User $user The user whose cache to update
+     * @param callable $fetchCallback Callback that returns fresh Task[] entities
+     * @return int Number of cache entries updated
      */
     public function updateTaskListsCache(User $user, callable $fetchCallback): int
     {
@@ -124,14 +180,33 @@ final readonly class TaskCacheService
             return 0; // No caches to update
         }
 
-        // Fetch fresh data ONCE
+        // Fetch fresh data ONCE (GRASP: Information Expert - callback knows how to fetch)
+        /** @var Task[] $freshTasks */
         $freshTasks = $fetchCallback();
 
-        // Update ALL existing cache keys with fresh data
+        // Convert Entity → DTO ONCE (avoid duplicate work)
+        // IMPORTANT: includeSubtasks: FALSE for bulk cache updates to prevent memory exhaustion
+        // Subtasks are loaded separately when user opens a specific task
+        // Check if we have entities or DTOs
+        if (!empty($freshTasks) && $freshTasks[0] instanceof TaskResponseDto) {
+            // Already DTOs, use them directly
+            $taskDtos = $freshTasks;
+        } else {
+            // Convert entities to DTOs WITHOUT subtasks (memory optimization)
+            $taskDtos = array_map(
+                fn(Task $task) => TaskResponseDto::fromEntity($task, includeSubtasks: false, includeMeta: true),
+                $freshTasks
+            );
+        }
+
+        // Serialize to JSON ONCE
+        // Using json_encode() directly since DTOs are simple data containers with public properties
+        $json = json_encode($taskDtos, JSON_THROW_ON_ERROR);
+
+        // Update ALL existing cache keys with the same fresh JSON
         $updated = 0;
         foreach ($keys as $fullKey) {
-            $serialized = serialize($freshTasks);
-            if ($redis->setex($fullKey, self::TTL_TASK_LIST, $serialized)) {
+            if ($redis->setex($fullKey, self::TTL_TASK_LIST, $json)) {
                 $updated++;
             }
         }
@@ -176,52 +251,64 @@ final readonly class TaskCacheService
 
     /**
      * UPDATE: Update dynamic views caches with fresh data
+     *
+     * Updates special task views (today, overdue, upcoming) with fresh JSON data
+     *
+     * @param User $user The user whose cache to update
+     * @param array $callbacks Associative array of callbacks ['today' => callable, 'overdue' => callable, 'upcoming' => callable]
+     * @return int Number of cache entries updated
      */
     public function updateDynamicViewsCache(User $user, array $callbacks): int
     {
+        $redis = $this->cacheService->getRedis();
         $updated = 0;
 
-        // Update today's tasks if callback provided
-        if (isset($callbacks['today'])) {
-            $pattern = $this->keyManager->buildUserPattern($user, 'tasks_today');
-            $keys = $this->cacheService->getRedis()->keys($this->cacheService->getPrefix() . $pattern);
+        // Define views configuration (GRASP: Low Coupling - centralized configuration)
+        $views = [
+            'today' => ['pattern' => 'tasks_today', 'ttl' => self::TTL_TODAY_TASKS],
+            'overdue' => ['pattern' => 'tasks_overdue', 'ttl' => self::TTL_OVERDUE_TASKS],
+            'upcoming' => ['pattern' => 'tasks_upcoming', 'ttl' => self::TTL_TASK_LIST],
+        ];
 
-            if (!empty($keys)) {
-                $freshData = $callbacks['today']();
-                foreach ($keys as $fullKey) {
-                    if ($this->cacheService->getRedis()->setex($fullKey, self::TTL_TODAY_TASKS, serialize($freshData))) {
-                        $updated++;
-                    }
-                }
+        foreach ($views as $viewName => $config) {
+            if (!isset($callbacks[$viewName])) {
+                continue; // Skip if no callback provided
             }
-        }
 
-        // Update overdue tasks if callback provided
-        if (isset($callbacks['overdue'])) {
-            $pattern = $this->keyManager->buildUserPattern($user, 'tasks_overdue');
-            $keys = $this->cacheService->getRedis()->keys($this->cacheService->getPrefix() . $pattern);
+            $pattern = $this->keyManager->buildUserPattern($user, $config['pattern']);
+            $keys = $redis->keys($this->cacheService->getPrefix() . $pattern);
 
-            if (!empty($keys)) {
-                $freshData = $callbacks['overdue']();
-                foreach ($keys as $fullKey) {
-                    if ($this->cacheService->getRedis()->setex($fullKey, self::TTL_OVERDUE_TASKS, serialize($freshData))) {
-                        $updated++;
-                    }
-                }
+            if (empty($keys)) {
+                continue; // No caches to update for this view
             }
-        }
 
-        // Update upcoming tasks if callback provided
-        if (isset($callbacks['upcoming'])) {
-            $pattern = $this->keyManager->buildUserPattern($user, 'tasks_upcoming');
-            $keys = $this->cacheService->getRedis()->keys($this->cacheService->getPrefix() . $pattern);
+            // Fetch fresh data ONCE per view
+            /** @var Task[] $freshTasks */
+            $freshTasks = $callbacks[$viewName]();
 
-            if (!empty($keys)) {
-                $freshData = $callbacks['upcoming']();
-                foreach ($keys as $fullKey) {
-                    if ($this->cacheService->getRedis()->setex($fullKey, self::TTL_TASK_LIST, serialize($freshData))) {
-                        $updated++;
-                    }
+            // Convert Entity → DTO ONCE
+            // IMPORTANT: includeSubtasks: FALSE for bulk cache updates to prevent memory exhaustion
+            // Subtasks are loaded separately when user opens a specific task
+            // Check if we have entities or DTOs
+            if (!empty($freshTasks) && $freshTasks[0] instanceof TaskResponseDto) {
+                // Already DTOs, use them directly
+                $taskDtos = $freshTasks;
+            } else {
+                // Convert entities to DTOs WITHOUT subtasks (memory optimization)
+                $taskDtos = array_map(
+                    fn(Task $task) => TaskResponseDto::fromEntity($task, includeSubtasks: false, includeMeta: true),
+                    $freshTasks
+                );
+            }
+
+            // Serialize to JSON ONCE
+            // Using json_encode() directly since DTOs are simple data containers with public properties
+            $json = json_encode($taskDtos, JSON_THROW_ON_ERROR);
+
+            // Update all cache keys for this view
+            foreach ($keys as $fullKey) {
+                if ($redis->setex($fullKey, $config['ttl'], $json)) {
+                    $updated++;
                 }
             }
         }

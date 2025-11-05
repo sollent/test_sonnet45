@@ -15,3 +15,7 @@ when@test:
 
     framework:
         profiler: { collect: false }
+
+when@prod:
+    framework:
+        profiler: { enabled: false, collect: false }

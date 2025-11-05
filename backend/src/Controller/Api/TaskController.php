@@ -160,13 +160,20 @@ class TaskController extends AbstractController
             };
         }
 
-        $response = array_map(
-            fn(Task $task) => TaskResponseDto::fromEntity($task, false, false),
-            $tasks
-        );
-        
+        // Check if tasks are already DTOs (from cache) or entities (from DB)
+        if (!empty($tasks) && $tasks[0] instanceof TaskResponseDto) {
+            // Already DTOs from cache - use as is
+            $response = $tasks;
+        } else {
+            // Entities from DB - convert to DTOs
+            $response = array_map(
+                fn(Task $task) => TaskResponseDto::fromEntity($task, false, false),
+                $tasks
+            );
+        }
+
         $response = $this->enrichDtosWithTranslations($response, $request);
-        
+
         return $this->json($response);
     }
 
