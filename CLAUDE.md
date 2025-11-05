@@ -17,18 +17,16 @@
 ### What is this project?
 
 **Task Management System** - Full-stack application with advanced features:
-- **Backend**: Symfony 6.4 + PHP 8.3 + PostgreSQL 16 + Redis 7
+- **Backend**: Symfony 7.1 + PHP 8.3 + PostgreSQL 16
 - **Frontend**: Vue.js 3.4 + TypeScript 5.4 + Pinia + PrimeVue
 - **Infrastructure**: Docker (all backend services)
-- **Cache**: Hybrid UPDATE/INVALIDATE strategy (200-700x performance)
 
 ### Key Features
 - ✅ Tasks with subtasks (unlimited nesting)
 - ✅ Tags, priorities, statuses, due dates
-- ✅ Advanced analytics (9 cached endpoints)
+- ✅ Advanced analytics
 - ✅ Calendar integration
 - ✅ JWT + Google OAuth authentication
-- ✅ Redis caching with UPDATE strategy
 - ✅ i18n support (EN/RU/UK)
 
 ---
@@ -42,12 +40,6 @@
    - PHP 8.3 modern standards (readonly, enums, match)
    - TypeScript strict mode rules
    - ✅ GOOD / ❌ BAD code examples
-
-2. **[`docs/backend/CACHE_SYSTEM.md`](docs/backend/CACHE_SYSTEM.md)** ⚠️ **CRITICAL**
-   - Hybrid UPDATE/INVALIDATE strategy
-   - When to use each approach
-   - Memory optimization (includeSubtasks: false!)
-   - Redis commands & debugging
 
 ### 📚 Architecture & Setup
 
@@ -67,7 +59,7 @@
 
 | Topic | Document | Key Info |
 |-------|----------|----------|
-| **Daily Workflow** | [`docs/guides/DEVELOPMENT_WORKFLOW.md`](docs/guides/DEVELOPMENT_WORKFLOW.md) | Docker commands, migrations, Redis, PostgreSQL |
+| **Daily Workflow** | [`docs/guides/DEVELOPMENT_WORKFLOW.md`](docs/guides/DEVELOPMENT_WORKFLOW.md) | Docker commands, migrations, PostgreSQL |
 | **Testing** | [`docs/guides/TESTING.md`](docs/guides/TESTING.md) | PHPUnit, Vitest, test organization |
 | **Troubleshooting** | [`docs/guides/TROUBLESHOOTING.md`](docs/guides/TROUBLESHOOTING.md) | All solved issues & solutions |
 
@@ -92,9 +84,6 @@ docker exec backend-php83 php bin/console <command>
 
 # Migrations
 docker exec backend-php83 php bin/console doctrine:migrations:migrate
-
-# Redis CLI
-docker exec -it backend-redis redis-cli
 ```
 
 **IMPORTANT**: Docker config is at `docker/docker-compose.yml`
@@ -120,9 +109,6 @@ npm run test:run
 
 **"How to write code?"**
 → Read [`docs/CODING_STANDARDS.md`](docs/CODING_STANDARDS.md)
-
-**"How does caching work?"**
-→ Read [`docs/backend/CACHE_SYSTEM.md`](docs/backend/CACHE_SYSTEM.md)
 
 **"What endpoints exist?"**
 → Read [`docs/backend/API_REFERENCE.md`](docs/backend/API_REFERENCE.md)
@@ -156,13 +142,6 @@ npm run test:run
 ❌ **DON'T**: Write fat controllers (use services!)
 ❌ **DON'T**: Mix business logic with HTTP layer
 
-### Cache Strategy
-✅ **DO**: Use UPDATE strategy for task lists
-✅ **DO**: Use INVALIDATE strategy for analytics
-✅ **DO**: Set `includeSubtasks: false` for bulk cache operations
-❌ **DON'T**: Include subtasks in list caches (memory exhaustion!)
-❌ **DON'T**: Use Symfony Serializer for cache (use json_encode)
-
 ### Docker
 ✅ **DO**: Use `docker/docker-compose.yml` (main config)
 ✅ **DO**: Run backend commands via `docker exec backend-php83`
@@ -182,7 +161,6 @@ test_sonnet45/
 │   ├── PROJECT_OVERVIEW.md
 │   ├── TECH_STACK.md
 │   ├── backend/
-│   │   ├── CACHE_SYSTEM.md        # ⚠️ CRITICAL
 │   │   ├── API_REFERENCE.md
 │   │   ├── ARCHITECTURE.md
 │   │   ├── DATABASE.md
@@ -197,7 +175,7 @@ test_sonnet45/
 │       └── TROUBLESHOOTING.md
 ├── docker/
 │   └── docker-compose.yml          # Main Docker config
-├── backend/                        # Symfony 6.4
+├── backend/                        # Symfony 7.1
 │   ├── src/
 │   │   ├── Controller/
 │   │   ├── Service/
@@ -223,9 +201,8 @@ test_sonnet45/
 1. **Read this file** (CLAUDE.md) for quick context
 2. **Navigate to relevant docs** using links above
 3. **Follow coding standards** (CODING_STANDARDS.md)
-4. **Check cache strategy** if working with data (CACHE_SYSTEM.md)
-5. **Write code** following patterns from documentation
-6. **Test thoroughly** (TESTING.md)
+4. **Write code** following patterns from documentation
+5. **Test thoroughly** (TESTING.md)
 
 ### Before making changes:
 
@@ -248,7 +225,6 @@ test_sonnet45/
 - **Frontend**: http://localhost:3000
 - **Backend API**: http://localhost:8089/api
 - **PostgreSQL**: localhost:15432 (user/password/backend-app)
-- **Redis**: localhost:16379
 - **RabbitMQ**: http://localhost:15672 (user/password)
 
 ---
@@ -256,15 +232,11 @@ test_sonnet45/
 ## 💡 Pro Tips
 
 1. **Always read CODING_STANDARDS.md** before writing code
-2. **Use UPDATE strategy** for frequently accessed data (tasks)
-3. **Use INVALIDATE strategy** for complex calculations (analytics)
-4. **Never include subtasks** in bulk cache operations
-5. **All Docker commands** run from `docker/` directory or use `-f docker/docker-compose.yml`
-6. **Redis cache keys** are deterministic: `app:prod:namespace:param1_value1:param2_value2`
-7. **Frontend state** managed by Pinia stores (no Vuex!)
-8. **Backend layers**: Controller → Service → Repository → Entity
-9. **TypeScript strict mode** - no `any` types allowed!
-10. **Complete rebuild**: See DEVELOPMENT_WORKFLOW.md "Complete Project Rebuild"
+2. **All Docker commands** run from `docker/` directory or use `-f docker/docker-compose.yml`
+3. **Frontend state** managed by Pinia stores (no Vuex!)
+4. **Backend layers**: Controller → Service → Repository → Entity
+5. **TypeScript strict mode** - no `any` types allowed!
+6. **Complete rebuild**: See DEVELOPMENT_WORKFLOW.md "Complete Project Rebuild"
 
 ---
 
@@ -280,16 +252,15 @@ If you're a new Claude Code instance or need complete context:
 **Phase 2 - Code Standards (45 min)**
 4. docs/CODING_STANDARDS.md ⚠️ **MUST READ**
 
-**Phase 3 - Core Architecture (45 min)**
-5. docs/backend/CACHE_SYSTEM.md ⚠️ **CRITICAL**
-6. docs/backend/ARCHITECTURE.md
-7. docs/frontend/ARCHITECTURE.md
+**Phase 3 - Core Architecture (30 min)**
+5. docs/backend/ARCHITECTURE.md
+6. docs/frontend/ARCHITECTURE.md
 
 **Phase 4 - Development (30 min)**
-8. docs/guides/DEVELOPMENT_WORKFLOW.md
-9. docs/guides/TROUBLESHOOTING.md
+7. docs/guides/DEVELOPMENT_WORKFLOW.md
+8. docs/guides/TROUBLESHOOTING.md
 
-**Total**: ~2.5 hours for complete context
+**Total**: ~2 hours for complete context
 
 ---
 
@@ -298,3 +269,5 @@ If you're a new Claude Code instance or need complete context:
 **Documentation Version**: 1.0
 
 **For questions or clarifications**: Refer to [`docs/INDEX.md`](docs/INDEX.md) for detailed navigation
+- Когда реализуешь довольно глобальный и важный для проекта функционал - всегда обновляй полностью всю документацию в @docs/ а также по необходимости @CLAUDE.md
+- Когда сталкиваешься с трудностями как пересобрать backend или frontend чтобы запустить тестировани (не важно - через bash скрипты или через mcp браузер) - всегда смотри в доку @docs/INDEX.md и оттуда в Development Workflow

@@ -1,6 +1,6 @@
 # 🎯 Project Overview - Task Manager
 
-> **TL;DR**: Modern SPA task management application with unlimited subtask nesting, calendar integration, analytics, and enterprise-grade caching system.
+> **TL;DR**: Modern SPA task management application with unlimited subtask nesting, calendar integration, and advanced analytics.
 
 ---
 
@@ -22,7 +22,7 @@
 ### Vision
 
 Create a lightning-fast task management system that:
-- **Feels instant** (optimistic UI, sub-millisecond cache responses)
+- **Feels instant** (optimistic UI updates)
 - **Scales infinitely** (unlimited subtask nesting)
 - **Provides insights** (analytics, productivity tracking)
 - **Works everywhere** (mobile-first responsive design)
@@ -196,7 +196,7 @@ Statistics {
 }
 ```
 
-#### Analytics Dashboard (9 Cached Endpoints)
+#### Analytics Dashboard
 
 **1. Overview Statistics**
 - Total tasks by status
@@ -376,9 +376,9 @@ Refresh Token:
 
 #### Performance
 ```
-API Response Times (with cache):
-- GET /api/tasks          → < 1ms (0.5ms average)
-- GET /api/analytics/*    → < 1ms (0.19-0.54ms average)
+API Response Times:
+- GET /api/tasks          → < 100ms
+- GET /api/analytics/*    → < 150ms
 - POST /api/tasks         → < 50ms
 - PUT /api/tasks/{id}     → < 50ms
 
@@ -387,10 +387,6 @@ Frontend Performance:
 - Route Navigation: < 100ms
 - Task List Render: < 50ms (100 tasks)
 - Optimistic Update: Instant (0ms perceived latency)
-
-Cache Hit Rate:
-- Target: > 90%
-- Actual: ~95% (production measurements)
 ```
 
 #### Scalability
@@ -399,11 +395,6 @@ Database:
 - Support: 100,000+ tasks per user
 - Indexing: All foreign keys + frequently queried fields
 - Query optimization: Eager loading, selective fetching
-
-Redis Cache:
-- Memory: ~1-2 KB per task (optimized DTOs)
-- Eviction: LRU (Least Recently Used)
-- Pattern: Separate keys per user (no cross-contamination)
 
 Frontend:
 - Virtual scrolling: 10,000+ tasks in list
@@ -469,7 +460,7 @@ User Story:
 Steps:
 1. Open app → Dashboard loads
 2. Click "Today" filter in sidebar
-   → Only today's tasks shown (cached, instant)
+   → Only today's tasks shown
 3. See task "Morning Workout"
 4. Click checkbox to mark complete
    → Optimistic update (instant visual feedback)
@@ -488,7 +479,7 @@ User Story:
 
 Steps:
 1. Click "Analytics" tab in navigation
-   → Dashboard loads (cached, < 1ms)
+   → Dashboard loads
 2. See overview statistics:
    - Total tasks: 127
    - Completed: 85 (67%)
@@ -590,12 +581,11 @@ Steps:
 ✅ Personalized insights
 
 #### Performance
-✅ Sub-millisecond API responses (cache)
+✅ Fast API responses (< 100ms)
 ✅ Optimistic UI updates (instant feedback)
 ✅ Virtual scrolling (handle 10,000+ tasks)
 ✅ Debounced search
 ✅ Code splitting (fast initial load)
-✅ 90%+ cache hit rate
 
 #### User Experience
 ✅ Mobile-first responsive
@@ -645,37 +635,26 @@ Steps:
 
 #### API Endpoints
 ```
-GET /api/tasks
-  Without cache: ~100ms
-  With cache:    ~0.5ms       ✅ 200x improvement
-
-GET /api/analytics/overview
-  Without cache: ~35ms
-  With cache:    ~0.24ms      ✅ 150x improvement
-
-GET /api/analytics/dashboard
-  Without cache: ~134ms
-  With cache:    ~0.19ms      ✅ 714x improvement
+GET /api/tasks: ~50-100ms     ✅ Fast enough
+GET /api/analytics/overview: ~35-50ms     ✅ Fast
+GET /api/analytics/dashboard: ~100-150ms  ✅ Acceptable
 ```
 
 #### User Actions
 ```
 Toggle task complete:
   Optimistic update: 0ms (instant)
-  API call:          6-10ms
-  Cache update:      15-35ms
-  Total:             ~35ms    ✅ Imperceptible delay
+  API call:          20-50ms
+  Total:             ~50ms    ✅ Fast
 
 Create new task:
   Form submit:       0ms (instant)
-  API call:          15-25ms
-  Cache update:      17-40ms
-  Total:             ~40ms    ✅ Very fast
+  API call:          30-50ms
+  Total:             ~50ms    ✅ Very fast
 
 Update task:
   Optimistic update: 0ms (instant)
-  API call:          20-35ms
-  Cache update:      25-50ms
+  API call:          20-50ms
   Total:             ~50ms    ✅ Fast enough
 ```
 
@@ -698,8 +677,8 @@ Task List Render (100 tasks):
 ### Future Performance Goals (Next Phase)
 
 #### Backend
-- [ ] API response time: < 0.1ms (cache warmup optimization)
-- [ ] Database query time: < 5ms (query optimization, indexes)
+- [ ] API response time: < 20ms (query optimization, indexes)
+- [ ] Database query time: < 10ms (query optimization, indexes)
 - [ ] Concurrent users: 1000+ (horizontal scaling)
 
 #### Frontend
@@ -708,7 +687,6 @@ Task List Render (100 tasks):
 - [ ] Memory usage: < 50MB (component lifecycle optimization)
 
 #### Infrastructure
-- [ ] Cache hit rate: > 98% (improved TTL, preemptive warming)
 - [ ] Uptime: 99.9% (redundancy, health checks)
 - [ ] Error rate: < 0.1% (robust error handling)
 
@@ -722,7 +700,7 @@ Task List Render (100 tasks):
 
 ### For Development
 - **[Coding Standards](CODING_STANDARDS.md)** - How to write code
-- **[Cache System](backend/CACHE_SYSTEM.md)** - Understanding caching
+- **[Architecture](backend/ARCHITECTURE.md)** - System design
 
 ### For Reference
 - **[API Reference](backend/API_REFERENCE.md)** - All endpoints documented

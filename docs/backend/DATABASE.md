@@ -702,7 +702,6 @@ $tasks = $taskRepository->createQueryBuilder('t')
 
 ### Must Read Next
 - **[Architecture](ARCHITECTURE.md)** - How to use these entities
-- **[Cache System](CACHE_SYSTEM.md)** - Caching query results
 
 ### For Reference
 - **[API Reference](API_REFERENCE.md)** - Endpoints using these entities

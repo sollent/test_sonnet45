@@ -51,7 +51,7 @@
 │  - Business logic                                            │
 │  - Transaction management                                    │
 │  - Data transformation                                       │
-│  - Cache coordination                                        │
+│  - Event dispatching                                         │
 └────────────────────────┬─────────────────────────────────────┘
                          │
                          ▼
@@ -60,14 +60,13 @@
 │  - Database queries                                          │
 │  - Data access logic                                         │
 │  - Query optimization                                        │
-│  - Cache integration                                         │
+│  - Entity hydration                                          │
 └────────────────────────┬─────────────────────────────────────┘
                          │
                          ▼
 ┌──────────────────────────────────────────────────────────────┐
 │                 📊 DATA LAYER                                │
 │  - PostgreSQL (entities)                                     │
-│  - Redis (cache)                                             │
 └──────────────────────────────────────────────────────────────┘
 ```
 
@@ -91,7 +90,6 @@
 #### What Controllers DON'T DO:
 ❌ Business logic
 ❌ Database queries
-❌ Cache management
 ❌ Data transformation
 ❌ Complex calculations
 
@@ -187,7 +185,7 @@ public function create(Request $request): JsonResponse
 ✅ Orchestrate multiple operations
 ✅ Manage transactions
 ✅ Transform data (Entity ↔ DTO)
-✅ Coordinate caching
+✅ Dispatch domain events
 ✅ Validate business constraints
 
 #### What Services DON'T DO:
@@ -208,8 +206,8 @@ final class TaskService
         private readonly TaskRepository $taskRepository,
         private readonly TagRepository $tagRepository,
         private readonly EntityManagerInterface $entityManager,
-        private readonly TaskCacheService $taskCache,
-        private readonly AnalyticsCacheService $analyticsCache
+        private readonly EventDispatcherInterface $eventDispatcher,
+        private readonly LoggerInterface $logger
     ) {}
 
     /**
@@ -249,11 +247,11 @@ final class TaskService
         $this->entityManager->persist($task);
         $this->entityManager->flush();
 
-        // ✅ Cache coordination: Update cache (UPDATE strategy)
-        $this->taskCache->updateAfterCreate($user, $task);
+        // ✅ Event dispatching: Notify listeners
+        $this->eventDispatcher->dispatch(new TaskCreatedEvent($task));
 
-        // ✅ Cache coordination: Invalidate analytics
-        $this->analyticsCache->invalidateUserAnalytics($user);
+        // ✅ Logging: Track task creation
+        $this->logger->info('Task created', ['taskId' => $task->getId(), 'userId' => $user->getId()]);
 
         return $task;
     }
@@ -287,9 +285,8 @@ final class TaskService
         // ✅ Transaction: Flush changes
         $this->entityManager->flush();
 
-        // ✅ Cache coordination
-        $this->taskCache->updateAfterModify($user, $task);
-        $this->analyticsCache->invalidateUserAnalytics($user);
+        // ✅ Event dispatching: Notify listeners
+        $this->eventDispatcher->dispatch(new TaskUpdatedEvent($task));
 
         return $task;
     }
@@ -308,7 +305,7 @@ final class TaskService
 ✅ Execute database queries
 ✅ Build complex QueryBuilders
 ✅ Optimize queries (joins, indexes)
-✅ Cache query results
+✅ Hydrate entities from database
 ✅ Return entities or arrays
 
 #### What Repositories DON'T DO:
@@ -326,17 +323,16 @@ final class TaskService
 class TaskRepository extends ServiceEntityRepository
 {
     public function __construct(
-        ManagerRegistry $registry,
-        private readonly TaskCacheService $taskCache
+        ManagerRegistry $registry
     ) {
         parent::__construct($registry, Task::class);
     }
 
     /**
-     * Find all tasks for a user with cache
+     * Find all tasks for a user
      *
-     * ✅ GOOD: Repository knows about caching
-     * ✅ GOOD: Uses callback pattern for cache miss
+     * ✅ GOOD: Repository handles data access only
+     * ✅ GOOD: Uses QueryBuilder for complex queries
      */
     public function findUserTasks(
         User $user,
@@ -344,40 +340,30 @@ class TaskRepository extends ServiceEntityRepository
         ?bool $includeArchived = false,
         ?bool $onlyParentTasks = true
     ): array {
-        // Build cache key filters
-        $filters = [
-            'status' => $status?->value,
-            'includeArchived' => $includeArchived,
-            'onlyParentTasks' => $onlyParentTasks,
-        ];
+        // Build query with criteria
+        $qb = $this->createQueryBuilder('t')
+            ->where('t.user = :user')
+            ->setParameter('user', $user);
 
-        // ✅ Cache-through pattern
-        return $this->taskCache->getTaskList($user, $filters, function () use ($user, $status, $includeArchived, $onlyParentTasks) {
-            // Query executed ONLY on cache miss
-            $qb = $this->createQueryBuilder('t')
-                ->where('t.user = :user')
-                ->setParameter('user', $user);
+        if ($onlyParentTasks) {
+            $qb->andWhere('t.parentTask IS NULL');
+        }
 
-            if ($onlyParentTasks) {
-                $qb->andWhere('t.parentTask IS NULL');
-            }
+        if ($status !== null) {
+            $qb->andWhere('t.status = :status')
+                ->setParameter('status', $status);
+        }
 
-            if ($status !== null) {
-                $qb->andWhere('t.status = :status')
-                    ->setParameter('status', $status);
-            }
+        if (!$includeArchived) {
+            $qb->andWhere('t.isArchived = :archived')
+                ->setParameter('archived', false);
+        }
 
-            if (!$includeArchived) {
-                $qb->andWhere('t.isArchived = :archived')
-                    ->setParameter('archived', false);
-            }
+        $qb->orderBy('t.sortOrder', 'ASC')
+            ->addOrderBy('t.priority', 'DESC')
+            ->addOrderBy('t.dueDate', 'ASC');
 
-            $qb->orderBy('t.sortOrder', 'ASC')
-                ->addOrderBy('t.priority', 'DESC')
-                ->addOrderBy('t.dueDate', 'ASC');
-
-            return $qb->getQuery()->getResult();
-        });
+        return $qb->getQuery()->getResult();
     }
 
     /**
@@ -442,98 +428,6 @@ class TaskRepository extends ServiceEntityRepository
 
 ---
 
-### 4. Cache Layer
-
-**Location:** `/backend/src/Service/Cache/`
-
-**Responsibility:** Caching strategy & implementation
-
-#### Cache Services:
-
-```
-Cache Layer Architecture:
-├── SimpleRedisCache.php         → Low-level Redis operations
-├── RedisKeyManager.php          → Key generation & management
-├── TaskCacheService.php         → Task-specific caching (UPDATE strategy)
-└── AnalyticsCacheService.php    → Analytics caching (INVALIDATE strategy)
-```
-
-#### Example: TaskCacheService
-
-```php
-<?php
-// src/Service/Cache/TaskCacheService.php
-
-final class TaskCacheService
-{
-    public function __construct(
-        private readonly SimpleRedisCache $redis,
-        private readonly RedisKeyManager $keyManager
-    ) {}
-
-    /**
-     * Get task list with cache-through pattern
-     */
-    public function getTaskList(User $user, array $filters, callable $fetchCallback): array
-    {
-        $key = $this->keyManager->generateTaskListKey($user, $filters);
-
-        // Try cache first
-        $cached = $this->redis->get($key);
-        if ($cached !== null) {
-            return $cached; // ✅ Cache hit (0.5ms)
-        }
-
-        // Cache miss: execute callback
-        $data = $fetchCallback(); // ✅ Query database (~100ms)
-
-        // Store in cache
-        $this->redis->set($key, $data, 900); // 15 min TTL
-
-        return $data;
-    }
-
-    /**
-     * UPDATE strategy: Modify cache after create
-     */
-    public function updateAfterCreate(User $user, Task $task): void
-    {
-        // Get current cached list
-        $key = $this->keyManager->generateTaskListKey($user);
-        $tasks = $this->redis->get($key);
-
-        if ($tasks !== null) {
-            // ✅ Add new task to cached list
-            array_unshift($tasks, $this->transformToDto($task));
-            $this->redis->set($key, $tasks, 900);
-        }
-        // If cache miss, do nothing (will be fetched on next request)
-    }
-
-    /**
-     * UPDATE strategy: Modify cache after update
-     */
-    public function updateAfterModify(User $user, Task $task): void
-    {
-        $key = $this->keyManager->generateTaskListKey($user);
-        $tasks = $this->redis->get($key);
-
-        if ($tasks !== null) {
-            // ✅ Find and update task in cached list
-            foreach ($tasks as &$cachedTask) {
-                if ($cachedTask['id'] === $task->getId()) {
-                    $cachedTask = $this->transformToDto($task);
-                    break;
-                }
-            }
-            $this->redis->set($key, $tasks, 900);
-        }
-    }
-}
-```
-
----
-
 ## SOLID Principles Applied
 
 ### S - Single Responsibility Principle
@@ -561,10 +455,10 @@ class TaskRepository extends ServiceEntityRepository
     // Single responsibility: Database queries
 }
 
-// ✅ TaskCacheService: ONLY handles caching
-class TaskCacheService
+// ✅ TranslationService: ONLY handles translations
+class TranslationService
 {
-    // Single responsibility: Cache management
+    // Single responsibility: i18n translations
 }
 ```
 
@@ -690,30 +584,29 @@ function processRepository(AbstractRepository $repo): void
 
 ```php
 // ✅ GOOD: Small, focused interfaces
-interface CacheServiceInterface
+interface NotificationServiceInterface
 {
-    public function get(string $key): mixed;
-    public function set(string $key, mixed $value, int $ttl): bool;
-    public function delete(string $key): bool;
+    public function send(User $user, string $message): void;
+    public function sendEmail(User $user, string $subject, string $body): void;
 }
 
-interface CacheKeyManagerInterface
+interface LoggerInterface
 {
-    public function generateTaskListKey(User $user, array $filters = []): string;
-    public function generateAnalyticsKey(User $user, string $type): string;
+    public function info(string $message, array $context = []): void;
+    public function error(string $message, array $context = []): void;
 }
 
 // ❌ BAD: Fat interface
-interface CacheInterface
+interface TaskManagerInterface
 {
-    public function get(string $key): mixed;
-    public function set(string $key, mixed $value, int $ttl): bool;
-    public function delete(string $key): bool;
-    public function generateTaskListKey(User $user): string;
-    public function generateAnalyticsKey(User $user): string;
-    public function invalidateUser(User $user): void;
-    public function warmup(): void;
-    public function getStats(): array;
+    public function create(array $data): Task;
+    public function update(int $id, array $data): Task;
+    public function delete(int $id): void;
+    public function sendNotification(Task $task): void;
+    public function log(string $message): void;
+    public function cache(Task $task): void;
+    public function validate(array $data): bool;
+    public function transform(Task $task): array;
     // ... too many methods!
 }
 ```
@@ -730,7 +623,7 @@ class TaskService
 {
     public function __construct(
         private readonly TaskRepositoryInterface $taskRepository,    // ✅ Interface
-        private readonly CacheServiceInterface $cacheService         // ✅ Interface
+        private readonly EventDispatcherInterface $eventDispatcher   // ✅ Interface
     ) {}
 }
 
@@ -739,7 +632,7 @@ class TaskService
 {
     public function __construct(
         private readonly TaskRepository $taskRepository,             // ❌ Concrete class
-        private readonly SimpleRedisCache $redis                     // ❌ Concrete class
+        private readonly EventDispatcher $eventDispatcher            // ❌ Concrete class
     ) {}
 }
 ```
@@ -867,7 +760,7 @@ class TaskService
         private readonly TaskRepository $taskRepository,
         private readonly TagRepository $tagRepository,
         private readonly EntityManagerInterface $entityManager,
-        private readonly TaskCacheService $taskCache
+        private readonly EventDispatcherInterface $eventDispatcher
     ) {}
 
     // All dependencies injected automatically by Symfony
@@ -919,15 +812,15 @@ $dto = TaskResponseDto::fromEntity($task);
 
 ### 5. Event Subscriber Pattern
 
-**Purpose:** Decouple cache invalidation from business logic.
+**Purpose:** Decouple side effects from business logic.
 
 ```php
-// Event subscriber for automatic cache invalidation
-class CacheInvalidationSubscriber implements EventSubscriberInterface
+// Event subscriber for automatic notifications and logging
+class TaskEventSubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private readonly TaskCacheService $taskCache,
-        private readonly AnalyticsCacheService $analyticsCache
+        private readonly NotificationService $notificationService,
+        private readonly LoggerInterface $logger
     ) {}
 
     public static function getSubscribedEvents(): array
@@ -944,9 +837,11 @@ class CacheInvalidationSubscriber implements EventSubscriberInterface
         $task = $event->getTask();
         $user = $task->getUser();
 
-        // ✅ Automatically update cache
-        $this->taskCache->updateAfterCreate($user, $task);
-        $this->analyticsCache->invalidateUserAnalytics($user);
+        // ✅ Automatically send notification
+        $this->notificationService->send($user, 'Task created: ' . $task->getTitle());
+
+        // ✅ Log the event
+        $this->logger->info('Task created', ['taskId' => $task->getId()]);
     }
 }
 ```
@@ -986,13 +881,15 @@ class TaskController extends AbstractController
     // ✅ Dependencies injected via constructor
     public function __construct(
         private readonly TaskService $taskService,
-        private readonly TranslationService $translationService
+        private readonly TranslationService $translationService,
+        private readonly LoggerInterface $logger
     ) {}
 
     public function list(): JsonResponse
     {
         // Use injected services
         $tasks = $this->taskService->getUserTasks(...);
+        $this->logger->info('Task list retrieved');
         return $this->json($tasks);
     }
 }
@@ -1078,9 +975,9 @@ final readonly class TaskResponseDto implements \JsonSerializable
    ↓
 9. Repository persists to PostgreSQL
    ↓
-10. Service updates TaskCacheService
+10. Service dispatches TaskCreatedEvent
    ↓
-11. Service invalidates AnalyticsCacheService
+11. Event subscribers handle side effects (notifications, logging)
    ↓
 12. Service returns Task entity
    ↓
@@ -1128,8 +1025,8 @@ class TaskService
         $this->entityManager->persist($task);
         $this->entityManager->flush();
 
-        // Cache coordination
-        $this->taskCache->updateAfterCreate($user, $task);
+        // Event dispatching
+        $this->eventDispatcher->dispatch(new TaskCreatedEvent($task));
 
         return $task;
     }
@@ -1160,8 +1057,8 @@ class TaskRepository extends ServiceEntityRepository
 ✅ **Single responsibility** - One class, one purpose
 ✅ **Use readonly properties** - PHP 8.3 feature
 ✅ **Use enums** - TaskStatus, TaskPriority
-✅ **Cache in repositories** - Where queries happen
-✅ **Events for side effects** - Cache invalidation via events
+✅ **Optimize queries** - Use indexes, joins, eager loading
+✅ **Events for side effects** - Notifications, logging via events
 
 ### DON'Ts ❌
 
@@ -1174,14 +1071,13 @@ class TaskRepository extends ServiceEntityRepository
 ❌ **Global state** (use dependency injection)
 ❌ **Magic numbers** (use constants/enums)
 ❌ **Suppressing errors** (let exceptions bubble up)
-❌ **Manual cache management in controllers**
+❌ **Direct infrastructure access in controllers** (Redis, message queues)
 
 ---
 
 ## Related Documents
 
 ### Must Read Next
-- **[Cache System](CACHE_SYSTEM.md)** - Complete caching implementation
 - **[Database](DATABASE.md)** - Entity relationships
 - **[Authentication](AUTHENTICATION.md)** - JWT & OAuth2
 

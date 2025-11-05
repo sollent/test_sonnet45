@@ -147,61 +147,63 @@ class RecurrenceCalculator
 
 **Rule:** Subtypes must be substitutable for their base types. If S is a subtype of T, then objects of type T may be replaced with objects of type S.
 
-#### Example from Project: Cache Services
+#### Example from Project: Notification Services
 
 ```php
-// location: /backend/src/Service/Cache/Interface/CacheServiceInterface.php
+// location: /backend/src/Service/Notification/Interface/NotificationServiceInterface.php
 
 // GOOD - Base interface
-interface CacheServiceInterface
+interface NotificationServiceInterface
 {
-    public function get(string $key, callable $callback, ?int $ttl = null): mixed;
-    public function set(string $key, mixed $value, ?int $ttl = null): bool;
-    public function delete(string $key): bool;
+    public function send(User $user, string $subject, string $message): bool;
+    public function sendBulk(array $users, string $subject, string $message): int;
+    public function supports(string $channel): bool;
 }
 
 // GOOD - Implementation respects contract
-final class SimpleRedisCache implements CacheServiceInterface
+final class EmailNotificationService implements NotificationServiceInterface
 {
-    public function get(string $key, callable $callback, ?int $ttl = null): mixed
+    public function send(User $user, string $subject, string $message): bool
     {
         // Works exactly as interface promises
-        $value = $this->redis->get($this->prefix . $key);
-        if ($value !== false) {
-            return unserialize($value);
-        }
-        $computedValue = $callback();
-        $this->set($key, $computedValue, $ttl);
-        return $computedValue;
+        $email = (new Email())
+            ->to($user->getEmail())
+            ->subject($subject)
+            ->html($message);
+
+        $this->mailer->send($email);
+        return true;
     }
 
     // Other methods follow contract exactly
 }
 
 // Can swap implementations without breaking code
-final class MemcachedCache implements CacheServiceInterface { }
-final class FilesystemCache implements CacheServiceInterface { }
+final class SmsNotificationService implements NotificationServiceInterface { }
+final class PushNotificationService implements NotificationServiceInterface { }
 ```
 
 ```php
 // BAD - Violates contract
-class BrokenCache implements CacheServiceInterface
+class BrokenNotification implements NotificationServiceInterface
 {
-    public function get(string $key, callable $callback, ?int $ttl = null): mixed
+    public function send(User $user, string $subject, string $message): bool
     {
         // WRONG! Throws exception when interface doesn't promise it
         throw new \Exception("Not implemented");
     }
 
-    public function set(string $key, mixed $value, ?int $ttl = null): bool
+    public function sendBulk(array $users, string $subject, string $message): int
     {
-        // WRONG! Returns void when interface requires bool
-        $this->storage[$key] = $value;
+        // WRONG! Returns void when interface requires int
+        foreach ($users as $user) {
+            $this->send($user, $subject, $message);
+        }
     }
 }
 ```
 
-**Why it matters:** You can swap SimpleRedisCache with MemcachedCache without changing ANY code that uses it.
+**Why it matters:** You can swap EmailNotificationService with SmsNotificationService without changing ANY code that uses it.
 
 ---
 
@@ -209,57 +211,59 @@ class BrokenCache implements CacheServiceInterface
 
 **Rule:** Many specific interfaces are better than one general-purpose interface. Don't force classes to implement methods they don't need.
 
-#### Example from Project: Cache Key Management
+#### Example from Project: Report Generation
 
 ```php
-// location: /backend/src/Service/Cache/Interface/CacheKeyManagerInterface.php
+// location: /backend/src/Service/Report/Interface/ReportGeneratorInterface.php
 
 // GOOD - Small, focused interface
-interface CacheKeyManagerInterface
+interface ReportGeneratorInterface
 {
-    public function buildKey(string $namespace, array $params): string;
-    public function buildPattern(string $namespace, array $params): string;
+    public function generate(User $user, array $data): string;
+    public function supports(string $format): bool;
 }
 
-// GOOD - Separate interface for tagging (not all cache managers need this)
-interface TaggableCacheKeyManagerInterface extends CacheKeyManagerInterface
+// GOOD - Separate interface for advanced features (not all generators need this)
+interface AdvancedReportGeneratorInterface extends ReportGeneratorInterface
 {
-    public function generateTags(string $namespace, array $params): array;
+    public function generateWithTemplate(User $user, array $data, string $template): string;
+    public function setWatermark(string $text): void;
 }
 
 // Implementation chooses what to implement
-final class RedisKeyManager implements TaggableCacheKeyManagerInterface
+final class PdfReportGenerator implements AdvancedReportGeneratorInterface
 {
-    public function buildKey(string $namespace, array $params): string { }
-    public function buildPattern(string $namespace, array $params): string { }
-    public function generateTags(string $namespace, array $params): array { }
+    public function generate(User $user, array $data): string { }
+    public function supports(string $format): bool { }
+    public function generateWithTemplate(User $user, array $data, string $template): string { }
+    public function setWatermark(string $text): void { }
 }
 
-// Simple implementation doesn't need tags
-final class SimpleKeyManager implements CacheKeyManagerInterface
+// Simple implementation doesn't need advanced features
+final class CsvReportGenerator implements ReportGeneratorInterface
 {
-    public function buildKey(string $namespace, array $params): string { }
-    public function buildPattern(string $namespace, array $params): string { }
-    // No tags needed!
+    public function generate(User $user, array $data): string { }
+    public function supports(string $format): bool { }
+    // No templates or watermarks needed!
 }
 ```
 
 ```php
 // BAD - Fat interface forces unnecessary implementations
-interface CacheManagerInterface
+interface ReportManagerInterface
 {
-    public function buildKey(): string;
-    public function generateTags(): array;        // Not all need this
-    public function warmUp(): void;               // Not all need this
-    public function exportMetrics(): array;       // Not all need this
-    public function sendToAnalytics(): void;      // Not all need this
+    public function generate(): string;
+    public function generateWithTemplate(): string;   // Not all need this
+    public function setWatermark(): void;            // Not all need this
+    public function exportMetrics(): array;          // Not all need this
+    public function sendToAnalytics(): void;         // Not all need this
 }
 
 // WRONG! Simple implementation forced to implement everything
-class SimpleKeyManager implements CacheManagerInterface
+class CsvReportGenerator implements ReportManagerInterface
 {
-    public function generateTags(): array { return []; } // Unused
-    public function warmUp(): void { } // Unused
+    public function generateWithTemplate(): string { return ''; } // Unused
+    public function setWatermark(): void { } // Unused
     public function exportMetrics(): array { return []; } // Unused
     public function sendToAnalytics(): void { } // Unused
 }
@@ -283,7 +287,7 @@ final class TaskService
 {
     public function __construct(
         private readonly TaskRepository $taskRepository,              // Interface
-        private readonly TaskCacheService $cacheService,               // Interface
+        private readonly TranslatorInterface $translator,             // Interface
         private readonly EventDispatcherInterface $eventDispatcher,   // Interface
         private readonly LoggerInterface $logger,                      // Interface
     ) {
@@ -296,7 +300,7 @@ final class TaskService
         // ... setup task
 
         $this->taskRepository->save($task);  // Could be Doctrine, MongoDB, etc.
-        $this->cacheService->invalidate();   // Could be Redis, Memcached, etc.
+        $this->translator->trans('task.created');   // Any translation system
         $this->eventDispatcher->dispatch();  // Any event system
         $this->logger->info();               // Any logger
 
@@ -310,14 +314,14 @@ final class TaskService
 class TaskService
 {
     private DoctrineTaskRepository $repository;     // WRONG! Concrete class
-    private RedisCache $cache;                      // WRONG! Concrete class
+    private SymfonyTranslator $translator;          // WRONG! Concrete class
     private FileLogger $logger;                     // WRONG! Concrete class
 
     public function __construct()
     {
         // WRONG! Creating dependencies inside
         $this->repository = new DoctrineTaskRepository();
-        $this->cache = new RedisCache('localhost', 6379);
+        $this->translator = new SymfonyTranslator('en');
         $this->logger = new FileLogger('/var/log/app.log');
     }
 
@@ -453,7 +457,8 @@ class TaskController
 final class TaskController extends AbstractController
 {
     public function __construct(
-        private readonly TaskService $taskService  // Delegate to service
+        private readonly TaskService $taskService,        // Delegate to service
+        private readonly NotificationService $notificationService
     ) {
     }
 
@@ -494,8 +499,8 @@ class TaskController
         $this->entityManager->persist($task);
         $this->entityManager->flush();
 
-        // WRONG! Cache logic in controller
-        $this->cache->invalidate('tasks');
+        // WRONG! Notification logic in controller
+        $this->emailService->send($this->getUser(), 'Task created', 'Your task was created');
 
         // WRONG! Event dispatching in controller
         $this->eventDispatcher->dispatch(new TaskCreatedEvent($task));
@@ -517,21 +522,21 @@ final class TaskService
 {
     public function __construct(
         private readonly TaskRepository $repository,
-        private readonly TaskCacheService $cache,
+        private readonly LoggerInterface $logger,
         private readonly EventDispatcherInterface $eventDispatcher,
     ) {
         // Only 3 dependencies, all through interfaces
     }
 }
 
-// GOOD - TaskCacheService doesn't know about TaskService
-final readonly class TaskCacheService
+// GOOD - NotificationService doesn't know about TaskService
+final readonly class EmailNotificationService
 {
     public function __construct(
-        private SimpleRedisCache $cacheService,
-        private RedisKeyManager $keyManager,
+        private MailerInterface $mailer,
+        private TranslatorInterface $translator,
     ) {
-        // Only 2 dependencies, focused on caching
+        // Only 2 dependencies, focused on email notifications
     }
 }
 ```
@@ -541,9 +546,9 @@ final readonly class TaskCacheService
 class TaskManager
 {
     private TaskRepository $repository;
-    private TaskCacheService $cache;
+    private LoggerInterface $logger;
     private EventDispatcher $eventDispatcher;
-    private Logger $logger;
+    private TranslatorInterface $translator;
     private EmailService $emailService;           // Too many!
     private NotificationService $notificationService;
     private AnalyticsService $analyticsService;
@@ -561,24 +566,24 @@ class TaskManager
 **Rule:** Keep related functionality together. Each class should have a focused, cohesive set of responsibilities.
 
 ```php
-// GOOD - High cohesion (all methods related to task caching)
-final readonly class TaskCacheService
+// GOOD - High cohesion (all methods related to email notifications)
+final readonly class EmailNotificationService
 {
-    // All methods are about TASK CACHING
-    public function getTaskList(User $user, array $filters, callable $callback): array { }
-    public function getTask(User $user, int $taskId, callable $callback): mixed { }
-    public function getTaskStatistics(User $user, callable $callback): mixed { }
-    public function invalidateUserCache(User $user): int { }
-    public function updateTaskListsCache(User $user, callable $fetchCallback): int { }
+    // All methods are about EMAIL NOTIFICATIONS
+    public function sendTaskCreatedNotification(User $user, Task $task): bool { }
+    public function sendTaskDueNotification(User $user, Task $task): bool { }
+    public function sendTaskCompletedNotification(User $user, Task $task): bool { }
+    public function sendBulkNotification(array $users, string $subject, string $message): int { }
+    public function queueNotification(User $user, string $subject, string $message): void { }
 }
 
-// GOOD - High cohesion (all methods related to analytics caching)
-final readonly class AnalyticsCacheService
+// GOOD - High cohesion (all methods related to analytics calculations)
+final readonly class AnalyticsCalculationService
 {
-    // All methods are about ANALYTICS CACHING
-    public function getOverview(User $user, callable $callback): mixed { }
-    public function getDashboardData(User $user, array $params, callable $callback): mixed { }
-    public function getCompletionTimeline(User $user, int $days, callable $callback): mixed { }
+    // All methods are about ANALYTICS CALCULATIONS
+    public function calculateCompletionRate(User $user): float { }
+    public function calculateProductivityTrend(User $user, int $days): array { }
+    public function calculateTaskDistribution(User $user): array { }
 }
 ```
 
@@ -586,10 +591,10 @@ final readonly class AnalyticsCacheService
 // BAD - Low cohesion (unrelated methods in same class)
 class TaskHelper
 {
-    public function cacheTask() { }          // Caching
     public function sendEmail() { }          // Email
     public function logActivity() { }        // Logging
     public function generatePDF() { }        // PDF generation
+    public function translateMessage() { }   // Translation
     public function calculateTax() { }       // Business logic
     // WRONG! Too many unrelated responsibilities
 }
@@ -669,19 +674,22 @@ class RecurrenceCalculator
 
 ```php
 // GOOD - Pure fabrication (not a domain entity, but needed for architecture)
-final readonly class RedisKeyManager
+final readonly class ReportFileNameGenerator
 {
-    // Not a real-world concept, but critical for Redis caching architecture
-    public function buildTaskListKey(User $user, array $filters): string
+    // Not a real-world concept, but critical for report generation architecture
+    public function generateTaskReportName(User $user, string $format): string
     {
-        return $this->buildUserKey($user, 'tasks_list', [
-            'filters' => $filters
-        ]);
+        return sprintf(
+            'task_report_%s_%s.%s',
+            $user->getId(),
+            date('Y-m-d_His'),
+            $format
+        );
     }
 
-    public function buildAnalyticsKey(User $user, string $type, array $params = []): string
+    public function generateAnalyticsReportName(User $user, string $type, array $params = []): string
     {
-        return $this->buildUserKey($user, "analytics_{$type}", $params);
+        return sprintf('analytics_%s_%s_%s.pdf', $type, $user->getId(), date('Ymd'));
     }
 }
 
@@ -702,38 +710,43 @@ final class TaskResponseDto implements \JsonSerializable
 **Rule:** Use intermediate objects to reduce coupling and increase reusability.
 
 ```php
-// GOOD - Indirection via CacheService (intermediate layer)
+// GOOD - Indirection via LoggerService (intermediate layer)
 final class TaskService
 {
     public function __construct(
-        private readonly TaskCacheService $cacheService,  // Indirection!
+        private readonly LoggerInterface $logger,  // Indirection!
     ) {
     }
 
-    public function getActiveTasks(User $user, TaskFilterDto $filters): array
+    public function createTask(CreateTaskDto $dto, User $user): Task
     {
-        // Service doesn't talk to Redis directly
-        // Goes through TaskCacheService (indirection layer)
-        return $this->cacheService->getTaskList(
-            $user,
-            ['filters' => $filters],
-            fn() => $this->taskRepository->findActiveByUser($user, $filters)
-        );
+        // Service doesn't talk to specific logger implementation
+        // Goes through LoggerInterface (indirection layer)
+        $this->logger->info('Creating task', [
+            'user_id' => $user->getId(),
+            'title' => $dto->title,
+        ]);
+
+        $task = new Task();
+        // ... create task
+
+        return $task;
     }
 }
 
-// GOOD - TaskCacheService provides indirection to Redis
-final readonly class TaskCacheService
+// GOOD - EventDispatcher provides indirection to event handling
+final class TaskEventDispatcher
 {
     public function __construct(
-        private SimpleRedisCache $cacheService,  // Another indirection!
+        private EventDispatcherInterface $dispatcher,  // Indirection!
     ) {
     }
 
-    // Abstracts Redis complexity
-    public function getTaskList(User $user, array $filters, callable $callback): array
+    // Abstracts event dispatching complexity
+    public function dispatchTaskCreated(Task $task): void
     {
-        // Complex caching logic hidden behind simple interface
+        // Complex event logic hidden behind simple interface
+        $this->dispatcher->dispatch(new TaskCreatedEvent($task));
     }
 }
 ```
@@ -742,22 +755,23 @@ final readonly class TaskCacheService
 // BAD - No indirection (direct coupling)
 class TaskService
 {
-    private \Redis $redis;
+    private FileLogger $fileLogger;
 
-    public function getActiveTasks(User $user): array
+    public function createTask(CreateTaskDto $dto, User $user): Task
     {
-        // WRONG! Service talks directly to Redis
-        $key = "user:{$user->getId()}:tasks:active";
-        $cached = $this->redis->get($key);
+        // WRONG! Service talks directly to specific logger
+        $logMessage = sprintf(
+            "[%s] Creating task for user %d: %s\n",
+            date('Y-m-d H:i:s'),
+            $user->getId(),
+            $dto->title
+        );
+        file_put_contents('/var/log/tasks.log', $logMessage, FILE_APPEND);
 
-        if ($cached) {
-            return unserialize($cached);
-        }
+        $task = new Task();
+        // ... create task
 
-        $tasks = $this->repository->findActiveByUser($user);
-        $this->redis->setex($key, 300, serialize($tasks));
-
-        return $tasks;
+        return $task;
     }
 }
 ```
@@ -769,29 +783,30 @@ class TaskService
 **Rule:** Protect elements from variations in other elements by wrapping them with stable interface.
 
 ```php
-// GOOD - Protected from cache implementation changes
-interface CacheServiceInterface
+// GOOD - Protected from file storage implementation changes
+interface FileStorageInterface
 {
-    public function get(string $key, callable $callback, ?int $ttl = null): mixed;
-    public function set(string $key, mixed $value, ?int $ttl = null): bool;
+    public function store(string $path, string $content): bool;
+    public function retrieve(string $path): string;
+    public function delete(string $path): bool;
 }
 
-// Implementation 1: Redis
-final class SimpleRedisCache implements CacheServiceInterface { }
+// Implementation 1: Local filesystem
+final class LocalFileStorage implements FileStorageInterface { }
 
-// Implementation 2: Memcached (can swap without changing code!)
-final class MemcachedCache implements CacheServiceInterface { }
+// Implementation 2: S3 (can swap without changing code!)
+final class S3Storage implements FileStorageInterface { }
 
-// Implementation 3: Filesystem (for testing)
-final class FilesystemCache implements CacheServiceInterface { }
+// Implementation 3: In-memory (for testing)
+final class InMemoryStorage implements FileStorageInterface { }
 
 // Services are PROTECTED from variations
-final class TaskService
+final class ReportService
 {
     public function __construct(
-        private readonly CacheServiceInterface $cache  // Stable interface!
+        private readonly FileStorageInterface $storage  // Stable interface!
     ) {
-        // Don't care if it's Redis, Memcached, or Filesystem
+        // Don't care if it's Local, S3, or In-Memory
         // Interface protects from variations
     }
 }
@@ -919,55 +934,80 @@ $dtoFromCache = TaskResponseDto::fromArray($cachedData);
 **Purpose:** Define a family of algorithms, encapsulate each one, and make them interchangeable.
 
 ```php
-// GOOD - Cache invalidation strategies
-// location: /backend/src/Service/Cache/TaskCacheService.php
+// GOOD - Export strategies
+// location: /backend/src/Service/Export/TaskExportService.php
 
-final readonly class TaskCacheService
+// Strategy interface
+interface ExportStrategyInterface
 {
-    // STRATEGY: UPDATE (proactive) - updates cache with fresh data
-    public function updateTaskListsCache(User $user, callable $fetchCallback): int
+    public function export(array $tasks, User $user): string;
+    public function getContentType(): string;
+}
+
+// STRATEGY 1: CSV Export
+final class CsvExportStrategy implements ExportStrategyInterface
+{
+    public function export(array $tasks, User $user): string
     {
-        // Fetch fresh data ONCE
-        $freshTasks = $fetchCallback();
-
-        // Convert to DTOs ONCE
-        $taskDtos = array_map(
-            fn(Task $task) => TaskResponseDto::fromEntity($task, false, true),
-            $freshTasks
-        );
-
-        // Update ALL cache keys with same data
-        $json = json_encode($taskDtos, JSON_THROW_ON_ERROR);
-
-        $redis = $this->cacheService->getRedis();
-        $keys = $redis->keys($this->cacheService->getPrefix() . $pattern);
-
-        foreach ($keys as $fullKey) {
-            $redis->setex($fullKey, self::TTL_TASK_LIST, $json);
+        $csv = "ID,Title,Status,Priority\n";
+        foreach ($tasks as $task) {
+            $csv .= sprintf(
+                "%d,%s,%s,%s\n",
+                $task->getId(),
+                $task->getTitle(),
+                $task->getStatus()->value,
+                $task->getPriority()->value
+            );
         }
-
-        return count($keys);
+        return $csv;
     }
 
-    // STRATEGY: INVALIDATE (reactive) - deletes cache, lazy recompute
-    public function invalidateTaskLists(User $user): int
+    public function getContentType(): string
     {
-        $pattern = $this->keyManager->buildUserPattern($user, 'tasks_list');
-        return $this->cacheService->deleteByPattern($pattern);
+        return 'text/csv';
     }
 }
 
-// Why UPDATE is better than INVALIDATE:
-// - UPDATE: User gets fresh data instantly (no delay)
-// - INVALIDATE: First request after invalidation is slow (cache miss)
-// - UPDATE: Fetch once, update many caches
-// - INVALIDATE: Each cache miss fetches from DB separately
+// STRATEGY 2: PDF Export
+final class PdfExportStrategy implements ExportStrategyInterface
+{
+    public function export(array $tasks, User $user): string
+    {
+        // Generate PDF with proper formatting
+        return $this->pdfGenerator->generate($tasks);
+    }
+
+    public function getContentType(): string
+    {
+        return 'application/pdf';
+    }
+}
+
+// Context uses strategies
+final class TaskExportService
+{
+    public function __construct(
+        private CsvExportStrategy $csvStrategy,
+        private PdfExportStrategy $pdfStrategy,
+    ) {}
+
+    public function export(array $tasks, User $user, string $format): string
+    {
+        $strategy = match($format) {
+            'csv' => $this->csvStrategy,
+            'pdf' => $this->pdfStrategy,
+            default => throw new \InvalidArgumentException("Unsupported format: $format"),
+        };
+
+        return $strategy->export($tasks, $user);
+    }
+}
 ```
 
 **When to use each strategy:**
 
-- **UPDATE:** For frequently accessed data (tasks, analytics dashboard)
-- **INVALIDATE:** For rarely accessed or parameter-heavy data (specific filters)
+- **CSV:** For simple data export, spreadsheet compatibility
+- **PDF:** For formatted reports, professional documents
 
 ---
 
@@ -1097,7 +1137,7 @@ $listDto = TaskResponseDto::fromEntity($task, false, true);       // For lists
 // PascalCase for classes
 final class TaskService { }
 final class TaskResponseDto { }
-final class SimpleRedisCache { }
+final class EmailNotificationService { }
 
 // camelCase for methods and variables
 public function createTask() { }
@@ -1106,8 +1146,8 @@ private string $userName;
 private int $taskCount;
 
 // SCREAMING_SNAKE_CASE for constants
-private const TTL_TASK_LIST = 300;
-private const TTL_ANALYTICS_DASHBOARD = 900;
+private const RETRY_DELAY_MS = 1000;
+private const MAX_RETRY_ATTEMPTS = 3;
 public const MAX_SUBTASKS_DEPTH = 5;
 
 // snake_case for database columns (migration files)
@@ -1124,7 +1164,7 @@ final class TaskService
 {
     public function __construct(
         private readonly TaskRepository $taskRepository,           // Type hint
-        private readonly TaskCacheService $cacheService,           // Type hint
+        private readonly NotificationService $notificationService, // Type hint
         private readonly EventDispatcherInterface $eventDispatcher, // Type hint
         private readonly LoggerInterface $logger,                  // Type hint
     ) {
@@ -1139,11 +1179,7 @@ final class TaskService
 
     public function getActiveTasks(User $user, TaskFilterDto $filters): array  // Return type
     {
-        return $this->cacheService->getTaskList(
-            user: $user,
-            filters: ['status' => $filters->status],
-            callback: fn(): array => $this->taskRepository->findActiveByUser($user, $filters)
-        );
+        return $this->taskRepository->findActiveByUser($user, $filters);
     }
 }
 ```
@@ -1176,12 +1212,12 @@ final class TaskResponseDto
     // Or entire class readonly (PHP 8.2+)
 }
 
-final readonly class TaskCacheService
+final readonly class EmailNotificationService
 {
     // All properties are automatically readonly
     public function __construct(
-        private SimpleRedisCache $cacheService,
-        private RedisKeyManager $keyManager,
+        private MailerInterface $mailer,
+        private TranslatorInterface $translator,
     ) {
     }
 }
@@ -1195,7 +1231,7 @@ final class TaskService
 {
     public function __construct(
         private readonly TaskRepository $taskRepository,
-        private readonly TaskCacheService $cacheService,
+        private readonly NotificationService $notificationService,
         private readonly LoggerInterface $logger,
     ) {
         // Properties declared and initialized automatically!
@@ -1208,16 +1244,16 @@ final class TaskService
 class TaskService
 {
     private TaskRepository $taskRepository;
-    private TaskCacheService $cacheService;
+    private NotificationService $notificationService;
     private LoggerInterface $logger;
 
     public function __construct(
         TaskRepository $taskRepository,
-        TaskCacheService $cacheService,
+        NotificationService $notificationService,
         LoggerInterface $logger
     ) {
         $this->taskRepository = $taskRepository;
-        $this->cacheService = $cacheService;
+        $this->notificationService = $notificationService;
         $this->logger = $logger;
     }
 }
@@ -1325,10 +1361,10 @@ public function getStatusColor($status): string
 
 ```php
 // GOOD - Named arguments for clarity
-$tasks = $this->cacheService->getTaskList(
+$notification = $this->notificationService->send(
     user: $user,
-    filters: ['status' => TaskStatus::PENDING],
-    callback: fn() => $this->repository->findPendingTasks($user)
+    subject: 'Task Created',
+    message: $this->translator->trans('task.created', ['title' => $task->getTitle()])
 );
 
 $dto = TaskResponseDto::fromEntity(
@@ -1340,10 +1376,10 @@ $dto = TaskResponseDto::fromEntity(
 
 ```php
 // BAD - Positional arguments (unclear)
-$tasks = $this->cacheService->getTaskList(
+$notification = $this->notificationService->send(
     $user,
-    ['status' => TaskStatus::PENDING],
-    fn() => $this->repository->findPendingTasks($user)
+    'Task Created',
+    $this->translator->trans('task.created', ['title' => $task->getTitle()])
 );
 
 $dto = TaskResponseDto::fromEntity($task, true, false);  // What do true/false mean?
@@ -1811,12 +1847,12 @@ class TaskManager
     // Validation
     public function validate() { }
 
-    // Caching
-    public function cache() { }
-    public function invalidate() { }
-
-    // Email
+    // Notifications
     public function sendEmail() { }
+    public function sendSms() { }
+
+    // Logging
+    public function logActivity() { }
 
     // Analytics
     public function trackEvent() { }
@@ -1829,7 +1865,7 @@ class TaskManager
 }
 ```
 
-**Fix:** Split into focused classes (TaskService, TaskRepository, TaskCacheService, TaskExporter)
+**Fix:** Split into focused classes (TaskService, TaskRepository, NotificationService, TaskExporter)
 
 ### Anemic Domain Model
 
@@ -1894,31 +1930,32 @@ class TaskService
 
 ```php
 // BAD - Magic numbers
-public function getTtl(): int
+public function getRetryDelay(): int
 {
-    if ($this->type === 'tasks') {
-        return 300;  // What is 300?
-    } elseif ($this->type === 'analytics') {
-        return 900;  // What is 900?
+    if ($this->attemptCount === 1) {
+        return 1000;  // What is 1000?
+    } elseif ($this->attemptCount === 2) {
+        return 5000;  // What is 5000?
     }
 }
 ```
 
 ```php
 // GOOD - Named constants
-final readonly class TaskCacheService
+final readonly class NotificationRetryService
 {
-    private const TTL_TASK_LIST = 300;      // 5 minutes
-    private const TTL_TASK_STATS = 300;     // 5 minutes
-    private const TTL_TODAY_TASKS = 60;     // 1 minute (dynamic)
+    private const RETRY_DELAY_FIRST = 1000;      // 1 second
+    private const RETRY_DELAY_SECOND = 5000;     // 5 seconds
+    private const RETRY_DELAY_THIRD = 15000;     // 15 seconds
+    private const MAX_RETRY_ATTEMPTS = 3;
 
-    public function getTtl(string $type): int
+    public function getRetryDelay(int $attemptCount): int
     {
-        return match($type) {
-            'task_list' => self::TTL_TASK_LIST,
-            'task_stats' => self::TTL_TASK_STATS,
-            'today_tasks' => self::TTL_TODAY_TASKS,
-            default => 300,
+        return match($attemptCount) {
+            1 => self::RETRY_DELAY_FIRST,
+            2 => self::RETRY_DELAY_SECOND,
+            3 => self::RETRY_DELAY_THIRD,
+            default => self::RETRY_DELAY_THIRD,
         };
     }
 }

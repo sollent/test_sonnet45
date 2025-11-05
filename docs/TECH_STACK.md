@@ -1,6 +1,6 @@
 # 🛠 Tech Stack - Complete Technology Overview
 
-> **TL;DR**: Modern full-stack application built with Symfony 7.1 (PHP 8.3), PostgreSQL, Redis, Vue.js 3.4, TypeScript 5.4, and containerized with Docker. Every technology choice is justified by performance, scalability, and developer experience.
+> **TL;DR**: Modern full-stack application built with Symfony 7.1 (PHP 8.3), PostgreSQL, Vue.js 3.4, TypeScript 5.4, and containerized with Docker. Every technology choice is justified by performance, scalability, and developer experience.
 
 ---
 
@@ -28,12 +28,12 @@
 ┌─────────────────────────▼───────────────────────────────────┐
 │                      BACKEND API                            │
 │           (Symfony 7.1 + PHP 8.3)                          │
-└─────────┬─────────────────────────────────┬─────────────────┘
-          │                                 │
-┌─────────▼──────────┐          ┌─────────▼────────────┐
-│   PostgreSQL 15    │          │    Redis 7.2         │
-│  (Primary Data)    │          │  (Cache + Sessions)  │
-└────────────────────┘          └──────────────────────┘
+└─────────┬───────────────────────────────────────────────────┘
+          │
+┌─────────▼──────────┐
+│   PostgreSQL 15    │
+│  (Primary Data)    │
+└────────────────────┘
 ```
 
 **Architecture Style:** Layered Monolith (Backend) + SPA (Frontend)
@@ -190,56 +190,6 @@ class TaskRepository extends ServiceEntityRepository
             ->getResult();
     }
 }
-```
-
----
-
-### Cache Layer
-
-#### **Redis 7.2**
-```yaml
-# docker-compose.yml
-redis:7.2-alpine
-```
-
-**Why Redis?**
-- **Speed**: In-memory storage, sub-millisecond response times
-- **Data structures**: Strings, hashes, lists, sets (flexible caching)
-- **TTL support**: Automatic key expiration
-- **Persistence**: Optional RDB/AOF for data durability
-- **Simplicity**: Easy to use, reliable
-- **Scalability**: Can be clustered for horizontal scaling
-
-**Redis Usage Pattern:**
-```php
-// SimpleRedisCache service (native Redis client)
-final class SimpleRedisCache
-{
-    private \Redis $redis;
-
-    public function get(string $key): mixed
-    {
-        $data = $this->redis->get($this->prefix . $key);
-        return $data ? json_decode($data, true) : null;
-    }
-
-    public function set(string $key, mixed $value, int $ttl = null): bool
-    {
-        $ttl = $ttl ?? $this->defaultTtl;
-        return $this->redis->setex(
-            $this->prefix . $key,
-            $ttl,
-            json_encode($value)
-        );
-    }
-}
-```
-
-**Cache Keys Pattern:**
-```
-app:prod:user_tasks_list:uid_5           → User 5's task list
-app:prod:analytics_overview:uid_5        → User 5's analytics overview
-app:prod:analytics_completion:uid_5      → User 5's completion timeline
 ```
 
 ---
@@ -738,10 +688,6 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
 
-  redis:
-    image: redis:7.2-alpine
-    command: redis-server --appendonly yes
-
   php:
     image: php:8.3-fpm-alpine
     volumes:
@@ -893,7 +839,7 @@ docker exec -it redis redis-cli
 #### **Backend: Symfony + PHP**
 ✅ **Enterprise-grade**: Used by enterprise companies (Spotify, Trivago)
 ✅ **Type safety**: PHP 8.3 + strict types = fewer bugs
-✅ **Performance**: PHP 8.3 JIT + Redis = sub-millisecond responses
+✅ **Performance**: PHP 8.3 JIT compiler for fast execution
 ✅ **Ecosystem**: Mature bundles for everything (JWT, OAuth, CORS)
 ✅ **Documentation**: Best-in-class docs + huge community
 
@@ -909,12 +855,6 @@ docker exec -it redis redis-cli
 ✅ **Features**: JSON, recursion, advanced indexing
 ✅ **Performance**: Query optimizer, efficient joins
 ✅ **Scalability**: Can handle millions of rows
-
-#### **Cache: Redis**
-✅ **Speed**: Sub-millisecond reads (0.19ms - 0.54ms measured)
-✅ **Simple**: Set/Get operations, TTL support
-✅ **Reliable**: Mature, well-tested, widely used
-✅ **Flexible**: Supports multiple data structures
 
 ---
 
@@ -951,7 +891,6 @@ docker exec -it redis redis-cli
 
 ```yaml
 postgres: "15-alpine"
-redis: "7.2-alpine"
 php: "8.3-fpm-alpine"
 nginx: "1.25-alpine"
 node: "20-alpine"
@@ -966,7 +905,6 @@ node: "20-alpine"
 | **Backend Framework** | Symfony | 7.1 | API, routing, DI | Laravel (too heavy), API Platform (overkill) |
 | **Language** | PHP | 8.3 | Business logic | PHP 8.2 (missing features) |
 | **Database** | PostgreSQL | 15 | Data persistence | MySQL (less features), MongoDB (not relational) |
-| **Cache** | Redis | 7.2 | Performance | Memcached (less features), APCu (not distributed) |
 | **ORM** | Doctrine | 3.2 | Data access | Eloquent (Laravel-only), Raw SQL (too manual) |
 | **Auth** | JWT + OAuth2 | - | Authentication | Session-based (not scalable), Auth0 (expensive) |
 | **Frontend Framework** | Vue.js | 3.4 | UI | React (more complex), Angular (too heavy) |
@@ -983,16 +921,13 @@ node: "20-alpine"
 
 ## Performance Benchmarks
 
-### Backend (with Redis cache)
+### Backend
 
 ```
-GET /api/tasks                    →  0.5ms (vs 100ms without cache)
-GET /api/analytics/overview       →  0.24ms (vs 35ms)
-GET /api/analytics/dashboard      →  0.19ms (vs 134ms)
-GET /api/analytics/completion     →  0.54ms (vs 45ms)
-
-Cache Hit Rate: ~95%
-Cache Miss Penalty: +50-100ms
+GET /api/tasks                    →  50-100ms
+GET /api/analytics/overview       →  35-50ms
+GET /api/analytics/dashboard      →  100-150ms
+GET /api/analytics/completion     →  40-60ms
 ```
 
 ### Frontend
@@ -1014,7 +949,6 @@ Bundle Size:         ~300KB (gzipped)
 
 ### For Reference
 - **[Database Schema](backend/DATABASE.md)** - PostgreSQL design
-- **[Cache System](backend/CACHE_SYSTEM.md)** - Redis implementation
 - **[API Integration](frontend/API_INTEGRATION.md)** - Axios configuration
 
 ---

@@ -34,8 +34,6 @@ Register a new user account.
 
 **Authentication:** Not required
 
-**Cache:** No
-
 **Request Body:**
 ```json
 {
@@ -86,8 +84,6 @@ Authenticate user and receive JWT token.
 
 **Authentication:** Not required
 
-**Cache:** No
-
 **Request Body:**
 ```json
 {
@@ -125,8 +121,6 @@ Refresh JWT token using refresh token.
 
 **Authentication:** Not required (uses refresh token)
 
-**Cache:** No
-
 **Request Body:**
 ```json
 {
@@ -157,8 +151,6 @@ Logout user (invalidate refresh token).
 
 **Authentication:** Required (JWT)
 
-**Cache:** No
-
 **Request Body:**
 ```json
 {
@@ -175,8 +167,6 @@ Logout user (invalidate refresh token).
 Get current authenticated user profile.
 
 **Authentication:** Required (JWT)
-
-**Cache:** No
 
 **Response 200 (Success):**
 ```json
@@ -206,8 +196,6 @@ Get current authenticated user profile.
 Get list of tasks with optional filters.
 
 **Authentication:** Required (JWT)
-
-**Cache:** Yes (TTL: 300s, UPDATE strategy)
 
 **Query Parameters:**
 - `view` (optional): Filter by view type
@@ -306,8 +294,6 @@ Get list of tasks with optional filters.
 Get single task with full details including subtasks.
 
 **Authentication:** Required (JWT)
-
-**Cache:** Yes (TTL: 300s)
 
 **Path Parameters:**
 - `id` (required): Task ID
@@ -412,8 +398,6 @@ Create a new task.
 
 **Authentication:** Required (JWT)
 
-**Cache:** No (triggers cache UPDATE for task lists)
-
 **Request Body:**
 ```json
 {
@@ -509,8 +493,6 @@ Update existing task (full update).
 
 **Authentication:** Required (JWT)
 
-**Cache:** No (triggers cache UPDATE for task lists)
-
 **Path Parameters:**
 - `id` (required): Task ID
 
@@ -579,8 +561,6 @@ Delete task and all its subtasks.
 
 **Authentication:** Required (JWT)
 
-**Cache:** No (triggers cache UPDATE for task lists)
-
 **Path Parameters:**
 - `id` (required): Task ID
 
@@ -607,8 +587,6 @@ Delete task and all its subtasks.
 Toggle task completion status (complete ↔ incomplete).
 
 **Authentication:** Required (JWT)
-
-**Cache:** No (triggers cache UPDATE)
 
 **Path Parameters:**
 - `id` (required): Task ID
@@ -639,8 +617,6 @@ Mark task as completed.
 
 **Authentication:** Required (JWT)
 
-**Cache:** No (triggers cache UPDATE)
-
 **Path Parameters:**
 - `id` (required): Task ID
 
@@ -665,8 +641,6 @@ Archive task (hide from active lists).
 
 **Authentication:** Required (JWT)
 
-**Cache:** No (triggers cache UPDATE)
-
 **Path Parameters:**
 - `id` (required): Task ID
 
@@ -688,8 +662,6 @@ Unarchive task (restore to active lists).
 
 **Authentication:** Required (JWT)
 
-**Cache:** No (triggers cache UPDATE)
-
 **Path Parameters:**
 - `id` (required): Task ID
 
@@ -710,8 +682,6 @@ Unarchive task (restore to active lists).
 Get task statistics for current user.
 
 **Authentication:** Required (JWT)
-
-**Cache:** Yes (TTL: 300s, UPDATE strategy)
 
 **Response 200 (Success):**
 ```json
@@ -748,8 +718,6 @@ Get task statistics for current user.
 Get paginated list of overdue tasks.
 
 **Authentication:** Required (JWT)
-
-**Cache:** Yes (TTL: 120s, UPDATE strategy)
 
 **Query Parameters:**
 - `page` (optional): Page number
@@ -788,8 +756,6 @@ Get tasks for calendar week view.
 
 **Authentication:** Required (JWT)
 
-**Cache:** No
-
 **Query Parameters:**
 - `weekStart` (required): Week start date
   - Type: `string` (format: `YYYY-MM-DD`)
@@ -818,8 +784,6 @@ Get tasks for calendar week view.
 Get tasks for calendar month view.
 
 **Authentication:** Required (JWT)
-
-**Cache:** No
 
 **Query Parameters:**
 - `year` (required): Year
@@ -853,8 +817,6 @@ Get tasks for specific day.
 
 **Authentication:** Required (JWT)
 
-**Cache:** No
-
 **Query Parameters:**
 - `date` (required): Date
   - Type: `string` (format: `YYYY-MM-DD`)
@@ -884,8 +846,6 @@ Reorder tasks by providing new sort order.
 
 **Authentication:** Required (JWT)
 
-**Cache:** No (triggers cache UPDATE)
-
 **Request Body:**
 ```json
 {
@@ -908,8 +868,6 @@ Reorder tasks by providing new sort order.
 Get list of user's tags.
 
 **Authentication:** Required (JWT)
-
-**Cache:** No
 
 **Query Parameters:**
 - `search` (optional): Search tags by name
@@ -949,8 +907,6 @@ Get single tag details.
 
 **Authentication:** Required (JWT)
 
-**Cache:** No
-
 **Path Parameters:**
 - `id` (required): Tag ID
 
@@ -981,8 +937,6 @@ Get single tag details.
 Create new tag.
 
 **Authentication:** Required (JWT)
-
-**Cache:** No
 
 **Request Body:**
 ```json
@@ -1037,8 +991,6 @@ Update existing tag.
 
 **Authentication:** Required (JWT)
 
-**Cache:** No
-
 **Path Parameters:**
 - `id` (required): Tag ID
 
@@ -1078,8 +1030,6 @@ Delete tag (removes tag from all tasks).
 
 **Authentication:** Required (JWT)
 
-**Cache:** No
-
 **Path Parameters:**
 - `id` (required): Tag ID
 
@@ -1099,8 +1049,6 @@ Delete tag (removes tag from all tasks).
 Get most frequently used tags.
 
 **Authentication:** Required (JWT)
-
-**Cache:** No
 
 **Query Parameters:**
 - `limit` (optional): Number of tags to return
@@ -1142,8 +1090,6 @@ Get analytics overview with key metrics.
 
 **Authentication:** Required (JWT)
 
-**Cache:** Yes (TTL: 600s, INVALIDATE strategy)
-
 **Response 200 (Success):**
 ```json
 {
@@ -1169,8 +1115,6 @@ Get analytics overview with key metrics.
 Get complete analytics dashboard data (combines multiple endpoints).
 
 **Authentication:** Required (JWT)
-
-**Cache:** Yes (TTL: 900s, INVALIDATE strategy)
 
 **Query Parameters:**
 - `period` (optional): Timeline period in days
@@ -1259,8 +1203,6 @@ Get task completion timeline data.
 
 **Authentication:** Required (JWT)
 
-**Cache:** Yes (TTL: 900s, INVALIDATE strategy)
-
 **Query Parameters:**
 - `period` (optional): Number of days
   - Type: `integer`
@@ -1300,8 +1242,6 @@ Get task count distribution by status.
 
 **Authentication:** Required (JWT)
 
-**Cache:** Yes (TTL: 600s, INVALIDATE strategy)
-
 **Response 200 (Success):**
 ```json
 {
@@ -1331,8 +1271,6 @@ Get task count distribution by status.
 Get task statistics grouped by priority.
 
 **Authentication:** Required (JWT)
-
-**Cache:** Yes (TTL: 600s, INVALIDATE strategy)
 
 **Response 200 (Success):**
 ```json
@@ -1377,8 +1315,6 @@ Get GitHub-style productivity heatmap (daily task completion counts).
 
 **Authentication:** Required (JWT)
 
-**Cache:** Yes (TTL: 1800s, INVALIDATE strategy)
-
 **Query Parameters:**
 - `year` (optional): Year for heatmap
   - Type: `integer`
@@ -1410,8 +1346,6 @@ Get GitHub-style productivity heatmap (daily task completion counts).
 Get task completion statistics by day of week.
 
 **Authentication:** Required (JWT)
-
-**Cache:** Yes (TTL: 900s, INVALIDATE strategy)
 
 **Response 200 (Success):**
 ```json
@@ -1462,8 +1396,6 @@ Get most used tags with completion statistics.
 
 **Authentication:** Required (JWT)
 
-**Cache:** Yes (TTL: 600s, INVALIDATE strategy)
-
 **Query Parameters:**
 - `limit` (optional): Number of tags to return
   - Type: `integer`
@@ -1505,8 +1437,6 @@ Get most used tags with completion statistics.
 Get AI-like insights and recommendations based on user data.
 
 **Authentication:** Required (JWT)
-
-**Cache:** Yes (TTL: 300s, INVALIDATE strategy)
 
 **Response 200 (Success):**
 ```json
@@ -1567,8 +1497,6 @@ Get AI-like insights and recommendations based on user data.
 Get current and longest task completion streak.
 
 **Authentication:** Required (JWT)
-
-**Cache:** Yes (TTL: 300s, INVALIDATE strategy)
 
 **Response 200 (Success):**
 ```json

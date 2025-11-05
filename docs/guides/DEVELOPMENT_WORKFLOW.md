@@ -1,6 +1,6 @@
 # 🛠 Development Workflow - Daily Development Guide
 
-> **TL;DR**: Docker setup for backend (Symfony + PostgreSQL + Redis) via `docker/docker-compose.yml`, npm for frontend (Vue + Vite). Database migrations with Doctrine. Redis operations. Git workflow with feature branches.
+> **TL;DR**: Docker setup for backend (Symfony + PostgreSQL) via `docker/docker-compose.yml`, npm for frontend (Vue + Vite). Database migrations with Doctrine. Git workflow with feature branches.
 
 ---
 
@@ -46,7 +46,6 @@ cp .env .env.local
 
 # Configure .env.local
 DATABASE_URL="postgresql://user:password@psql16:5432/backend-app"
-REDIS_URL="redis://redis:6379"
 JWT_SECRET_KEY=%kernel.project_dir%/config/jwt/private.pem
 JWT_PUBLIC_KEY=%kernel.project_dir%/config/jwt/public.pem
 GOOGLE_CLIENT_ID=your-google-client-id
@@ -95,7 +94,6 @@ npm run dev
 - **Frontend:** http://localhost:3000 (Vite dev server)
 - **Backend API:** http://localhost:8089/api (Nginx)
 - **PostgreSQL:** localhost:15432 (external port)
-- **Redis:** localhost:16379 (external port)
 - **RabbitMQ Management:** http://localhost:15672 (user/password)
 
 ---
@@ -155,7 +153,6 @@ docker-compose logs -f
 docker-compose logs -f php83-fpm
 docker-compose logs -f nginx
 docker-compose logs -f psql16
-docker-compose logs -f redis
 ```
 
 ---
@@ -187,69 +184,6 @@ docker exec backend-php83 php bin/console make:entity
 
 ---
 
-## Redis Operations
-
-### Connect to Redis CLI
-
-```bash
-# Connect to Redis container
-docker exec -it backend-redis redis-cli
-```
-
-### Common Redis Commands
-
-```bash
-# List all keys
-KEYS *
-
-# List keys by pattern
-KEYS "app:prod:user_tasks_list:*"
-
-# Get specific key value
-GET "app:prod:user_tasks_list:uid_5"
-
-# Check if key exists
-EXISTS "app:prod:user_tasks_list:uid_5"
-
-# Get TTL (time to live)
-TTL "app:prod:user_tasks_list:uid_5"
-
-# Delete specific key
-DEL "app:prod:user_tasks_list:uid_5"
-
-# Delete keys by pattern (use with caution!)
-KEYS "app:prod:user_*:uid_5*" | xargs redis-cli DEL
-
-# Flush all cache (WARNING: deletes everything!)
-FLUSHALL
-
-# Get Redis info
-INFO
-INFO memory
-INFO stats
-
-# Monitor Redis activity in real-time
-MONITOR
-
-# Count all keys
-DBSIZE
-```
-
-### Clear Cache for Specific User
-
-```bash
-# From host machine
-docker exec backend-redis redis-cli --eval - , "app:prod:user_*:uid_42*" <<EOF
-local keys = redis.call('keys', ARGV[1])
-for i=1,#keys,5000 do
-    redis.call('del', unpack(keys, i, math.min(i+4999, #keys)))
-end
-return #keys
-EOF
-```
-
----
-
 ## Docker Container Operations
 
 ### Managing Containers
@@ -268,7 +202,6 @@ docker logs --tail 100 backend-php83  # Last 100 lines
 
 # Restart specific container
 docker restart backend-php83
-docker restart backend-redis
 
 # Stop specific container
 docker stop backend-php83
@@ -289,7 +222,6 @@ docker exec backend-php83 composer --version
 
 # Interactive shell access
 docker exec -it backend-php83 bash
-docker exec -it backend-redis sh
 docker exec -it backend-psql16 bash
 ```
 
@@ -372,10 +304,6 @@ docker exec backend-php83 php bin/console doctrine:fixtures:load --no-interactio
 
 # 8. Clear cache
 docker exec backend-php83 php bin/console cache:clear
-
-# 9. Verify Redis is working
-docker exec backend-redis redis-cli PING
-# Should return: PONG
 ```
 
 ### Container Health Checks
@@ -393,13 +321,6 @@ docker inspect backend-psql16 | grep -i status
 
 # Test backend API is responding
 curl http://localhost:8089/api/health
-
-# Test Redis connection
-docker exec backend-php83 php -r "
-\$redis = new Redis();
-\$redis->connect('redis', 6379);
-echo \$redis->ping() ? 'Redis OK' : 'Redis FAIL';
-"
 
 # Test database connection
 docker exec backend-php83 php bin/console doctrine:query:sql "SELECT 1"
@@ -450,7 +371,6 @@ docker logs backend-php83
 # Check if port is already in use
 lsof -i :8089
 lsof -i :15432
-lsof -i :16379
 
 # Force remove and recreate
 cd docker
@@ -475,19 +395,6 @@ try {
 "
 ```
 
-### Redis connection issues
-
-```bash
-# Check Redis is running
-docker ps | grep redis
-
-# Test connection
-docker exec backend-redis redis-cli PING
-
-# Check Redis logs
-docker logs backend-redis
-```
-
 ### Performance issues
 
 ```bash
@@ -496,7 +403,6 @@ docker stats
 
 # Clear all caches
 docker exec backend-php83 php bin/console cache:clear
-docker exec backend-redis redis-cli FLUSHALL
 
 # Restart containers
 cd docker

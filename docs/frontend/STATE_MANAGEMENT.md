@@ -1,6 +1,6 @@
 # 🗂 State Management - Pinia Stores
 
-> **TL;DR**: Pinia stores for global state management. TaskStore for tasks, AuthStore for authentication. Actions vs Getters pattern. Optimistic UI updates for instant feedback. Cache synchronization with backend Redis.
+> **TL;DR**: Pinia stores for global state management. TaskStore for tasks, AuthStore for authentication. Actions vs Getters pattern. Optimistic UI updates for instant feedback.
 
 ---
 
@@ -11,7 +11,6 @@
 - [AuthStore](#authstore)
 - [Actions vs Getters](#actions-vs-getters)
 - [Optimistic Updates](#optimistic-updates)
-- [Cache Synchronization](#cache-synchronization)
 
 ---
 
@@ -473,71 +472,6 @@ async function toggleTaskCompletion(id: number): Promise<void> {
 
 ---
 
-## Cache Synchronization
-
-### Frontend ↔ Backend Cache Sync
-
-```
-Frontend Store (Pinia)  ↔  Backend Cache (Redis)  ↔  Database (PostgreSQL)
-```
-
-### Synchronization Strategies
-
-#### 1. UPDATE Strategy (Tasks)
-
-**Backend:** Updates cache when data changes
-**Frontend:** Always fetches latest from backend
-
-```typescript
-// Frontend: Fetch tasks
-async function fetchTasks() {
-  // Backend returns cached data (0.5ms) or DB data (~100ms)
-  tasks.value = await taskService.getTasks()
-}
-
-// Backend: Update cache after create
-public function createTask(CreateTaskDto $dto, User $user): Task
-{
-    $task = new Task();
-    // ... create task
-
-    $this->em->persist($task);
-    $this->em->flush();
-
-    // ✅ Update cache immediately
-    $this->taskCache->updateAfterCreate($user, $task);
-
-    return $task;
-}
-```
-
-#### 2. INVALIDATE Strategy (Analytics)
-
-**Backend:** Deletes cache when data changes
-**Frontend:** Always fetches fresh data
-
-```typescript
-// Frontend: Fetch analytics
-async function fetchAnalytics() {
-  // First request: Cache miss → DB query (~134ms) → Cache SET
-  // Subsequent requests: Cache hit (0.19ms)
-  analytics.value = await analyticsService.getOverview()
-}
-
-// Backend: Invalidate cache after task change
-public function updateTask(Task $task): void
-{
-    $this->em->flush();
-
-    // ✅ Invalidate analytics cache
-    $this->analyticsCache->invalidateUserAnalytics($user);
-
-    // Next request will rebuild cache from DB
-}
-```
-
----
-
 ## Best Practices
 
 ### DO's ✅
@@ -564,9 +498,6 @@ public function updateTask(Task $task): void
 ### Must Read Next
 - **[Architecture](ARCHITECTURE.md)** - Component patterns
 - **[API Integration](API_INTEGRATION.md)** - Service layer
-
-### For Reference
-- **[Backend Cache System](../backend/CACHE_SYSTEM.md)** - Redis caching
 
 ---
 

@@ -12,7 +12,6 @@
 2. **[Tech Stack](TECH_STACK.md)** - Technologies and versions *(3 min read)*
 3. **[Coding Standards](CODING_STANDARDS.md)** - How we write code (CRITICAL) *(10 min read)*
 4. **[Architecture](backend/ARCHITECTURE.md)** - System design patterns *(8 min read)*
-5. **[Cache System](backend/CACHE_SYSTEM.md)** - Redis caching (MUST READ) *(12 min read)*
 
 **Already familiar?** Jump to:
 - **[API Reference](backend/API_REFERENCE.md)** - All endpoints documented
@@ -38,7 +37,7 @@ What is this application, its purpose, main features, and business logic
 Complete technology stack with versions and justifications
 
 **Key Topics:**
-- Backend stack (Symfony 6.4, PHP 8.3, PostgreSQL, Redis)
+- Backend stack (Symfony 7.1, PHP 8.3, PostgreSQL)
 - Frontend stack (Vue.js 3, TypeScript, PrimeVue)
 - Infrastructure (Docker, Nginx)
 - Third-party services (Google OAuth)
@@ -69,19 +68,6 @@ Backend architecture, layers, and design patterns
 - Event system
 - Authentication & authorization
 
-#### [`backend/CACHE_SYSTEM.md`](backend/CACHE_SYSTEM.md)
-**⚠️ CRITICAL DOCUMENT** - Complete Redis caching implementation
-
-**Key Topics:**
-- Hybrid cache strategy (UPDATE vs INVALIDATE)
-- SimpleRedisCache service
-- RedisKeyManager (key generation)
-- TaskCacheService (all task caching)
-- AnalyticsCacheService (all analytics caching)
-- Performance benchmarks
-- TTL optimization
-- Cache invalidation patterns
-- DTO optimization for caching
 
 #### [`backend/API_REFERENCE.md`](backend/API_REFERENCE.md)
 Complete API endpoint documentation
@@ -90,7 +76,7 @@ Complete API endpoint documentation
 - Authentication endpoints (JWT, Google OAuth)
 - Task CRUD operations
 - Tag management
-- Analytics endpoints (9 cached methods)
+- Analytics endpoints
 - Request/Response examples
 - Error responses
 - Query parameters & filtering
@@ -151,7 +137,6 @@ Pinia stores and state patterns
 - AuthStore (authentication)
 - Actions vs Getters
 - Optimistic updates
-- Cache synchronization
 
 #### [`frontend/API_INTEGRATION.md`](frontend/API_INTEGRATION.md)
 How frontend communicates with backend
@@ -177,7 +162,6 @@ Day-to-day development process
 - Running frontend (Vite: `cd frontend && npm run dev`)
 - Complete project rebuild commands
 - Database migrations & operations
-- Redis operations & cache management
 - PostgreSQL operations
 - Symfony console commands
 - Container management (logs, restart, health checks)
@@ -189,12 +173,11 @@ Common issues and their solutions
 
 **Key Topics:**
 - CORS errors (solved)
-- Empty arrays in cache (solved)
 - Date shifting (solved)
 - UI blinking (solved)
 - Memory exhaustion (solved)
 - Docker issues
-- Redis connection issues
+- Database connection issues
 
 #### [`guides/TESTING.md`](guides/TESTING.md)
 Testing strategy and running tests
@@ -213,7 +196,6 @@ Production deployment guide
 - Environment configuration
 - Docker production build
 - Database setup
-- Redis configuration
 - SSL/HTTPS setup
 - Monitoring & logs
 
@@ -225,7 +207,6 @@ Production deployment guide
 **Must Read:**
 1. [`CODING_STANDARDS.md`](CODING_STANDARDS.md) - SOLID/GRASP principles
 2. [`backend/ARCHITECTURE.md`](backend/ARCHITECTURE.md) - Layered architecture
-3. [`backend/CACHE_SYSTEM.md`](backend/CACHE_SYSTEM.md) - Caching patterns
 
 **Reference:**
 - [`backend/API_REFERENCE.md`](backend/API_REFERENCE.md) - API contracts
@@ -246,7 +227,6 @@ Production deployment guide
 - [`guides/TROUBLESHOOTING.md`](guides/TROUBLESHOOTING.md) - All known issues & fixes
 
 **If Issue Persists:**
-- [`backend/CACHE_SYSTEM.md`](backend/CACHE_SYSTEM.md) - Cache-related issues
 - [`guides/DEVELOPMENT_WORKFLOW.md`](guides/DEVELOPMENT_WORKFLOW.md) - Setup issues
 
 ---
@@ -257,7 +237,7 @@ Production deployment guide
 Backend:
 - Lines of Code: ~15,000
 - Controllers: 4 (Auth, Task, Tag, Analytics)
-- Services: 12+ (TaskService, TaskCacheService, AnalyticsService, etc.)
+- Services: 10+ (TaskService, AnalyticsService, etc.)
 - Entities: 5 (User, Task, Tag, Media, RefreshToken)
 - Tests: PHPUnit (Unit + Integration)
 
@@ -267,11 +247,6 @@ Frontend:
 - Composables: 8 (useTaskCompletion, useAuth, useTagSuggestions, etc.)
 - Stores: 3 (TaskStore, AuthStore, LoaderStore)
 - Tests: 115 (Vitest - 100% passing)
-
-Cache Performance:
-- GET /api/tasks: 0.5ms (200x faster)
-- GET /api/analytics/overview: 0.24ms (150x faster)
-- GET /api/analytics/dashboard: 0.19ms (714x faster)
 ```
 
 ---
@@ -285,8 +260,8 @@ Cache Performance:
 
 ### Phase 2: Backend Deep Dive (45 minutes)
 1. Study `backend/ARCHITECTURE.md` - How is backend structured?
-2. **CRITICAL**: Read `backend/CACHE_SYSTEM.md` - Understand caching thoroughly
-3. Reference `backend/API_REFERENCE.md` - Know all endpoints
+2. Reference `backend/API_REFERENCE.md` - Know all endpoints
+3. Read `backend/DATABASE.md` - Database schema and relationships
 
 ### Phase 3: Frontend Deep Dive (45 minutes)
 1. Study `frontend/ARCHITECTURE.md` - How is frontend structured?
@@ -334,12 +309,6 @@ docker exec backend-php83 php bin/console doctrine:migrations:migrate
 
 # Clear cache
 docker exec backend-php83 php bin/console cache:clear
-
-# Check Redis
-docker exec backend-redis redis-cli
-> KEYS *
-> GET "app:prod:user_tasks_list:uid_5"
-> FLUSHALL  # Clear all cache
 
 # PostgreSQL operations
 docker exec -it backend-psql16 psql -U user -d backend-app
@@ -412,7 +381,6 @@ Every document follows this pattern:
 - **TypeScript**: https://www.typescriptlang.org/docs/
 - **PrimeVue**: https://primevue.org/
 - **Pinia**: https://pinia.vuejs.org/
-- **Redis**: https://redis.io/docs/
 
 ### Books Referenced
 - **Clean Architecture** - Robert C. Martin
@@ -428,13 +396,11 @@ Every document follows this pattern:
 1. **SOLID principles are non-negotiable** - Every class follows them
 2. **No business logic in controllers** - Controllers are thin coordinators
 3. **TypeScript strict mode** - No `any` types allowed
-4. **Cache strategy matters** - Tasks use UPDATE, Analytics use INVALIDATE
-5. **Optimistic UI updates** - No full list reloads
+4. **Optimistic UI updates** - No full list reloads
 
 ### Before Making Changes
 - [ ] Have you read the relevant docs?
 - [ ] Do you understand the SOLID principles applied?
-- [ ] Will your change follow the hybrid cache strategy?
 - [ ] Have you checked `TROUBLESHOOTING.md` for similar issues?
 - [ ] Are you maintaining the existing code patterns?
 
@@ -463,7 +429,7 @@ After reading this INDEX:
 → Start with [`PROJECT_OVERVIEW.md`](PROJECT_OVERVIEW.md)
 
 **For Writing Backend Code:**
-→ Read [`CODING_STANDARDS.md`](CODING_STANDARDS.md) then [`backend/CACHE_SYSTEM.md`](backend/CACHE_SYSTEM.md)
+→ Read [`CODING_STANDARDS.md`](CODING_STANDARDS.md) then [`backend/ARCHITECTURE.md`](backend/ARCHITECTURE.md)
 
 **For Writing Frontend Code:**
 → Read [`CODING_STANDARDS.md`](CODING_STANDARDS.md) then [`frontend/ARCHITECTURE.md`](frontend/ARCHITECTURE.md)

@@ -3,12 +3,11 @@
 ## Table of Contents
 1. [Solved Issues](#solved-issues)
 2. [Docker Issues](#docker-issues)
-3. [Redis Issues](#redis-issues)
-4. [Database Issues](#database-issues)
-5. [Frontend Issues](#frontend-issues)
-6. [Backend Issues](#backend-issues)
-7. [Performance Issues](#performance-issues)
-8. [Security Issues](#security-issues)
+3. [Database Issues](#database-issues)
+4. [Frontend Issues](#frontend-issues)
+5. [Backend Issues](#backend-issues)
+6. [Performance Issues](#performance-issues)
+7. [Security Issues](#security-issues)
 
 ---
 
@@ -75,11 +74,7 @@ nelmio_cors:
    docker-compose down
    docker-compose up -d --build
    ```
-4. Clear Symfony cache:
-   ```bash
-   docker exec -it ultra_backend php bin/console cache:clear
-   ```
-5. Test in browser console:
+4. Test in browser console:
    ```javascript
    fetch('http://localhost:8089/api/tasks', {
      headers: { 'Authorization': 'Bearer YOUR_TOKEN' }
@@ -103,307 +98,7 @@ Access-Control-Allow-Headers: Content-Type, Authorization
 
 ---
 
-### 2. Empty Arrays in Redis Cache
-
-**Problem:**
-```bash
-# Redis shows empty arrays instead of task data
-redis-cli> GET "app:prod:user_tasks_list:uid_42"
-"[]"
-
-# Frontend receives empty array
-GET /api/tasks
-Response: []
-```
-
-**Symptoms:**
-- Cache keys exist in Redis
-- API returns empty arrays `[]` instead of task data
-- Direct database queries work fine
-- Only cached responses are broken
-
-**Root Cause:**
-
-Symfony Serializer was misconfigured and returned empty arrays when serializing DTOs to JSON. Missing serialization groups and context caused all data to be filtered out.
-
-```php
-// BROKEN CODE (in TaskCacheService)
-$json = $this->serializer->serialize($taskDtos, 'json', ['groups' => ['task:read']]);
-// Result: "[]" because groups weren't properly configured
-```
-
-**Solution:**
-
-Use native `json_encode()` with `JsonSerializable` interface instead of Symfony Serializer.
-
-**File 1:** `/backend/src/Dto/Response/Task/TaskResponseDto.php`
-
-```php
-final class TaskResponseDto implements \JsonSerializable
-{
-    public int $id;
-    public string $title;
-    public TaskStatus $status;
-    // ... other properties
-
-    /**
-     * Serialize DTO to JSON-compatible array
-     * Called automatically by json_encode()
-     */
-    public function jsonSerialize(): array
-    {
-        return [
-            'id' => $this->id,
-            'title' => $this->title,
-            'description' => $this->description,
-            'status' => $this->status->value,                                    // Enum → string
-            'priority' => $this->priority->value,                                // Enum → string
-            'startDate' => $this->startDate?->format(\DateTimeInterface::ATOM),  // DateTime → ISO 8601
-            'dueDate' => $this->dueDate?->format(\DateTimeInterface::ATOM),
-            'completedAt' => $this->completedAt?->format(\DateTimeInterface::ATOM),
-            'parentTaskId' => $this->parentTaskId,
-            'tags' => $this->tags,
-            'subtasks' => $this->subtasks,      // Recursively serialized
-            'sortOrder' => $this->sortOrder,
-            'isArchived' => $this->isArchived,
-            'isCompleted' => $this->isCompleted,
-            'isOverdue' => $this->isOverdue,
-            'completionProgress' => $this->completionProgress,
-            'createdAt' => $this->createdAt?->format(\DateTimeInterface::ATOM),
-            'updatedAt' => $this->updatedAt?->format(\DateTimeInterface::ATOM),
-            'subtaskCount' => $this->subtaskCount,
-            'completedSubtaskCount' => $this->completedSubtaskCount,
-            'hasNestedSubtasks' => $this->hasNestedSubtasks,
-            'attachments' => $this->attachments,
-            'isRecurringTemplate' => $this->isRecurringTemplate,
-            'recurrenceRule' => $this->recurrenceRule,
-        ];
-    }
-
-    /**
-     * Create DTO from cached array (Redis → DTO)
-     */
-    public static function fromArray(array $data): self
-    {
-        $dto = new self();
-
-        // Basic fields
-        $dto->id = (int) $data['id'];
-        $dto->title = (string) $data['title'];
-
-        // Enums - convert string back to enum
-        $dto->status = TaskStatus::from($data['status']);
-        $dto->priority = TaskPriority::from($data['priority']);
-
-        // Dates - convert ISO 8601 string to DateTimeImmutable
-        $dto->startDate = isset($data['startDate']) && $data['startDate']
-            ? new \DateTimeImmutable($data['startDate'])
-            : null;
-
-        // ... more fields
-
-        return $dto;
-    }
-}
-```
-
-**File 2:** `/backend/src/Service/Cache/TaskCacheService.php`
-
-```php
-// FIXED CODE
-public function getTaskList(User $user, array $filters, callable $callback): array
-{
-    $key = $this->keyManager->buildTaskListKey($user, $filters);
-    $redis = $this->cacheService->getRedis();
-    $fullKey = $this->cacheService->getPrefix() . $key;
-
-    // Try to get from cache
-    $cached = $redis->get($fullKey);
-
-    if ($cached !== false) {
-        // Cache HIT: Deserialize JSON → Array → TaskResponseDto[]
-        $tasksArray = json_decode($cached, true);
-
-        if (json_last_error() === JSON_ERROR_NONE && is_array($tasksArray)) {
-            return array_map(
-                fn(array $taskData) => TaskResponseDto::fromArray($taskData),
-                $tasksArray
-            );
-        }
-    }
-
-    // Cache MISS: Fetch from database
-    $tasks = $callback();
-
-    // Convert Entity → DTO
-    $taskDtos = array_map(
-        fn(Task $task) => TaskResponseDto::fromEntity($task, includeSubtasks: false),
-        $tasks
-    );
-
-    // Serialize DTO → JSON using JsonSerializable
-    $json = json_encode($taskDtos, JSON_THROW_ON_ERROR);  // ← KEY CHANGE!
-
-    // Store in cache
-    $redis->setex($fullKey, self::TTL_TASK_LIST, $json);
-
-    return $taskDtos;
-}
-```
-
-**Step-by-Step Fix:**
-
-1. Add `implements \JsonSerializable` to TaskResponseDto
-2. Implement `jsonSerialize()` method that returns array representation
-3. Implement static `fromArray()` method to deserialize from cache
-4. Replace Symfony Serializer calls with `json_encode()` and `json_decode()`
-5. Test serialization:
-   ```php
-   $dto = TaskResponseDto::fromEntity($task);
-   $json = json_encode($dto);
-   dump($json); // Should show full JSON, not "[]"
-   ```
-
-**Prevention:**
-- Use `JsonSerializable` interface for DTOs
-- Avoid Symfony Serializer for simple serialization
-- Always test cache contents: `redis-cli GET "key"` | jq
-- Log serialized JSON before storing in cache
-
-**Verification:**
-
-```bash
-# Check Redis contents
-docker exec -it ultra_redis redis-cli
-GET "app:prod:user_tasks_list:uid_42"
-# Should show: '[{"id":123,"title":"Task","status":"PENDING",...}]'
-
-# Test API response
-curl -H "Authorization: Bearer TOKEN" http://localhost:8089/api/tasks
-# Should return array of tasks, not []
-```
-
----
-
-### 3. Memory Exhaustion (OutOfMemory Error)
-
-**Problem:**
-```
-PHP Fatal error: Allowed memory size of 268435456 bytes exhausted
-(tried to allocate 272629760 bytes) in /var/www/backend/src/Service/Cache/TaskCacheService.php on line 74
-```
-
-**Symptoms:**
-- Server crashes when caching task lists
-- Error occurs with 500+ tasks
-- Memory limit increases (256MB → 512MB → 1GB) don't help
-- Cache update operations fail
-
-**Root Cause:**
-
-Including subtasks in bulk cache operations caused exponential memory growth:
-
-- 500 parent tasks × 3 average subtasks = 1,500 total tasks
-- Each task with subtasks: ~10 KB (includes nested data, tags, attachments)
-- Total memory: 1,500 × 10 KB = **15 MB** per cache entry
-- Multiple cache variations (filters, views): 15 MB × 20 = **300 MB**
-- PHP memory limit: 256 MB → **FATAL ERROR**
-
-**Solution:**
-
-Set `includeSubtasks: false` for bulk cache operations. Load subtasks separately when viewing individual tasks.
-
-**File:** `/backend/src/Service/Cache/TaskCacheService.php`
-
-**Lines 73-76 (getTaskList):**
-```php
-// BEFORE (Memory Exhaustion)
-$taskDtos = array_map(
-    fn(Task $task) => TaskResponseDto::fromEntity($task, includeSubtasks: true), // BAD!
-    $tasks
-);
-
-// AFTER (Memory Efficient)
-$taskDtos = array_map(
-    fn(Task $task) => TaskResponseDto::fromEntity($task, includeSubtasks: false, includeMeta: true), // GOOD!
-    $tasks
-);
-```
-
-**Lines 195-200 (updateTaskListsCache):**
-```php
-// AFTER (Memory Efficient)
-$taskDtos = array_map(
-    fn(Task $task) => TaskResponseDto::fromEntity($task, includeSubtasks: false, includeMeta: true),
-    $freshTasks
-);
-```
-
-**Lines 297-301 (updateDynamicViewsCache):**
-```php
-// AFTER (Memory Efficient)
-$taskDtos = array_map(
-    fn(Task $task) => TaskResponseDto::fromEntity($task, includeSubtasks: false, includeMeta: true),
-    $freshTasks
-);
-```
-
-**Step-by-Step Fix:**
-
-1. Find all `TaskResponseDto::fromEntity()` calls in cache services
-2. Change `includeSubtasks: true` to `includeSubtasks: false`
-3. Keep `includeSubtasks: true` ONLY in single-task endpoints:
-   ```php
-   // GET /api/tasks/{id} - OK to include subtasks
-   public function show(int $id): JsonResponse
-   {
-       $task = $this->taskRepository->findWithSubtasks($id, $user);
-       $dto = TaskResponseDto::fromEntity($task, includeSubtasks: true); // OK!
-       return $this->json($dto);
-   }
-   ```
-4. Clear Redis cache:
-   ```bash
-   docker exec -it ultra_redis redis-cli FLUSHALL
-   ```
-5. Restart backend:
-   ```bash
-   docker-compose restart backend
-   ```
-
-**Prevention:**
-- Never include subtasks in bulk operations
-- Use `subtaskCount` property instead of full `subtasks` array
-- Load subtasks on-demand when user opens task detail
-- Monitor memory usage: `docker stats ultra_backend`
-
-**Verification:**
-
-```bash
-# Check memory usage
-docker stats ultra_backend --no-stream
-# Should show < 100MB
-
-# Check cache entry size
-docker exec -it ultra_redis redis-cli
-GET "app:prod:user_tasks_list:uid_42"
-# Should be < 100KB for 500 tasks
-
-# Load test
-ab -n 100 -c 10 -H "Authorization: Bearer TOKEN" http://localhost:8089/api/tasks
-# Should complete without memory errors
-```
-
-**Memory Comparison:**
-
-| Configuration | Task Count | Entry Size | Total Cache | Result |
-|---------------|------------|------------|-------------|--------|
-| includeSubtasks: true | 500 | 10 KB | 5 MB × 20 = 100 MB | **OutOfMemory** |
-| includeSubtasks: false | 500 | 1 KB | 500 KB × 20 = 10 MB | **Success** |
-
----
-
-### 4. Date Shifting (Timezone Issue)
+### 2. Date Shifting (Timezone Issue)
 
 **Problem:**
 ```javascript
@@ -536,7 +231,7 @@ console.log('formatDateForApi():', formatDateForApi(date));
 
 ---
 
-### 5. UI Blinking on Updates
+### 3. UI Blinking on Updates
 
 **Problem:**
 
@@ -702,7 +397,7 @@ await taskStore.toggleTaskCompletion(123);
 
 ---
 
-### 6. Subtasks Not Updating
+### 4. Subtasks Not Updating
 
 **Problem:**
 
@@ -949,15 +644,14 @@ docker-compose up -d
 - 8089 - Backend (PHP-FPM)
 - 3000 - Frontend (Vite)
 - 5432 - PostgreSQL
-- 6379 - Redis
 
 **Check All Ports:**
 ```bash
 # macOS/Linux
-lsof -i :8089 -i :3000 -i :5432 -i :6379
+lsof -i :8089 -i :3000 -i :5432
 
 # Windows
-netstat -ano | findstr "8089 3000 5432 6379"
+netstat -ano | findstr "8089 3000 5432"
 ```
 
 **Fix Port Conflicts:**
@@ -976,10 +670,6 @@ services:
   postgres:
     ports:
       - "5433:5432"  # Changed from 5432
-
-  redis:
-    ports:
-      - "6380:6379"  # Changed from 6379
 ```
 
 Don't forget to update `.env` files!
@@ -1006,7 +696,6 @@ sudo chown -R $USER:$USER frontend/
 
 # Fix permissions
 sudo chmod -R 755 backend/var/
-sudo chmod -R 777 backend/var/cache/
 sudo chmod -R 777 backend/var/log/
 
 # Rebuild
@@ -1029,7 +718,6 @@ no such file or directory
 
 ```bash
 # Create missing directories
-mkdir -p backend/var/cache
 mkdir -p backend/var/log
 mkdir -p backend/public/uploads
 
@@ -1042,164 +730,6 @@ services:
 
 # Restart
 docker-compose up -d
-```
-
----
-
-## Redis Issues
-
-### Connection Refused
-
-**Error:**
-```
-Connection refused [tcp://redis:6379]
-RedisException: Connection to redis:6379 failed after 2 failures
-```
-
-**Diagnosis:**
-```bash
-# Check if Redis container is running
-docker ps | grep redis
-
-# Check Redis logs
-docker logs ultra_redis
-
-# Try to connect manually
-docker exec -it ultra_redis redis-cli ping
-# Should respond: PONG
-```
-
-**Solution:**
-
-```bash
-# Restart Redis container
-docker-compose restart redis
-
-# Or rebuild
-docker-compose down
-docker-compose up -d redis
-
-# Verify connection
-docker exec -it ultra_redis redis-cli
-127.0.0.1:6379> PING
-PONG
-```
-
-**If still failing:**
-
-Check `config/packages/framework.yaml`:
-```yaml
-# Should use service name 'redis' (not 'localhost')
-framework:
-    cache:
-        default_redis_provider: redis://redis:6379
-```
-
----
-
-### Out of Memory
-
-**Error:**
-```
-OOM command not allowed when used memory > 'maxmemory'
-```
-
-**Diagnosis:**
-```bash
-docker exec -it ultra_redis redis-cli
-
-# Check memory usage
-INFO memory
-
-# Output shows:
-used_memory_human:512.00M
-maxmemory:512000000
-```
-
-**Solution:**
-
-Edit `docker-compose.yml`:
-```yaml
-services:
-  redis:
-    image: redis:7-alpine
-    command: redis-server --maxmemory 1gb --maxmemory-policy allkeys-lru
-    #                      ↑ Increase limit   ↑ Eviction policy
-```
-
-**Restart:**
-```bash
-docker-compose down
-docker-compose up -d redis
-
-# Verify
-docker exec -it ultra_redis redis-cli CONFIG GET maxmemory
-```
-
-**Eviction Policies:**
-- `allkeys-lru` - Remove least recently used keys (recommended)
-- `volatile-lru` - Remove LRU keys with TTL
-- `allkeys-random` - Remove random keys
-- `noeviction` - Return error when memory full
-
----
-
-### Cache Not Persisting
-
-**Problem:** Cache clears after container restart
-
-**Solution:**
-
-Add Redis persistence in `docker-compose.yml`:
-```yaml
-services:
-  redis:
-    image: redis:7-alpine
-    command: redis-server --appendonly yes --save 60 1000
-    #                      ↑ AOF persistence  ↑ RDB snapshot every 60s if 1000+ keys
-    volumes:
-      - redis_data:/data
-
-volumes:
-  redis_data:
-    driver: local
-```
-
-**Restart:**
-```bash
-docker-compose down
-docker-compose up -d redis
-```
-
----
-
-### Keys Not Expiring
-
-**Problem:** Cached data never expires, TTL not working
-
-**Diagnosis:**
-```bash
-docker exec -it ultra_redis redis-cli
-
-# Check key TTL
-TTL "app:prod:user_tasks_list:uid_42"
-# -1 means no TTL
-# -2 means key doesn't exist
-# 300 means 300 seconds remaining
-```
-
-**Root Cause:** Using `SET` instead of `SETEX`
-
-**Fix:**
-
-```php
-// WRONG - No TTL
-$this->redis->set($key, $value);
-
-// CORRECT - With TTL
-$this->redis->setex($key, 300, $value);
-// or
-$this->redis->set($key, $value, ['EX' => 300]);
 ```
 
 ---
@@ -1769,5 +1299,5 @@ This troubleshooting guide covers all major issues encountered during developmen
 **Remember:**
 - Always check logs first
 - Search error messages on Google/Stack Overflow
-- Test in isolation (disable cache, clear data)
+- Test in isolation (clear data, verify configuration)
 - Document new issues for future reference
