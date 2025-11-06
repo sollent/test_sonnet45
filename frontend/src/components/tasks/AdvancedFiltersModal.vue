@@ -140,6 +140,18 @@ function toggleStatus(status: TaskStatus) {
   }
 }
 
+function setTaskType(type: 'all' | 'active' | 'completed') {
+  taskType.value = type
+  
+  // If switching to 'active', remove 'completed' status if it's selected
+  if (type === 'active') {
+    const completedIndex = localFilters.value.statuses.indexOf(TaskStatus.COMPLETED)
+    if (completedIndex > -1) {
+      localFilters.value.statuses.splice(completedIndex, 1)
+    }
+  }
+}
+
 function toggleTag(tagId: number) {
   const index = localFilters.value.tags.indexOf(tagId)
   if (index > -1) {
@@ -332,13 +344,13 @@ watch(() => props.visible, (newVisible) => {
             <section class="filter-section">
               <h3 class="section-title">{{ t('tasks.task_type') }}</h3>
               <div class="type-buttons">
-                <button :class="['type-btn', { active: taskType === 'all' }]" @click="taskType = 'all'">
+                <button :class="['type-btn', { active: taskType === 'all' }]" @click="setTaskType('all')">
                   {{ t('tasks.all_tasks') }}
                 </button>
-                <button :class="['type-btn', { active: taskType === 'active' }]" @click="taskType = 'active'">
+                <button :class="['type-btn', { active: taskType === 'active' }]" @click="setTaskType('active')">
                   {{ t('tasks.active') }}
                 </button>
-                <button :class="['type-btn', { active: taskType === 'completed' }]" @click="taskType = 'completed'">
+                <button :class="['type-btn', { active: taskType === 'completed' }]" @click="setTaskType('completed')">
                   {{ t('tasks.completed') }}
                 </button>
               </div>
