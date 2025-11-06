@@ -467,6 +467,17 @@ export default {
     select_date_range: 'Выберите период',
     description: 'Описание',
     tags: 'Теги',
+
+    // Quick date/time selection
+    schedule_task: 'Запланировать задачу',
+    today: 'Сегодня',
+    tomorrow: 'Завтра',
+    day_after_tomorrow: 'Послезавтра',
+    start_time: 'Время начала',
+    end_time: 'Время окончания',
+    quick_presets: 'Быстрые пресеты',
+    show_advanced: 'Показать расширенные настройки',
+    hide_advanced: 'Скрыть расширенные настройки',
     search_tags: 'Поиск тегов...',
     tags_placeholder: 'Добавить теги (нажмите Enter)',
     tags_help: 'Нажмите Enter или запятую для добавления тегов',

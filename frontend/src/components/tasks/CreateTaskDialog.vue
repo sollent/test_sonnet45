@@ -58,6 +58,12 @@ const formData = ref<CreateTaskRequest>({
 const isSubmitting = ref(false)
 const errors = ref<Record<string, string>>({})
 
+// Quick date/time selection
+const selectedDay = ref<'today' | 'tomorrow' | 'dayAfter' | null>(null)
+const quickTimeStart = ref<string>('')
+const quickTimeEnd = ref<string>('')
+const showAdvancedDate = ref(false)
+
 // Computed
 const isEditMode = computed(() => !!props.task)
 const dialogTitle = computed(() => 
@@ -114,7 +120,113 @@ function resetForm() {
     tags: []
   }
   errors.value = {}
+  selectedDay.value = null
+  quickTimeStart.value = ''
+  quickTimeEnd.value = ''
+  showAdvancedDate.value = false
 }
+
+// Quick date selection methods
+function selectQuickDay(day: 'today' | 'tomorrow' | 'dayAfter') {
+  selectedDay.value = day
+  updateDatesFromQuickSelection()
+}
+
+function updateDatesFromQuickSelection() {
+  if (!selectedDay.value) return
+
+  const baseDate = new Date()
+
+  // Reset time to current time rounded to next 30 minutes
+  const currentMinutes = baseDate.getMinutes()
+  const roundedMinutes = Math.ceil(currentMinutes / 30) * 30
+  baseDate.setMinutes(roundedMinutes, 0, 0)
+
+  // Set the day
+  switch (selectedDay.value) {
+    case 'tomorrow':
+      baseDate.setDate(baseDate.getDate() + 1)
+      break
+    case 'dayAfter':
+      baseDate.setDate(baseDate.getDate() + 2)
+      break
+  }
+
+  // If we have time values, apply them
+  if (quickTimeStart.value && quickTimeEnd.value) {
+    const [startHour, startMin] = quickTimeStart.value.split(':').map(Number)
+    const [endHour, endMin] = quickTimeEnd.value.split(':').map(Number)
+
+    const startDate = new Date(baseDate)
+    startDate.setHours(startHour, startMin, 0, 0)
+
+    const endDate = new Date(baseDate)
+    endDate.setHours(endHour, endMin, 0, 0)
+
+    formData.value.startDate = startDate.toISOString()
+    formData.value.dueDate = endDate.toISOString()
+  } else {
+    // Default: 1-hour task starting at next rounded hour
+    const startDate = new Date(baseDate)
+    const endDate = new Date(baseDate)
+    endDate.setHours(endDate.getHours() + 1)
+
+    formData.value.startDate = startDate.toISOString()
+    formData.value.dueDate = endDate.toISOString()
+
+    // Update quick time fields to show the default
+    quickTimeStart.value = `${String(startDate.getHours()).padStart(2, '0')}:${String(startDate.getMinutes()).padStart(2, '0')}`
+    quickTimeEnd.value = `${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`
+  }
+}
+
+function onQuickTimeChange() {
+  updateDatesFromQuickSelection()
+}
+
+// Watch for manual date changes to sync with quick selection
+watch([() => formData.value.startDate, () => formData.value.dueDate], ([newStart, newDue]) => {
+  if (!newStart || !newDue) {
+    selectedDay.value = null
+    quickTimeStart.value = ''
+    quickTimeEnd.value = ''
+    return
+  }
+
+  const start = new Date(newStart)
+  const due = new Date(newDue)
+
+  // Check if dates are on the same day
+  if (start.toDateString() !== due.toDateString()) {
+    selectedDay.value = null
+    quickTimeStart.value = ''
+    quickTimeEnd.value = ''
+    return
+  }
+
+  // Check which day it is
+  const today = new Date()
+  const tomorrow = new Date()
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  const dayAfter = new Date()
+  dayAfter.setDate(dayAfter.getDate() + 2)
+
+  if (start.toDateString() === today.toDateString()) {
+    selectedDay.value = 'today'
+  } else if (start.toDateString() === tomorrow.toDateString()) {
+    selectedDay.value = 'tomorrow'
+  } else if (start.toDateString() === dayAfter.toDateString()) {
+    selectedDay.value = 'dayAfter'
+  } else {
+    selectedDay.value = null
+  }
+
+  // Update time fields
+  if (selectedDay.value) {
+    quickTimeStart.value = `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`
+    quickTimeEnd.value = `${String(due.getHours()).padStart(2, '0')}:${String(due.getMinutes()).padStart(2, '0')}`
+  }
+})
 
 function validateForm(): boolean {
   errors.value = {}
@@ -268,6 +380,153 @@ function handleClose() {
         <small v-if="errors.description" class="p-error">{{ errors.description }}</small>
       </div>
 
+      <!-- Quick Date & Time Selection -->
+      <div class="quick-datetime-section">
+        <div class="section-header">
+          <div class="section-title">
+            <i class="pi pi-calendar-times" />
+            <span>{{ t('tasks.schedule_task') }}</span>
+          </div>
+          <button
+            type="button"
+            class="advanced-toggle"
+            @click="showAdvancedDate = !showAdvancedDate"
+          >
+            <i :class="showAdvancedDate ? 'pi pi-chevron-up' : 'pi pi-chevron-down'" />
+            <span>{{ showAdvancedDate ? t('tasks.hide_advanced') : t('tasks.show_advanced') }}</span>
+          </button>
+        </div>
+
+        <div v-if="!showAdvancedDate" class="quick-datetime-content">
+          <!-- Day Selection Chips -->
+          <div class="day-chips">
+            <button
+              type="button"
+              class="day-chip"
+              :class="{ 'active': selectedDay === 'today' }"
+              @click="selectQuickDay('today')"
+            >
+              <i class="pi pi-sun" />
+              <span>{{ t('tasks.today') }}</span>
+            </button>
+            <button
+              type="button"
+              class="day-chip"
+              :class="{ 'active': selectedDay === 'tomorrow' }"
+              @click="selectQuickDay('tomorrow')"
+            >
+              <i class="pi pi-cloud" />
+              <span>{{ t('tasks.tomorrow') }}</span>
+            </button>
+            <button
+              type="button"
+              class="day-chip"
+              :class="{ 'active': selectedDay === 'dayAfter' }"
+              @click="selectQuickDay('dayAfter')"
+            >
+              <i class="pi pi-moon" />
+              <span>{{ t('tasks.day_after_tomorrow') }}</span>
+            </button>
+          </div>
+
+          <!-- Time Range Selection -->
+          <div v-if="selectedDay" class="time-range-selector">
+            <div class="time-input-group">
+              <label class="time-label">
+                <i class="pi pi-clock" />
+                <span>{{ t('tasks.start_time') }}</span>
+              </label>
+              <input
+                type="time"
+                v-model="quickTimeStart"
+                @change="onQuickTimeChange"
+                class="time-input"
+                :step="300"
+              />
+            </div>
+            <div class="time-arrow">
+              <i class="pi pi-arrow-right" />
+            </div>
+            <div class="time-input-group">
+              <label class="time-label">
+                <i class="pi pi-flag-fill" />
+                <span>{{ t('tasks.end_time') }}</span>
+              </label>
+              <input
+                type="time"
+                v-model="quickTimeEnd"
+                @change="onQuickTimeChange"
+                class="time-input"
+                :step="300"
+              />
+            </div>
+          </div>
+
+          <!-- Quick Time Presets -->
+          <div v-if="selectedDay" class="time-presets">
+            <span class="preset-label">{{ t('tasks.quick_presets') }}:</span>
+            <button
+              type="button"
+              class="time-preset"
+              @click="quickTimeStart = '09:00'; quickTimeEnd = '10:00'; onQuickTimeChange()"
+            >
+              9:00 - 10:00
+            </button>
+            <button
+              type="button"
+              class="time-preset"
+              @click="quickTimeStart = '14:00'; quickTimeEnd = '15:00'; onQuickTimeChange()"
+            >
+              14:00 - 15:00
+            </button>
+            <button
+              type="button"
+              class="time-preset"
+              @click="quickTimeStart = '17:00'; quickTimeEnd = '18:00'; onQuickTimeChange()"
+            >
+              17:00 - 18:00
+            </button>
+          </div>
+        </div>
+
+        <!-- Advanced Date Selection (Traditional) -->
+        <div v-if="showAdvancedDate" class="form-row">
+          <div class="form-field">
+            <label for="start-date" class="field-label">
+              {{ t('tasks.start_date') }}
+            </label>
+            <Calendar
+              id="start-date"
+              v-model="formData.startDate"
+              showTime
+              hourFormat="24"
+              :placeholder="t('common.select_date')"
+              :stepMinute="10"
+              class="w-full"
+              dateFormat="dd.mm.yy"
+            />
+          </div>
+
+          <div class="form-field">
+            <label for="due-date" class="field-label">
+              {{ t('tasks.due_date') }}
+            </label>
+            <Calendar
+              id="due-date"
+              v-model="formData.dueDate"
+              showTime
+              hourFormat="24"
+              :placeholder="t('common.select_date')"
+              :stepMinute="10"
+              :class="{ 'p-invalid': errors.dueDate }"
+              class="w-full"
+              dateFormat="dd.mm.yy"
+            />
+            <small v-if="errors.dueDate" class="p-error">{{ errors.dueDate }}</small>
+          </div>
+        </div>
+      </div>
+
       <!-- Status and Priority -->
       <div class="form-row">
         <div class="form-field">
@@ -298,43 +557,6 @@ function handleClose() {
             :placeholder="t('tasks.task_priority')"
             class="w-full"
           />
-        </div>
-      </div>
-
-      <!-- Dates -->
-      <div class="form-row">
-        <div class="form-field">
-          <label for="start-date" class="field-label">
-            {{ t('tasks.start_date') }}
-          </label>
-          <Calendar
-            id="start-date"
-            v-model="formData.startDate"
-            showTime
-            hourFormat="24"
-            :placeholder="t('common.select_date')"
-            :stepMinute="10"
-            class="w-full"
-            dateFormat="dd.mm.yy"
-          />
-        </div>
-
-        <div class="form-field">
-          <label for="due-date" class="field-label">
-            {{ t('tasks.due_date') }}
-          </label>
-          <Calendar
-            id="due-date"
-            v-model="formData.dueDate"
-            showTime
-            hourFormat="24"
-            :placeholder="t('common.select_date')"
-            :stepMinute="10"
-            :class="{ 'p-invalid': errors.dueDate }"
-            class="w-full"
-            dateFormat="dd.mm.yy"
-          />
-          <small v-if="errors.dueDate" class="p-error">{{ errors.dueDate }}</small>
         </div>
       </div>
 
@@ -568,6 +790,226 @@ function handleClose() {
   background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
 }
 
+/* Quick Date & Time Selection Styles */
+.quick-datetime-section {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 16px;
+  padding: 1.25rem;
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.section-title i {
+  color: #8b5cf6;
+  font-size: 1.125rem;
+}
+
+.advanced-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  color: #64748b;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.advanced-toggle:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #475569;
+}
+
+.quick-datetime-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Day Selection Chips */
+.day-chips {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.day-chip {
+  flex: 1;
+  min-width: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.25rem;
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  color: #64748b;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.day-chip::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.day-chip:hover {
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.day-chip.active {
+  color: white;
+  border-color: transparent;
+}
+
+.day-chip.active::before {
+  opacity: 1;
+}
+
+.day-chip i,
+.day-chip span {
+  position: relative;
+  z-index: 1;
+}
+
+.day-chip i {
+  font-size: 1.125rem;
+}
+
+/* Time Range Selector */
+.time-range-selector {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.time-input-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.time-label {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.time-label i {
+  font-size: 0.875rem;
+  color: #8b5cf6;
+}
+
+.time-input {
+  padding: 0.75rem;
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  color: #334155;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.time-input:hover {
+  background: white;
+  border-color: #cbd5e1;
+}
+
+.time-input:focus {
+  outline: none;
+  background: white;
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.time-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 0.5rem;
+  color: #cbd5e1;
+  font-size: 1.25rem;
+}
+
+/* Time Presets */
+.time-presets {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.preset-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.time-preset {
+  padding: 0.5rem 1rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  color: #64748b;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.time-preset:hover {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%);
+  border-color: rgba(139, 92, 246, 0.3);
+  color: #8b5cf6;
+  transform: scale(1.05);
+}
+
+.time-preset:active {
+  transform: scale(0.98);
+}
+
 /* Responsive */
 @media (max-width: 640px) {
   .form-row {
@@ -582,6 +1024,28 @@ function handleClose() {
 
   .dialog-title {
     font-size: 1.25rem;
+  }
+
+  .day-chips {
+    flex-direction: column;
+  }
+
+  .day-chip {
+    min-width: unset;
+  }
+
+  .time-range-selector {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .time-arrow {
+    transform: rotate(90deg);
+    padding: 0.5rem 0;
+  }
+
+  .time-presets {
+    justify-content: center;
   }
 }
 

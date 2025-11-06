@@ -467,6 +467,17 @@ export default {
     select_date_range: 'Select date range',
     description: 'Description',
     tags: 'Tags',
+
+    // Quick date/time selection
+    schedule_task: 'Schedule Task',
+    today: 'Today',
+    tomorrow: 'Tomorrow',
+    day_after_tomorrow: 'Day After Tomorrow',
+    start_time: 'Start Time',
+    end_time: 'End Time',
+    quick_presets: 'Quick Presets',
+    show_advanced: 'Show Advanced Options',
+    hide_advanced: 'Hide Advanced Options',
     search_tags: 'Search tags...',
     tags_placeholder: 'Add tags (press Enter)',
     tags_help: 'Press Enter or comma to add tags',
