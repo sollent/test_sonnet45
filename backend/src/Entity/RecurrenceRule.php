@@ -37,7 +37,7 @@ class RecurrenceRule
     #[ORM\Column(type: Types::INTEGER, nullable: true)]
     private ?int $monthOfYear = null; // For yearly
 
-    #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
+    #[ORM\Column(type: Types::DATE_IMMUTABLE, nullable: true)]
     private ?\DateTimeInterface $endDate = null;
 
     #[ORM\Column(type: Types::INTEGER, nullable: true)]
@@ -46,7 +46,7 @@ class RecurrenceRule
     #[ORM\Column(type: Types::INTEGER, options: ['default' => 0])]
     private int $currentOccurrences = 0;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeInterface $nextOccurrenceDate;
 
     #[ORM\Column(type: Types::BOOLEAN, options: ['default' => true])]
@@ -60,26 +60,26 @@ class RecurrenceRule
     #[ORM\JoinColumn(nullable: false)]
     private Task $templateTask;
 
-    #[ORM\Column(type: Types::TIME_MUTABLE, nullable: true)]
+    #[ORM\Column(type: Types::TIME_IMMUTABLE, nullable: true)]
     private ?\DateTimeInterface $timeOfDay = null; // Time when task should be created
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private \DateTimeInterface $updatedAt;
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
+    private \DateTimeImmutable $updatedAt;
 
     #[ORM\PrePersist]
     public function onPrePersist(): void
     {
         $this->createdAt = new \DateTimeImmutable();
-        $this->updatedAt = new \DateTime();
+        $this->updatedAt = new \DateTimeImmutable();
     }
 
     #[ORM\PreUpdate]
     public function onPreUpdate(): void
     {
-        $this->updatedAt = new \DateTime();
+        $this->updatedAt = new \DateTimeImmutable();
     }
 
     // Getters and Setters
@@ -242,7 +242,7 @@ class RecurrenceRule
         return $this->createdAt;
     }
 
-    public function getUpdatedAt(): \DateTimeInterface
+    public function getUpdatedAt(): \DateTimeImmutable
     {
         return $this->updatedAt;
     }

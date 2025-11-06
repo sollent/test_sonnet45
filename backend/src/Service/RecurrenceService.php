@@ -79,7 +79,7 @@ class RecurrenceService
         // Set optional parameters
         if (isset($options['endDate'])) {
             if (is_string($options['endDate'])) {
-                $endDate = new \DateTime($options['endDate']);
+                $endDate = new \DateTimeImmutable($options['endDate']);
                 $rule->setEndDate($endDate);
             } elseif ($options['endDate'] instanceof \DateTimeInterface) {
                 $rule->setEndDate($options['endDate']);
@@ -91,9 +91,9 @@ class RecurrenceService
         }
         
         if (isset($options['timeOfDay'])) {
-            // Convert string time to DateTime
+            // Convert string time to DateTimeImmutable
             if (is_string($options['timeOfDay'])) {
-                $time = \DateTime::createFromFormat('H:i', $options['timeOfDay']);
+                $time = \DateTimeImmutable::createFromFormat('H:i', $options['timeOfDay']);
                 if ($time) {
                     $rule->setTimeOfDay($time);
                 }
@@ -103,7 +103,7 @@ class RecurrenceService
         }
         
         // Calculate first occurrence
-        $startDate = $templateTask->getStartDate() ?? new \DateTime();
+        $startDate = $templateTask->getStartDate() ?? new \DateTimeImmutable();
         $nextOccurrence = $this->calculateNextOccurrence($startDate, $rule);
         
         if (!$nextOccurrence) {
@@ -120,9 +120,9 @@ class RecurrenceService
     /**
      * Process all active recurrence rules and generate tasks
      */
-    public function processRecurrenceRules(\DateTime $now = null): int
+    public function processRecurrenceRules(\DateTimeInterface $now = null): int
     {
-        $now = $now ?? new \DateTime();
+        $now = $now ?? new \DateTimeImmutable();
         $processedCount = 0;
         
         // First, deactivate expired rules
@@ -149,9 +149,9 @@ class RecurrenceService
     /**
      * Generate a task from a recurrence rule
      */
-    public function generateTaskFromRule(RecurrenceRule $rule, \DateTime $now = null): Task
+    public function generateTaskFromRule(RecurrenceRule $rule, \DateTimeInterface $now = null): Task
     {
-        $now = $now ?? new \DateTime();
+        $now = $now ?? new \DateTimeImmutable();
         $templateTask = $rule->getTemplateTask();
         
         // Create new task from template
@@ -268,7 +268,7 @@ class RecurrenceService
         // Update end conditions
         if (array_key_exists('endDate', $options)) {
             if (is_string($options['endDate'])) {
-                $endDate = new \DateTime($options['endDate']);
+                $endDate = new \DateTimeImmutable($options['endDate']);
                 $rule->setEndDate($endDate);
             } elseif ($options['endDate'] instanceof \DateTimeInterface) {
                 $rule->setEndDate($options['endDate']);
@@ -282,9 +282,9 @@ class RecurrenceService
         }
         
         if (isset($options['timeOfDay'])) {
-            // Convert string time to DateTime
+            // Convert string time to DateTimeImmutable
             if (is_string($options['timeOfDay'])) {
-                $time = \DateTime::createFromFormat('H:i', $options['timeOfDay']);
+                $time = \DateTimeImmutable::createFromFormat('H:i', $options['timeOfDay']);
                 if ($time) {
                     $rule->setTimeOfDay($time);
                 }
@@ -294,7 +294,7 @@ class RecurrenceService
         }
         
         // Recalculate next occurrence
-        $currentDate = $rule->getNextOccurrenceDate() ?? new \DateTime();
+        $currentDate = $rule->getNextOccurrenceDate() ?? new \DateTimeImmutable();
         $nextOccurrence = $this->calculateNextOccurrence($currentDate, $rule);
         
         if ($nextOccurrence) {
