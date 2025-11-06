@@ -36,7 +36,7 @@ export class RegisterPage {
    * Navigate to registration page
    */
   async goto(): Promise<void> {
-    const baseURL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000'
+    const baseURL = (globalThis as any).process?.env?.PLAYWRIGHT_BASE_URL || 'http://localhost:3000'
     await this.page.goto(`${baseURL}/register`)
     await this.page.waitForLoadState('networkidle')
   }
