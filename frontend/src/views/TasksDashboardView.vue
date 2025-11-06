@@ -281,7 +281,6 @@ onMounted(() => {
   window.addEventListener('resize', onResize)
   // Fetch initial data
   selectView(selectedView.value)
-  taskStore.fetchStatistics()
   taskStore.fetchTags()
 })
 

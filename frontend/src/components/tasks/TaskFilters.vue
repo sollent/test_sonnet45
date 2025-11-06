@@ -27,14 +27,12 @@ const internalSearchQuery = computed({
   set: (value) => emit('update:searchQuery', value)
 })
 
-const activeCount = computed(() => taskStore.todayTasks.length + taskStore.upcomingTasks.length)
-
 const views = computed(() => [
-  { id: 'all', label: t('tasks.all_tasks'), icon: 'pi pi-list', count: activeCount.value, color: '#667eea' },
-  { id: 'today', label: t('tasks.today_tasks'), icon: 'pi pi-calendar', count: taskStore.todayTasks.length, color: '#10b981' },
-  { id: 'upcoming', label: t('tasks.upcoming_tasks'), icon: 'pi pi-clock', count: taskStore.upcomingTasks.length, color: '#f59e0b' },
-  { id: 'overdue', label: t('tasks.overdue_tasks'), icon: 'pi pi-exclamation-circle', count: taskStore.overdueTotal || taskStore.statistics?.overdue || 0, color: '#ef4444' },
-  { id: 'unscheduled', label: t('tasks.unscheduled_tasks'), icon: 'pi pi-inbox', count: taskStore.unscheduledTotal || 0, color: '#64748b' }
+  { id: 'all', label: t('tasks.all_tasks'), icon: 'pi pi-list', color: '#667eea' },
+  { id: 'today', label: t('tasks.today_tasks'), icon: 'pi pi-calendar', color: '#10b981' },
+  { id: 'upcoming', label: t('tasks.upcoming_tasks'), icon: 'pi pi-clock', color: '#f59e0b' },
+  { id: 'overdue', label: t('tasks.overdue_tasks'), icon: 'pi pi-exclamation-circle', color: '#ef4444' },
+  { id: 'unscheduled', label: t('tasks.unscheduled_tasks'), icon: 'pi pi-inbox', color: '#64748b' }
 ])
 
 function handleSelectView(viewId: string) {
@@ -69,9 +67,6 @@ function handleSelectView(viewId: string) {
         >
           <i :class="view.icon" :style="{ color: view.color }" />
           <span class="view-label">{{ view.label }}</span>
-          <span v-if="view.count > 0" class="view-count">
-            {{ view.count }}
-          </span>
         </button>
       </div>
     </nav>
@@ -89,49 +84,6 @@ function handleSelectView(viewId: string) {
           <span class="tag-name">{{ tag.name }}</span>
           <span class="tag-usage">{{ tag.usageCount }}</span>
         </button>
-      </div>
-    </div>
-
-    <!-- Statistics Card -->
-    <div v-if="taskStore.statistics" class="sidebar-section stats-section">
-      <h3 class="sidebar-section-title">{{ t('tasks.total_tasks') }}</h3>
-      <div class="stats-card">
-        <div class="stat-item">
-          <div class="stat-icon pending">
-            <i class="pi pi-clock"></i>
-          </div>
-          <div class="stat-content">
-            <div class="stat-value">{{ taskStore.statistics.pending }}</div>
-            <div class="stat-label">{{ t('tasks.pending_tasks') }}</div>
-          </div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-icon progress">
-            <i class="pi pi-play"></i>
-          </div>
-          <div class="stat-content">
-            <div class="stat-value">{{ taskStore.statistics.in_progress }}</div>
-            <div class="stat-label">{{ t('tasks.in_progress_tasks') }}</div>
-          </div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-icon completed">
-            <i class="pi pi-check"></i>
-          </div>
-          <div class="stat-content">
-            <div class="stat-value">{{ taskStore.statistics.completed }}</div>
-            <div class="stat-label">{{ t('tasks.completed_tasks_count') }}</div>
-          </div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-icon overdue">
-            <i class="pi pi-exclamation-circle"></i>
-          </div>
-          <div class="stat-content">
-            <div class="stat-value">{{ taskStore.statistics.overdue }}</div>
-            <div class="stat-label">{{ t('tasks.overdue_tasks_count') }}</div>
-          </div>
-        </div>
       </div>
     </div>
   </div>
@@ -280,34 +232,13 @@ function handleSelectView(viewId: string) {
 }
 
 .view-item i,
-.view-item .view-label,
-.view-item .view-count {
+.view-item .view-label {
   position: relative;
   z-index: 1;
 }
 
 .view-label {
   flex: 1;
-}
-
-.view-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.75rem;
-  font-weight: 700;
-  min-width: 1.5rem;
-  height: 1.5rem;
-  border-radius: 50%;
-  padding: 0 0.25rem;
-  transition: all 0.2s ease;
-  background-color: #eef2ff;
-  color: #4338ca;
-}
-
-.view-item-active .view-count {
-  background: rgba(255, 255, 255, 0.25);
-  color: white;
 }
 
 /* Tags Section */
@@ -353,67 +284,5 @@ function handleSelectView(viewId: string) {
   font-size: 0.75rem;
   color: #a0aec0;
   font-weight: 600;
-}
-
-/* Statistics Section */
-.stats-card {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.stat-item {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.stat-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.125rem;
-  flex-shrink: 0;
-}
-
-.stat-icon.pending {
-  background: rgba(102, 126, 234, 0.1);
-  color: #667eea;
-}
-
-.stat-icon.progress {
-  background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
-}
-
-.stat-icon.completed {
-  background: rgba(16, 185, 129, 0.1);
-  color: #10b981;
-}
-
-.stat-icon.overdue {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-}
-
-.stat-content {
-  flex: 1;
-}
-
-.stat-value {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #2d3748;
-  line-height: 1;
-  margin-bottom: 0.25rem;
-}
-
-.stat-label {
-  font-size: 0.75rem;
-  color: #718096;
-  font-weight: 500;
 }
 </style>
