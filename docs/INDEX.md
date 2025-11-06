@@ -206,6 +206,19 @@ Comprehensive testing strategy for backend and frontend
 - Detailed examples for each test type
 - Troubleshooting common test issues
 
+#### [`guides/E2E_TESTING_PLAN.md`](guides/E2E_TESTING_PLAN.md)
+Complete End-to-End (E2E) browser testing plan and strategy
+
+**Key Topics:**
+- Technology stack recommendation (Playwright)
+- Test architecture (Page Object Model)
+- 100+ detailed test scenarios covering all features
+- Test cases by feature (Auth, Tasks, Filters, Calendar, Analytics, Profile)
+- Implementation phases (5-week plan)
+- CI/CD integration examples
+- Test coverage goals and success metrics
+- Page objects structure and best practices
+
 #### [`guides/DEPLOYMENT.md`](guides/DEPLOYMENT.md)
 Production deployment guide
 
