@@ -192,14 +192,19 @@ Common issues and their solutions
 - Database connection issues
 
 #### [`guides/TESTING.md`](guides/TESTING.md)
-Testing strategy and running tests
+Comprehensive testing strategy for backend and frontend
 
 **Key Topics:**
-- Backend testing (PHPUnit)
-- Frontend testing (Vitest)
-- Test organization
-- Writing new tests
-- CI/CD integration
+- Backend testing (PHPUnit 9.6): Unit, Integration, Functional tests
+- Frontend testing (Vitest): 7 test files covering all layers
+- Test organization and structure (3 test types on backend)
+- Writing guidelines (AAA pattern, mocking, isolation)
+- Zenstruck Foundry factories for test data
+- ResetDatabase trait and DAMA DoctrineTestBundle
+- Happy-dom environment for frontend
+- CI/CD integration and coverage goals
+- Detailed examples for each test type
+- Troubleshooting common test issues
 
 #### [`guides/DEPLOYMENT.md`](guides/DEPLOYMENT.md)
 Production deployment guide
