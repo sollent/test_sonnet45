@@ -8,6 +8,21 @@ vi.mock('primevue/usetoast', () => ({
   })),
 }))
 
+// Mock vue-i18n
+vi.mock('vue-i18n', () => ({
+  useI18n: vi.fn(() => ({
+    t: vi.fn((key: string) => {
+      const translations: Record<string, string> = {
+        'common.success': 'Success',
+        'common.error': 'Error',
+        'common.info': 'Info',
+        'common.warning': 'Warning'
+      }
+      return translations[key] || key
+    })
+  }))
+}))
+
 import { useToast as usePrimeToast } from 'primevue/usetoast'
 
 describe('useToast', () => {
