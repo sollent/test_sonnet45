@@ -42,22 +42,22 @@ const progressEmoji = computed(() => {
   return '💫'
 })
 
-// Get gradient colors based on progress - soft, muted, pastel colors
+// Get gradient colors based on progress - balanced, visible but not too bright
 const gradientColors = computed(() => {
   const p = progress.value
   if (p === 100) {
-    return 'linear-gradient(135deg, #a7f3d0 0%, #b8f5d3 100%)' // Very soft green
+    return 'linear-gradient(135deg, #34d399 0%, #6ee7b7 100%)' // Balanced green
   }
   if (p >= 80) {
-    return 'linear-gradient(135deg, #e9d5ff 0%, #f3e8ff 100%)' // Very soft purple
+    return 'linear-gradient(135deg, #a78bfa 0%, #c4b5fd 100%)' // Balanced purple
   }
   if (p >= 60) {
-    return 'linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%)' // Very soft blue
+    return 'linear-gradient(135deg, #60a5fa 0%, #93c5fd 100%)' // Balanced blue
   }
   if (p >= 40) {
-    return 'linear-gradient(135deg, #fef3c7 0%, #fef9c3 100%)' // Very soft amber
+    return 'linear-gradient(135deg, #fbbf24 0%, #fcd34d 100%)' // Balanced amber
   }
-  return 'linear-gradient(135deg, #d1d5db 0%, #e5e7eb 100%)' // Very soft gray
+  return 'linear-gradient(135deg, #9ca3af 0%, #d1d5db 100%)' // Balanced gray
 })
 
 // Animation trigger
@@ -137,7 +137,7 @@ const strokeDashoffset = computed(() => {
               cx="18"
               cy="18"
               r="15"
-              :stroke="progress === 100 ? '#a7f3d0' : '#b8f5d3'"
+              :stroke="progress === 100 ? '#34d399' : '#6ee7b7'"
               stroke-width="2.5"
               fill="none"
               stroke-linecap="round"
@@ -473,12 +473,12 @@ const strokeDashoffset = computed(() => {
 }
 
 .status-complete {
-  color: #047857;
+  color: #059669;
   font-weight: 600;
 }
 
 .status-almost {
-  color: #6d28d9;
+  color: #7c3aed;
   font-weight: 600;
 }
 
