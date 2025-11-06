@@ -543,9 +543,14 @@ class TaskRepository extends ServiceEntityRepository
                ->setParameter('filterTags', $tags);
         }
 
+        // Filter by statuses (check first, as it's more specific)
+        $statuses = $filters->getStatuses();
+        $hasStatusFilter = $statuses !== null && !empty($statuses);
+
         // Filter by completion status
+        // Only apply if statuses filter is not specified (to avoid conflicts)
         $completed = $filters->getCompleted();
-        if ($completed !== null) {
+        if ($completed !== null && !$hasStatusFilter) {
             if ($completed) {
                 $qb->andWhere('t.status = :completedFilterStatus')
                    ->setParameter('completedFilterStatus', TaskStatus::COMPLETED);
@@ -605,9 +610,8 @@ class TaskRepository extends ServiceEntityRepository
                ->setParameter('filterPriorities', $priorityEnums);
         }
 
-        // Filter by statuses
-        $statuses = $filters->getStatuses();
-        if ($statuses !== null && !empty($statuses)) {
+        // Filter by statuses (apply if specified)
+        if ($hasStatusFilter) {
             $statusEnums = array_map(fn($s) => TaskStatus::from($s), $statuses);
             $qb->andWhere('t.status IN (:filterStatuses)')
                ->setParameter('filterStatuses', $statusEnums);
