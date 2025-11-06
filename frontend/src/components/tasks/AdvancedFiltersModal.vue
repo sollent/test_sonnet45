@@ -122,15 +122,13 @@ function togglePriority(priority: TaskPriority) {
     localFilters.value.priorities.push(priority)
   }
   
-  // If user manually selects LOW or MEDIUM priority, deselect "Важные" preset
-  // "Важные" should only be active when only HIGH and URGENT are selected
-  if (priority === TaskPriority.LOW || priority === TaskPriority.MEDIUM) {
-    if (activePreset.value === 'important') {
-      activePreset.value = null
-    }
-  } else {
-    // If HIGH or URGENT is toggled, check if we should activate "Важные"
-    checkImportantPreset()
+  // Always check if "Важные" preset should be active/deactivated
+  // This ensures synchronization works both ways (adding and removing priorities)
+  checkImportantPreset()
+  
+  // If any filter is changed, deselect "Все задачи" preset
+  if (activePreset.value === 'all') {
+    activePreset.value = null
   }
 }
 
@@ -162,6 +160,11 @@ function toggleStatus(status: TaskStatus) {
     // If completed status is selected and task type is not 'completed', switch to 'completed'
     taskType.value = 'completed'
   }
+  
+  // If any filter is changed, deselect "Все задачи" preset
+  if (activePreset.value === 'all') {
+    activePreset.value = null
+  }
 }
 
 function setTaskType(type: 'all' | 'active' | 'completed') {
@@ -173,6 +176,11 @@ function setTaskType(type: 'all' | 'active' | 'completed') {
     if (completedIndex > -1) {
       localFilters.value.statuses.splice(completedIndex, 1)
     }
+  }
+  
+  // If task type is changed from 'all', deselect "Все задачи" preset
+  if (type !== 'all' && activePreset.value === 'all') {
+    activePreset.value = null
   }
 }
 
@@ -240,6 +248,11 @@ function toggleTag(tagId: number) {
     localFilters.value.tags.splice(index, 1)
   } else {
     localFilters.value.tags.push(tagId)
+  }
+  
+  // If any filter is changed, deselect "Все задачи" preset
+  if (activePreset.value === 'all') {
+    activePreset.value = null
   }
 }
 
@@ -309,6 +322,9 @@ function clearAll() {
   if (tagSearchTimeout) {
     clearTimeout(tagSearchTimeout)
   }
+  
+  // Apply cleared filters and close modal
+  apply()
 }
 
 function removeTag(tagId: number) {
@@ -317,6 +333,11 @@ function removeTag(tagId: number) {
 
 function clearDateRange() {
   dateRange.value = null
+  
+  // If date range is cleared, deselect "Все задачи" and "На этой неделе" presets
+  if (activePreset.value === 'all' || activePreset.value === 'week') {
+    activePreset.value = null
+  }
 }
 
 function formatDateRange(start: Date | null, end: Date | null): string {
@@ -408,6 +429,32 @@ watch(() => props.visible, (newVisible) => {
     if (tagSearchTimeout) {
       clearTimeout(tagSearchTimeout)
     }
+  }
+})
+
+// Watch for date range changes to deselect "week" preset if manually changed
+watch(dateRange, (newRange) => {
+  if (activePreset.value === 'week' && newRange) {
+    const [weekStart, weekEnd] = getWeekRange()
+    if (newRange[0] && newRange[1]) {
+      const startDateOnly = new Date(newRange[0].getFullYear(), newRange[0].getMonth(), newRange[0].getDate())
+      const endDateOnly = new Date(newRange[1].getFullYear(), newRange[1].getMonth(), newRange[1].getDate())
+      const weekStartDateOnly = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate())
+      const weekEndDateOnly = new Date(weekEnd.getFullYear(), weekEnd.getMonth(), weekEnd.getDate())
+      
+      // If date range doesn't match current week, deselect "week" preset
+      if (startDateOnly.getTime() !== weekStartDateOnly.getTime() || 
+          endDateOnly.getTime() !== weekEndDateOnly.getTime()) {
+        activePreset.value = null
+      }
+    } else {
+      activePreset.value = null
+    }
+  }
+  
+  // If any filter is changed, deselect "Все задачи" preset
+  if (activePreset.value === 'all') {
+    activePreset.value = null
   }
 })
 </script>

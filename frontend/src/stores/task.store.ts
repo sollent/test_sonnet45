@@ -561,7 +561,7 @@ export const useTaskStore = defineStore('task', () => {
       statuses: []
     }
     
-    // Refetch without filters
+    // Refetch tasks without filters
     const baseFilter: TaskFilters = {
       view: currentFilter.value.view || 'all'
     }

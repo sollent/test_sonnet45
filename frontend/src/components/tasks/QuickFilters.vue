@@ -72,6 +72,17 @@ function toggleFilter(filter: QuickFilter) {
 function isActive(filterId: string): boolean {
   return activeFilters.value.includes(filterId)
 }
+
+function clearAllFilters() {
+  // Clear all quick filters
+  activeFilters.value = []
+  
+  // Clear all filters in store
+  taskStore.clearFilters()
+  
+  // Emit empty filters
+  emit('filters-change', [])
+}
 </script>
 
 <template>
@@ -85,6 +96,17 @@ function isActive(filterId: string): boolean {
       <i :class="filter.icon"></i>
       <span>{{ filter.label }}</span>
       <span v-if="filter.count" class="count-badge">{{ filter.count }}</span>
+    </button>
+    
+    <!-- Clear Filters Button -->
+    <button
+      v-if="taskStore.hasActiveFilters() || activeFilters.length > 0"
+      class="clear-filters-btn"
+      @click="clearAllFilters"
+      :title="t('tasks.clear_filters')"
+    >
+      <i class="pi pi-times-circle"></i>
+      <span>{{ t('tasks.clear_filters') }}</span>
     </button>
   </div>
 </template>
@@ -168,6 +190,70 @@ function isActive(filterId: string): boolean {
   color: white;
 }
 
+/* Clear Filters Button - Beautiful, modern, warm design */
+.clear-filters-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 1.5px solid #fbbf24;
+  border-radius: 20px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #92400e;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.clear-filters-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s;
+}
+
+.clear-filters-btn:hover::before {
+  left: 100%;
+}
+
+.clear-filters-btn i {
+  font-size: 0.875rem;
+  color: #d97706;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+}
+
+.clear-filters-btn:hover {
+  background: linear-gradient(135deg, #fde68a 0%, #fcd34d 100%);
+  border-color: #f59e0b;
+  color: #78350f;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(251, 191, 36, 0.35);
+}
+
+.clear-filters-btn:hover i {
+  transform: rotate(90deg) scale(1.1);
+  color: #b45309;
+}
+
+.clear-filters-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.25);
+}
+
 /* Mobile - компактный wrap дизайн */
 @media (max-width: 768px) {
   .quick-filters {
@@ -191,6 +277,17 @@ function isActive(filterId: string): boolean {
     height: 1.125rem;
     font-size: 0.6875rem;
   }
+  
+  .clear-filters-btn {
+    padding: 0.5rem 0.875rem;
+    font-size: 0.8125rem;
+    border-radius: 16px;
+    gap: 0.375rem;
+  }
+  
+  .clear-filters-btn i {
+    font-size: 0.875rem;
+  }
 }
 
 /* Dark Mode */
@@ -210,6 +307,26 @@ function isActive(filterId: string): boolean {
     background: #6366f1;
     border-color: #6366f1;
     color: white;
+  }
+  
+  .clear-filters-btn {
+    background: linear-gradient(135deg, #78350f 0%, #92400e 100%);
+    border-color: #b45309;
+    color: #fef3c7;
+  }
+  
+  .clear-filters-btn:hover {
+    background: linear-gradient(135deg, #92400e 0%, #b45309 100%);
+    border-color: #d97706;
+    color: #fde68a;
+  }
+  
+  .clear-filters-btn i {
+    color: #fbbf24;
+  }
+  
+  .clear-filters-btn:hover i {
+    color: #fcd34d;
   }
 }
 </style>
