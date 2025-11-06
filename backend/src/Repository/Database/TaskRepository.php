@@ -556,18 +556,45 @@ class TaskRepository extends ServiceEntityRepository
         }
 
         // Filter by date range
+        // Task is included if at least one of its dates (dueDate or startDate) falls within the range [dateFrom, dateTo]
         $dateFrom = $filters->getDateFrom();
-        if ($dateFrom !== null) {
-            $dateFromObj = new \DateTimeImmutable($dateFrom);
-            $qb->andWhere('(t.dueDate >= :filterDateFrom OR t.startDate >= :filterDateFrom)')
-               ->setParameter('filterDateFrom', $dateFromObj);
-        }
-
         $dateTo = $filters->getDateTo();
-        if ($dateTo !== null) {
-            $dateToObj = new \DateTimeImmutable($dateTo . ' 23:59:59');
-            $qb->andWhere('(t.dueDate <= :filterDateTo OR t.startDate <= :filterDateTo)')
-               ->setParameter('filterDateTo', $dateToObj);
+        
+        if ($dateFrom !== null || $dateTo !== null) {
+            $dateCondition = [];
+            $params = [];
+            
+            if ($dateFrom !== null && $dateTo !== null) {
+                // Both boundaries specified: task must have at least one date in range [dateFrom, dateTo]
+                $dateFromObj = new \DateTimeImmutable($dateFrom);
+                $dateToObj = new \DateTimeImmutable($dateTo . ' 23:59:59');
+                
+                // Task is included if:
+                // 1. dueDate is in range [dateFrom, dateTo], OR
+                // 2. startDate is in range [dateFrom, dateTo]
+                $dateCondition[] = '(
+                    (t.dueDate IS NOT NULL AND t.dueDate >= :filterDateFrom AND t.dueDate <= :filterDateTo) OR
+                    (t.startDate IS NOT NULL AND t.startDate >= :filterDateFrom AND t.startDate <= :filterDateTo)
+                )';
+                $params['filterDateFrom'] = $dateFromObj;
+                $params['filterDateTo'] = $dateToObj;
+            } elseif ($dateFrom !== null) {
+                // Only lower boundary: task must have at least one date >= dateFrom
+                $dateFromObj = new \DateTimeImmutable($dateFrom);
+                $dateCondition[] = '(t.dueDate >= :filterDateFrom OR t.startDate >= :filterDateFrom)';
+                $params['filterDateFrom'] = $dateFromObj;
+            } elseif ($dateTo !== null) {
+                // Only upper boundary: task must have at least one date <= dateTo
+                $dateToObj = new \DateTimeImmutable($dateTo . ' 23:59:59');
+                $dateCondition[] = '(t.dueDate <= :filterDateTo OR t.startDate <= :filterDateTo)';
+                $params['filterDateTo'] = $dateToObj;
+            }
+            
+            $qb->andWhere(implode(' AND ', $dateCondition));
+            
+            foreach ($params as $key => $value) {
+                $qb->setParameter($key, $value);
+            }
         }
 
         // Filter by priorities
