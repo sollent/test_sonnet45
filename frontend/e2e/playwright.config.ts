@@ -13,6 +13,15 @@ import { defineConfig, devices } from '@playwright/test'
  */
 export default defineConfig({
   testDir: './tests',
+  /* Only match E2E test files in e2e directory, ignore Vitest unit tests */
+  testMatch: /e2e\/tests\/.*\.spec\.ts$/,
+  testIgnore: [
+    '**/node_modules/**',
+    '**/src/**', // Ignore all src files (Vitest tests)
+    '**/dist/**',
+    '**/.next/**',
+    '**/.*/**' // Ignore hidden directories
+  ],
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
