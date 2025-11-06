@@ -79,20 +79,27 @@ class TaskRepository extends ServiceEntityRepository
             ->where('t.user = :user')
             ->andWhere('t.parentTask IS NULL')
             ->andWhere('t.isArchived = false')
+            ->andWhere('t.status != :cancelledStatus')  // Exclude cancelled tasks
             ->andWhere(
                 '(t.dueDate BETWEEN :todayStart AND :todayEnd) OR (t.startDate BETWEEN :todayStart AND :todayEnd)'
             )
             ->setParameter('user', $user)
             ->setParameter('todayStart', $todayStart)
-            ->setParameter('todayEnd', $todayEnd);
+            ->setParameter('todayEnd', $todayEnd)
+            ->setParameter('cancelledStatus', TaskStatus::CANCELLED);
 
         // Apply filters
         if ($filters) {
             $this->applyFilters($qb, $filters);
         }
 
-        $qb->orderBy('t.priority', 'DESC')
-           ->addOrderBy('t.dueDate', 'ASC');
+        // Sort by completion status first (uncompleted first, then completed), then by priority
+        $qb->addSelect('CASE WHEN t.status = :completedStatus THEN 1 ELSE 0 END AS HIDDEN completedOrder')
+           ->setParameter('completedStatus', TaskStatus::COMPLETED)
+           ->orderBy('completedOrder', 'ASC')  // 0=uncompleted first, 1=completed after
+           ->addOrderBy('t.priority', 'DESC')
+           ->addOrderBy('t.dueDate', 'ASC')
+           ->addOrderBy('t.id', 'ASC');
 
         return $qb->getQuery()->getResult();
     }
@@ -135,18 +142,26 @@ class TaskRepository extends ServiceEntityRepository
             ->where('t.user = :user')
             ->andWhere('t.parentTask IS NULL')
             ->andWhere('t.isArchived = false')
+            ->andWhere('t.status != :cancelledStatus')  // Exclude cancelled tasks
             ->andWhere('(t.startDate >= :tomorrow AND t.startDate <= :endDate) OR (t.dueDate >= :tomorrow AND t.dueDate <= :endDate)')
             ->setParameter('user', $user)
             ->setParameter('tomorrow', $tomorrow)
-            ->setParameter('endDate', $endDate);
+            ->setParameter('endDate', $endDate)
+            ->setParameter('cancelledStatus', TaskStatus::CANCELLED);
 
         // Apply filters
         if ($filters) {
             $this->applyFilters($qb, $filters);
         }
 
-        $qb->orderBy('t.dueDate', 'ASC')
-           ->addOrderBy('t.priority', 'DESC');
+        // Sort by date first, then by completion status (uncompleted first, then completed), then by priority
+        $qb->addSelect('DATE(COALESCE(t.dueDate, t.startDate)) AS HIDDEN dateOnly')
+           ->addSelect('CASE WHEN t.status = :completedStatus THEN 1 ELSE 0 END AS HIDDEN completedOrder')
+           ->setParameter('completedStatus', TaskStatus::COMPLETED)
+           ->orderBy('dateOnly', 'ASC')  // Group by day
+           ->addOrderBy('completedOrder', 'ASC')  // 0=uncompleted first, 1=completed after
+           ->addOrderBy('t.priority', 'DESC')
+           ->addOrderBy('t.id', 'ASC');
 
         return $qb->getQuery()->getResult();
     }
@@ -451,25 +466,24 @@ class TaskRepository extends ServiceEntityRepository
             ->where('t.user = :user')
             ->andWhere('t.parentTask IS NULL')
             ->andWhere('t.isArchived = false')
+            ->andWhere('t.status != :cancelledStatus')  // Exclude cancelled tasks
             ->andWhere('t.dueDate < :today')
             ->setParameter('user', $user)
-            ->setParameter('today', new \DateTimeImmutable());
-
-        // Apply default status filter only if no status or completed filter is provided
-        $statuses = $filters ? $filters->getStatuses() : null;
-        $completed = $filters ? $filters->getCompleted() : null;
-        if ((!$statuses || empty($statuses)) && $completed === null) {
-            $qb->andWhere('t.status != :completedStatus')
-               ->setParameter('completedStatus', TaskStatus::COMPLETED);
-        }
+            ->setParameter('today', new \DateTimeImmutable())
+            ->setParameter('cancelledStatus', TaskStatus::CANCELLED);
 
         // Apply filters
         if ($filters) {
             $this->applyFilters($qb, $filters);
         }
 
-        $qb->orderBy('t.dueDate', 'ASC')
-           ->addOrderBy('t.priority', 'DESC');
+        // Sort by completion status first (uncompleted first, then completed), then by date and priority
+        $qb->addSelect('CASE WHEN t.status = :completedStatus THEN 1 ELSE 0 END AS HIDDEN completedOrder')
+           ->setParameter('completedStatus', TaskStatus::COMPLETED)
+           ->orderBy('completedOrder', 'ASC')  // 0=uncompleted first, 1=completed after
+           ->addOrderBy('t.dueDate', 'ASC')
+           ->addOrderBy('t.priority', 'DESC')
+           ->addOrderBy('t.id', 'ASC');
 
         $query = $qb->getQuery()
             ->setFirstResult(($page - 1) * $limit)
@@ -484,24 +498,23 @@ class TaskRepository extends ServiceEntityRepository
             ->where('t.user = :user')
             ->andWhere('t.parentTask IS NULL')
             ->andWhere('t.isArchived = false')
+            ->andWhere('t.status != :cancelledStatus')  // Exclude cancelled tasks
             ->andWhere('t.dueDate IS NULL')
-            ->setParameter('user', $user);
-
-        // Apply default status filter only if no status or completed filter is provided
-        $statuses = $filters ? $filters->getStatuses() : null;
-        $completed = $filters ? $filters->getCompleted() : null;
-        if ((!$statuses || empty($statuses)) && $completed === null) {
-            $qb->andWhere('t.status != :completedStatus')
-               ->setParameter('completedStatus', TaskStatus::COMPLETED);
-        }
+            ->setParameter('user', $user)
+            ->setParameter('cancelledStatus', TaskStatus::CANCELLED);
 
         // Apply filters
         if ($filters) {
             $this->applyFilters($qb, $filters);
         }
 
-        $qb->orderBy('t.createdAt', 'DESC')
-           ->addOrderBy('t.priority', 'DESC');
+        // Sort by completion status first (uncompleted first, then completed), then by date and priority
+        $qb->addSelect('CASE WHEN t.status = :completedStatus THEN 1 ELSE 0 END AS HIDDEN completedOrder')
+           ->setParameter('completedStatus', TaskStatus::COMPLETED)
+           ->orderBy('completedOrder', 'ASC')  // 0=uncompleted first, 1=completed after
+           ->addOrderBy('t.createdAt', 'DESC')
+           ->addOrderBy('t.priority', 'DESC')
+           ->addOrderBy('t.id', 'ASC');
 
         $query = $qb->getQuery()
             ->setFirstResult(($page - 1) * $limit)
