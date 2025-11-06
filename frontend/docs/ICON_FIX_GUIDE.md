@@ -155,3 +155,5 @@ i, .pi, [class^="pi-"], [class*=" pi-"] {
 4. Проверьте CSS specificity - может понадобиться `!important`
 
 
+
+

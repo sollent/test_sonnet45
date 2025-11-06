@@ -441,6 +441,11 @@ export default {
   tasks: {
     title: 'Задачи',
     my_tasks: 'Мои задачи',
+    tasks_of: 'из',
+    tasks_completed: 'выполнено',
+    almost_done: 'Почти готово!',
+    all_completed: 'Все задачи выполнены!',
+    lets_start: 'Давайте начнём!',
     create_task: 'Создать задачу',
     new_task: 'Новая задача',
     edit_task: 'Редактировать задачу',

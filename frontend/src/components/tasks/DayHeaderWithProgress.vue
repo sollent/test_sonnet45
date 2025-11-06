@@ -84,45 +84,39 @@ const strokeDashoffset = computed(() => {
 
       <!-- Right section: Stats and progress -->
       <div class="header-right">
-        <!-- Task count badges -->
+        <!-- Task count badges with warm colors -->
         <div class="task-badges">
-          <Badge
-            :value="`${uncompletedTasks.length}`"
-            severity="info"
-            class="uncompleted-badge"
-          />
-          <span class="divider">/</span>
-          <Badge
-            :value="`${tasks.length}`"
-            severity="secondary"
-            class="total-badge"
-          />
+          <span class="badge-text">
+            <span class="completed-count">{{ completedTasks.length }}</span>
+            <span class="divider">/</span>
+            <span class="total-count">{{ tasks.length }}</span>
+          </span>
         </div>
 
         <!-- Circular progress -->
         <div class="circular-progress">
-          <svg width="44" height="44" viewBox="0 0 44 44">
+          <svg width="36" height="36" viewBox="0 0 36 36">
             <!-- Background circle -->
             <circle
-              cx="22"
-              cy="22"
-              r="18"
+              cx="18"
+              cy="18"
+              r="15"
               stroke="#e5e7eb"
-              stroke-width="3"
+              stroke-width="2.5"
               fill="none"
             />
             <!-- Progress circle -->
             <circle
-              cx="22"
-              cy="22"
-              r="18"
-              :stroke="progress === 100 ? '#10b981' : '#6366f1'"
-              stroke-width="3"
+              cx="18"
+              cy="18"
+              r="15"
+              :stroke="progress === 100 ? '#10b981' : '#34d399'"
+              stroke-width="2.5"
               fill="none"
               stroke-linecap="round"
-              :stroke-dasharray="`${2 * Math.PI * 18}`"
+              :stroke-dasharray="`${2 * Math.PI * 15}`"
               :stroke-dashoffset="strokeDashoffset"
-              transform="rotate(-90 22 22)"
+              transform="rotate(-90 18 18)"
               :class="{ 'progress-animated': isAnimating }"
             />
           </svg>
@@ -157,7 +151,7 @@ const strokeDashoffset = computed(() => {
           🎯 {{ t('tasks.almost_done') || 'Almost there!' }}
         </span>
         <span v-else-if="completedTasks.length > 0" class="status-progress">
-          {{ completedTasks.length }} {{ t('tasks.of') || 'of' }} {{ tasks.length }} {{ t('tasks.completed') || 'completed' }}
+          {{ completedTasks.length }} {{ t('tasks.tasks_of') }} {{ tasks.length }} {{ t('tasks.tasks_completed') }}
         </span>
         <span v-else class="status-start">
           {{ t('tasks.lets_start') || "Let's get started!" }}
@@ -170,10 +164,10 @@ const strokeDashoffset = computed(() => {
 <style scoped>
 .day-header-container {
   background: white;
-  border-radius: 16px;
-  padding: 1rem 1.25rem 0.75rem;
-  margin-bottom: 1rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  padding: 0.75rem 1rem 0.5rem;
+  margin-bottom: 0.75rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   z-index: 10;
@@ -183,16 +177,18 @@ const strokeDashoffset = computed(() => {
   position: sticky;
   top: 0;
   backdrop-filter: blur(12px);
-  background: rgba(255, 255, 255, 0.98);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   z-index: 20;
+  border-radius: 0 0 12px 12px;
+  margin-top: -1px;
 }
 
 .day-header-content {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
 }
 
 .header-left {
@@ -200,7 +196,7 @@ const strokeDashoffset = computed(() => {
 }
 
 .day-label {
-  font-size: 1.25rem;
+  font-size: 1.125rem;
   font-weight: 700;
   color: #1f2937;
   margin: 0;
@@ -210,7 +206,7 @@ const strokeDashoffset = computed(() => {
 }
 
 .progress-emoji {
-  font-size: 1.25rem;
+  font-size: 1.125rem;
   animation: bounce 2s infinite;
 }
 
@@ -228,34 +224,34 @@ const strokeDashoffset = computed(() => {
 .task-badges {
   display: flex;
   align-items: center;
+  padding: 0.25rem 0.625rem;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border-radius: 20px;
+  border: 1px solid #86efac;
+}
+
+.badge-text {
+  display: flex;
+  align-items: center;
   gap: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.completed-count {
+  color: #059669;
+  font-weight: 700;
 }
 
 .divider {
-  color: #9ca3af;
-  font-size: 0.875rem;
-  font-weight: 500;
+  color: #6ee7b7;
+  font-size: 0.75rem;
+  margin: 0 0.125rem;
 }
 
-.uncompleted-badge :deep(.p-badge) {
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+.total-count {
+  color: #10b981;
   font-weight: 600;
-  min-width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.total-badge :deep(.p-badge) {
-  background: #e5e7eb;
-  color: #6b7280;
-  font-weight: 600;
-  min-width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 /* Circular progress */

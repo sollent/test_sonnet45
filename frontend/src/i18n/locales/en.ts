@@ -441,6 +441,11 @@ export default {
   tasks: {
     title: 'Tasks',
     my_tasks: 'My Tasks',
+    tasks_of: 'of',
+    tasks_completed: 'completed',
+    almost_done: 'Almost there!',
+    all_completed: 'All tasks completed!',
+    lets_start: "Let's get started!",
     create_task: 'Create Task',
     new_task: 'New Task',
     edit_task: 'Edit Task',
