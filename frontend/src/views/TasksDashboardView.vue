@@ -39,14 +39,12 @@ const displayMode = ref<'cards' | 'list'>('cards')
 const overduePage = ref(1)
 const overdueLimit = ref(20)
 
-// Infinite scroll state
-const PAGE_SIZE = 50
+// Pagination state
+const PAGE_SIZE = 150
 const currentOffset = ref(0)
 const totalLoadedTasks = ref(0)  // Track total loaded tasks
 const isLoadingMore = ref(false)
 const hasMoreTasks = ref(true)
-const sentinelElement = ref<HTMLElement | null>(null)
-let observer: IntersectionObserver | null = null
 
 // Active filters count
 const activeFiltersCount = computed(() => {
@@ -260,41 +258,6 @@ async function loadMoreTasks() {
   }
 }
 
-// Setup Intersection Observer for infinite scroll
-function setupInfiniteScroll() {
-  // Clean up existing observer
-  if (observer) {
-    observer.disconnect()
-    observer = null
-  }
-
-  // Wait for element to be ready
-  nextTick(() => {
-    if (!sentinelElement.value) {
-      console.log('[Infinite Scroll] Sentinel element not found, retrying...')
-      setTimeout(setupInfiniteScroll, 100)
-      return
-    }
-
-    console.log('[Infinite Scroll] Setting up observer')
-
-    observer = new IntersectionObserver(
-      (entries) => {
-        console.log('[Infinite Scroll] Intersection detected:', entries[0]?.isIntersecting)
-        if (entries[0]?.isIntersecting) {
-          loadMoreTasks()
-        }
-      },
-      {
-        rootMargin: '200px', // Start loading earlier
-        threshold: 0.1
-      }
-    )
-
-    observer.observe(sentinelElement.value)
-    console.log('[Infinite Scroll] Observer attached to sentinel')
-  })
-}
 
 // Simple breakpoint detection
 const isMobile = ref(window.innerWidth < 1024)
@@ -308,19 +271,10 @@ onMounted(() => {
   selectView(selectedView.value)
   taskStore.fetchStatistics()
   taskStore.fetchTags()
-
-  // Setup infinite scroll after data is loaded
-  setTimeout(() => {
-    setupInfiniteScroll()
-  }, 500)
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', onResize)
-  if (observer) {
-    observer.disconnect()
-    observer = null
-  }
 })
 
 const displayedTasks = computed(() => {
@@ -501,8 +455,6 @@ function selectView(viewId: string) {
         console.log('[View Change] More tasks available, hasMoreTasks =', hasMoreTasks.value)
       }
 
-      // Re-setup observer after data load
-      setTimeout(() => setupInfiniteScroll(), 300)
     })
   } else {
     taskStore.fetchTasks(queryFilters)
@@ -815,15 +767,31 @@ async function handleTaskDeleted() {
               />
             </div>
 
-            <!-- Infinite Scroll Sentinel & Loader -->
-            <div v-if="selectedView === 'all'" ref="sentinelElement" class="infinite-scroll-sentinel">
-              <div v-if="isLoadingMore" class="infinite-scroll-loader">
+            <!-- Load More Button -->
+            <div v-if="selectedView === 'all'" class="load-more-container">
+              <!-- Loading State -->
+              <div v-if="isLoadingMore" class="load-more-loader">
                 <Skeleton height="120px" class="mb-4" borderRadius="16px" />
                 <Skeleton height="120px" class="mb-4" borderRadius="16px" />
                 <Skeleton height="120px" class="mb-4" borderRadius="16px" />
               </div>
-              <div v-else-if="!hasMoreTasks && displayedTasks.length > 0" class="end-message">
-                {{ t('tasks.all_tasks_loaded', { count: totalLoadedTasks }) }}
+
+              <!-- Load More Button -->
+              <button
+                v-else-if="hasMoreTasks"
+                @click="loadMoreTasks"
+                class="load-more-button"
+                :disabled="isLoadingMore"
+              >
+                <span class="button-icon">📦</span>
+                <span class="button-text">{{ t('tasks.load_more') }}</span>
+                <span class="button-shine"></span>
+              </button>
+
+              <!-- All Tasks Loaded Message -->
+              <div v-else-if="displayedTasks.length > 0" class="all-loaded-message">
+                <span class="message-icon">✨</span>
+                <span class="message-text">{{ t('tasks.all_tasks_loaded', { count: totalLoadedTasks }) }}</span>
               </div>
             </div>
           </div>
@@ -1472,32 +1440,149 @@ async function handleTaskDeleted() {
   gap: 0.75rem;
   }
 
-  .infinite-scroll-loader {
+  .load-more-loader {
     grid-template-columns: 1fr;
     gap: 0.75rem;
   }
+
+  .load-more-button {
+    padding: 0.875rem 2rem;
+    font-size: 0.9375rem;
+  }
+
+  .all-loaded-message {
+    padding: 1.25rem 1.5rem;
+    font-size: 0.9375rem;
+  }
 }
 
-/* ===== Infinite Scroll Styles ===== */
-.infinite-scroll-sentinel {
+/* ===== Load More Button Styles ===== */
+.load-more-container {
   padding: 2rem 0;
-  min-height: 100px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-.infinite-scroll-loader {
+.load-more-loader {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   gap: 1.25rem;
+  width: 100%;
 }
 
-.end-message {
-  text-align: center;
-  padding: 2rem;
-  font-size: 0.9375rem;
-  color: #94a3b8;
-  font-weight: 500;
-  border-top: 1px solid #e2e8f0;
-  margin-top: 1rem;
+.load-more-button {
+  position: relative;
+  overflow: hidden;
+  padding: 1rem 2.5rem;
+  background: linear-gradient(135deg, rgba(157, 159, 255, 0.75) 0%, rgba(139, 92, 246, 0.75) 50%, rgba(236, 72, 153, 0.75) 100%);
+  border: none;
+  border-radius: 16px;
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.35),
+              0 2px 8px rgba(0, 0, 0, 0.1),
+              inset 0 1px 2px rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(139, 92, 246, 0.45),
+                0 4px 12px rgba(0, 0, 0, 0.15),
+                inset 0 1px 2px rgba(255, 255, 255, 0.4);
+    background: linear-gradient(135deg, rgba(157, 159, 255, 0.85) 0%, rgba(139, 92, 246, 0.85) 50%, rgba(236, 72, 153, 0.85) 100%);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 2px 12px rgba(139, 92, 246, 0.3),
+                0 1px 4px rgba(0, 0, 0, 0.1),
+                inset 0 1px 2px rgba(255, 255, 255, 0.2);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.button-icon {
+  font-size: 1.25rem;
+  animation: bounceIcon 2s ease-in-out infinite;
+}
+
+@keyframes bounceIcon {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.button-text {
+  position: relative;
+  z-index: 1;
+}
+
+.button-shine {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s ease;
+}
+
+.load-more-button:hover .button-shine {
+  left: 100%;
+}
+
+.all-loaded-message {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.5rem 2rem;
+  background: linear-gradient(135deg, rgba(167, 243, 208, 0.2) 0%, rgba(134, 239, 172, 0.2) 100%);
+  border-radius: 16px;
+  color: #059669;
+  font-size: 1rem;
+  font-weight: 600;
+  border: 1px solid rgba(134, 239, 172, 0.3);
+  box-shadow: 0 2px 12px rgba(134, 239, 172, 0.15),
+              inset 0 1px 2px rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.message-icon {
+  font-size: 1.5rem;
+  animation: sparkle 1.5s ease-in-out infinite;
+}
+
+@keyframes sparkle {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2) rotate(180deg);
+    opacity: 0.8;
+  }
+}
+
+.message-text {
+  color: #047857;
+  font-weight: 600;
 }
 
 .paginator-wrapper {

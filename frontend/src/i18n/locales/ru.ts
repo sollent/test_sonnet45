@@ -541,6 +541,7 @@ export default {
     cards_view: 'Вид карточек',
     table_view: 'Вид таблицы',
     tasks: 'задач(и)',
+    load_more: 'Загрузить еще',
     all_tasks_loaded: 'Все задачи загружены ({count} всего)',
     max_tasks_loaded: 'Достигнут максимальный лимит ({count} задач загружено)',
     

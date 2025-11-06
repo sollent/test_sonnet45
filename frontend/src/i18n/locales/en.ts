@@ -542,6 +542,7 @@ export default {
     table_view: 'Table View',
     tasks: 'task(s)',
     unscheduled_tasks: 'Unscheduled',
+    load_more: 'Load More',
     all_tasks_loaded: 'All tasks loaded ({count} total)',
     max_tasks_loaded: 'Maximum limit reached ({count} tasks loaded)',
     
