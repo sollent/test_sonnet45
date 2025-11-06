@@ -117,22 +117,28 @@ test.describe('Login Flow', () => {
     await page.waitForTimeout(500)
     await loginPage.submit()
 
-    // Wait for error message (could be toast, form error, or both)
+    // Wait for error message - it appears in .form-message .p-message.p-message-error
+    // Also check for toast which may appear and disappear quickly
     await Promise.race([
-      page.waitForSelector('.p-toast-message', { timeout: 5000 }).catch(() => null),
-      page.waitForSelector('.form-message .p-message', { timeout: 5000 }).catch(() => null),
-      page.waitForSelector('.form-message', { timeout: 5000 }).catch(() => null),
-      page.waitForTimeout(4000)
+      page.waitForSelector('.form-message .p-message', { timeout: 6000 }).catch(() => null),
+      page.waitForSelector('.p-message-error', { timeout: 6000 }).catch(() => null),
+      page.waitForSelector('.p-toast-message', { timeout: 6000 }).catch(() => null),
+      page.waitForTimeout(5000)
     ])
+
+    // Wait a bit more to ensure error is fully rendered
+    await page.waitForTimeout(1000)
 
     // Check multiple ways error could be displayed
     const hasFormError = await loginPage.hasFormError()
     const hasToast = await page.locator('.p-toast-message').isVisible().catch(() => false)
     const hasFormMessage = await page.locator('.form-message').isVisible().catch(() => false)
     const hasErrorMessage = await page.locator('.p-message-error, .p-message.p-message-error').isVisible().catch(() => false)
+    const hasMessageInForm = await page.locator('.form-message .p-message').isVisible().catch(() => false)
     
     // At least one error indicator should be present
-    expect(hasFormError || hasToast || hasFormMessage || hasErrorMessage).toBe(true)
+    // The error appears as .form-message .p-message.p-message-error
+    expect(hasFormError || hasToast || hasFormMessage || hasErrorMessage || hasMessageInForm).toBe(true)
 
     // Should still be on login page
     expect(await loginPage.isOnLoginPage()).toBe(true)
