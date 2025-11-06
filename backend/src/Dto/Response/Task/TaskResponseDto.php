@@ -34,7 +34,7 @@ final class TaskResponseDto
     public bool $hasNestedSubtasks = false;
     public array $attachments = [];
     public bool $isRecurringTemplate = false;
-    public ?array $recurrenceRule = null;
+    public ?RecurrenceRuleDto $recurrenceRule = null;
     
     // Translated labels (populated by TaskService)
     public ?string $priorityLabel = null;
