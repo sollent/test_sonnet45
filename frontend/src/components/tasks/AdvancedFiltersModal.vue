@@ -24,15 +24,14 @@ const emit = defineEmits<{
 }>()
 
 // Quick filter presets for modal with translations
+// Temporarily hide 'my' and 'team' as functionality is not yet implemented
 const quickPresets = computed(() => [
   { id: 'all', label: t('tasks.all_tasks') },
-  { id: 'my', label: t('tasks.my_tasks') },
   { id: 'week', label: t('tasks.this_week') },
-  { id: 'important', label: t('tasks.important') },
-  { id: 'team', label: t('tasks.team') }
+  { id: 'important', label: t('tasks.important') }
 ])
 
-const activePreset = ref('all')
+const activePreset = ref<string | null>(null)
 
 // Local filter state
 const localFilters = ref<TaskFiltersState>({
@@ -122,6 +121,31 @@ function togglePriority(priority: TaskPriority) {
   } else {
     localFilters.value.priorities.push(priority)
   }
+  
+  // If user manually selects LOW or MEDIUM priority, deselect "Важные" preset
+  // "Важные" should only be active when only HIGH and URGENT are selected
+  if (priority === TaskPriority.LOW || priority === TaskPriority.MEDIUM) {
+    if (activePreset.value === 'important') {
+      activePreset.value = null
+    }
+  } else {
+    // If HIGH or URGENT is toggled, check if we should activate "Важные"
+    checkImportantPreset()
+  }
+}
+
+function checkImportantPreset() {
+  const hasHigh = localFilters.value.priorities.includes(TaskPriority.HIGH)
+  const hasUrgent = localFilters.value.priorities.includes(TaskPriority.URGENT)
+  const hasLow = localFilters.value.priorities.includes(TaskPriority.LOW)
+  const hasMedium = localFilters.value.priorities.includes(TaskPriority.MEDIUM)
+  
+  // "Важные" is active only if HIGH and URGENT are selected, and LOW and MEDIUM are not
+  if (hasHigh && hasUrgent && !hasLow && !hasMedium) {
+    activePreset.value = 'important'
+  } else if (activePreset.value === 'important') {
+    activePreset.value = null
+  }
 }
 
 function toggleStatus(status: TaskStatus) {
@@ -149,6 +173,64 @@ function setTaskType(type: 'all' | 'active' | 'completed') {
     if (completedIndex > -1) {
       localFilters.value.statuses.splice(completedIndex, 1)
     }
+  }
+}
+
+function getWeekRange(): [Date, Date] {
+  const today = new Date()
+  const dayOfWeek = today.getDay() // 0 = Sunday, 1 = Monday, etc.
+  
+  // Calculate Monday (start of week)
+  const monday = new Date(today)
+  const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek // If Sunday, go back 6 days
+  monday.setDate(today.getDate() + daysToMonday)
+  monday.setHours(0, 0, 0, 0)
+  
+  // Calculate Sunday (end of week)
+  const sunday = new Date(monday)
+  sunday.setDate(monday.getDate() + 6)
+  sunday.setHours(23, 59, 59, 999)
+  
+  return [monday, sunday]
+}
+
+function handlePresetClick(presetId: string) {
+  if (presetId === activePreset.value) {
+    // If clicking the same preset, deselect it and clear related filters
+    activePreset.value = null
+    if (presetId === 'important') {
+      // Remove HIGH and URGENT priorities
+      localFilters.value.priorities = localFilters.value.priorities.filter(
+        p => p !== TaskPriority.HIGH && p !== TaskPriority.URGENT
+      )
+    } else if (presetId === 'week') {
+      // Clear date range
+      dateRange.value = null
+    }
+    return
+  }
+  
+  activePreset.value = presetId
+  
+  if (presetId === 'all') {
+    // "Все задачи" - clear all filters
+    localFilters.value = {
+      tags: [],
+      completed: null,
+      dateFrom: null,
+      dateTo: null,
+      priorities: [],
+      statuses: []
+    }
+    dateRange.value = null
+    taskType.value = 'all'
+  } else if (presetId === 'important') {
+    // "Важные" - select HIGH and URGENT priorities only
+    localFilters.value.priorities = [TaskPriority.HIGH, TaskPriority.URGENT]
+  } else if (presetId === 'week') {
+    // "На этой неделе" - set date range to current week
+    const [weekStart, weekEnd] = getWeekRange()
+    dateRange.value = [weekStart, weekEnd]
   }
 }
 
@@ -219,7 +301,7 @@ function clearAll() {
   }
   dateRange.value = null
   taskType.value = 'all'
-  activePreset.value = 'all'
+  activePreset.value = null
   
   // Clear tag search
   tagSearchQuery.value = ''
@@ -298,9 +380,27 @@ watch(() => props.visible, (newVisible) => {
       const start = hasDateFrom ? new Date(taskStore.activeFilters.dateFrom!) : null
       const end = hasDateTo ? new Date(taskStore.activeFilters.dateTo!) : null
       dateRange.value = start && end ? [start, end] : (start ? [start] : null)
+      
+      // Check if date range matches current week
+      if (start && end) {
+        const [weekStart, weekEnd] = getWeekRange()
+        // Compare dates without time (only year, month, day)
+        const startDateOnly = new Date(start.getFullYear(), start.getMonth(), start.getDate())
+        const endDateOnly = new Date(end.getFullYear(), end.getMonth(), end.getDate())
+        const weekStartDateOnly = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate())
+        const weekEndDateOnly = new Date(weekEnd.getFullYear(), weekEnd.getMonth(), weekEnd.getDate())
+        
+        if (startDateOnly.getTime() === weekStartDateOnly.getTime() && 
+            endDateOnly.getTime() === weekEndDateOnly.getTime()) {
+          activePreset.value = 'week'
+        }
+      }
     } else {
       dateRange.value = null
     }
+    
+    // Check if "Важные" preset should be active (only HIGH and URGENT selected)
+    checkImportantPreset()
   } else {
     // Clear tag search when closing
     tagSearchQuery.value = ''
@@ -332,7 +432,7 @@ watch(() => props.visible, (newVisible) => {
               v-for="preset in quickPresets"
               :key="preset.id"
               :class="['preset-chip', { active: activePreset === preset.id }]"
-              @click="activePreset = preset.id"
+              @click="handlePresetClick(preset.id)"
             >
               {{ preset.label }}
             </button>
