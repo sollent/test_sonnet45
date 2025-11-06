@@ -42,6 +42,14 @@ vi.mock('primevue/message', () => ({
   },
 }))
 
+// Mock GoogleLoginButton to avoid loading Google OAuth library
+vi.mock('@/components/auth/GoogleLoginButton.vue', () => ({
+  default: {
+    name: 'GoogleLoginButton',
+    template: '<div data-testid="google-login-button">Google Login</div>',
+  },
+}))
+
 describe('LoginForm', () => {
   let router: ReturnType<typeof createRouter>
 
