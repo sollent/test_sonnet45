@@ -1,0 +1,563 @@
+{
+  "config": {
+    "configFile": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/frontend/e2e/playwright.config.ts",
+    "rootDir": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/frontend/e2e/tests",
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 8
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "html",
+        null
+      ],
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "test-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 8
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/frontend/e2e/tests",
+        "testIgnore": [
+          "**/node_modules/**",
+          "**/src/**",
+          "**/dist/**",
+          "**/.next/**",
+          "**/.*/**"
+        ],
+        "testMatch": [
+          "/e2e\\/tests\\/.*\\.spec\\.ts$/"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.56.1",
+    "workers": 8,
+    "webServer": {
+      "command": "npm run dev",
+      "url": "http://localhost:3000",
+      "reuseExistingServer": true,
+      "timeout": 120000,
+      "stdout": "ignore",
+      "stderr": "pipe"
+    }
+  },
+  "suites": [
+    {
+      "title": "auth/login.spec.ts",
+      "file": "auth/login.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Login Flow",
+          "file": "auth/login.spec.ts",
+          "line": 6,
+          "column": 6,
+          "specs": [
+            {
+              "title": "TC-AUTH-008: Successful login with valid credentials",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 31717,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-06T21:26:33.698Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "231ca1f0f4db3e4958c3-4f681de625ed45c79556",
+              "file": "auth/login.spec.ts",
+              "line": 22,
+              "column": 3
+            },
+            {
+              "title": "TC-AUTH-009: Login validation - empty fields",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 11995,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-06T21:26:33.684Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "231ca1f0f4db3e4958c3-e5d37b110ed2f4a28d05",
+              "file": "auth/login.spec.ts",
+              "line": 54,
+              "column": 3
+            },
+            {
+              "title": "TC-AUTH-010: Login - invalid credentials",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 25806,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-06T21:26:33.681Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "231ca1f0f4db3e4958c3-81b422a7c79b14e70cb2",
+              "file": "auth/login.spec.ts",
+              "line": 80,
+              "column": 3
+            },
+            {
+              "title": "TC-AUTH-011: Login - wrong password",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 31983,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-06T21:26:33.702Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "231ca1f0f4db3e4958c3-3a012e0299a6c3bc549f",
+              "file": "auth/login.spec.ts",
+              "line": 110,
+              "column": 3
+            },
+            {
+              "title": "TC-AUTH-012: Login - invalid email format",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 4,
+                      "status": "passed",
+                      "duration": 25185,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-06T21:26:33.690Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "231ca1f0f4db3e4958c3-0d41dcc6910a9cfeb1c8",
+              "file": "auth/login.spec.ts",
+              "line": 151,
+              "column": 3
+            },
+            {
+              "title": "TC-AUTH-013: Login - Google OAuth button presence",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 5,
+                      "status": "passed",
+                      "duration": 22192,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-06T21:26:33.713Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "231ca1f0f4db3e4958c3-de0f2f09529c80bbc29c",
+              "file": "auth/login.spec.ts",
+              "line": 189,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "auth/register.spec.ts",
+      "file": "auth/register.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Registration Flow",
+          "file": "auth/register.spec.ts",
+          "line": 6,
+          "column": 6,
+          "specs": [
+            {
+              "title": "TC-AUTH-001: Successful registration with valid data",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 6,
+                      "status": "passed",
+                      "duration": 34980,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-06T21:26:33.682Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "7a2e1e1ccab58a85dc6a-2648afdcbf4828037a73",
+              "file": "auth/register.spec.ts",
+              "line": 22,
+              "column": 3
+            },
+            {
+              "title": "TC-AUTH-002: Registration validation - empty fields",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 7,
+                      "status": "passed",
+                      "duration": 16304,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-06T21:26:33.705Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "7a2e1e1ccab58a85dc6a-3cd68adbe2b4bea2f398",
+              "file": "auth/register.spec.ts",
+              "line": 54,
+              "column": 3
+            },
+            {
+              "title": "TC-AUTH-003: Registration validation - invalid email",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 22116,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-06T21:26:48.722Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "7a2e1e1ccab58a85dc6a-f610a7542198e4ac12d2",
+              "file": "auth/register.spec.ts",
+              "line": 81,
+              "column": 3
+            },
+            {
+              "title": "TC-AUTH-004: Registration validation - password mismatch",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 7,
+                      "status": "passed",
+                      "duration": 16581,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-06T21:26:52.966Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "7a2e1e1ccab58a85dc6a-df5e46986a559f428e2d",
+              "file": "auth/register.spec.ts",
+              "line": 121,
+              "column": 3
+            },
+            {
+              "title": "TC-AUTH-005: Registration validation - weak password",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 5,
+                      "status": "passed",
+                      "duration": 15079,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-06T21:26:58.942Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "7a2e1e1ccab58a85dc6a-200ec864c58df9e70aad",
+              "file": "auth/register.spec.ts",
+              "line": 150,
+              "column": 3
+            },
+            {
+              "title": "TC-AUTH-006: Registration - duplicate email",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 4,
+                      "status": "passed",
+                      "duration": 18464,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-06T21:27:01.858Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "7a2e1e1ccab58a85dc6a-a4ea29f9ab74dc1a0e0a",
+              "file": "auth/register.spec.ts",
+              "line": 193,
+              "column": 3
+            },
+            {
+              "title": "TC-AUTH-007: Registration - Google OAuth button presence",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 10455,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-06T21:27:02.459Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "7a2e1e1ccab58a85dc6a-7a181b77340aef0bedde",
+              "file": "auth/register.spec.ts",
+              "line": 234,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2025-11-06T21:26:32.429Z",
+    "duration": 48260.723,
+    "expected": 13,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}
