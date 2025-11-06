@@ -42,20 +42,20 @@ const progressEmoji = computed(() => {
   return '💫'
 })
 
-// Get gradient colors based on progress - balanced, visible but not too bright
+// Get gradient colors based on progress - slightly softer, still visible
 const gradientColors = computed(() => {
   const p = progress.value
   if (p === 100) {
-    return 'linear-gradient(135deg, #34d399 0%, #6ee7b7 100%)' // Balanced green
+    return 'linear-gradient(135deg, #6ee7b7 0%, #86efac 100%)' // Slightly softer green
   }
   if (p >= 80) {
-    return 'linear-gradient(135deg, #a78bfa 0%, #c4b5fd 100%)' // Balanced purple
+    return 'linear-gradient(135deg, #c4b5fd 0%, #ddd6fe 100%)' // Slightly softer purple
   }
   if (p >= 60) {
-    return 'linear-gradient(135deg, #60a5fa 0%, #93c5fd 100%)' // Balanced blue
+    return 'linear-gradient(135deg, #93c5fd 0%, #bfdbfe 100%)' // Slightly softer blue
   }
   if (p >= 40) {
-    return 'linear-gradient(135deg, #fbbf24 0%, #fcd34d 100%)' // Balanced amber
+    return 'linear-gradient(135deg, #fcd34d 0%, #fde68a 100%)' // Slightly softer amber
   }
   return 'linear-gradient(135deg, #9ca3af 0%, #d1d5db 100%)' // Balanced gray
 })
@@ -137,7 +137,7 @@ const strokeDashoffset = computed(() => {
               cx="18"
               cy="18"
               r="15"
-              :stroke="progress === 100 ? '#34d399' : '#6ee7b7'"
+              :stroke="progress === 100 ? '#6ee7b7' : '#86efac'"
               stroke-width="2.5"
               fill="none"
               stroke-linecap="round"
