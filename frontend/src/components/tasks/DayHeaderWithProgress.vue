@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Badge from 'primevue/badge'
 import type { Task } from '@/types/task.types'
@@ -14,6 +14,13 @@ interface Props {
 
 const props = defineProps<Props>()
 const { t } = useI18n()
+
+// Refs
+const headerRef = ref<HTMLElement | null>(null)
+const isStickyInternal = ref(false)
+
+// Use prop if provided, otherwise use internal state
+const isSticky = computed(() => props.isSticky !== undefined ? props.isSticky : isStickyInternal.value)
 
 // Calculate progress
 const progress = computed(() => {
@@ -56,29 +63,49 @@ const gradientColors = computed(() => {
 // Animation trigger
 const isAnimating = ref(false)
 
+// Sticky detection using scroll position
+const updateStickyState = () => {
+  if (headerRef.value) {
+    const rect = headerRef.value.getBoundingClientRect()
+    isStickyInternal.value = rect.top <= 0
+  }
+}
+
 onMounted(() => {
   setTimeout(() => {
     isAnimating.value = true
   }, 100)
+
+  // Add scroll listener to detect sticky state (if not controlled by prop)
+  if (props.isSticky === undefined) {
+    window.addEventListener('scroll', updateStickyState, { passive: true })
+    updateStickyState() // Initial check
+
+    onBeforeUnmount(() => {
+      window.removeEventListener('scroll', updateStickyState)
+    })
+  }
 })
 
 // Calculate stroke dashoffset for circular progress
 const strokeDashoffset = computed(() => {
-  const circumference = 2 * Math.PI * 18 // radius = 18
+  const circumference = 2 * Math.PI * 15 // radius = 15
   return circumference - (progress.value / 100) * circumference
 })
 </script>
 
 <template>
   <div
+    ref="headerRef"
     :class="['day-header-container', { 'is-sticky': isSticky }]"
   >
     <div class="day-header-content">
       <!-- Left section: Date and emoji -->
       <div class="header-left">
-        <h3 class="day-label">
+        <!-- Date label - changes style based on sticky state -->
+        <h3 :class="['day-label', { 'day-label--sticky': isSticky }]">
           {{ label }}
-          <span class="progress-emoji">{{ progressEmoji }}</span>
+          <span :class="['progress-emoji', { 'progress-emoji--sticky': isSticky }]">{{ progressEmoji }}</span>
         </h3>
       </div>
 
@@ -143,18 +170,18 @@ const strokeDashoffset = computed(() => {
       </div>
 
       <!-- Progress status text -->
-      <div class="progress-status">
+      <div class="progress-status" :class="{ 'status-sticky': isSticky }">
         <span v-if="progress === 100" class="status-complete">
-          ✨ {{ t('tasks.all_completed') || 'All tasks completed!' }}
+          ✨ {{ t('tasks.all_completed') }}
         </span>
         <span v-else-if="progress >= 80" class="status-almost">
-          🎯 {{ t('tasks.almost_done') || 'Almost there!' }}
+          🎯 {{ t('tasks.almost_done') }}
         </span>
         <span v-else-if="completedTasks.length > 0" class="status-progress">
           {{ completedTasks.length }} {{ t('tasks.tasks_of') }} {{ tasks.length }} {{ t('tasks.tasks_completed') }}
         </span>
         <span v-else class="status-start">
-          {{ t('tasks.lets_start') || "Let's get started!" }}
+          {{ t('tasks.lets_start') }}
         </span>
       </div>
     </div>
@@ -169,19 +196,74 @@ const strokeDashoffset = computed(() => {
   margin-bottom: 0.75rem;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  z-index: 10;
+  position: -webkit-sticky; /* Safari */
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
 .day-header-container.is-sticky {
-  position: sticky;
-  top: 0;
-  backdrop-filter: blur(12px);
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-  z-index: 20;
-  border-radius: 0 0 12px 12px;
-  margin-top: -1px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px); /* Safari */
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  z-index: 100;
+  border-radius: 0;
+  margin-top: 0;
+  padding: 0.5rem 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.day-header-container.is-sticky .day-header-content {
+  margin-bottom: 0;
+}
+
+.day-header-container.is-sticky .circular-progress {
+  width: 28px;
+  height: 28px;
+}
+
+.day-header-container.is-sticky .circular-progress svg {
+  width: 28px;
+  height: 28px;
+}
+
+.day-header-container.is-sticky .progress-text {
+  font-size: 0.625rem;
+}
+
+.day-header-container.is-sticky .percent {
+  font-size: 0.5rem;
+}
+
+.day-header-container.is-sticky .task-badges {
+  padding: 0.2rem 0.5rem;
+  border: 1px solid rgba(134, 239, 172, 0.6);
+}
+
+.day-header-container.is-sticky .badge-text {
+  font-size: 0.75rem;
+}
+
+.day-header-container.is-sticky .header-right {
+  gap: 0.625rem;
+}
+
+.day-header-container.is-sticky .linear-progress-background {
+  height: 3px;
+  margin-top: 0.5rem;
+}
+
+.day-header-container.is-sticky .linear-progress-container {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 0;
+}
+
+.day-header-container.is-sticky .progress-status {
+  display: none;
 }
 
 .day-header-content {
@@ -203,11 +285,23 @@ const strokeDashoffset = computed(() => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.day-label--sticky {
+  font-size: 0.875rem;
+  font-weight: 600;
+  gap: 0.375rem;
 }
 
 .progress-emoji {
   font-size: 1.125rem;
   animation: bounce 2s infinite;
+  transition: all 0.3s ease;
+}
+
+.progress-emoji--sticky {
+  font-size: 0.875rem;
 }
 
 @keyframes bounce {
@@ -257,8 +351,8 @@ const strokeDashoffset = computed(() => {
 /* Circular progress */
 .circular-progress {
   position: relative;
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 36px;
 }
 
 .circular-progress svg {
@@ -276,7 +370,7 @@ const strokeDashoffset = computed(() => {
 
 @keyframes progress-fill {
   from {
-    stroke-dashoffset: 113; /* 2 * PI * 18 (circumference) */
+    stroke-dashoffset: 94.25; /* 2 * PI * 15 (circumference) */
   }
 }
 
@@ -285,14 +379,16 @@ const strokeDashoffset = computed(() => {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-size: 0.75rem;
+  font-size: 0.625rem;
   font-weight: 700;
   color: #1f2937;
+  line-height: 1;
 }
 
 .percent {
-  font-size: 0.625rem;
+  font-size: 0.5rem;
   color: #6b7280;
+  font-weight: 600;
 }
 
 /* Linear progress bar */
@@ -345,10 +441,28 @@ const strokeDashoffset = computed(() => {
 
 /* Progress status */
 .progress-status {
-  margin-top: 0.5rem;
+  margin-top: 0.625rem;
   font-size: 0.75rem;
   font-weight: 500;
   text-align: center;
+  padding-top: 0.125rem;
+}
+
+.progress-status.status-sticky {
+  margin-top: 0.75rem;
+  padding-top: 0.25rem;
+}
+
+/* Sticky mode: add more padding on desktop */
+.day-header-container.is-sticky .progress-status {
+  padding-top: 0.725rem;
+}
+
+/* Mobile: keep normal padding in sticky mode */
+@media (max-width: 768px) {
+  .day-header-container.is-sticky .progress-status {
+    padding-top: 0.725rem;
+  }
 }
 
 .status-complete {

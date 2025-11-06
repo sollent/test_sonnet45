@@ -271,3 +271,4 @@ If you're a new Claude Code instance or need complete context:
 **For questions or clarifications**: Refer to [`docs/INDEX.md`](docs/INDEX.md) for detailed navigation
 - Когда реализуешь довольно глобальный и важный для проекта функционал - всегда обновляй полностью всю документацию в @docs/ а также по необходимости @CLAUDE.md
 - Когда сталкиваешься с трудностями как пересобрать backend или frontend чтобы запустить тестировани (не важно - через bash скрипты или через mcp браузер) - всегда смотри в доку @docs/INDEX.md и оттуда в Development Workflow
+- Делай коммит после каждого выполненного тобой промта - с понятным заголовком и супер минимальным описанием

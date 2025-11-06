@@ -790,7 +790,6 @@ async function handleTaskDeleted() {
                 :tasks="group.tasks"
                 :uncompleted-tasks="group.uncompletedTasks"
                 :completed-tasks="group.completedTasks"
-                :is-sticky="true"
               />
 
               <!-- Uncompleted Tasks as Cards -->
@@ -838,7 +837,6 @@ async function handleTaskDeleted() {
                 :tasks="group.tasks"
                 :uncompleted-tasks="group.uncompletedTasks"
                 :completed-tasks="group.completedTasks"
-                :is-sticky="true"
               />
 
               <!-- Uncompleted tasks in list view -->
