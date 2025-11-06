@@ -131,6 +131,13 @@ function toggleStatus(status: TaskStatus) {
   } else {
     localFilters.value.statuses.push(status)
   }
+  
+  // Auto-switch task type when completed status is selected/deselected
+  const hasCompletedStatus = localFilters.value.statuses.includes(TaskStatus.COMPLETED)
+  if (hasCompletedStatus && taskType.value !== 'completed') {
+    // If completed status is selected and task type is not 'completed', switch to 'completed'
+    taskType.value = 'completed'
+  }
 }
 
 function toggleTag(tagId: number) {
@@ -255,6 +262,21 @@ watch(() => props.visible, (newVisible) => {
   if (newVisible) {
     // Load current filters when opening
     localFilters.value = { ...taskStore.activeFilters }
+    
+    // Auto-set task type based on completed status in filters
+    const hasCompletedStatus = localFilters.value.statuses.includes(TaskStatus.COMPLETED)
+    if (hasCompletedStatus) {
+      taskType.value = 'completed'
+    } else {
+      // Determine task type from completed filter
+      if (taskStore.activeFilters.completed === true) {
+        taskType.value = 'completed'
+      } else if (taskStore.activeFilters.completed === false) {
+        taskType.value = 'active'
+      } else {
+        taskType.value = 'all'
+      }
+    }
     
     // Load date range
     const hasDateFrom = taskStore.activeFilters.dateFrom
