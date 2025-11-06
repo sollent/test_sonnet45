@@ -173,15 +173,19 @@ const strokeDashoffset = computed(() => {
       <div class="progress-status" :class="{ 'status-sticky': isSticky }">
         <span v-if="progress === 100" class="status-complete">
           ✨ {{ t('tasks.all_completed') }}
+          <span class="date-badge">{{ label }}</span>
         </span>
         <span v-else-if="progress >= 80" class="status-almost">
           🎯 {{ t('tasks.almost_done') }}
+          <span class="date-badge">{{ label }}</span>
         </span>
         <span v-else-if="completedTasks.length > 0" class="status-progress">
           {{ completedTasks.length }} {{ t('tasks.tasks_of') }} {{ tasks.length }} {{ t('tasks.tasks_completed') }}
+          <span class="date-badge">{{ label }}</span>
         </span>
         <span v-else class="status-start">
           {{ t('tasks.lets_start') }}
+          <span class="date-badge">{{ label }}</span>
         </span>
       </div>
     </div>
@@ -445,7 +449,7 @@ const strokeDashoffset = computed(() => {
   font-size: 0.75rem;
   font-weight: 500;
   text-align: center;
-  padding-top: 0.525rem;
+  padding-top: 0.585rem;
 }
 
 .progress-status.status-sticky {
@@ -487,6 +491,45 @@ const strokeDashoffset = computed(() => {
   font-style: italic;
 }
 
+/* Beautiful date badge in sticky mode */
+.date-badge {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.25rem 0.625rem;
+  background: linear-gradient(135deg, rgb(157 159 255 / 85%) 0%, rgba(139, 92, 246, 0.85) 100%);
+  border-radius: 10px;
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: white;
+  letter-spacing: 0.02em;
+  text-transform: capitalize;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25),
+              0 1px 3px rgba(0, 0, 0, 0.1),
+              inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: fadeInScale 0.3s ease-out;
+  transition: all 0.2s ease;
+}
+
+.date-badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 12px rgba(99, 102, 241, 0.35),
+              0 2px 4px rgba(0, 0, 0, 0.15),
+              inset 0 1px 1px rgba(255, 255, 255, 0.3);
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 /* Hover effects */
 .day-header-container:hover {
   transform: translateY(-2px);
@@ -523,6 +566,12 @@ const strokeDashoffset = computed(() => {
 
   .progress-status {
     font-size: 0.7rem;
+  }
+
+  .date-badge {
+    font-size: 0.6rem;
+    padding: 0.2rem 0.5rem;
+    margin-left: 0.375rem;
   }
 }
 
