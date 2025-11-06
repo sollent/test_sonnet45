@@ -181,12 +181,19 @@ test.describe('Login Flow', () => {
   })
 
   test('TC-AUTH-013: Login - Google OAuth button presence', async ({ page }) => {
-    // Wait for Google button to load (it's in iframe)
-    await page.waitForTimeout(2000)
+    // Wait for Google button to load (it's in iframe, may take time)
+    await page.waitForTimeout(3000)
     
     // Verify Google login button container is visible
     const container = page.locator('.google-login-button')
     const iframe = page.locator('iframe[src*="accounts.google.com"]')
+    
+    // Wait for either container or iframe to appear
+    await Promise.race([
+      container.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null),
+      iframe.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null),
+      page.waitForTimeout(5000)
+    ])
     
     const containerVisible = await container.isVisible().catch(() => false)
     const iframeVisible = await iframe.isVisible().catch(() => false)
