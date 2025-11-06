@@ -55,3 +55,22 @@ export const invalidEmails = [
   ''
 ]
 
+/**
+ * Test user credentials for login tests
+ * Note: These should match actual test users in the database
+ */
+export const testLoginUsers = {
+  valid: {
+    email: 'sollent98@gmail.com',
+    password: 'Pahan1998'
+  },
+  invalidCredentials: {
+    email: 'nonexistent@example.com',
+    password: 'WrongPassword123!'
+  },
+  wrongPassword: {
+    email: 'sollent98@gmail.com',
+    password: 'WrongPassword123!'
+  }
+}
+
