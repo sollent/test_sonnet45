@@ -208,6 +208,11 @@ async function loadMoreTasks() {
 
   console.log('[Infinite Scroll] Loading more tasks, offset:', currentOffset.value, 'totalLoaded:', totalLoadedTasks.value)
   console.log('[Infinite Scroll] Current tasks count in store:', taskStore.tasks.length)
+
+  // Save scroll position before loading (important for mobile)
+  const scrollY = window.scrollY
+  const documentHeight = document.documentElement.scrollHeight
+
   isLoadingMore.value = true
 
   try {
@@ -250,6 +255,16 @@ async function loadMoreTasks() {
       currentOffset.value += loadedCount
       console.log('[Infinite Scroll] New offset:', currentOffset.value, 'continuing to load more')
     }
+
+    // Restore scroll position after DOM updates (fixes mobile scroll jump)
+    await nextTick()
+    const newDocumentHeight = document.documentElement.scrollHeight
+    const heightDifference = newDocumentHeight - documentHeight
+
+    // Maintain the same visual position by adding the height difference
+    window.scrollTo(0, scrollY + heightDifference)
+    console.log('[Scroll] Restored scroll position:', scrollY, '+ height diff:', heightDifference, '=', scrollY + heightDifference)
+
   } catch (error: any) {
     console.error('[Infinite Scroll] Error:', error)
     showError(error.message || t('errors.unknown_error'))
