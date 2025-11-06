@@ -102,6 +102,18 @@ Authentication & authorization implementation
 - Security voters
 - Role-based access control
 
+#### [`backend/RECURRENCE_TASKS.md`](backend/RECURRENCE_TASKS.md)
+Recurring tasks functionality and implementation
+
+**Key Topics:**
+- RecurrenceRule entity and relationships
+- RecurrenceService business logic
+- Strategy pattern for recurrence types (daily, weekly, monthly, yearly, custom)
+- Cron-based automatic task generation
+- CLI command for processing rules
+- Testing and troubleshooting
+- Usage examples for each recurrence type
+
 ---
 
 ### 🎨 Frontend (`project/frontend/`)
@@ -211,6 +223,7 @@ Production deployment guide
 **Reference:**
 - [`backend/API_REFERENCE.md`](backend/API_REFERENCE.md) - API contracts
 - [`backend/DATABASE.md`](backend/DATABASE.md) - Schema design
+- [`backend/RECURRENCE_TASKS.md`](backend/RECURRENCE_TASKS.md) - Recurring tasks system
 
 ### For Frontend Development
 **Must Read:**
@@ -237,8 +250,8 @@ Production deployment guide
 Backend:
 - Lines of Code: ~15,000
 - Controllers: 4 (Auth, Task, Tag, Analytics)
-- Services: 10+ (TaskService, AnalyticsService, etc.)
-- Entities: 5 (User, Task, Tag, Media, RefreshToken)
+- Services: 10+ (TaskService, RecurrenceService, AnalyticsService, etc.)
+- Entities: 6 (User, Task, Tag, Media, RefreshToken, RecurrenceRule)
 - Tests: PHPUnit (Unit + Integration)
 
 Frontend:
@@ -262,6 +275,7 @@ Frontend:
 1. Study `backend/ARCHITECTURE.md` - How is backend structured?
 2. Reference `backend/API_REFERENCE.md` - Know all endpoints
 3. Read `backend/DATABASE.md` - Database schema and relationships
+4. Read `backend/RECURRENCE_TASKS.md` - Recurring tasks feature (optional)
 
 ### Phase 3: Frontend Deep Dive (45 minutes)
 1. Study `frontend/ARCHITECTURE.md` - How is frontend structured?
@@ -414,8 +428,8 @@ Every document follows this pattern:
 
 ## 📅 Last Updated
 
-**Version:** 1.0.0
-**Date:** 2025-01-05
+**Version:** 1.1.0
+**Date:** 2025-11-06
 **Maintainer:** Claude Code AI
 **Project Phase:** Production-Ready
 
