@@ -445,7 +445,7 @@ const strokeDashoffset = computed(() => {
   font-size: 0.75rem;
   font-weight: 500;
   text-align: center;
-  padding-top: 0.125rem;
+  padding-top: 0.525rem;
 }
 
 .progress-status.status-sticky {
@@ -462,6 +462,9 @@ const strokeDashoffset = computed(() => {
 @media (max-width: 768px) {
   .day-header-container.is-sticky .progress-status {
     padding-top: 0.725rem;
+  }
+  .progress-status {
+    padding-top: 0.025rem !important;
   }
 }
 
