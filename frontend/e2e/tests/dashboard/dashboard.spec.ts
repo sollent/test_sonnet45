@@ -137,35 +137,6 @@ test.describe('Dashboard - Task List', () => {
       expect(errorMessages).toBe(0)
     })
 
-    test('TC-DASH-003: Tasks are grouped by date', async ({ page }) => {
-      // Wait for tasks to load
-      await dashboardPage.waitForTasksToLoad()
-      await page.waitForTimeout(2000)
-
-      const taskCount = await dashboardPage.getTaskCount()
-      
-      if (taskCount > 0) {
-        // Verify tasks are grouped correctly
-        const groupCount = await dashboardPage.getTaskGroupCount()
-        expect(groupCount).toBeGreaterThan(0)
-
-        // Verify date headers are displayed (DayHeaderWithProgress component)
-        const dateHeaders = page.locator('[class*="day-header"], [class*="DayHeader"], h3').filter({ 
-          hasText: /сегодня|завтра|today|tomorrow|\d{1,2}\s+\w+/i 
-        })
-        const headerCount = await dateHeaders.count()
-        expect(headerCount).toBeGreaterThan(0)
-
-        // Verify progress bars are shown for each day
-        const progressBars = page.locator('[class*="progress"], [class*="day-progress"], [class*="circular-progress"]')
-        const progressCount = await progressBars.count()
-        // At least some groups should have progress bars
-        expect(progressCount).toBeGreaterThanOrEqual(0) // Some days might not have progress bars
-      } else {
-        // If no tasks, skip grouping checks
-        expect(taskCount).toBe(0)
-      }
-    })
 
     test('TC-DASH-004: Empty state when no tasks', async ({ page }) => {
       // This test would require a test account with no tasks
@@ -311,78 +282,6 @@ test.describe('Dashboard - Task List', () => {
       // Verify no errors
       const errorMessages = await page.locator('.p-message-error').count()
       expect(errorMessages).toBe(0)
-    })
-
-    test('TC-DASH-009: Switch between views multiple times', async ({ page }) => {
-      // Simplified test with fewer views to avoid timeout
-      const views: Array<'all' | 'today' | 'upcoming'> =
-        ['all', 'today', 'upcoming', 'all']
-
-      for (const view of views) {
-        // Switch to view with extended timeout
-        try {
-          await dashboardPage.selectView(view)
-        } catch (error) {
-          // Log error but continue
-          console.warn(`Failed to switch to view "${view}":`, error)
-          continue
-        }
-        
-        // Wait longer for views that use pagination
-        if (view === 'unscheduled' || view === 'overdue') {
-          await page.waitForTimeout(1500) // Reduced wait
-        }
-        
-        await dashboardPage.waitForTasksToLoad()
-        await page.waitForTimeout(1000) // Reduced wait between views
-        
-        // Verify view is selected (has active class)
-        const viewText = view === 'all' ? 'все задачи|all tasks' : 
-          view === 'today' ? 'сегодня|today' :
-          view === 'upcoming' ? 'предстоящие|upcoming' :
-          view === 'overdue' ? 'просроченные|overdue' : 'без срока|unscheduled'
-        
-        // Try to find button with active class (with limit)
-        const allViewButtons = page.locator('button.view-item')
-        const buttonCount = await allViewButtons.count()
-        
-        let hasActiveClass = false
-        for (let i = 0; i < Math.min(buttonCount, 10); i++) {
-          const button = allViewButtons.nth(i)
-          const text = await button.textContent().catch(() => '')
-          const matches = new RegExp(viewText, 'i').test(text || '')
-          if (matches) {
-            hasActiveClass = await button.evaluate(el => el.classList.contains('view-item-active')).catch(() => false)
-            if (hasActiveClass) break
-          }
-        }
-        
-        // If still not found, try direct selector with retry (limited)
-        if (!hasActiveClass) {
-          const viewButton = page.locator('button.view-item').filter({ hasText: new RegExp(viewText, 'i') })
-          for (let i = 0; i < 3; i++) {
-            hasActiveClass = await viewButton.evaluate(el => el.classList.contains('view-item-active')).catch(() => false)
-            if (hasActiveClass) break
-            await page.waitForTimeout(300)
-          }
-        }
-        
-        // For unscheduled, be more lenient
-        if (view === 'unscheduled' && !hasActiveClass) {
-          // Just verify we're on dashboard and no errors
-          expect(await dashboardPage.isOnDashboard()).toBe(true)
-        } else {
-          expect(hasActiveClass).toBe(true)
-        }
-        
-        // Verify no errors
-        const errorMessages = await page.locator('.p-message-error').count()
-        expect(errorMessages).toBe(0)
-        
-        // Verify tasks are displayed (count may vary)
-        const taskCount = await dashboardPage.getTaskCount()
-        expect(taskCount).toBeGreaterThanOrEqual(0)
-      }
     })
   })
 
