@@ -3,3 +3,5 @@
 /frontend/playwright-report/
 /frontend/test-results/
 frontend/e2e/test-results.json
+/screenshots_for_claude/
+/backend/public/uploads/
