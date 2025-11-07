@@ -275,8 +275,8 @@ test.describe('Task Editing', () => {
         await page.waitForTimeout(1000)
         
         // Verify sidebar is closed
-        const sidebarVisible = await taskSidebar.isVisible()
-        expect(sidebarVisible).toBe(false)
+        const sidebarClosed = await taskSidebar.isVisible()
+        expect(sidebarClosed).toBe(false)
       } else {
         expect(true).toBe(true)
       }
@@ -315,8 +315,8 @@ test.describe('Task Editing', () => {
         await page.waitForTimeout(1000)
         
         // Verify sidebar is closed
-        const sidebarVisible = await taskSidebar.isVisible()
-        expect(sidebarVisible).toBe(false)
+        const sidebarClosed = await taskSidebar.isVisible()
+        expect(sidebarClosed).toBe(false)
       } else {
         expect(true).toBe(true)
       }
@@ -901,8 +901,8 @@ test.describe('Task Editing', () => {
           expect(taskStillVisible).toBe(false)
           
           // Verify sidebar is closed
-          const sidebarVisible = await taskSidebar.isVisible()
-          expect(sidebarVisible).toBe(false)
+          const sidebarClosed = await taskSidebar.isVisible()
+          expect(sidebarClosed).toBe(false)
         } else {
           expect(true).toBe(true)
         }
@@ -966,8 +966,8 @@ test.describe('Task Editing', () => {
         expect(taskStillExists).toBe(true)
         
         // Verify sidebar stays open
-        const sidebarVisible = await taskSidebar.isVisible()
-        expect(sidebarVisible).toBe(true)
+        const sidebarStillOpen = await taskSidebar.isVisible()
+        expect(sidebarStillOpen).toBe(true)
       } else {
         expect(true).toBe(true)
       }
