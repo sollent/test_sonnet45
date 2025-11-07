@@ -73,10 +73,10 @@ export class TaskDialogPage {
       page.locator('.p-calendar input').last()
     )
     
-    // Quick date buttons
-    this.todayButton = page.locator('button').filter({ hasText: /сегодня|today/i }).first()
-    this.tomorrowButton = page.locator('button').filter({ hasText: /завтра|tomorrow/i }).first()
-    this.dayAfterButton = page.locator('button').filter({ hasText: /послезавтра|day after/i }).first()
+    // Quick date buttons - in day-chips section
+    this.todayButton = page.locator('.day-chip, button').filter({ hasText: /сегодня|today/i }).first()
+    this.tomorrowButton = page.locator('.day-chip, button').filter({ hasText: /завтра|tomorrow/i }).first()
+    this.dayAfterButton = page.locator('.day-chip, button').filter({ hasText: /послезавтра|day after|day after tomorrow/i }).first()
     
     // Advanced date toggle
     this.advancedDateToggle = page.locator('button').filter({ hasText: /расширен|advanced/i })
@@ -86,13 +86,15 @@ export class TaskDialogPage {
     this.popularTags = page.locator('.popular-tags, [class*="popular-tag"]')
     this.tagChips = page.locator('.p-chip, [class*="tag-chip"], [class*="chip"], .p-autocomplete-token')
     
-    // Recurrence - RecurrenceSettings component
-    this.recurrenceToggle = page.locator('input[type="checkbox"]').filter({ 
-      has: page.locator('label, span').filter({ hasText: /повторяющ|recurring/i })
-    }).or(
-      page.locator('.recurrence-field input[type="checkbox"]')
+    // Recurrence - RecurrenceSettings component (ToggleButton)
+    this.recurrenceToggle = page.locator('.recurrence-field input[type="checkbox"]').or(
+      page.locator('.recurrence-toggle input[type="checkbox"]')
+    ).or(
+      page.locator('.p-togglebutton input[type="checkbox"]')
     ).first()
-    this.recurrenceTypeDropdown = page.locator('.recurrence-field [role="combobox"], .recurrence-field select').first()
+    this.recurrenceTypeDropdown = page.locator('.recurrence-field [role="combobox"]').or(
+      page.locator('.recurrence-options [role="combobox"]')
+    ).first()
     
     // Actions
     this.saveButton = page.getByRole('button', { name: /сохранить|save/i })
@@ -190,20 +192,49 @@ export class TaskDialogPage {
    * Click quick date button
    */
   async clickQuickDate(day: 'today' | 'tomorrow' | 'dayAfter'): Promise<void> {
-    let button: Locator
-    switch (day) {
-      case 'today':
-        button = this.todayButton
+    // Try multiple selectors for day buttons
+    const dayTexts = {
+      'today': /сегодня|today/i,
+      'tomorrow': /завтра|tomorrow/i,
+      'dayAfter': /послезавтра|day after|day after tomorrow/i
+    }
+    
+    const dayPattern = dayTexts[day]
+    const dayButtons = this.page.locator('.day-chip, button').filter({ hasText: dayPattern })
+    
+    let button: Locator | null = null
+    const buttonCount = await dayButtons.count()
+    
+    for (let i = 0; i < buttonCount; i++) {
+      const btn = dayButtons.nth(i)
+      const text = await btn.textContent().catch(() => '')
+      if (dayPattern.test(text || '')) {
+        button = btn
         break
-      case 'tomorrow':
-        button = this.tomorrowButton
-        break
-      case 'dayAfter':
-        button = this.dayAfterButton
-        break
+      }
+    }
+    
+    if (!button) {
+      // Fallback to predefined selectors
+      switch (day) {
+        case 'today':
+          button = this.todayButton
+          break
+        case 'tomorrow':
+          button = this.tomorrowButton
+          break
+        case 'dayAfter':
+          button = this.dayAfterButton
+          break
+      }
+    }
+    
+    if (!button) {
+      throw new Error(`Quick date button for "${day}" not found`)
     }
     
     await button.waitFor({ state: 'visible', timeout: 5000 })
+    await button.scrollIntoViewIfNeeded()
     await button.click()
     await this.page.waitForTimeout(500)
   }
@@ -251,10 +282,34 @@ export class TaskDialogPage {
    * Enable recurrence
    */
   async enableRecurrence(): Promise<void> {
-    await this.recurrenceToggle.waitFor({ state: 'visible', timeout: 5000 })
-    if (!(await this.recurrenceToggle.isChecked())) {
-      await this.recurrenceToggle.click()
-      await this.page.waitForTimeout(500)
+    // Try multiple selectors for recurrence toggle
+    const toggleSelectors = [
+      this.page.locator('.recurrence-field input[type="checkbox"]'),
+      this.page.locator('.recurrence-toggle input[type="checkbox"]'),
+      this.page.locator('.p-togglebutton input[type="checkbox"]'),
+      this.page.locator('input[type="checkbox"]').filter({ 
+        has: this.page.locator('label, span').filter({ hasText: /повторяющ|repeat/i })
+      })
+    ]
+    
+    let toggle: Locator | null = null
+    for (const selector of toggleSelectors) {
+      try {
+        await selector.first().waitFor({ state: 'visible', timeout: 2000 })
+        toggle = selector.first()
+        break
+      } catch {
+        continue
+      }
+    }
+    
+    if (!toggle) {
+      throw new Error('Recurrence toggle not found')
+    }
+    
+    if (!(await toggle.isChecked())) {
+      await toggle.click()
+      await this.page.waitForTimeout(1000) // Wait for recurrence options to appear
     }
   }
 
@@ -262,9 +317,30 @@ export class TaskDialogPage {
    * Select recurrence type
    */
   async selectRecurrenceType(type: 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom'): Promise<void> {
-    await this.recurrenceTypeDropdown.waitFor({ state: 'visible', timeout: 5000 })
-    await this.recurrenceTypeDropdown.click()
-    await this.page.waitForTimeout(300)
+    // Try multiple selectors for recurrence type dropdown
+    const dropdownSelectors = [
+      this.page.locator('.recurrence-field [role="combobox"]'),
+      this.page.locator('.recurrence-options [role="combobox"]'),
+      this.page.locator('.recurrence-settings [role="combobox"]')
+    ]
+    
+    let dropdown: Locator | null = null
+    for (const selector of dropdownSelectors) {
+      try {
+        await selector.first().waitFor({ state: 'visible', timeout: 2000 })
+        dropdown = selector.first()
+        break
+      } catch {
+        continue
+      }
+    }
+    
+    if (!dropdown) {
+      throw new Error('Recurrence type dropdown not found')
+    }
+    
+    await dropdown.click()
+    await this.page.waitForTimeout(500)
     
     const typeText = type === 'daily' ? /ежедневно|daily/i :
                      type === 'weekly' ? /еженедельно|weekly/i :
@@ -272,7 +348,11 @@ export class TaskDialogPage {
                      type === 'yearly' ? /ежегодно|yearly/i :
                      /настраиваем|custom/i
     
-    await this.page.getByRole('option', { name: typeText }).click()
+    // Try to find option
+    const option = this.page.getByRole('option', { name: typeText })
+    await option.waitFor({ state: 'visible', timeout: 3000 })
+    await option.click()
+    await this.page.waitForTimeout(500)
   }
 
   /**
