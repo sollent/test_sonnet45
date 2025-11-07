@@ -21,10 +21,28 @@ test.describe('Task Editing', () => {
     // Login before each test
     const { email, password } = testLoginUsers.valid
     await loginPage.goto()
+    await page.waitForLoadState('networkidle')
     await loginPage.fillForm(email, password)
-    await page.waitForTimeout(500)
+    await page.waitForTimeout(1000)
     await loginPage.submit()
-    await page.waitForURL('**/dashboard', { timeout: 15000 })
+    
+    // Wait for redirect to dashboard with more flexible timeout
+    try {
+      await page.waitForURL('**/dashboard', { timeout: 30000 })
+    } catch {
+      // If URL wait fails, try waiting for network idle and check URL
+      await page.waitForLoadState('networkidle', { timeout: 30000 })
+      const url = page.url()
+      if (!url.includes('/dashboard')) {
+        await page.waitForTimeout(3000)
+        const finalUrl = page.url()
+        if (!finalUrl.includes('/dashboard')) {
+          await page.goto('/dashboard')
+          await page.waitForLoadState('networkidle')
+        }
+      }
+    }
+    
     await page.waitForTimeout(2000)
     
     // Ensure we have at least one task for editing tests
@@ -38,36 +56,20 @@ test.describe('Task Editing', () => {
       const taskCount = await dashboardPage.getTaskCount()
       
       if (taskCount === 0) {
-        // Create a test task first
-        const createButtonSelectors = [
-          page.getByRole('button', { name: /создать задачу|create task/i }),
-          page.locator('button').filter({ has: page.locator('i.pi-plus') }),
-          page.locator('.floating-action-button, [class*="floating"]')
-        ]
-        
-        let createButton: Locator | null = null
-        for (const selector of createButtonSelectors) {
-          try {
-            await selector.first().waitFor({ state: 'visible', timeout: 3000 })
-            createButton = selector.first()
-            break
-          } catch {
-            continue
-          }
-        }
-        
-        if (createButton) {
-          await createButton.click()
-          await taskDialog.waitForDialog()
-          const testTitle = `Test Task ${Date.now()}`
-          await taskDialog.fillTitle(testTitle)
-          await taskDialog.save()
-          await Promise.race([
-            page.waitForSelector('.p-toast-message', { timeout: 10000 }).catch(() => null),
-            page.waitForTimeout(5000)
-          ])
-          await page.waitForTimeout(2000)
-        }
+        // Create a test task first - use helper function
+        const { findAndClickCreateButton } = await import('./task-creation.spec')
+        await findAndClickCreateButton(page)
+        await taskDialog.waitForDialog()
+        const testTitle = `Test Task ${Date.now()}`
+        await taskDialog.fillTitle(testTitle)
+        await taskDialog.save()
+        await Promise.race([
+          page.waitForSelector('.p-toast-message', { timeout: 10000 }).catch(() => null),
+          page.waitForTimeout(5000)
+        ])
+        await page.waitForTimeout(2000)
+        await page.reload({ waitUntil: 'networkidle' })
+        await dashboardPage.waitForTasksToLoad()
       }
       
       // Find first task card - try multiple selectors
@@ -93,17 +95,26 @@ test.describe('Task Editing', () => {
         const taskTitle = await taskCard.textContent().catch(() => '')
         
         // Click on task card
-        await taskCard.click()
-        await page.waitForTimeout(1000) // Wait for sidebar animation
+        await taskCard.click({ force: true })
+        await page.waitForTimeout(2000) // Wait for sidebar animation
         
         // Wait for sidebar to open with multiple selector checks
         await Promise.race([
           taskSidebar.waitForSidebar(),
-          page.locator('.p-sidebar').waitFor({ state: 'visible', timeout: 10000 }),
-          page.waitForTimeout(3000)
+          page.locator('.p-sidebar').waitFor({ state: 'visible', timeout: 15000 }),
+          page.locator('[role="complementary"]').waitFor({ state: 'visible', timeout: 15000 }),
+          page.waitForTimeout(5000)
         ])
         
+        // Additional wait for sidebar to fully render
+        await page.waitForTimeout(1000)
+        
         // Verify sidebar is visible
+        const sidebarVisible = await taskSidebar.isVisible()
+        if (!sidebarVisible) {
+          // Try waiting a bit more
+          await page.waitForTimeout(2000)
+        }
         expect(await taskSidebar.isVisible()).toBe(true)
         
         // Verify task data is loaded (check if title is displayed)
@@ -138,15 +149,22 @@ test.describe('Task Editing', () => {
       }
       
       if (taskCard) {
-        await taskCard.click()
-        await page.waitForTimeout(1000)
+        await taskCard.click({ force: true })
+        await page.waitForTimeout(2000) // Wait for sidebar animation
         
-        // Wait for sidebar with multiple checks
+        // Wait for sidebar to open
         await Promise.race([
           taskSidebar.waitForSidebar(),
-          page.locator('.p-sidebar').waitFor({ state: 'visible', timeout: 10000 }),
-          page.waitForTimeout(3000)
+          page.locator('.p-sidebar').waitFor({ state: 'visible', timeout: 15000 }),
+          page.locator('[role="complementary"]').waitFor({ state: 'visible', timeout: 15000 }),
+          page.waitForTimeout(5000)
         ])
+        
+        // Additional wait for sidebar to fully render
+        await page.waitForTimeout(1000)
+        
+        // Verify sidebar is visible
+        expect(await taskSidebar.isVisible()).toBe(true)
         
         // Click close button
         await taskSidebar.close()
@@ -185,15 +203,22 @@ test.describe('Task Editing', () => {
       }
       
       if (taskCard) {
-        await taskCard.click()
-        await page.waitForTimeout(1000)
+        await taskCard.click({ force: true })
+        await page.waitForTimeout(2000) // Wait for sidebar animation
         
-        // Wait for sidebar with multiple checks
+        // Wait for sidebar to open
         await Promise.race([
           taskSidebar.waitForSidebar(),
-          page.locator('.p-sidebar').waitFor({ state: 'visible', timeout: 10000 }),
-          page.waitForTimeout(3000)
+          page.locator('.p-sidebar').waitFor({ state: 'visible', timeout: 15000 }),
+          page.locator('[role="complementary"]').waitFor({ state: 'visible', timeout: 15000 }),
+          page.waitForTimeout(5000)
         ])
+        
+        // Additional wait for sidebar to fully render
+        await page.waitForTimeout(1000)
+        
+        // Verify sidebar is visible
+        expect(await taskSidebar.isVisible()).toBe(true)
         
         // Click outside sidebar
         await taskSidebar.clickOutside()
@@ -219,12 +244,30 @@ test.describe('Task Editing', () => {
       
       if (taskExists) {
         const originalTitle = await taskCard.textContent().catch(() => '')
-        await taskCard.click()
-        await taskSidebar.waitForSidebar()
+        await taskCard.click({ force: true })
+        await page.waitForTimeout(2000) // Wait for sidebar animation
+        
+        // Wait for sidebar to open
+        await Promise.race([
+          taskSidebar.waitForSidebar(),
+          page.locator('.p-sidebar').waitFor({ state: 'visible', timeout: 15000 }),
+          page.locator('[role="complementary"]').waitFor({ state: 'visible', timeout: 15000 }),
+          page.waitForTimeout(5000)
+        ])
+        
+        // Additional wait for sidebar to fully render
+        await page.waitForTimeout(1000)
+        
+        // Verify sidebar is visible before trying to edit
+        const sidebarVisible = await taskSidebar.isVisible()
+        if (!sidebarVisible) {
+          await page.waitForTimeout(2000)
+        }
+        expect(await taskSidebar.isVisible()).toBe(true)
         
         // Enter edit mode
         await taskSidebar.enterEditMode()
-        await page.waitForTimeout(500)
+        await page.waitForTimeout(1000) // Wait for edit mode to activate
         
         // Change title
         const newTitle = `Updated Title ${Date.now()}`
@@ -268,12 +311,30 @@ test.describe('Task Editing', () => {
       const taskExists = await taskCard.isVisible({ timeout: 5000 }).catch(() => false)
       
       if (taskExists) {
-        await taskCard.click()
-        await taskSidebar.waitForSidebar()
+        await taskCard.click({ force: true })
+        await page.waitForTimeout(2000) // Wait for sidebar animation
+        
+        // Wait for sidebar to open
+        await Promise.race([
+          taskSidebar.waitForSidebar(),
+          page.locator('.p-sidebar').waitFor({ state: 'visible', timeout: 15000 }),
+          page.locator('[role="complementary"]').waitFor({ state: 'visible', timeout: 15000 }),
+          page.waitForTimeout(5000)
+        ])
+        
+        // Additional wait for sidebar to fully render
+        await page.waitForTimeout(1000)
+        
+        // Verify sidebar is visible before trying to edit
+        const sidebarVisible = await taskSidebar.isVisible()
+        if (!sidebarVisible) {
+          await page.waitForTimeout(2000)
+        }
+        expect(await taskSidebar.isVisible()).toBe(true)
         
         // Enter edit mode
         await taskSidebar.enterEditMode()
-        await page.waitForTimeout(500)
+        await page.waitForTimeout(1000) // Wait for edit mode to activate
         
         // Edit description
         const newDescription = `Updated description ${Date.now()}`
@@ -304,12 +365,30 @@ test.describe('Task Editing', () => {
       const taskExists = await taskCard.isVisible({ timeout: 5000 }).catch(() => false)
       
       if (taskExists) {
-        await taskCard.click()
-        await taskSidebar.waitForSidebar()
+        await taskCard.click({ force: true })
+        await page.waitForTimeout(2000) // Wait for sidebar animation
+        
+        // Wait for sidebar to open
+        await Promise.race([
+          taskSidebar.waitForSidebar(),
+          page.locator('.p-sidebar').waitFor({ state: 'visible', timeout: 15000 }),
+          page.locator('[role="complementary"]').waitFor({ state: 'visible', timeout: 15000 }),
+          page.waitForTimeout(5000)
+        ])
+        
+        // Additional wait for sidebar to fully render
+        await page.waitForTimeout(1000)
+        
+        // Verify sidebar is visible before trying to edit
+        const sidebarVisible = await taskSidebar.isVisible()
+        if (!sidebarVisible) {
+          await page.waitForTimeout(2000)
+        }
+        expect(await taskSidebar.isVisible()).toBe(true)
         
         // Enter edit mode
         await taskSidebar.enterEditMode()
-        await page.waitForTimeout(500)
+        await page.waitForTimeout(1000) // Wait for edit mode to activate
         
         // Change status to "В процессе"
         await taskSidebar.changeStatus('in_progress')
@@ -339,12 +418,30 @@ test.describe('Task Editing', () => {
       const taskExists = await taskCard.isVisible({ timeout: 5000 }).catch(() => false)
       
       if (taskExists) {
-        await taskCard.click()
-        await taskSidebar.waitForSidebar()
+        await taskCard.click({ force: true })
+        await page.waitForTimeout(2000) // Wait for sidebar animation
+        
+        // Wait for sidebar to open
+        await Promise.race([
+          taskSidebar.waitForSidebar(),
+          page.locator('.p-sidebar').waitFor({ state: 'visible', timeout: 15000 }),
+          page.locator('[role="complementary"]').waitFor({ state: 'visible', timeout: 15000 }),
+          page.waitForTimeout(5000)
+        ])
+        
+        // Additional wait for sidebar to fully render
+        await page.waitForTimeout(1000)
+        
+        // Verify sidebar is visible before trying to edit
+        const sidebarVisible = await taskSidebar.isVisible()
+        if (!sidebarVisible) {
+          await page.waitForTimeout(2000)
+        }
+        expect(await taskSidebar.isVisible()).toBe(true)
         
         // Enter edit mode
         await taskSidebar.enterEditMode()
-        await page.waitForTimeout(500)
+        await page.waitForTimeout(1000) // Wait for edit mode to activate
         
         // Change priority to "Срочный"
         await taskSidebar.changePriority('urgent')
@@ -374,12 +471,30 @@ test.describe('Task Editing', () => {
       const taskExists = await taskCard.isVisible({ timeout: 5000 }).catch(() => false)
       
       if (taskExists) {
-        await taskCard.click()
-        await taskSidebar.waitForSidebar()
+        await taskCard.click({ force: true })
+        await page.waitForTimeout(2000) // Wait for sidebar animation
+        
+        // Wait for sidebar to open
+        await Promise.race([
+          taskSidebar.waitForSidebar(),
+          page.locator('.p-sidebar').waitFor({ state: 'visible', timeout: 15000 }),
+          page.locator('[role="complementary"]').waitFor({ state: 'visible', timeout: 15000 }),
+          page.waitForTimeout(5000)
+        ])
+        
+        // Additional wait for sidebar to fully render
+        await page.waitForTimeout(1000)
+        
+        // Verify sidebar is visible before trying to edit
+        const sidebarVisible = await taskSidebar.isVisible()
+        if (!sidebarVisible) {
+          await page.waitForTimeout(2000)
+        }
+        expect(await taskSidebar.isVisible()).toBe(true)
         
         // Enter edit mode
         await taskSidebar.enterEditMode()
-        await page.waitForTimeout(500)
+        await page.waitForTimeout(1000) // Wait for edit mode to activate
         
         // Note: Calendar interaction is complex, so we'll just verify the fields exist
         const startDateVisible = await taskSidebar.editStartDateCalendar.isVisible().catch(() => false)
@@ -495,8 +610,22 @@ test.describe('Task Editing', () => {
       
       if (taskExists) {
         const originalTitle = await taskCard.textContent().catch(() => '')
-        await taskCard.click()
-        await taskSidebar.waitForSidebar()
+        await taskCard.click({ force: true })
+        await page.waitForTimeout(2000) // Wait for sidebar animation
+        
+        // Wait for sidebar to open
+        await Promise.race([
+          taskSidebar.waitForSidebar(),
+          page.locator('.p-sidebar').waitFor({ state: 'visible', timeout: 15000 }),
+          page.locator('[role="complementary"]').waitFor({ state: 'visible', timeout: 15000 }),
+          page.waitForTimeout(5000)
+        ])
+        
+        // Additional wait for sidebar to fully render
+        await page.waitForTimeout(1000)
+        
+        // Verify sidebar is visible
+        expect(await taskSidebar.isVisible()).toBe(true)
         
         // Get original title from sidebar
         const originalSidebarTitle = await taskSidebar.getTaskTitle()
@@ -530,9 +659,26 @@ test.describe('Task Editing', () => {
       const taskExists = await taskCard.isVisible({ timeout: 5000 }).catch(() => false)
       
       if (taskExists) {
-        await taskCard.click()
-        await taskSidebar.waitForSidebar()
+        await taskCard.click({ force: true })
+        await page.waitForTimeout(2000) // Wait for sidebar animation
+        
+        // Wait for sidebar to open
+        await Promise.race([
+          taskSidebar.waitForSidebar(),
+          page.locator('.p-sidebar').waitFor({ state: 'visible', timeout: 15000 }),
+          page.locator('[role="complementary"]').waitFor({ state: 'visible', timeout: 15000 }),
+          page.waitForTimeout(5000)
+        ])
+        
+        // Additional wait for sidebar to fully render
         await page.waitForTimeout(1000)
+        
+        // Verify sidebar is visible
+        const sidebarVisible = await taskSidebar.isVisible()
+        if (!sidebarVisible) {
+          await page.waitForTimeout(2000)
+        }
+        expect(await taskSidebar.isVisible()).toBe(true)
         
         // Get initial subtask count
         const initialCount = await taskSidebar.getSubtaskCount()
@@ -566,9 +712,26 @@ test.describe('Task Editing', () => {
       const taskExists = await taskCard.isVisible({ timeout: 5000 }).catch(() => false)
       
       if (taskExists) {
-        await taskCard.click()
-        await taskSidebar.waitForSidebar()
+        await taskCard.click({ force: true })
+        await page.waitForTimeout(2000) // Wait for sidebar animation
+        
+        // Wait for sidebar to open
+        await Promise.race([
+          taskSidebar.waitForSidebar(),
+          page.locator('.p-sidebar').waitFor({ state: 'visible', timeout: 15000 }),
+          page.locator('[role="complementary"]').waitFor({ state: 'visible', timeout: 15000 }),
+          page.waitForTimeout(5000)
+        ])
+        
+        // Additional wait for sidebar to fully render
         await page.waitForTimeout(1000)
+        
+        // Verify sidebar is visible
+        const sidebarVisible = await taskSidebar.isVisible()
+        if (!sidebarVisible) {
+          await page.waitForTimeout(2000)
+        }
+        expect(await taskSidebar.isVisible()).toBe(true)
         
         // Add subtask first if none exist
         const subtaskCount = await taskSidebar.getSubtaskCount()
@@ -606,9 +769,26 @@ test.describe('Task Editing', () => {
       const taskExists = await taskCard.isVisible({ timeout: 5000 }).catch(() => false)
       
       if (taskExists) {
-        await taskCard.click()
-        await taskSidebar.waitForSidebar()
+        await taskCard.click({ force: true })
+        await page.waitForTimeout(2000) // Wait for sidebar animation
+        
+        // Wait for sidebar to open
+        await Promise.race([
+          taskSidebar.waitForSidebar(),
+          page.locator('.p-sidebar').waitFor({ state: 'visible', timeout: 15000 }),
+          page.locator('[role="complementary"]').waitFor({ state: 'visible', timeout: 15000 }),
+          page.waitForTimeout(5000)
+        ])
+        
+        // Additional wait for sidebar to fully render
         await page.waitForTimeout(1000)
+        
+        // Verify sidebar is visible
+        const sidebarVisible = await taskSidebar.isVisible()
+        if (!sidebarVisible) {
+          await page.waitForTimeout(2000)
+        }
+        expect(await taskSidebar.isVisible()).toBe(true)
         
         const subtaskCount = await taskSidebar.getSubtaskCount()
         if (subtaskCount > 0) {
@@ -655,9 +835,26 @@ test.describe('Task Editing', () => {
       const taskExists = await taskCard.isVisible({ timeout: 5000 }).catch(() => false)
       
       if (taskExists) {
-        await taskCard.click()
-        await taskSidebar.waitForSidebar()
+        await taskCard.click({ force: true })
+        await page.waitForTimeout(2000) // Wait for sidebar animation
+        
+        // Wait for sidebar to open
+        await Promise.race([
+          taskSidebar.waitForSidebar(),
+          page.locator('.p-sidebar').waitFor({ state: 'visible', timeout: 15000 }),
+          page.locator('[role="complementary"]').waitFor({ state: 'visible', timeout: 15000 }),
+          page.waitForTimeout(5000)
+        ])
+        
+        // Additional wait for sidebar to fully render
         await page.waitForTimeout(1000)
+        
+        // Verify sidebar is visible
+        const sidebarVisible = await taskSidebar.isVisible()
+        if (!sidebarVisible) {
+          await page.waitForTimeout(2000)
+        }
+        expect(await taskSidebar.isVisible()).toBe(true)
         
         // Add subtask first if none exist
         const initialCount = await taskSidebar.getSubtaskCount()
@@ -746,8 +943,22 @@ test.describe('Task Editing', () => {
         const taskExists = await taskCard.isVisible({ timeout: 5000 }).catch(() => false)
         
         if (taskExists) {
-          await taskCard.click()
-          await taskSidebar.waitForSidebar()
+          await taskCard.click({ force: true })
+          await page.waitForTimeout(2000) // Wait for sidebar animation
+          
+          // Wait for sidebar to open
+          await Promise.race([
+            taskSidebar.waitForSidebar(),
+            page.locator('.p-sidebar').waitFor({ state: 'visible', timeout: 15000 }),
+            page.locator('[role="complementary"]').waitFor({ state: 'visible', timeout: 15000 }),
+            page.waitForTimeout(5000)
+          ])
+          
+          // Additional wait for sidebar to fully render
+          await page.waitForTimeout(1000)
+          
+          // Verify sidebar is visible
+          expect(await taskSidebar.isVisible()).toBe(true)
           
           // Delete task
           await taskSidebar.deleteTask()
@@ -782,12 +993,56 @@ test.describe('Task Editing', () => {
       
       if (taskExists) {
         const taskTitle = await taskCard.textContent().catch(() => '')
-        await taskCard.click()
-        await taskSidebar.waitForSidebar()
+        await taskCard.click({ force: true })
+        await page.waitForTimeout(2000) // Wait for sidebar animation
         
-        // Click delete button
-        await taskSidebar.deleteButton.waitFor({ state: 'visible', timeout: 5000 })
-        await taskSidebar.deleteButton.click()
+        // Wait for sidebar to open
+        await Promise.race([
+          taskSidebar.waitForSidebar(),
+          page.locator('.p-sidebar').waitFor({ state: 'visible', timeout: 15000 }),
+          page.locator('[role="complementary"]').waitFor({ state: 'visible', timeout: 15000 }),
+          page.waitForTimeout(5000)
+        ])
+        
+        // Additional wait for sidebar to fully render
+        await page.waitForTimeout(1000)
+        
+        // Verify sidebar is visible
+        expect(await taskSidebar.isVisible()).toBe(true)
+        
+        // Click delete button - try multiple selectors
+        const deleteButtonSelectors = [
+          taskSidebar.deleteButton,
+          page.locator('button[aria-label*="delete"], button').filter({ has: page.locator('i.pi-trash') }),
+          page.locator('button').filter({ hasText: /удалить|delete/i }),
+          page.locator('.delete-button, [class*="delete"]')
+        ]
+        
+        let deleteButtonFound = false
+        for (const selector of deleteButtonSelectors) {
+          try {
+            await selector.first().waitFor({ state: 'visible', timeout: 10000 })
+            await selector.first().click()
+            deleteButtonFound = true
+            break
+          } catch {
+            continue
+          }
+        }
+        
+        if (!deleteButtonFound) {
+          // Last resort: try to find any button with trash icon
+          const trashButtons = page.locator('button').filter({ has: page.locator('i.pi-trash') })
+          const count = await trashButtons.count()
+          if (count > 0) {
+            await trashButtons.first().click()
+            deleteButtonFound = true
+          }
+        }
+        
+        if (!deleteButtonFound) {
+          throw new Error('Delete button not found in sidebar')
+        }
         await page.waitForTimeout(500)
         
         // Cancel deletion

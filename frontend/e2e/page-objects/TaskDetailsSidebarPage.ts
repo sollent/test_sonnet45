@@ -102,18 +102,19 @@ export class TaskDetailsSidebarPage {
    * Wait for sidebar to be visible
    */
   async waitForSidebar(): Promise<void> {
-    // Try multiple selectors for sidebar
+    // Try multiple selectors for sidebar with increased timeout
     const sidebarSelectors = [
       this.page.locator('.p-sidebar'),
       this.page.locator('[role="complementary"]'),
       this.page.locator('.p-sidebar-content'),
-      this.page.locator('.drawer-header')
+      this.page.locator('.drawer-header'),
+      this.page.locator('[class*="sidebar"]')
     ]
     
     let sidebarFound = false
     for (const selector of sidebarSelectors) {
       try {
-        await selector.first().waitFor({ state: 'visible', timeout: 3000 })
+        await selector.first().waitFor({ state: 'visible', timeout: 5000 })
         sidebarFound = true
         break
       } catch {
@@ -122,16 +123,28 @@ export class TaskDetailsSidebarPage {
     }
     
     if (!sidebarFound) {
-      // Wait a bit more and try again
-      await this.page.waitForTimeout(1000)
-      await this.sidebar.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {
+      // Wait a bit more and try again with longer timeout
+      await this.page.waitForTimeout(2000)
+      
+      // Try the main sidebar selector with longer timeout
+      try {
+        await this.sidebar.waitFor({ state: 'visible', timeout: 10000 })
+        sidebarFound = true
+      } catch {
         // If still not found, check if any sidebar-like element exists
-        const anySidebar = this.page.locator('.p-sidebar, [role="complementary"]')
-        anySidebar.first().waitFor({ state: 'visible', timeout: 3000 }).catch(() => {})
-      })
+        const anySidebar = this.page.locator('.p-sidebar, [role="complementary"], [class*="sidebar"]')
+        try {
+          await anySidebar.first().waitFor({ state: 'visible', timeout: 5000 })
+          sidebarFound = true
+        } catch {
+          // Last resort: wait a bit more and check visibility
+          await this.page.waitForTimeout(2000)
+        }
+      }
     }
     
-    await this.page.waitForTimeout(500)
+    // Additional wait for sidebar animation to complete
+    await this.page.waitForTimeout(1000)
   }
 
   /**
@@ -203,9 +216,75 @@ export class TaskDetailsSidebarPage {
    * Enter edit mode
    */
   async enterEditMode(): Promise<void> {
-    await this.editButton.waitFor({ state: 'visible', timeout: 5000 })
-    await this.editButton.click()
+    // First, ensure sidebar is visible
+    await this.waitForSidebar()
     await this.page.waitForTimeout(500)
+    
+    // Try multiple selectors for edit button with increased timeout
+    const editButtonSelectors = [
+      this.editButton,
+      this.page.locator('button[aria-label*="edit"], button').filter({ has: this.page.locator('i.pi-pencil') }),
+      this.page.locator('button').filter({ hasText: /редактировать|edit/i }),
+      this.page.locator('.edit-button, [class*="edit"]'),
+      this.page.locator('button[aria-label*="edit"]'),
+      this.page.locator('button').filter({ has: this.page.locator('[class*="pencil"], [class*="edit"]') })
+    ]
+    
+    let buttonFound = false
+    for (const selector of editButtonSelectors) {
+      try {
+        const button = selector.first()
+        await button.waitFor({ state: 'visible', timeout: 10000 })
+        await button.scrollIntoViewIfNeeded()
+        await button.click({ force: true })
+        buttonFound = true
+        await this.page.waitForTimeout(500)
+        break
+      } catch {
+        continue
+      }
+    }
+    
+    if (!buttonFound) {
+      // Last resort: try to find any button with pencil icon anywhere in sidebar
+      const sidebar = this.sidebar
+      const pencilButtons = sidebar.locator('button').filter({ has: this.page.locator('i.pi-pencil') })
+      const count = await pencilButtons.count()
+      if (count > 0) {
+        await pencilButtons.first().scrollIntoViewIfNeeded()
+        await pencilButtons.first().click({ force: true })
+        buttonFound = true
+        await this.page.waitForTimeout(500)
+      }
+    }
+    
+    if (!buttonFound) {
+      // Even more last resort: try clicking on any button in sidebar that might be edit
+      const allButtons = this.sidebar.locator('button')
+      const buttonCount = await allButtons.count()
+      for (let i = 0; i < Math.min(buttonCount, 5); i++) {
+        try {
+          const btn = allButtons.nth(i)
+          const ariaLabel = await btn.getAttribute('aria-label').catch(() => '')
+          const hasPencil = await btn.locator('i.pi-pencil').count() > 0
+          if (ariaLabel?.toLowerCase().includes('edit') || hasPencil) {
+            await btn.scrollIntoViewIfNeeded()
+            await btn.click({ force: true })
+            buttonFound = true
+            await this.page.waitForTimeout(500)
+            break
+          }
+        } catch {
+          continue
+        }
+      }
+    }
+    
+    if (!buttonFound) {
+      throw new Error('Edit button not found in sidebar')
+    }
+    
+    await this.page.waitForTimeout(1000) // Wait for edit mode to activate
   }
 
   /**
