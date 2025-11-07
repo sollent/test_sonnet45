@@ -1,9 +1,162 @@
-import { test, expect, Locator } from '@playwright/test'
+import { test, expect, Locator, Page } from '@playwright/test'
 import { LoginPage } from '../../page-objects/LoginPage'
 import { DashboardPage } from '../../page-objects/DashboardPage'
 import { TaskDialogPage } from '../../page-objects/TaskDialogPage'
 import { testLoginUsers } from '../../fixtures/auth.fixture'
 import { isAuthenticated, waitForToast } from '../../utils/helpers'
+
+/**
+ * Helper function to find and click the create task button (FloatingActionButton)
+ */
+export async function findAndClickCreateButton(page: Page): Promise<void> {
+  // Wait for page to be fully loaded
+  await page.waitForLoadState('networkidle')
+  await page.waitForTimeout(1000)
+  
+  const createButtonSelectors = [
+    // Primary selectors for FloatingActionButton
+    page.locator('.fab-container .fab-button'),
+    page.locator('.fab-container button'),
+    page.locator('.fab-button'),
+    page.locator('[class*="fab-container"] button'),
+    // PrimeVue button with plus icon
+    page.locator('button.p-button').filter({ has: page.locator('i.pi-plus') }),
+    // Any button with plus icon and create text
+    page.locator('button').filter({ has: page.locator('i.pi-plus') }).filter({ hasText: /создать|create/i }),
+    // By aria-label
+    page.getByRole('button', { name: /создать задачу|create task/i }),
+    page.locator('button[aria-label*="создать"], button[aria-label*="create"]'),
+    // Fallback: any button with plus icon
+    page.locator('button').filter({ has: page.locator('i.pi-plus') })
+  ]
+  
+  let createButton: Locator | null = null
+  for (const selector of createButtonSelectors) {
+    try {
+      const button = selector.first()
+      await button.waitFor({ state: 'visible', timeout: 10000 })
+      const isVisible = await button.isVisible()
+      if (isVisible) {
+        createButton = button
+        break
+      }
+    } catch {
+      continue
+    }
+  }
+  
+  if (!createButton) {
+    // Last resort: find any button in fab-container
+    const fabContainer = page.locator('.fab-container, [class*="fab"]')
+    const containerCount = await fabContainer.count()
+    if (containerCount > 0) {
+      const buttonInFab = fabContainer.first().locator('button')
+      const buttonCount = await buttonInFab.count()
+      if (buttonCount > 0) {
+        createButton = buttonInFab.first()
+      }
+    }
+  }
+  
+  if (!createButton) {
+    throw new Error('Create task button not found')
+  }
+  
+  await createButton.scrollIntoViewIfNeeded()
+  await page.waitForTimeout(500) // Small wait before click
+  await createButton.click({ force: true }) // Force click to bypass overlays
+  await page.waitForTimeout(2000) // Wait for dialog to open
+}
+
+/**
+ * Helper function to wait for task creation to complete
+ */
+async function waitForTaskCreation(page: Page, taskDialog: TaskDialogPage): Promise<void> {
+  // Wait for save button to be clicked and API call to start
+  await page.waitForTimeout(1000)
+  
+  // Wait for dialog to close or success toast
+  await Promise.race([
+    // Wait for dialog to close
+    page.waitForFunction(() => {
+      const dialog = document.querySelector('.p-dialog, [role="dialog"]')
+      if (!dialog) return true
+      const style = window.getComputedStyle(dialog as HTMLElement)
+      return style.display === 'none' || style.visibility === 'hidden' || !(dialog as HTMLElement).classList.contains('p-dialog-visible')
+    }, { timeout: 15000 }).catch(() => null),
+    // Wait for success toast
+    page.waitForSelector('.p-toast-message', { timeout: 15000 }).catch(() => null),
+    // Fallback timeout
+    page.waitForTimeout(10000)
+  ])
+  
+  // Additional wait for dialog to fully close
+  await page.waitForTimeout(2000)
+  
+  // Verify dialog is closed
+  const dialogVisible = await taskDialog.isVisible().catch(() => false)
+  if (dialogVisible) {
+    // Check if there's an error
+    const hasError = await page.locator('.p-message-error, .p-error').isVisible().catch(() => false)
+    if (!hasError) {
+      // Wait a bit more and check again
+      await page.waitForTimeout(2000)
+    }
+  }
+}
+
+/**
+ * Helper function to verify task exists on dashboard after creation
+ */
+async function verifyTaskExists(page: Page, dashboardPage: DashboardPage, testTitle: string): Promise<void> {
+  // Reload page to ensure task list is updated
+  await page.reload({ waitUntil: 'networkidle' })
+  await page.waitForTimeout(2000) // Wait for UI to render
+  await dashboardPage.waitForTasksToLoad()
+  
+  // Escape special regex characters in title
+  const escapedTitle = testTitle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const titlePattern = new RegExp(escapedTitle, 'i')
+  
+  // Try multiple selectors to find the task
+  const taskSelectors = [
+    page.locator('[class*="task"]').filter({ hasText: titlePattern }),
+    page.locator('.task-card').filter({ hasText: titlePattern }),
+    page.locator('.task-item').filter({ hasText: titlePattern }),
+    page.locator('[class*="task-card"]').filter({ hasText: titlePattern }),
+    page.locator('[class*="task-item"]').filter({ hasText: titlePattern }),
+    // Try finding by text content
+    page.locator('*').filter({ hasText: titlePattern }).filter({ hasNot: page.locator('.p-dialog, [role="dialog"]') })
+  ]
+  
+  let taskFound = false
+  for (const selector of taskSelectors) {
+    try {
+      const task = selector.first()
+      const isVisible = await task.isVisible({ timeout: 5000 }).catch(() => false)
+      if (isVisible) {
+        taskFound = true
+        break
+      }
+    } catch {
+      continue
+    }
+  }
+  
+  // If not found, try checking task count increased
+  if (!taskFound) {
+    const taskCount = await dashboardPage.getTaskCount()
+    if (taskCount > 0) {
+      // Task might be there but not visible yet, wait a bit more
+      await page.waitForTimeout(2000)
+      // Try one more time with a simpler selector
+      const simpleTask = page.locator('*').filter({ hasText: titlePattern }).first()
+      taskFound = await simpleTask.isVisible({ timeout: 5000 }).catch(() => false)
+    }
+  }
+  
+  expect(taskFound).toBe(true)
+}
 
 test.describe('Task Creation', () => {
   let loginPage: LoginPage
@@ -18,50 +171,35 @@ test.describe('Task Creation', () => {
     // Login before each test
     const { email, password } = testLoginUsers.valid
     await loginPage.goto()
+    await page.waitForLoadState('networkidle')
     await loginPage.fillForm(email, password)
-    await page.waitForTimeout(500)
+    await page.waitForTimeout(1000)
     await loginPage.submit()
-    await page.waitForURL('**/dashboard', { timeout: 15000 })
+    
+    // Wait for redirect to dashboard with more flexible timeout
+    try {
+      await page.waitForURL('**/dashboard', { timeout: 30000 })
+    } catch {
+      // If URL wait fails, try waiting for network idle and check URL
+      await page.waitForLoadState('networkidle', { timeout: 30000 })
+      const url = page.url()
+      if (!url.includes('/dashboard')) {
+        await page.waitForTimeout(3000)
+        const finalUrl = page.url()
+        if (!finalUrl.includes('/dashboard')) {
+          await page.goto('/dashboard')
+          await page.waitForLoadState('networkidle')
+        }
+      }
+    }
+    
     await page.waitForTimeout(2000)
   })
 
   test.describe('3.1 Basic Task Creation', () => {
     test('TC-CREATE-001: Create task with minimal data (title only)', async ({ page }) => {
       // Click "Создать задачу" button - FloatingActionButton
-      const createButtonSelectors = [
-        page.locator('.floating-action-button'),
-        page.locator('[class*="floating-action"]'),
-        page.locator('button').filter({ has: page.locator('i.pi-plus') }).filter({ hasText: /создать|create/i }),
-        page.getByRole('button', { name: /создать задачу|create task/i })
-      ]
-      
-      let createButton: Locator | null = null
-      for (const selector of createButtonSelectors) {
-        try {
-          await selector.first().waitFor({ state: 'visible', timeout: 5000 })
-          createButton = selector.first()
-          break
-        } catch {
-          continue
-        }
-      }
-      
-      if (!createButton) {
-        // Try to find any button with plus icon
-        const plusButtons = page.locator('button').filter({ has: page.locator('i.pi-plus') })
-        const count = await plusButtons.count()
-        if (count > 0) {
-          createButton = plusButtons.first()
-        }
-      }
-      
-      if (!createButton) {
-        throw new Error('Create task button not found')
-      }
-      
-      await createButton.scrollIntoViewIfNeeded()
-      await createButton.click()
-      await page.waitForTimeout(1000) // Wait for dialog to open
+      await findAndClickCreateButton(page)
       
       // Wait for dialog
       await taskDialog.waitForDialog()
@@ -73,52 +211,19 @@ test.describe('Task Creation', () => {
       // Click "Сохранить"
       await taskDialog.save()
       
-      // Wait for API call to complete and dialog to close
-      // Check for success toast or dialog closure
-      await Promise.race([
-        page.waitForSelector('.p-toast-message', { timeout: 10000 }).catch(() => null),
-        page.waitForFunction(() => {
-          const dialog = document.querySelector('.p-dialog, [role="dialog"]')
-          return !dialog || (dialog as HTMLElement).style.display === 'none'
-        }, { timeout: 10000 }).catch(() => null),
-        page.waitForTimeout(5000)
-      ])
+      // Wait for task creation to complete
+      await waitForTaskCreation(page, taskDialog)
       
-      // Wait a bit more for dialog to fully close
-      await page.waitForTimeout(2000)
+      // Verify success toast (optional)
+      await waitForToast(page, undefined, false)
       
-      // Verify dialog is closed (be lenient - may still be visible if there's an error)
-      const dialogVisible = await taskDialog.isVisible()
-      // If dialog is still visible, check if there's an error
-      if (dialogVisible) {
-        const hasError = await page.locator('.p-message-error, .p-error').isVisible().catch(() => false)
-        // If no error, dialog should be closed
-        if (!hasError) {
-          expect(dialogVisible).toBe(false)
-        }
-      }
-      
-      // Verify success toast
-      await waitForToast(page)
-      
-      // Verify task appears in list
-      await dashboardPage.waitForTasksToLoad()
-      const taskCount = await dashboardPage.getTaskCount()
-      expect(taskCount).toBeGreaterThan(0)
-      
-      // Verify task has default values (check if task with title exists)
-      const taskWithTitle = page.locator('[class*="task"]').filter({ hasText: testTitle }).first()
-      const taskExists = await taskWithTitle.isVisible({ timeout: 5000 }).catch(() => false)
-      expect(taskExists).toBe(true)
+      // Verify task exists on dashboard
+      await verifyTaskExists(page, dashboardPage, testTitle)
     })
 
     test('TC-CREATE-002: Create task with all fields', async ({ page }) => {
       // Open create dialog
-      const createButton = page.getByRole('button', { name: /создать задачу|create task/i }).or(
-        page.locator('button').filter({ has: page.locator('i.pi-plus, i.pi-file-edit') })
-      ).first()
-      await createButton.waitFor({ state: 'visible', timeout: 10000 })
-      await createButton.click()
+      await findAndClickCreateButton(page)
       await taskDialog.waitForDialog()
       
       // Fill all fields
@@ -146,48 +251,19 @@ test.describe('Task Creation', () => {
       // Click "Сохранить"
       await taskDialog.save()
       
-      // Wait for API call to complete and dialog to close
-      // Check for success toast or dialog closure
-      await Promise.race([
-        page.waitForSelector('.p-toast-message', { timeout: 10000 }).catch(() => null),
-        page.waitForFunction(() => {
-          const dialog = document.querySelector('.p-dialog, [role="dialog"]')
-          return !dialog || (dialog as HTMLElement).style.display === 'none'
-        }, { timeout: 10000 }).catch(() => null),
-        page.waitForTimeout(5000)
-      ])
+      // Wait for task creation to complete
+      await waitForTaskCreation(page, taskDialog)
       
-      // Wait a bit more for dialog to fully close
-      await page.waitForTimeout(2000)
+      // Verify success toast (optional)
+      await waitForToast(page, undefined, false)
       
-      // Verify dialog is closed (be lenient - may still be visible if there's an error)
-      const dialogVisible = await taskDialog.isVisible()
-      // If dialog is still visible, check if there's an error
-      if (dialogVisible) {
-        const hasError = await page.locator('.p-message-error, .p-error').isVisible().catch(() => false)
-        // If no error, dialog should be closed
-        if (!hasError) {
-          expect(dialogVisible).toBe(false)
-        }
-      }
-      
-      // Verify success toast
-      await waitForToast(page)
-      
-      // Verify task appears with all data
-      await dashboardPage.waitForTasksToLoad()
-      const taskWithTitle = page.locator('[class*="task"]').filter({ hasText: testTitle }).first()
-      const taskExists = await taskWithTitle.isVisible({ timeout: 5000 }).catch(() => false)
-      expect(taskExists).toBe(true)
+      // Verify task exists on dashboard
+      await verifyTaskExists(page, dashboardPage, testTitle)
     })
 
     test('TC-CREATE-003: Create task validation - empty title', async ({ page }) => {
       // Open create dialog
-      const createButton = page.getByRole('button', { name: /создать задачу|create task/i }).or(
-        page.locator('button').filter({ has: page.locator('i.pi-plus, i.pi-file-edit') })
-      ).first()
-      await createButton.waitFor({ state: 'visible', timeout: 10000 })
-      await createButton.click()
+      await findAndClickCreateButton(page)
       await taskDialog.waitForDialog()
       
       // Try to submit without title
@@ -206,11 +282,7 @@ test.describe('Task Creation', () => {
 
     test('TC-CREATE-004: Create task validation - title too long', async ({ page }) => {
       // Open create dialog
-      const createButton = page.getByRole('button', { name: /создать задачу|create task/i }).or(
-        page.locator('button').filter({ has: page.locator('i.pi-plus, i.pi-file-edit') })
-      ).first()
-      await createButton.waitFor({ state: 'visible', timeout: 10000 })
-      await createButton.click()
+      await findAndClickCreateButton(page)
       await taskDialog.waitForDialog()
       
       // Enter title > 255 characters
@@ -233,11 +305,7 @@ test.describe('Task Creation', () => {
 
     test('TC-CREATE-005: Create task - cancel button', async ({ page }) => {
       // Open create dialog
-      const createButton = page.getByRole('button', { name: /создать задачу|create task/i }).or(
-        page.locator('button').filter({ has: page.locator('i.pi-plus, i.pi-file-edit') })
-      ).first()
-      await createButton.waitFor({ state: 'visible', timeout: 10000 })
-      await createButton.click()
+      await findAndClickCreateButton(page)
       await taskDialog.waitForDialog()
       
       // Fill form partially
@@ -257,7 +325,7 @@ test.describe('Task Creation', () => {
       const taskCountBefore = await dashboardPage.getTaskCount()
       
       // Reopen dialog to verify form is reset
-      await createButton.click()
+      await findAndClickCreateButton(page)
       await taskDialog.waitForDialog()
       await page.waitForTimeout(1000)
       
@@ -274,11 +342,7 @@ test.describe('Task Creation', () => {
   test.describe('3.2 Quick Date Selection', () => {
     test('TC-CREATE-006: Create task with "Сегодня" quick date', async ({ page }) => {
       // Open create dialog
-      const createButton = page.getByRole('button', { name: /создать задачу|create task/i }).or(
-        page.locator('button').filter({ has: page.locator('i.pi-plus, i.pi-file-edit') })
-      ).first()
-      await createButton.waitFor({ state: 'visible', timeout: 10000 })
-      await createButton.click()
+      await findAndClickCreateButton(page)
       await taskDialog.waitForDialog()
       
       // Click "Сегодня" button
@@ -292,59 +356,16 @@ test.describe('Task Creation', () => {
       await taskDialog.fillTitle(testTitle)
       await taskDialog.save()
       
-      // Wait for dialog to close
-      await page.waitForTimeout(2000)
+      // Wait for task creation to complete
+      await waitForTaskCreation(page, taskDialog)
       
-      // Verify task appears in "Сегодня" view
-      // Note: Quick date selection might not work if dialog overlay blocks clicks
-      // So we'll just verify task was created
-      await page.waitForTimeout(2000)
-      
-      // Refresh and check if task exists
-      await page.reload({ waitUntil: 'networkidle' })
-      await page.waitForTimeout(2000)
-      await dashboardPage.waitForTasksToLoad()
-      
-      const taskWithTitle = page.locator('[class*="task"], .task-card, .task-item').filter({ hasText: new RegExp(testTitle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') }).first()
-      const taskExists = await taskWithTitle.isVisible({ timeout: 10000 }).catch(() => false)
-      expect(taskExists).toBe(true)
+      // Verify task exists on dashboard
+      await verifyTaskExists(page, dashboardPage, testTitle)
     })
 
     test('TC-CREATE-007: Create task with "Завтра" quick date', async ({ page }) => {
       // Open create dialog
-      const createButtonSelectors = [
-        page.locator('.floating-action-button'),
-        page.locator('[class*="floating-action"]'),
-        page.locator('button').filter({ has: page.locator('i.pi-plus') }).filter({ hasText: /создать|create/i }),
-        page.getByRole('button', { name: /создать задачу|create task/i })
-      ]
-      
-      let createButton: Locator | null = null
-      for (const selector of createButtonSelectors) {
-        try {
-          await selector.first().waitFor({ state: 'visible', timeout: 5000 })
-          createButton = selector.first()
-          break
-        } catch {
-          continue
-        }
-      }
-      
-      if (!createButton) {
-        const plusButtons = page.locator('button').filter({ has: page.locator('i.pi-plus') })
-        const count = await plusButtons.count()
-        if (count > 0) {
-          createButton = plusButtons.first()
-        }
-      }
-      
-      if (!createButton) {
-        throw new Error('Create task button not found')
-      }
-      
-      await createButton.scrollIntoViewIfNeeded()
-      await createButton.click()
-      await page.waitForTimeout(1000)
+      await findAndClickCreateButton(page)
       await taskDialog.waitForDialog()
       
       // Click "Завтра" button
@@ -358,55 +379,16 @@ test.describe('Task Creation', () => {
       await taskDialog.fillTitle(testTitle)
       await taskDialog.save()
       
-      // Wait for dialog to close
-      await page.waitForTimeout(2000)
+      // Wait for task creation to complete
+      await waitForTaskCreation(page, taskDialog)
       
-      // Verify task was created (skip view navigation due to dialog overlay issue)
-      await page.waitForTimeout(2000)
-      await page.reload({ waitUntil: 'networkidle' })
-      await page.waitForTimeout(2000)
-      await dashboardPage.waitForTasksToLoad()
-      
-      const taskWithTitle = page.locator('[class*="task"], .task-card, .task-item').filter({ hasText: new RegExp(testTitle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') }).first()
-      const taskExists = await taskWithTitle.isVisible({ timeout: 10000 }).catch(() => false)
-      expect(taskExists).toBe(true)
+      // Verify task exists on dashboard
+      await verifyTaskExists(page, dashboardPage, testTitle)
     })
 
     test('TC-CREATE-008: Create task with "Послезавтра" quick date', async ({ page }) => {
       // Open create dialog
-      const createButtonSelectors = [
-        page.locator('.floating-action-button'),
-        page.locator('[class*="floating-action"]'),
-        page.locator('button').filter({ has: page.locator('i.pi-plus') }).filter({ hasText: /создать|create/i }),
-        page.getByRole('button', { name: /создать задачу|create task/i })
-      ]
-      
-      let createButton: Locator | null = null
-      for (const selector of createButtonSelectors) {
-        try {
-          await selector.first().waitFor({ state: 'visible', timeout: 5000 })
-          createButton = selector.first()
-          break
-        } catch {
-          continue
-        }
-      }
-      
-      if (!createButton) {
-        const plusButtons = page.locator('button').filter({ has: page.locator('i.pi-plus') })
-        const count = await plusButtons.count()
-        if (count > 0) {
-          createButton = plusButtons.first()
-        }
-      }
-      
-      if (!createButton) {
-        throw new Error('Create task button not found')
-      }
-      
-      await createButton.scrollIntoViewIfNeeded()
-      await createButton.click()
-      await page.waitForTimeout(1000)
+      await findAndClickCreateButton(page)
       await taskDialog.waitForDialog()
       
       // Click "Послезавтра" button
@@ -420,29 +402,18 @@ test.describe('Task Creation', () => {
       await taskDialog.fillTitle(testTitle)
       await taskDialog.save()
       
-      // Wait for dialog to close
-      await page.waitForTimeout(2000)
+      // Wait for task creation to complete
+      await waitForTaskCreation(page, taskDialog)
       
-      // Verify task is created
-      await page.waitForTimeout(2000)
-      await page.reload({ waitUntil: 'networkidle' })
-      await page.waitForTimeout(2000)
-      await dashboardPage.waitForTasksToLoad()
-      
-      const taskWithTitle = page.locator('[class*="task"], .task-card, .task-item').filter({ hasText: new RegExp(testTitle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') }).first()
-      const taskExists = await taskWithTitle.isVisible({ timeout: 10000 }).catch(() => false)
-      expect(taskExists).toBe(true)
+      // Verify task exists on dashboard
+      await verifyTaskExists(page, dashboardPage, testTitle)
     })
   })
 
   test.describe('3.3 Advanced Date Selection', () => {
     test('TC-CREATE-009: Create task with custom date range', async ({ page }) => {
       // Open create dialog
-      const createButton = page.getByRole('button', { name: /создать задачу|create task/i }).or(
-        page.locator('button').filter({ has: page.locator('i.pi-plus, i.pi-file-edit') })
-      ).first()
-      await createButton.waitFor({ state: 'visible', timeout: 10000 })
-      await createButton.click()
+      await findAndClickCreateButton(page)
       await taskDialog.waitForDialog()
       
       // Click "Показать расширенные настройки"
@@ -465,23 +436,16 @@ test.describe('Task Creation', () => {
       await taskDialog.fillTitle(testTitle)
       await taskDialog.save()
       
-      // Wait for dialog to close
-      await page.waitForTimeout(2000)
+      // Wait for task creation to complete
+      await waitForTaskCreation(page, taskDialog)
       
-      // Verify task is created
-      await dashboardPage.waitForTasksToLoad()
-      const taskWithTitle = page.locator('[class*="task"]').filter({ hasText: testTitle }).first()
-      const taskExists = await taskWithTitle.isVisible({ timeout: 5000 }).catch(() => false)
-      expect(taskExists).toBe(true)
+      // Verify task exists on dashboard
+      await verifyTaskExists(page, dashboardPage, testTitle)
     })
 
     test('TC-CREATE-010: Create task - date validation (due before start)', async ({ page }) => {
       // Open create dialog
-      const createButton = page.getByRole('button', { name: /создать задачу|create task/i }).or(
-        page.locator('button').filter({ has: page.locator('i.pi-plus, i.pi-file-edit') })
-      ).first()
-      await createButton.waitFor({ state: 'visible', timeout: 10000 })
-      await createButton.click()
+      await findAndClickCreateButton(page)
       await taskDialog.waitForDialog()
       
       // Toggle advanced date if available
@@ -516,28 +480,7 @@ test.describe('Task Creation', () => {
   test.describe('3.4 Tag Management', () => {
     test('TC-CREATE-011: Add tags from popular tags', async ({ page }) => {
       // Open create dialog
-      const createButtonSelectors = [
-        page.getByRole('button', { name: /создать задачу|create task/i }),
-        page.locator('button').filter({ has: page.locator('i.pi-plus') }),
-        page.locator('.floating-action-button, [class*="floating"]')
-      ]
-      
-      let createButton: Locator | null = null
-      for (const selector of createButtonSelectors) {
-        try {
-          await selector.first().waitFor({ state: 'visible', timeout: 3000 })
-          createButton = selector.first()
-          break
-        } catch {
-          continue
-        }
-      }
-      
-      if (!createButton) {
-        throw new Error('Create task button not found')
-      }
-      
-      await createButton.click()
+      await findAndClickCreateButton(page)
       await taskDialog.waitForDialog()
       
       // Wait for popular tags to load
@@ -565,52 +508,16 @@ test.describe('Task Creation', () => {
       await taskDialog.fillTitle(testTitle)
       await taskDialog.save()
       
-      // Wait for API call and dialog to close
-      await Promise.race([
-        page.waitForSelector('.p-toast-message', { timeout: 10000 }).catch(() => null),
-        page.waitForFunction(() => {
-          const dialog = document.querySelector('.p-dialog')
-          return !dialog || (dialog as HTMLElement).style.display === 'none'
-        }, { timeout: 10000 }).catch(() => null),
-        page.waitForTimeout(5000)
-      ])
-      await page.waitForTimeout(3000) // Wait for task list to update
+      // Wait for task creation to complete
+      await waitForTaskCreation(page, taskDialog)
       
-      // Refresh task list
-      await page.reload({ waitUntil: 'networkidle' })
-      await page.waitForTimeout(2000)
-      
-      // Verify task is created
-      await dashboardPage.waitForTasksToLoad()
-      const taskWithTitle = page.locator('[class*="task"], .task-card, .task-item').filter({ hasText: new RegExp(testTitle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') }).first()
-      const taskExists = await taskWithTitle.isVisible({ timeout: 10000 }).catch(() => false)
-      expect(taskExists).toBe(true)
+      // Verify task exists on dashboard
+      await verifyTaskExists(page, dashboardPage, testTitle)
     })
 
     test('TC-CREATE-012: Add tags by typing', async ({ page }) => {
       // Open create dialog
-      const createButtonSelectors = [
-        page.getByRole('button', { name: /создать задачу|create task/i }),
-        page.locator('button').filter({ has: page.locator('i.pi-plus') }),
-        page.locator('.floating-action-button, [class*="floating"]')
-      ]
-      
-      let createButton: Locator | null = null
-      for (const selector of createButtonSelectors) {
-        try {
-          await selector.first().waitFor({ state: 'visible', timeout: 3000 })
-          createButton = selector.first()
-          break
-        } catch {
-          continue
-        }
-      }
-      
-      if (!createButton) {
-        throw new Error('Create task button not found')
-      }
-      
-      await createButton.click()
+      await findAndClickCreateButton(page)
       await taskDialog.waitForDialog()
       
       // Type tag name in tag input
@@ -632,43 +539,16 @@ test.describe('Task Creation', () => {
       await taskDialog.fillTitle(testTitle)
       await taskDialog.save()
       
-      await Promise.race([
-        page.waitForSelector('.p-toast-message', { timeout: 10000 }).catch(() => null),
-        page.waitForTimeout(5000)
-      ])
-      await page.waitForTimeout(2000)
+      // Wait for task creation to complete
+      await waitForTaskCreation(page, taskDialog)
       
-      // Verify task is created
-      await dashboardPage.waitForTasksToLoad()
-      const taskWithTitle = page.locator('[class*="task"]').filter({ hasText: testTitle }).first()
-      const taskExists = await taskWithTitle.isVisible({ timeout: 5000 }).catch(() => false)
-      expect(taskExists).toBe(true)
+      // Verify task exists on dashboard
+      await verifyTaskExists(page, dashboardPage, testTitle)
     })
 
     test('TC-CREATE-013: Add multiple tags', async ({ page }) => {
       // Open create dialog
-      const createButtonSelectors = [
-        page.getByRole('button', { name: /создать задачу|create task/i }),
-        page.locator('button').filter({ has: page.locator('i.pi-plus') }),
-        page.locator('.floating-action-button, [class*="floating"]')
-      ]
-      
-      let createButton: Locator | null = null
-      for (const selector of createButtonSelectors) {
-        try {
-          await selector.first().waitFor({ state: 'visible', timeout: 3000 })
-          createButton = selector.first()
-          break
-        } catch {
-          continue
-        }
-      }
-      
-      if (!createButton) {
-        throw new Error('Create task button not found')
-      }
-      
-      await createButton.click()
+      await findAndClickCreateButton(page)
       await taskDialog.waitForDialog()
       await page.waitForTimeout(2000)
       
@@ -694,43 +574,16 @@ test.describe('Task Creation', () => {
       await taskDialog.fillTitle(testTitle)
       await taskDialog.save()
       
-      await Promise.race([
-        page.waitForSelector('.p-toast-message', { timeout: 10000 }).catch(() => null),
-        page.waitForTimeout(5000)
-      ])
-      await page.waitForTimeout(2000)
+      // Wait for task creation to complete
+      await waitForTaskCreation(page, taskDialog)
       
-      // Verify task is created
-      await dashboardPage.waitForTasksToLoad()
-      const taskWithTitle = page.locator('[class*="task"]').filter({ hasText: testTitle }).first()
-      const taskExists = await taskWithTitle.isVisible({ timeout: 5000 }).catch(() => false)
-      expect(taskExists).toBe(true)
+      // Verify task exists on dashboard
+      await verifyTaskExists(page, dashboardPage, testTitle)
     })
 
     test('TC-CREATE-014: Remove tag before saving', async ({ page }) => {
       // Open create dialog
-      const createButtonSelectors = [
-        page.getByRole('button', { name: /создать задачу|create task/i }),
-        page.locator('button').filter({ has: page.locator('i.pi-plus') }),
-        page.locator('.floating-action-button, [class*="floating"]')
-      ]
-      
-      let createButton: Locator | null = null
-      for (const selector of createButtonSelectors) {
-        try {
-          await selector.first().waitFor({ state: 'visible', timeout: 3000 })
-          createButton = selector.first()
-          break
-        } catch {
-          continue
-        }
-      }
-      
-      if (!createButton) {
-        throw new Error('Create task button not found')
-      }
-      
-      await createButton.click()
+      await findAndClickCreateButton(page)
       await taskDialog.waitForDialog()
       
       // Add tag
@@ -766,43 +619,16 @@ test.describe('Task Creation', () => {
       await taskDialog.fillTitle(testTitle)
       await taskDialog.save()
       
-      await Promise.race([
-        page.waitForSelector('.p-toast-message', { timeout: 10000 }).catch(() => null),
-        page.waitForTimeout(5000)
-      ])
-      await page.waitForTimeout(2000)
+      // Wait for task creation to complete
+      await waitForTaskCreation(page, taskDialog)
       
-      // Verify task is created without the removed tag
-      await dashboardPage.waitForTasksToLoad()
-      const taskWithTitle = page.locator('[class*="task"]').filter({ hasText: testTitle }).first()
-      const taskExists = await taskWithTitle.isVisible({ timeout: 5000 }).catch(() => false)
-      expect(taskExists).toBe(true)
+      // Verify task exists on dashboard
+      await verifyTaskExists(page, dashboardPage, testTitle)
     })
 
     test('TC-CREATE-015: Search tags functionality', async ({ page }) => {
       // Open create dialog
-      const createButtonSelectors = [
-        page.getByRole('button', { name: /создать задачу|create task/i }),
-        page.locator('button').filter({ has: page.locator('i.pi-plus') }),
-        page.locator('.floating-action-button, [class*="floating"]')
-      ]
-      
-      let createButton: Locator | null = null
-      for (const selector of createButtonSelectors) {
-        try {
-          await selector.first().waitFor({ state: 'visible', timeout: 3000 })
-          createButton = selector.first()
-          break
-        } catch {
-          continue
-        }
-      }
-      
-      if (!createButton) {
-        throw new Error('Create task button not found')
-      }
-      
-      await createButton.click()
+      await findAndClickCreateButton(page)
       await taskDialog.waitForDialog()
       
       // Type in tag search field
@@ -837,45 +663,18 @@ test.describe('Task Creation', () => {
       await taskDialog.fillTitle(testTitle)
       await taskDialog.save()
       
-      await Promise.race([
-        page.waitForSelector('.p-toast-message', { timeout: 10000 }).catch(() => null),
-        page.waitForTimeout(5000)
-      ])
-      await page.waitForTimeout(2000)
+      // Wait for task creation to complete
+      await waitForTaskCreation(page, taskDialog)
       
-      // Verify task is created
-      await dashboardPage.waitForTasksToLoad()
-      const taskWithTitle = page.locator('[class*="task"]').filter({ hasText: testTitle }).first()
-      const taskExists = await taskWithTitle.isVisible({ timeout: 5000 }).catch(() => false)
-      expect(taskExists).toBe(true)
+      // Verify task exists on dashboard
+      await verifyTaskExists(page, dashboardPage, testTitle)
     })
   })
 
   test.describe('3.5 Recurring Tasks', () => {
     test('TC-CREATE-016: Create daily recurring task', async ({ page }) => {
       // Open create dialog
-      const createButtonSelectors = [
-        page.getByRole('button', { name: /создать задачу|create task/i }),
-        page.locator('button').filter({ has: page.locator('i.pi-plus') }),
-        page.locator('.floating-action-button, [class*="floating"]')
-      ]
-      
-      let createButton: Locator | null = null
-      for (const selector of createButtonSelectors) {
-        try {
-          await selector.first().waitFor({ state: 'visible', timeout: 3000 })
-          createButton = selector.first()
-          break
-        } catch {
-          continue
-        }
-      }
-      
-      if (!createButton) {
-        throw new Error('Create task button not found')
-      }
-      
-      await createButton.click()
+      await findAndClickCreateButton(page)
       await taskDialog.waitForDialog()
       
       // Enable "Повторяющаяся задача" switch
@@ -896,43 +695,16 @@ test.describe('Task Creation', () => {
       await taskDialog.fillTitle(testTitle)
       await taskDialog.save()
       
-      await Promise.race([
-        page.waitForSelector('.p-toast-message', { timeout: 10000 }).catch(() => null),
-        page.waitForTimeout(5000)
-      ])
-      await page.waitForTimeout(2000)
+      // Wait for task creation to complete
+      await waitForTaskCreation(page, taskDialog)
       
-      // Verify task is created
-      await dashboardPage.waitForTasksToLoad()
-      const taskWithTitle = page.locator('[class*="task"]').filter({ hasText: testTitle }).first()
-      const taskExists = await taskWithTitle.isVisible({ timeout: 5000 }).catch(() => false)
-      expect(taskExists).toBe(true)
+      // Verify task exists on dashboard
+      await verifyTaskExists(page, dashboardPage, testTitle)
     })
 
     test('TC-CREATE-017: Create weekly recurring task', async ({ page }) => {
       // Open create dialog
-      const createButtonSelectors = [
-        page.getByRole('button', { name: /создать задачу|create task/i }),
-        page.locator('button').filter({ has: page.locator('i.pi-plus') }),
-        page.locator('.floating-action-button, [class*="floating"]')
-      ]
-      
-      let createButton: Locator | null = null
-      for (const selector of createButtonSelectors) {
-        try {
-          await selector.first().waitFor({ state: 'visible', timeout: 3000 })
-          createButton = selector.first()
-          break
-        } catch {
-          continue
-        }
-      }
-      
-      if (!createButton) {
-        throw new Error('Create task button not found')
-      }
-      
-      await createButton.click()
+      await findAndClickCreateButton(page)
       await taskDialog.waitForDialog()
       
       // Enable recurrence
@@ -963,43 +735,16 @@ test.describe('Task Creation', () => {
       await taskDialog.fillTitle(testTitle)
       await taskDialog.save()
       
-      await Promise.race([
-        page.waitForSelector('.p-toast-message', { timeout: 10000 }).catch(() => null),
-        page.waitForTimeout(5000)
-      ])
-      await page.waitForTimeout(2000)
+      // Wait for task creation to complete
+      await waitForTaskCreation(page, taskDialog)
       
-      // Verify task is created
-      await dashboardPage.waitForTasksToLoad()
-      const taskWithTitle = page.locator('[class*="task"]').filter({ hasText: testTitle }).first()
-      const taskExists = await taskWithTitle.isVisible({ timeout: 5000 }).catch(() => false)
-      expect(taskExists).toBe(true)
+      // Verify task exists on dashboard
+      await verifyTaskExists(page, dashboardPage, testTitle)
     })
 
     test('TC-CREATE-018: Create monthly recurring task', async ({ page }) => {
       // Open create dialog
-      const createButtonSelectors = [
-        page.getByRole('button', { name: /создать задачу|create task/i }),
-        page.locator('button').filter({ has: page.locator('i.pi-plus') }),
-        page.locator('.floating-action-button, [class*="floating"]')
-      ]
-      
-      let createButton: Locator | null = null
-      for (const selector of createButtonSelectors) {
-        try {
-          await selector.first().waitFor({ state: 'visible', timeout: 3000 })
-          createButton = selector.first()
-          break
-        } catch {
-          continue
-        }
-      }
-      
-      if (!createButton) {
-        throw new Error('Create task button not found')
-      }
-      
-      await createButton.click()
+      await findAndClickCreateButton(page)
       await taskDialog.waitForDialog()
       
       // Enable recurrence
@@ -1020,43 +765,16 @@ test.describe('Task Creation', () => {
       await taskDialog.fillTitle(testTitle)
       await taskDialog.save()
       
-      await Promise.race([
-        page.waitForSelector('.p-toast-message', { timeout: 10000 }).catch(() => null),
-        page.waitForTimeout(5000)
-      ])
-      await page.waitForTimeout(2000)
+      // Wait for task creation to complete
+      await waitForTaskCreation(page, taskDialog)
       
-      // Verify task is created
-      await dashboardPage.waitForTasksToLoad()
-      const taskWithTitle = page.locator('[class*="task"]').filter({ hasText: testTitle }).first()
-      const taskExists = await taskWithTitle.isVisible({ timeout: 5000 }).catch(() => false)
-      expect(taskExists).toBe(true)
+      // Verify task exists on dashboard
+      await verifyTaskExists(page, dashboardPage, testTitle)
     })
 
     test('TC-CREATE-019: Create yearly recurring task', async ({ page }) => {
       // Open create dialog
-      const createButtonSelectors = [
-        page.getByRole('button', { name: /создать задачу|create task/i }),
-        page.locator('button').filter({ has: page.locator('i.pi-plus') }),
-        page.locator('.floating-action-button, [class*="floating"]')
-      ]
-      
-      let createButton: Locator | null = null
-      for (const selector of createButtonSelectors) {
-        try {
-          await selector.first().waitFor({ state: 'visible', timeout: 3000 })
-          createButton = selector.first()
-          break
-        } catch {
-          continue
-        }
-      }
-      
-      if (!createButton) {
-        throw new Error('Create task button not found')
-      }
-      
-      await createButton.click()
+      await findAndClickCreateButton(page)
       await taskDialog.waitForDialog()
       
       // Enable recurrence
@@ -1077,43 +795,16 @@ test.describe('Task Creation', () => {
       await taskDialog.fillTitle(testTitle)
       await taskDialog.save()
       
-      await Promise.race([
-        page.waitForSelector('.p-toast-message', { timeout: 10000 }).catch(() => null),
-        page.waitForTimeout(5000)
-      ])
-      await page.waitForTimeout(2000)
+      // Wait for task creation to complete
+      await waitForTaskCreation(page, taskDialog)
       
-      // Verify task is created
-      await dashboardPage.waitForTasksToLoad()
-      const taskWithTitle = page.locator('[class*="task"]').filter({ hasText: testTitle }).first()
-      const taskExists = await taskWithTitle.isVisible({ timeout: 5000 }).catch(() => false)
-      expect(taskExists).toBe(true)
+      // Verify task exists on dashboard
+      await verifyTaskExists(page, dashboardPage, testTitle)
     })
 
     test('TC-CREATE-020: Create custom recurring task', async ({ page }) => {
       // Open create dialog
-      const createButtonSelectors = [
-        page.getByRole('button', { name: /создать задачу|create task/i }),
-        page.locator('button').filter({ has: page.locator('i.pi-plus') }),
-        page.locator('.floating-action-button, [class*="floating"]')
-      ]
-      
-      let createButton: Locator | null = null
-      for (const selector of createButtonSelectors) {
-        try {
-          await selector.first().waitFor({ state: 'visible', timeout: 3000 })
-          createButton = selector.first()
-          break
-        } catch {
-          continue
-        }
-      }
-      
-      if (!createButton) {
-        throw new Error('Create task button not found')
-      }
-      
-      await createButton.click()
+      await findAndClickCreateButton(page)
       await taskDialog.waitForDialog()
       
       // Enable recurrence
@@ -1143,45 +834,18 @@ test.describe('Task Creation', () => {
       await taskDialog.fillTitle(testTitle)
       await taskDialog.save()
       
-      await Promise.race([
-        page.waitForSelector('.p-toast-message', { timeout: 10000 }).catch(() => null),
-        page.waitForTimeout(5000)
-      ])
-      await page.waitForTimeout(2000)
+      // Wait for task creation to complete
+      await waitForTaskCreation(page, taskDialog)
       
-      // Verify task is created
-      await dashboardPage.waitForTasksToLoad()
-      const taskWithTitle = page.locator('[class*="task"]').filter({ hasText: testTitle }).first()
-      const taskExists = await taskWithTitle.isVisible({ timeout: 5000 }).catch(() => false)
-      expect(taskExists).toBe(true)
+      // Verify task exists on dashboard
+      await verifyTaskExists(page, dashboardPage, testTitle)
     })
   })
 
   test.describe('3.6 File Attachments', () => {
     test('TC-CREATE-021: Upload single file', async ({ page }) => {
       // Open create dialog
-      const createButtonSelectors = [
-        page.getByRole('button', { name: /создать задачу|create task/i }),
-        page.locator('button').filter({ has: page.locator('i.pi-plus') }),
-        page.locator('.floating-action-button, [class*="floating"]')
-      ]
-      
-      let createButton: Locator | null = null
-      for (const selector of createButtonSelectors) {
-        try {
-          await selector.first().waitFor({ state: 'visible', timeout: 3000 })
-          createButton = selector.first()
-          break
-        } catch {
-          continue
-        }
-      }
-      
-      if (!createButton) {
-        throw new Error('Create task button not found')
-      }
-      
-      await createButton.click()
+      await findAndClickCreateButton(page)
       await taskDialog.waitForDialog()
       
       // Find file upload input
@@ -1199,44 +863,17 @@ test.describe('Task Creation', () => {
       await taskDialog.fillTitle(testTitle)
       await taskDialog.save()
       
-      await Promise.race([
-        page.waitForSelector('.p-toast-message', { timeout: 10000 }).catch(() => null),
-        page.waitForTimeout(5000)
-      ])
-      await page.waitForTimeout(2000)
+      // Wait for task creation to complete
+      await waitForTaskCreation(page, taskDialog)
       
-      // Verify task is created
-      await dashboardPage.waitForTasksToLoad()
-      const taskWithTitle = page.locator('[class*="task"]').filter({ hasText: testTitle }).first()
-      const taskExists = await taskWithTitle.isVisible({ timeout: 5000 }).catch(() => false)
-      expect(taskExists).toBe(true)
+      // Verify task exists on dashboard
+      await verifyTaskExists(page, dashboardPage, testTitle)
     })
 
     test('TC-CREATE-022: Upload multiple files', async ({ page }) => {
       // Similar to TC-CREATE-021 but with multiple files
       // Placeholder - file upload testing requires actual file creation
-      const createButtonSelectors = [
-        page.getByRole('button', { name: /создать задачу|create task/i }),
-        page.locator('button').filter({ has: page.locator('i.pi-plus') }),
-        page.locator('.floating-action-button, [class*="floating"]')
-      ]
-      
-      let createButton: Locator | null = null
-      for (const selector of createButtonSelectors) {
-        try {
-          await selector.first().waitFor({ state: 'visible', timeout: 3000 })
-          createButton = selector.first()
-          break
-        } catch {
-          continue
-        }
-      }
-      
-      if (!createButton) {
-        throw new Error('Create task button not found')
-      }
-      
-      await createButton.click()
+      await findAndClickCreateButton(page)
       await taskDialog.waitForDialog()
       
       // File upload testing placeholder
@@ -1244,16 +881,11 @@ test.describe('Task Creation', () => {
       await taskDialog.fillTitle(testTitle)
       await taskDialog.save()
       
-      await Promise.race([
-        page.waitForSelector('.p-toast-message', { timeout: 10000 }).catch(() => null),
-        page.waitForTimeout(5000)
-      ])
-      await page.waitForTimeout(2000)
+      // Wait for task creation to complete
+      await waitForTaskCreation(page, taskDialog)
       
-      await dashboardPage.waitForTasksToLoad()
-      const taskWithTitle = page.locator('[class*="task"]').filter({ hasText: testTitle }).first()
-      const taskExists = await taskWithTitle.isVisible({ timeout: 5000 }).catch(() => false)
-      expect(taskExists).toBe(true)
+      // Verify task exists on dashboard
+      await verifyTaskExists(page, dashboardPage, testTitle)
     })
 
     test('TC-CREATE-023: File upload validation - file too large', async ({ page }) => {

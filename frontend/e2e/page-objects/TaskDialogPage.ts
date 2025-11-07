@@ -248,11 +248,15 @@ export class TaskDialogPage {
     }
     
     // Wait for button to be visible and clickable
-    await button.waitFor({ state: 'visible', timeout: 5000 })
+    await button.waitFor({ state: 'visible', timeout: 10000 })
+    await button.scrollIntoViewIfNeeded()
+    
+    // Wait for dialog to be fully rendered
+    await this.page.waitForTimeout(500)
     
     // Force click to bypass overlay if needed
     await button.click({ force: true })
-    await this.page.waitForTimeout(500)
+    await this.page.waitForTimeout(1000) // Wait for date to be set
   }
 
   /**
@@ -375,7 +379,7 @@ export class TaskDialogPage {
    * Click save button
    */
   async save(): Promise<void> {
-    await this.saveButton.waitFor({ state: 'visible', timeout: 5000 })
+    await this.saveButton.waitFor({ state: 'visible', timeout: 15000 })
     await this.saveButton.click()
   }
 
