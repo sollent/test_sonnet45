@@ -110,17 +110,17 @@ async function waitForTaskCreation(page: Page, taskDialog: TaskDialogPage): Prom
  */
 async function verifyTaskExists(page: Page, dashboardPage: DashboardPage, testTitle: string): Promise<void> {
   // Wait for any pending API calls to complete
-  await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {})
-  await page.waitForTimeout(2000) // Wait for UI to update
+  await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {})
+  await page.waitForTimeout(1000) // Wait for UI to update
 
   // Reload page to ensure task list is updated
   await page.reload({ waitUntil: 'networkidle' })
-  await page.waitForTimeout(2000) // Wait for UI to render
+  await page.waitForTimeout(1000) // Wait for UI to render
   await dashboardPage.waitForTasksToLoad()
 
   // IMPORTANT: Expand completed sections first (tasks might be auto-completed)
   await dashboardPage.expandCompletedSection()
-  await page.waitForTimeout(1000)
+  await page.waitForTimeout(500)
 
   // Try to find task using the new method
   const task = await dashboardPage.findTaskByTitle(testTitle)
@@ -158,6 +158,9 @@ async function verifyTaskExists(page: Page, dashboardPage: DashboardPage, testTi
 }
 
 test.describe('Task Creation', () => {
+  // Increase timeout for task creation tests due to multiple waits
+  test.describe.configure({ timeout: 60000 })
+
   let loginPage: LoginPage
   let dashboardPage: DashboardPage
   let taskDialog: TaskDialogPage
