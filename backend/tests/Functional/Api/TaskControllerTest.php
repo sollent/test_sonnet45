@@ -184,6 +184,7 @@ class TaskControllerTest extends WebTestCase
 
         $task1 = TaskFactory::createOne([
             'user' => $this->user,
+            'status' => TaskStatus::PENDING, // Prevent random CANCELLED status
             'dueDate' => new \DateTimeImmutable('+1 day'),
         ]);
         $task1->_real()->addTag($tag1->_real());
@@ -191,6 +192,7 @@ class TaskControllerTest extends WebTestCase
 
         $task2 = TaskFactory::createOne([
             'user' => $this->user,
+            'status' => TaskStatus::PENDING, // Prevent random CANCELLED status
             'dueDate' => new \DateTimeImmutable('+1 day'),
         ]);
         $task2->_real()->addTag($tag2->_real());
