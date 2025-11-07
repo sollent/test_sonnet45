@@ -123,12 +123,39 @@ async function verifyTaskExists(page: Page, dashboardPage: DashboardPage, testTi
   await page.waitForTimeout(500)
 
   // Try to find task using the new method
-  const task = await dashboardPage.findTaskByTitle(testTitle)
+  let task = await dashboardPage.findTaskByTitle(testTitle)
 
   if (task) {
     const isVisible = await task.isVisible().catch(() => false)
-    expect(isVisible).toBe(true)
-    return
+    if (isVisible) {
+      expect(isVisible).toBe(true)
+      return
+    }
+  }
+
+  // If not found in current view, switch to "Без срока" (Unscheduled) view
+  // Most tasks without dates end up there
+  console.log(`Task "${testTitle}" not found in current view, switching to "Без срока" view`)
+
+  try {
+    await dashboardPage.selectView('unscheduled')
+    await page.waitForTimeout(2000) // Wait for view to load
+    await dashboardPage.expandCompletedSection()
+    await page.waitForTimeout(500)
+
+    // Try to find task again in unscheduled view
+    task = await dashboardPage.findTaskByTitle(testTitle)
+
+    if (task) {
+      const isVisible = await task.isVisible().catch(() => false)
+      if (isVisible) {
+        console.log(`Task "${testTitle}" found in "Без срока" view`)
+        expect(isVisible).toBe(true)
+        return
+      }
+    }
+  } catch (error) {
+    console.error(`Failed to switch to unscheduled view: ${error}`)
   }
 
   // If still not found, try more aggressive search
@@ -449,32 +476,132 @@ test.describe('Task Creation', () => {
       // Open create dialog
       await findAndClickCreateButton(page)
       await taskDialog.waitForDialog()
-      
+
       // Toggle advanced date if available
       const hasAdvancedToggle = await taskDialog.advancedDateToggle.isVisible().catch(() => false)
       if (hasAdvancedToggle) {
         await taskDialog.toggleAdvancedDate()
         await page.waitForTimeout(1000)
       }
-      
+
       // This test requires complex calendar interaction
       // For now, we'll verify that date inputs exist
       const startDateVisible = await taskDialog.startDateCalendar.isVisible().catch(() => false)
       const dueDateVisible = await taskDialog.dueDateCalendar.isVisible().catch(() => false)
-      
+
       if (startDateVisible && dueDateVisible) {
         // Fill title
         await taskDialog.fillTitle('Date Validation Test')
-        
+
         // Note: Actual date validation testing would require setting dates programmatically
         // which is complex with PrimeVue Calendar. This is a placeholder test.
         // In a real scenario, you'd need to interact with the calendar widget.
-        
+
         // Verify form is still open (validation should prevent submission)
         expect(await taskDialog.isVisible()).toBe(true)
       } else {
         // If advanced date is not available, skip this test
         expect(true).toBe(true)
+      }
+    })
+
+    test('TC-CREATE-010A: Create task with "Today" date and verify in views', async ({ page }) => {
+      // Open create dialog
+      await findAndClickCreateButton(page)
+      await taskDialog.waitForDialog()
+
+      // Enter task title
+      const testTitle = `Today Task ${Date.now()}`
+      await taskDialog.fillTitle(testTitle)
+
+      // Click "Сегодня" quick date button
+      await taskDialog.clickQuickDate('today')
+      await page.waitForTimeout(500)
+
+      // Save task
+      await taskDialog.save()
+
+      // Wait for task creation to complete
+      await waitForTaskCreation(page, taskDialog)
+
+      // First check in "Все задачи" (All tasks) view
+      await dashboardPage.selectView('all')
+      await page.waitForTimeout(2000)
+      await dashboardPage.waitForTasksToLoad()
+
+      // Find task in all tasks view
+      let task = await dashboardPage.findTaskByTitle(testTitle)
+      expect(task).not.toBeNull()
+
+      if (task) {
+        const isVisible = await task.isVisible().catch(() => false)
+        expect(isVisible).toBe(true)
+        console.log(`Task "${testTitle}" found in "Все задачи" view`)
+      }
+
+      // Now check in "Сегодня" (Today) view
+      await dashboardPage.selectView('today')
+      await page.waitForTimeout(2000)
+      await dashboardPage.waitForTasksToLoad()
+
+      // Find task in today view
+      task = await dashboardPage.findTaskByTitle(testTitle)
+      expect(task).not.toBeNull()
+
+      if (task) {
+        const isVisible = await task.isVisible().catch(() => false)
+        expect(isVisible).toBe(true)
+        console.log(`Task "${testTitle}" found in "Сегодня" view`)
+      }
+    })
+
+    test('TC-CREATE-010B: Create task with "Tomorrow" date and verify in views', async ({ page }) => {
+      // Open create dialog
+      await findAndClickCreateButton(page)
+      await taskDialog.waitForDialog()
+
+      // Enter task title
+      const testTitle = `Tomorrow Task ${Date.now()}`
+      await taskDialog.fillTitle(testTitle)
+
+      // Click "Завтра" quick date button
+      await taskDialog.clickQuickDate('tomorrow')
+      await page.waitForTimeout(500)
+
+      // Save task
+      await taskDialog.save()
+
+      // Wait for task creation to complete
+      await waitForTaskCreation(page, taskDialog)
+
+      // First check in "Все задачи" (All tasks) view
+      await dashboardPage.selectView('all')
+      await page.waitForTimeout(2000)
+      await dashboardPage.waitForTasksToLoad()
+
+      // Find task in all tasks view
+      let task = await dashboardPage.findTaskByTitle(testTitle)
+      expect(task).not.toBeNull()
+
+      if (task) {
+        const isVisible = await task.isVisible().catch(() => false)
+        expect(isVisible).toBe(true)
+        console.log(`Task "${testTitle}" found in "Все задачи" view`)
+      }
+
+      // Now check in "Предстоящие" (Upcoming) view
+      await dashboardPage.selectView('upcoming')
+      await page.waitForTimeout(2000)
+      await dashboardPage.waitForTasksToLoad()
+
+      // Find task in upcoming view
+      task = await dashboardPage.findTaskByTitle(testTitle)
+      expect(task).not.toBeNull()
+
+      if (task) {
+        const isVisible = await task.isVisible().catch(() => false)
+        expect(isVisible).toBe(true)
+        console.log(`Task "${testTitle}" found in "Предстоящие" view`)
       }
     })
   })

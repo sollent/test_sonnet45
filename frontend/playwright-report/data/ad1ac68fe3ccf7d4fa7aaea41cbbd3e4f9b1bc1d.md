@@ -1,0 +1,205 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - generic [ref=e4]:
+    - banner [ref=e5]:
+      - generic [ref=e6]:
+        - heading "My Tasks" [level=1] [ref=e8]
+        - generic [ref=e9]:
+          - button "My Tasks" [ref=e10] [cursor=pointer]:
+            - generic [ref=e11]: 
+            - generic [ref=e12]: My Tasks
+          - button "Calendar" [ref=e13] [cursor=pointer]:
+            - generic [ref=e14]: 
+            - generic [ref=e15]: Calendar
+          - button "Analytics" [ref=e16] [cursor=pointer]:
+            - generic [ref=e17]: 
+            - generic [ref=e18]: Analytics
+        - generic [ref=e19]:
+          - button " sollent98@gmail.com" [ref=e20] [cursor=pointer]:
+            - generic [ref=e21]: 
+            - generic [ref=e22]: sollent98@gmail.com
+          - button "Logout" [ref=e23] [cursor=pointer]:
+            - generic [ref=e24]: 
+    - generic [ref=e26]:
+      - complementary [ref=e27]:
+        - generic [ref=e28]:
+          - generic [ref=e30]:
+            - generic [ref=e31]: 
+            - textbox "Search tasks..." [ref=e32]
+          - navigation [ref=e33]:
+            - heading "Filter by" [level=3] [ref=e34]
+            - generic [ref=e35]:
+              - button " All Tasks" [ref=e36] [cursor=pointer]:
+                - generic [ref=e37]: 
+                - generic [ref=e38]: All Tasks
+              - button " Today" [ref=e39] [cursor=pointer]:
+                - generic [ref=e40]: 
+                - generic [ref=e41]: Today
+              - button " Upcoming" [ref=e42] [cursor=pointer]:
+                - generic [ref=e43]: 
+                - generic [ref=e44]: Upcoming
+              - button " Overdue" [ref=e45] [cursor=pointer]:
+                - generic [ref=e46]: 
+                - generic [ref=e47]: Overdue
+              - button " No Due Date" [ref=e48] [cursor=pointer]:
+                - generic [ref=e49]: 
+                - generic [ref=e50]: No Due Date
+          - generic [ref=e51]:
+            - heading "Most Used" [level=3] [ref=e52]
+            - generic [ref=e53]:
+              - button "Работа 14" [ref=e54] [cursor=pointer]:
+                - generic [ref=e56]: Работа
+                - generic [ref=e57]: "14"
+              - button "Личное 11" [ref=e58] [cursor=pointer]:
+                - generic [ref=e60]: Личное
+                - generic [ref=e61]: "11"
+              - button "Покупки 8" [ref=e62] [cursor=pointer]:
+                - generic [ref=e64]: Покупки
+                - generic [ref=e65]: "8"
+              - button "Срочно 3" [ref=e66] [cursor=pointer]:
+                - generic [ref=e68]: Срочно
+                - generic [ref=e69]: "3"
+              - button "фывфы 2" [ref=e70] [cursor=pointer]:
+                - generic [ref=e72]: фывфы
+                - generic [ref=e73]: "2"
+      - main [ref=e74]:
+        - generic [ref=e76]:
+          - button "Cards View" [ref=e77] [cursor=pointer]:
+            - generic [ref=e78]: 
+          - button "Table View" [ref=e79] [cursor=pointer]:
+            - generic [ref=e80]: 
+        - generic [ref=e81]:
+          - generic [ref=e83]:
+            - button " Today" [ref=e84] [cursor=pointer]:
+              - generic [ref=e85]: 
+              - generic [ref=e86]: Today
+            - button " Urgent" [ref=e87] [cursor=pointer]:
+              - generic [ref=e88]: 
+              - generic [ref=e89]: Urgent
+            - button " Overdue" [ref=e90] [cursor=pointer]:
+              - generic [ref=e91]: 
+              - generic [ref=e92]: Overdue
+            - button " In Progress" [ref=e93] [cursor=pointer]:
+              - generic [ref=e94]: 
+              - generic [ref=e95]: In Progress
+          - button " Filters" [ref=e96] [cursor=pointer]:
+            - generic [ref=e97]: 
+            - generic [ref=e98]: Filters
+        - generic [ref=e99]:
+          - generic [ref=e100]:
+            - generic [ref=e101]:
+              - generic [ref=e102]:
+                - heading "Today 🎉" [level=3] [ref=e104]:
+                  - text: Today
+                  - generic [ref=e105]: 🎉
+                - generic [ref=e106]:
+                  - generic [ref=e108]:
+                    - generic [ref=e109]: "1"
+                    - generic [ref=e110]: /
+                    - generic [ref=e111]: "1"
+                  - generic [ref=e112]:
+                    - img [ref=e113]
+                    - generic [ref=e116]: 100%
+              - generic [ref=e121]:
+                - text: ✨ All tasks completed!
+                - generic [ref=e122]: Today
+            - generic [ref=e123]:
+              - generic [ref=e125] [cursor=pointer]:
+                - generic [ref=e126]: 
+                - generic [ref=e127]: ✅ Completed
+                - generic [ref=e128]: "1"
+              - generic [ref=e129]:
+                - generic [ref=e130]:
+                  - generic [ref=e132]:
+                    - checkbox [checked] [ref=e133] [cursor=pointer]
+                    - img [ref=e135]
+                  - generic [ref=e138] [cursor=pointer]: Consequatur ut vel itaque quibusdam iste qui.
+                  - generic [ref=e140]: 02:11
+                - generic [ref=e142]:
+                  - generic [ref=e143]: "Работа:"
+                  - generic [ref=e144]: "1"
+          - generic [ref=e145]:
+            - generic [ref=e146]:
+              - generic [ref=e147]:
+                - heading "Tomorrow 🎉" [level=3] [ref=e149]:
+                  - text: Tomorrow
+                  - generic [ref=e150]: 🎉
+                - generic [ref=e151]:
+                  - generic [ref=e153]:
+                    - generic [ref=e154]: "1"
+                    - generic [ref=e155]: /
+                    - generic [ref=e156]: "1"
+                  - generic [ref=e157]:
+                    - img [ref=e158]
+                    - generic [ref=e161]: 100%
+              - generic [ref=e166]:
+                - text: ✨ All tasks completed!
+                - generic [ref=e167]: Tomorrow
+            - generic [ref=e168]:
+              - generic [ref=e170] [cursor=pointer]:
+                - generic [ref=e171]: 
+                - generic [ref=e172]: ✅ Completed
+                - generic [ref=e173]: "1"
+              - generic [ref=e175]:
+                - generic [ref=e177]:
+                  - checkbox [checked] [ref=e178] [cursor=pointer]
+                  - img [ref=e180]
+                - generic [ref=e183] [cursor=pointer]: ывфывфывфывфывфывфывфывфывфывфывф
+                - generic [ref=e185]: 01:36
+          - generic [ref=e186]:
+            - generic [ref=e187]:
+              - generic [ref=e188]:
+                - heading "Sunday, November 9, 2025 🎉" [level=3] [ref=e190]:
+                  - text: Sunday, November 9, 2025
+                  - generic [ref=e191]: 🎉
+                - generic [ref=e192]:
+                  - generic [ref=e194]:
+                    - generic [ref=e195]: "2"
+                    - generic [ref=e196]: /
+                    - generic [ref=e197]: "2"
+                  - generic [ref=e198]:
+                    - img [ref=e199]
+                    - generic [ref=e202]: 100%
+              - generic [ref=e207]:
+                - text: ✨ All tasks completed!
+                - generic [ref=e208]: Sunday, November 9, 2025
+            - generic [ref=e209]:
+              - generic [ref=e211] [cursor=pointer]:
+                - generic [ref=e212]: 
+                - generic [ref=e213]: ✅ Completed
+                - generic [ref=e214]: "2"
+              - generic [ref=e215]:
+                - generic [ref=e216]:
+                  - generic [ref=e218]:
+                    - checkbox [checked] [ref=e219] [cursor=pointer]
+                    - img [ref=e221]
+                  - generic [ref=e224] [cursor=pointer]: Et iusto inventore doloribus rerum molestiae.
+                  - generic [ref=e226]: 11:53
+                - generic [ref=e227]:
+                  - generic [ref=e229]:
+                    - checkbox [checked] [ref=e230] [cursor=pointer]
+                    - img [ref=e232]
+                  - generic [ref=e235] [cursor=pointer]: Aut ut quam ut praesentium sit neque et.
+                  - generic [ref=e237]: 23:43
+                - generic [ref=e238]:
+                  - generic [ref=e239]:
+                    - generic [ref=e240]: "Работа:"
+                    - generic [ref=e241]: "2"
+                  - generic [ref=e242]:
+                    - generic [ref=e243]: "Личное:"
+                    - generic [ref=e244]: "2"
+                  - generic [ref=e245]:
+                    - generic [ref=e246]: "Покупки:"
+                    - generic [ref=e247]: "2"
+          - generic [ref=e249]:
+            - generic [ref=e250]: ✨
+            - generic [ref=e251]: All tasks loaded (4 total)
+    - button "Create Task" [ref=e253] [cursor=pointer]:
+      - generic [ref=e254]: 
+      - generic [ref=e255]: Create Task
+  - button "Language selector" [ref=e258] [cursor=pointer]:
+    - generic [ref=e259]: 🇬🇧
+    - generic [ref=e260]: EN
+```

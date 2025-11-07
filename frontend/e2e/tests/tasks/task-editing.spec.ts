@@ -7,16 +7,79 @@ import { testLoginUsers } from '../../fixtures/auth.fixture'
 import { waitForToast } from '../../utils/helpers'
 
 /**
+ * Helper function to find a task across different views
+ * Checks current view first, then switches to unscheduled view if not found
+ */
+async function findTaskAcrossViews(page: Page, dashboardPage: DashboardPage, taskTitle?: string): Promise<Locator | null> {
+  // First, try to find task in current view
+  let task: Locator | null = null
+
+  // Expand completed sections first
+  await dashboardPage.expandCompletedSection()
+  await page.waitForTimeout(1000)
+
+  if (taskTitle) {
+    task = await dashboardPage.findTaskByTitle(taskTitle)
+  } else {
+    task = await dashboardPage.getFirstVisibleTask()
+  }
+
+  if (task && await task.isVisible().catch(() => false)) {
+    return task
+  }
+
+  // If not found, switch to unscheduled view (where most tasks without dates are)
+  console.log(`Task not found in current view, switching to "Без срока" view`)
+  try {
+    await dashboardPage.selectView('unscheduled')
+    await page.waitForTimeout(2000)
+    await dashboardPage.expandCompletedSection()
+    await page.waitForTimeout(1000)
+
+    if (taskTitle) {
+      task = await dashboardPage.findTaskByTitle(taskTitle)
+    } else {
+      task = await dashboardPage.getFirstVisibleTask()
+    }
+
+    if (task && await task.isVisible().catch(() => false)) {
+      console.log(`Task found in "Без срока" view`)
+      return task
+    }
+  } catch (error) {
+    console.error(`Failed to switch to unscheduled view: ${error}`)
+  }
+
+  // Try "All tasks" view as last resort
+  console.log(`Task not found in unscheduled view, switching to "Все задачи" view`)
+  try {
+    await dashboardPage.selectView('all')
+    await page.waitForTimeout(2000)
+    await dashboardPage.expandCompletedSection()
+    await page.waitForTimeout(1000)
+
+    if (taskTitle) {
+      task = await dashboardPage.findTaskByTitle(taskTitle)
+    } else {
+      task = await dashboardPage.getFirstVisibleTask()
+    }
+
+    if (task && await task.isVisible().catch(() => false)) {
+      console.log(`Task found in "Все задачи" view`)
+      return task
+    }
+  } catch (error) {
+    console.error(`Failed to switch to all tasks view: ${error}`)
+  }
+
+  return null
+}
+
+/**
  * Helper function to open task sidebar by clicking on a task card
  * Automatically expands completed sections if taskCard is null
  */
 async function openTaskSidebar(page: Page, taskSidebar: TaskDetailsSidebarPage, taskCard: Locator | null, dashboardPage?: DashboardPage): Promise<boolean> {
-  // If dashboardPage provided, try to expand completed sections
-  if (dashboardPage) {
-    await dashboardPage.expandCompletedSection()
-    await page.waitForTimeout(1000)
-  }
-
   if (!taskCard) {
     return false
   }
@@ -140,10 +203,12 @@ test.describe('Task Editing', () => {
     test('TC-EDIT-001: Open task details sidebar', async ({ page }) => {
       // Wait for tasks to load
       await dashboardPage.waitForTasksToLoad()
-      const taskCount = await dashboardPage.getTaskCount()
-      
-      if (taskCount === 0) {
-        // Create a test task first - use helper function
+
+      // Find a task across views
+      let taskCard = await findTaskAcrossViews(page, dashboardPage)
+
+      if (!taskCard) {
+        // Create a test task first
         const { findAndClickCreateButton } = await import('./task-creation.spec')
         await findAndClickCreateButton(page)
         await taskDialog.waitForDialog()
@@ -155,96 +220,15 @@ test.describe('Task Editing', () => {
           page.waitForTimeout(5000)
         ])
         await page.waitForTimeout(2000)
-        await page.reload({ waitUntil: 'networkidle' })
-        await dashboardPage.waitForTasksToLoad()
+
+        // Find the newly created task
+        taskCard = await findTaskAcrossViews(page, dashboardPage, testTitle)
       }
-      
-      // Find first task card - try multiple selectors
-      const taskCardSelectors = [
-        page.locator('.task-card').first(),
-        page.locator('.task-item').first(),
-        page.locator('[class*="task-card"]').first(),
-        page.locator('[class*="task"]').filter({ hasNot: page.locator('.p-sidebar, .p-dialog') }).first()
-      ]
-      
-      let taskCard: Locator | null = null
-      for (const selector of taskCardSelectors) {
-        try {
-          await selector.waitFor({ state: 'visible', timeout: 3000 })
-          taskCard = selector
-          break
-        } catch {
-          continue
-        }
-      }
-      
+
       if (taskCard) {
-        const taskTitle = await taskCard.textContent().catch(() => '')
-        
-        // Scroll task card into view
-        await taskCard.scrollIntoViewIfNeeded()
-        await page.waitForTimeout(500)
-        
-        // Click on task card - try multiple click strategies
-        try {
-          await taskCard.click({ force: true })
-        } catch {
-          // If normal click fails, try clicking on title or content area
-          const titleElement = taskCard.locator('.task-card__title, .task-title, h3, h4').first()
-          const titleVisible = await titleElement.isVisible().catch(() => false)
-          if (titleVisible) {
-            await titleElement.click({ force: true })
-          } else {
-            // Last resort: click on any clickable area
-            await taskCard.locator('*').first().click({ force: true })
-          }
-        }
-        
-        await page.waitForTimeout(3000) // Wait for sidebar animation
-        
-        // Wait for sidebar to open with multiple selector checks
-        let sidebarOpened = false
-        const sidebarChecks = [
-          () => taskSidebar.waitForSidebar(),
-          () => page.locator('.p-sidebar').waitFor({ state: 'visible', timeout: 15000 }),
-          () => page.locator('[role="complementary"]').waitFor({ state: 'visible', timeout: 15000 }),
-          () => page.locator('.p-sidebar-content').waitFor({ state: 'visible', timeout: 15000 }),
-          () => page.locator('.drawer-header').waitFor({ state: 'visible', timeout: 15000 })
-        ]
-        
-        for (const check of sidebarChecks) {
-          try {
-            await Promise.race([
-              check(),
-              page.waitForTimeout(5000)
-            ])
-            sidebarOpened = true
-            break
-          } catch {
-            continue
-          }
-        }
-        
-        // Additional wait for sidebar to fully render
-        await page.waitForTimeout(2000)
-        
-        // Verify sidebar is visible with multiple checks
-        let sidebarVisible = await taskSidebar.isVisible()
-        if (!sidebarVisible) {
-          // Try waiting more and checking again
-          await page.waitForTimeout(3000)
-          sidebarVisible = await taskSidebar.isVisible()
-        }
-        
-        // If still not visible, try clicking again
-        if (!sidebarVisible) {
-          await taskCard.click({ force: true })
-          await page.waitForTimeout(3000)
-          sidebarVisible = await taskSidebar.isVisible()
-        }
-        
+        const sidebarVisible = await openTaskSidebar(page, taskSidebar, taskCard, dashboardPage)
         expect(sidebarVisible).toBe(true)
-        
+
         // Verify task data is loaded (check if title is displayed)
         if (sidebarVisible) {
           const sidebarTitle = await taskSidebar.getTaskTitle().catch(() => '')
@@ -259,35 +243,20 @@ test.describe('Task Editing', () => {
     test('TC-EDIT-002: Close task details sidebar', async ({ page }) => {
       // Open task details first
       await dashboardPage.waitForTasksToLoad()
-      
-      // Find task card with multiple selectors
-      const taskCardSelectors = [
-        page.locator('.task-card').first(),
-        page.locator('.task-item').first(),
-        page.locator('[class*="task-card"]').first()
-      ]
-      
-      let taskCard: Locator | null = null
-      for (const selector of taskCardSelectors) {
-        try {
-          await selector.waitFor({ state: 'visible', timeout: 3000 })
-          taskCard = selector
-          break
-        } catch {
-          continue
-        }
-      }
-      
+
+      // Find a task across views
+      const taskCard = await findTaskAcrossViews(page, dashboardPage)
+
       if (taskCard) {
         const sidebarVisible = await openTaskSidebar(page, taskSidebar, taskCard, dashboardPage)
         expect(sidebarVisible).toBe(true)
-        
+
         // Click close button
         await taskSidebar.close()
-        
+
         // Wait for sidebar to close
         await page.waitForTimeout(1000)
-        
+
         // Verify sidebar is closed
         const sidebarClosed = await taskSidebar.isVisible()
         expect(sidebarClosed).toBe(false)
@@ -299,35 +268,20 @@ test.describe('Task Editing', () => {
     test('TC-EDIT-003: Close sidebar by clicking outside', async ({ page }) => {
       // Open task details first
       await dashboardPage.waitForTasksToLoad()
-      
-      // Find task card with multiple selectors
-      const taskCardSelectors = [
-        page.locator('.task-card').first(),
-        page.locator('.task-item').first(),
-        page.locator('[class*="task-card"]').first()
-      ]
-      
-      let taskCard: Locator | null = null
-      for (const selector of taskCardSelectors) {
-        try {
-          await selector.waitFor({ state: 'visible', timeout: 3000 })
-          taskCard = selector
-          break
-        } catch {
-          continue
-        }
-      }
-      
+
+      // Find a task across views
+      const taskCard = await findTaskAcrossViews(page, dashboardPage)
+
       if (taskCard) {
         const sidebarVisible = await openTaskSidebar(page, taskSidebar, taskCard, dashboardPage)
         expect(sidebarVisible).toBe(true)
-        
+
         // Click outside sidebar
         await taskSidebar.clickOutside()
-        
+
         // Wait for sidebar to close
         await page.waitForTimeout(1000)
-        
+
         // Verify sidebar is closed
         const sidebarClosed = await taskSidebar.isVisible()
         expect(sidebarClosed).toBe(false)
@@ -341,10 +295,9 @@ test.describe('Task Editing', () => {
     test('TC-EDIT-004: Edit task title', async ({ page }) => {
       // Open task details
       await dashboardPage.waitForTasksToLoad()
-      const taskCard = page.locator('[class*="task"]').first()
-      const taskExists = await taskCard.isVisible({ timeout: 5000 }).catch(() => false)
-      
-      if (taskExists) {
+      const taskCard = await findTaskAcrossViews(page, dashboardPage)
+
+      if (taskCard) {
         const originalTitle = await taskCard.textContent().catch(() => '')
         const sidebarVisible = await openTaskSidebar(page, taskSidebar, taskCard, dashboardPage)
         expect(sidebarVisible).toBe(true)
@@ -391,10 +344,9 @@ test.describe('Task Editing', () => {
     test('TC-EDIT-005: Edit task description', async ({ page }) => {
       // Open task details
       await dashboardPage.waitForTasksToLoad()
-      const taskCard = page.locator('[class*="task"]').first()
-      const taskExists = await taskCard.isVisible({ timeout: 5000 }).catch(() => false)
-      
-      if (taskExists) {
+      const taskCard = await findTaskAcrossViews(page, dashboardPage)
+
+      if (taskCard) {
         const sidebarVisible = await openTaskSidebar(page, taskSidebar, taskCard, dashboardPage)
         expect(sidebarVisible).toBe(true)
         
@@ -427,10 +379,9 @@ test.describe('Task Editing', () => {
     test('TC-EDIT-006: Change task status', async ({ page }) => {
       // Open task details
       await dashboardPage.waitForTasksToLoad()
-      const taskCard = page.locator('[class*="task"]').first()
-      const taskExists = await taskCard.isVisible({ timeout: 5000 }).catch(() => false)
-      
-      if (taskExists) {
+      const taskCard = await findTaskAcrossViews(page, dashboardPage)
+
+      if (taskCard) {
         const sidebarVisible = await openTaskSidebar(page, taskSidebar, taskCard, dashboardPage)
         expect(sidebarVisible).toBe(true)
         
@@ -462,10 +413,9 @@ test.describe('Task Editing', () => {
     test('TC-EDIT-007: Change task priority', async ({ page }) => {
       // Open task details
       await dashboardPage.waitForTasksToLoad()
-      const taskCard = page.locator('[class*="task"]').first()
-      const taskExists = await taskCard.isVisible({ timeout: 5000 }).catch(() => false)
-      
-      if (taskExists) {
+      const taskCard = await findTaskAcrossViews(page, dashboardPage)
+
+      if (taskCard) {
         const sidebarVisible = await openTaskSidebar(page, taskSidebar, taskCard, dashboardPage)
         expect(sidebarVisible).toBe(true)
         
@@ -497,10 +447,9 @@ test.describe('Task Editing', () => {
     test('TC-EDIT-008: Change task dates', async ({ page }) => {
       // Open task details
       await dashboardPage.waitForTasksToLoad()
-      const taskCard = page.locator('[class*="task"]').first()
-      const taskExists = await taskCard.isVisible({ timeout: 5000 }).catch(() => false)
-      
-      if (taskExists) {
+      const taskCard = await findTaskAcrossViews(page, dashboardPage)
+
+      if (taskCard) {
         const sidebarVisible = await openTaskSidebar(page, taskSidebar, taskCard, dashboardPage)
         expect(sidebarVisible).toBe(true)
         
@@ -527,10 +476,9 @@ test.describe('Task Editing', () => {
     test('TC-EDIT-009: Add tags to existing task', async ({ page }) => {
       // Open task details
       await dashboardPage.waitForTasksToLoad()
-      const taskCard = page.locator('[class*="task"]').first()
-      const taskExists = await taskCard.isVisible({ timeout: 5000 }).catch(() => false)
-      
-      if (taskExists) {
+      const taskCard = await findTaskAcrossViews(page, dashboardPage)
+
+      if (taskCard) {
         const sidebarVisible = await openTaskSidebar(page, taskSidebar, taskCard, dashboardPage)
         expect(sidebarVisible).toBe(true)
         
@@ -570,10 +518,9 @@ test.describe('Task Editing', () => {
     test('TC-EDIT-010: Remove tags from task', async ({ page }) => {
       // Open task details
       await dashboardPage.waitForTasksToLoad()
-      const taskCard = page.locator('[class*="task"]').first()
-      const taskExists = await taskCard.isVisible({ timeout: 5000 }).catch(() => false)
-      
-      if (taskExists) {
+      const taskCard = await findTaskAcrossViews(page, dashboardPage)
+
+      if (taskCard) {
         const sidebarVisible = await openTaskSidebar(page, taskSidebar, taskCard, dashboardPage)
         expect(sidebarVisible).toBe(true)
         
@@ -617,27 +564,12 @@ test.describe('Task Editing', () => {
     test('TC-EDIT-011: Edit task - cancel changes', async ({ page }) => {
       // Open task details
       await dashboardPage.waitForTasksToLoad()
-      const taskCard = page.locator('[class*="task"]').first()
-      const taskExists = await taskCard.isVisible({ timeout: 5000 }).catch(() => false)
-      
-      if (taskExists) {
+      const taskCard = await findTaskAcrossViews(page, dashboardPage)
+
+      if (taskCard) {
         const originalTitle = await taskCard.textContent().catch(() => '')
-        await taskCard.click({ force: true })
-        await page.waitForTimeout(2000) // Wait for sidebar animation
-        
-        // Wait for sidebar to open
-        await Promise.race([
-          taskSidebar.waitForSidebar(),
-          page.locator('.p-sidebar').waitFor({ state: 'visible', timeout: 15000 }),
-          page.locator('[role="complementary"]').waitFor({ state: 'visible', timeout: 15000 }),
-          page.waitForTimeout(5000)
-        ])
-        
-        // Additional wait for sidebar to fully render
-        await page.waitForTimeout(1000)
-        
-        // Verify sidebar is visible
-        expect(await taskSidebar.isVisible()).toBe(true)
+        const sidebarVisible = await openTaskSidebar(page, taskSidebar, taskCard, dashboardPage)
+        expect(sidebarVisible).toBe(true)
         
         // Get original title from sidebar
         const originalSidebarTitle = await taskSidebar.getTaskTitle()
@@ -667,10 +599,9 @@ test.describe('Task Editing', () => {
     test('TC-EDIT-012: Add subtask', async ({ page }) => {
       // Open task details
       await dashboardPage.waitForTasksToLoad()
-      const taskCard = page.locator('[class*="task"]').first()
-      const taskExists = await taskCard.isVisible({ timeout: 5000 }).catch(() => false)
-      
-      if (taskExists) {
+      const taskCard = await findTaskAcrossViews(page, dashboardPage)
+
+      if (taskCard) {
         const sidebarVisible = await openTaskSidebar(page, taskSidebar, taskCard, dashboardPage)
         expect(sidebarVisible).toBe(true)
         
@@ -702,10 +633,9 @@ test.describe('Task Editing', () => {
     test('TC-EDIT-013: Complete subtask', async ({ page }) => {
       // Open task details
       await dashboardPage.waitForTasksToLoad()
-      const taskCard = page.locator('[class*="task"]').first()
-      const taskExists = await taskCard.isVisible({ timeout: 5000 }).catch(() => false)
-      
-      if (taskExists) {
+      const taskCard = await findTaskAcrossViews(page, dashboardPage)
+
+      if (taskCard) {
         const sidebarVisible = await openTaskSidebar(page, taskSidebar, taskCard, dashboardPage)
         expect(sidebarVisible).toBe(true)
         
@@ -741,10 +671,9 @@ test.describe('Task Editing', () => {
     test('TC-EDIT-014: Uncomplete subtask', async ({ page }) => {
       // Similar to TC-EDIT-013 but uncheck
       await dashboardPage.waitForTasksToLoad()
-      const taskCard = page.locator('[class*="task"]').first()
-      const taskExists = await taskCard.isVisible({ timeout: 5000 }).catch(() => false)
-      
-      if (taskExists) {
+      const taskCard = await findTaskAcrossViews(page, dashboardPage)
+
+      if (taskCard) {
         const sidebarVisible = await openTaskSidebar(page, taskSidebar, taskCard, dashboardPage)
         expect(sidebarVisible).toBe(true)
         
@@ -789,10 +718,9 @@ test.describe('Task Editing', () => {
     test('TC-EDIT-016: Delete subtask', async ({ page }) => {
       // Open task details
       await dashboardPage.waitForTasksToLoad()
-      const taskCard = page.locator('[class*="task"]').first()
-      const taskExists = await taskCard.isVisible({ timeout: 5000 }).catch(() => false)
-      
-      if (taskExists) {
+      const taskCard = await findTaskAcrossViews(page, dashboardPage)
+
+      if (taskCard) {
         const sidebarVisible = await openTaskSidebar(page, taskSidebar, taskCard, dashboardPage)
         expect(sidebarVisible).toBe(true)
         
@@ -928,10 +856,9 @@ test.describe('Task Editing', () => {
     test('TC-EDIT-022: Cancel task deletion', async ({ page }) => {
       // Open task details
       await dashboardPage.waitForTasksToLoad()
-      const taskCard = page.locator('[class*="task"]').first()
-      const taskExists = await taskCard.isVisible({ timeout: 5000 }).catch(() => false)
-      
-      if (taskExists) {
+      const taskCard = await findTaskAcrossViews(page, dashboardPage)
+
+      if (taskCard) {
         const taskTitle = await taskCard.textContent().catch(() => '')
         const sidebarVisible = await openTaskSidebar(page, taskSidebar, taskCard, dashboardPage)
         expect(sidebarVisible).toBe(true)
