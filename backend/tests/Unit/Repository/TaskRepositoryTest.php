@@ -9,7 +9,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * IMPORTANT: Doctrine ServiceEntityRepository cannot be unit tested effectively.
  *
- * The parent::__construct($registry, User::class) in the repository requires
+ * The parent::__construct($registry, Task::class) in the repository requires
  * a fully configured Doctrine infrastructure with ClassMetadata, EntityManager with
  * proper metadata caching, etc. This is impossible to mock properly in unit tests.
  *
@@ -19,14 +19,18 @@ use PHPUnit\Framework\TestCase;
  * SOLUTION: Repository methods must be tested using Integration Tests with
  * Symfony's KernelTestCase and a real test database.
  *
- * UserRepository implements PasswordUpgraderInterface and contains:
- * - save(), remove() - CRUD methods
- * - upgradePassword() - PasswordUpgraderInterface method
- * - findByEmail(), findOneByGoogleId() - query methods
+ * TaskRepository contains 40+ methods:
+ * - 2 CRUD methods: save(), remove()
+ * - 10+ query methods: findUserTasks(), findTodayTasks(), findOverdueTasks(), etc.
+ * - 15+ analytics methods: getUserTaskStatistics(), getCompletionRate(), etc.
+ * - Calendar methods: getTasksForCalendar(), getTasksByDateRange()
+ * - Filter methods: searchTasks(), findActiveTasks(), countActiveTasks()
  *
- * See: tests/Integration/Repository/UserRepositoryTest.php (to be created)
+ * All require integration testing with real database and QueryBuilder.
+ *
+ * See: tests/Integration/Repository/TaskRepositoryTest.php (to be created)
  */
-class UserRepositoryTest extends TestCase
+class TaskRepositoryTest extends TestCase
 {
     /** @test */
     public function testRepositoryRequiresIntegrationTesting(): void
