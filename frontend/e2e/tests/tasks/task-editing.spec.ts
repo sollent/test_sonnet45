@@ -8,12 +8,26 @@ import { waitForToast } from '../../utils/helpers'
 
 /**
  * Helper function to open task sidebar by clicking on a task card
+ * Automatically expands completed sections if taskCard is null
  */
-async function openTaskSidebar(page: Page, taskSidebar: TaskDetailsSidebarPage, taskCard: Locator | null): Promise<boolean> {
+async function openTaskSidebar(page: Page, taskSidebar: TaskDetailsSidebarPage, taskCard: Locator | null, dashboardPage?: DashboardPage): Promise<boolean> {
+  // If dashboardPage provided, try to expand completed sections
+  if (dashboardPage) {
+    await dashboardPage.expandCompletedSection()
+    await page.waitForTimeout(1000)
+  }
+
   if (!taskCard) {
     return false
   }
-  
+
+  // Ensure task is visible
+  try {
+    await taskCard.waitFor({ state: 'visible', timeout: 5000 })
+  } catch {
+    console.warn('Task card not visible')
+  }
+
   // Scroll task card into view
   await taskCard.scrollIntoViewIfNeeded()
   await page.waitForTimeout(500)
@@ -265,7 +279,7 @@ test.describe('Task Editing', () => {
       }
       
       if (taskCard) {
-        const sidebarVisible = await openTaskSidebar(page, taskSidebar, taskCard)
+        const sidebarVisible = await openTaskSidebar(page, taskSidebar, taskCard, dashboardPage)
         expect(sidebarVisible).toBe(true)
         
         // Click close button
@@ -305,7 +319,7 @@ test.describe('Task Editing', () => {
       }
       
       if (taskCard) {
-        const sidebarVisible = await openTaskSidebar(page, taskSidebar, taskCard)
+        const sidebarVisible = await openTaskSidebar(page, taskSidebar, taskCard, dashboardPage)
         expect(sidebarVisible).toBe(true)
         
         // Click outside sidebar
@@ -332,7 +346,7 @@ test.describe('Task Editing', () => {
       
       if (taskExists) {
         const originalTitle = await taskCard.textContent().catch(() => '')
-        const sidebarVisible = await openTaskSidebar(page, taskSidebar, taskCard)
+        const sidebarVisible = await openTaskSidebar(page, taskSidebar, taskCard, dashboardPage)
         expect(sidebarVisible).toBe(true)
         
         // Enter edit mode
@@ -381,7 +395,7 @@ test.describe('Task Editing', () => {
       const taskExists = await taskCard.isVisible({ timeout: 5000 }).catch(() => false)
       
       if (taskExists) {
-        const sidebarVisible = await openTaskSidebar(page, taskSidebar, taskCard)
+        const sidebarVisible = await openTaskSidebar(page, taskSidebar, taskCard, dashboardPage)
         expect(sidebarVisible).toBe(true)
         
         // Enter edit mode
@@ -417,7 +431,7 @@ test.describe('Task Editing', () => {
       const taskExists = await taskCard.isVisible({ timeout: 5000 }).catch(() => false)
       
       if (taskExists) {
-        const sidebarVisible = await openTaskSidebar(page, taskSidebar, taskCard)
+        const sidebarVisible = await openTaskSidebar(page, taskSidebar, taskCard, dashboardPage)
         expect(sidebarVisible).toBe(true)
         
         // Enter edit mode
@@ -452,7 +466,7 @@ test.describe('Task Editing', () => {
       const taskExists = await taskCard.isVisible({ timeout: 5000 }).catch(() => false)
       
       if (taskExists) {
-        const sidebarVisible = await openTaskSidebar(page, taskSidebar, taskCard)
+        const sidebarVisible = await openTaskSidebar(page, taskSidebar, taskCard, dashboardPage)
         expect(sidebarVisible).toBe(true)
         
         // Enter edit mode
@@ -487,7 +501,7 @@ test.describe('Task Editing', () => {
       const taskExists = await taskCard.isVisible({ timeout: 5000 }).catch(() => false)
       
       if (taskExists) {
-        const sidebarVisible = await openTaskSidebar(page, taskSidebar, taskCard)
+        const sidebarVisible = await openTaskSidebar(page, taskSidebar, taskCard, dashboardPage)
         expect(sidebarVisible).toBe(true)
         
         // Enter edit mode
@@ -517,7 +531,7 @@ test.describe('Task Editing', () => {
       const taskExists = await taskCard.isVisible({ timeout: 5000 }).catch(() => false)
       
       if (taskExists) {
-        const sidebarVisible = await openTaskSidebar(page, taskSidebar, taskCard)
+        const sidebarVisible = await openTaskSidebar(page, taskSidebar, taskCard, dashboardPage)
         expect(sidebarVisible).toBe(true)
         
         // Enter edit mode
@@ -560,7 +574,7 @@ test.describe('Task Editing', () => {
       const taskExists = await taskCard.isVisible({ timeout: 5000 }).catch(() => false)
       
       if (taskExists) {
-        const sidebarVisible = await openTaskSidebar(page, taskSidebar, taskCard)
+        const sidebarVisible = await openTaskSidebar(page, taskSidebar, taskCard, dashboardPage)
         expect(sidebarVisible).toBe(true)
         
         // Enter edit mode
@@ -657,7 +671,7 @@ test.describe('Task Editing', () => {
       const taskExists = await taskCard.isVisible({ timeout: 5000 }).catch(() => false)
       
       if (taskExists) {
-        const sidebarVisible = await openTaskSidebar(page, taskSidebar, taskCard)
+        const sidebarVisible = await openTaskSidebar(page, taskSidebar, taskCard, dashboardPage)
         expect(sidebarVisible).toBe(true)
         
         // Get initial subtask count
@@ -692,7 +706,7 @@ test.describe('Task Editing', () => {
       const taskExists = await taskCard.isVisible({ timeout: 5000 }).catch(() => false)
       
       if (taskExists) {
-        const sidebarVisible = await openTaskSidebar(page, taskSidebar, taskCard)
+        const sidebarVisible = await openTaskSidebar(page, taskSidebar, taskCard, dashboardPage)
         expect(sidebarVisible).toBe(true)
         
         // Add subtask first if none exist
@@ -731,7 +745,7 @@ test.describe('Task Editing', () => {
       const taskExists = await taskCard.isVisible({ timeout: 5000 }).catch(() => false)
       
       if (taskExists) {
-        const sidebarVisible = await openTaskSidebar(page, taskSidebar, taskCard)
+        const sidebarVisible = await openTaskSidebar(page, taskSidebar, taskCard, dashboardPage)
         expect(sidebarVisible).toBe(true)
         
         const subtaskCount = await taskSidebar.getSubtaskCount()
@@ -779,7 +793,7 @@ test.describe('Task Editing', () => {
       const taskExists = await taskCard.isVisible({ timeout: 5000 }).catch(() => false)
       
       if (taskExists) {
-        const sidebarVisible = await openTaskSidebar(page, taskSidebar, taskCard)
+        const sidebarVisible = await openTaskSidebar(page, taskSidebar, taskCard, dashboardPage)
         expect(sidebarVisible).toBe(true)
         
         // Add subtask first if none exist
@@ -919,7 +933,7 @@ test.describe('Task Editing', () => {
       
       if (taskExists) {
         const taskTitle = await taskCard.textContent().catch(() => '')
-        const sidebarVisible = await openTaskSidebar(page, taskSidebar, taskCard)
+        const sidebarVisible = await openTaskSidebar(page, taskSidebar, taskCard, dashboardPage)
         expect(sidebarVisible).toBe(true)
         
         // Click delete button - try multiple selectors

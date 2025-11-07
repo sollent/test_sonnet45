@@ -377,4 +377,122 @@ export class DashboardPage {
     })
     return errors
   }
+
+  /**
+   * Expand completed tasks section if it's collapsed
+   */
+  async expandCompletedSection(): Promise<boolean> {
+    // Look for completed section button with different possible texts
+    const completedButtons = [
+      this.page.locator('button, [role="button"]').filter({ hasText: /✅\s*Completed/i }),
+      this.page.locator('button, [role="button"]').filter({ hasText: /✅\s*Завершен/i }),
+      this.page.locator('[class*="completed"]').filter({ hasText: /✅/ }),
+      this.page.locator('*[cursor="pointer"]').filter({ hasText: /✅\s*Completed/i })
+    ]
+
+    for (const selector of completedButtons) {
+      try {
+        const count = await selector.count()
+        if (count > 0) {
+          // Click all completed section toggles to expand them
+          for (let i = 0; i < count; i++) {
+            const btn = selector.nth(i)
+            const isVisible = await btn.isVisible().catch(() => false)
+            if (isVisible) {
+              await btn.scrollIntoViewIfNeeded()
+              await this.page.waitForTimeout(300)
+              await btn.click({ force: true })
+              await this.page.waitForTimeout(500)
+            }
+          }
+          return true
+        }
+      } catch {
+        continue
+      }
+    }
+
+    return false
+  }
+
+  /**
+   * Get first visible task card (either active or completed)
+   */
+  async getFirstVisibleTask(): Promise<Locator | null> {
+    // First try to expand completed sections
+    await this.expandCompletedSection()
+    await this.page.waitForTimeout(1000)
+
+    // Try multiple selectors to find tasks
+    const taskSelectors = [
+      this.taskCards,
+      this.taskList,
+      this.page.locator('[class*="task-card"]'),
+      this.page.locator('.task-item, [class*="task-item"]'),
+      this.page.locator('[class*="task"]').filter({
+        has: this.page.locator('input[type="checkbox"]')
+      })
+    ]
+
+    for (const selector of taskSelectors) {
+      try {
+        const count = await selector.count()
+        if (count > 0) {
+          const task = selector.first()
+          const isVisible = await task.isVisible({ timeout: 2000 }).catch(() => false)
+          if (isVisible) {
+            return task
+          }
+        }
+      } catch {
+        continue
+      }
+    }
+
+    return null
+  }
+
+  /**
+   * Find task by title (searches in both active and completed sections)
+   */
+  async findTaskByTitle(title: string): Promise<Locator | null> {
+    // First try to expand completed sections
+    await this.expandCompletedSection()
+    await this.page.waitForTimeout(1000)
+
+    // Escape special regex characters in title
+    const escapedTitle = title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const titlePattern = new RegExp(escapedTitle, 'i')
+
+    // Try multiple selectors to find the task
+    const taskSelectors = [
+      // Try exact text match first
+      this.page.getByText(titlePattern, { exact: false }),
+      // Try in task cards
+      this.page.locator('.task-card').filter({ hasText: titlePattern }),
+      this.page.locator('[class*="task-card"]').filter({ hasText: titlePattern }),
+      // Try in task items
+      this.page.locator('.task-item').filter({ hasText: titlePattern }),
+      this.page.locator('[class*="task-item"]').filter({ hasText: titlePattern }),
+      // Try in any task container
+      this.page.locator('[class*="task"]').filter({ hasText: titlePattern }),
+    ]
+
+    for (const selector of taskSelectors) {
+      try {
+        const count = await selector.count()
+        if (count > 0) {
+          const task = selector.first()
+          const isVisible = await task.isVisible({ timeout: 2000 }).catch(() => false)
+          if (isVisible) {
+            return task
+          }
+        }
+      } catch {
+        continue
+      }
+    }
+
+    return null
+  }
 }

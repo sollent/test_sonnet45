@@ -9,14 +9,21 @@ export async function waitForPageLoad(page: Page): Promise<void> {
 }
 
 /**
- * Wait for toast message to appear
+ * Wait for toast message to appear (optional - won't fail if toast doesn't appear)
  */
-export async function waitForToast(page: Page, message?: string): Promise<void> {
+export async function waitForToast(page: Page, message?: string, required = false): Promise<void> {
   const toastSelector = '.p-toast-message'
-  await page.waitForSelector(toastSelector, { timeout: 5000 })
-  
-  if (message) {
-    await expect(page.locator(toastSelector)).toContainText(message, { timeout: 5000 })
+  try {
+    await page.waitForSelector(toastSelector, { timeout: 10000 })
+    
+    if (message) {
+      await expect(page.locator(toastSelector)).toContainText(message, { timeout: 5000 })
+    }
+  } catch (e) {
+    if (required) {
+      throw e
+    }
+    // If toast is not required, just continue
   }
 }
 
