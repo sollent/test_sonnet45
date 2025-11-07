@@ -94,32 +94,75 @@ test.describe('Task Editing', () => {
       if (taskCard) {
         const taskTitle = await taskCard.textContent().catch(() => '')
         
-        // Click on task card
-        await taskCard.click({ force: true })
-        await page.waitForTimeout(2000) // Wait for sidebar animation
+        // Scroll task card into view
+        await taskCard.scrollIntoViewIfNeeded()
+        await page.waitForTimeout(500)
+        
+        // Click on task card - try multiple click strategies
+        try {
+          await taskCard.click({ force: true })
+        } catch {
+          // If normal click fails, try clicking on title or content area
+          const titleElement = taskCard.locator('.task-card__title, .task-title, h3, h4').first()
+          const titleVisible = await titleElement.isVisible().catch(() => false)
+          if (titleVisible) {
+            await titleElement.click({ force: true })
+          } else {
+            // Last resort: click on any clickable area
+            await taskCard.locator('*').first().click({ force: true })
+          }
+        }
+        
+        await page.waitForTimeout(3000) // Wait for sidebar animation
         
         // Wait for sidebar to open with multiple selector checks
-        await Promise.race([
-          taskSidebar.waitForSidebar(),
-          page.locator('.p-sidebar').waitFor({ state: 'visible', timeout: 15000 }),
-          page.locator('[role="complementary"]').waitFor({ state: 'visible', timeout: 15000 }),
-          page.waitForTimeout(5000)
-        ])
+        let sidebarOpened = false
+        const sidebarChecks = [
+          () => taskSidebar.waitForSidebar(),
+          () => page.locator('.p-sidebar').waitFor({ state: 'visible', timeout: 15000 }),
+          () => page.locator('[role="complementary"]').waitFor({ state: 'visible', timeout: 15000 }),
+          () => page.locator('.p-sidebar-content').waitFor({ state: 'visible', timeout: 15000 }),
+          () => page.locator('.drawer-header').waitFor({ state: 'visible', timeout: 15000 })
+        ]
+        
+        for (const check of sidebarChecks) {
+          try {
+            await Promise.race([
+              check(),
+              page.waitForTimeout(5000)
+            ])
+            sidebarOpened = true
+            break
+          } catch {
+            continue
+          }
+        }
         
         // Additional wait for sidebar to fully render
-        await page.waitForTimeout(1000)
+        await page.waitForTimeout(2000)
         
-        // Verify sidebar is visible
-        const sidebarVisible = await taskSidebar.isVisible()
+        // Verify sidebar is visible with multiple checks
+        let sidebarVisible = await taskSidebar.isVisible()
         if (!sidebarVisible) {
-          // Try waiting a bit more
-          await page.waitForTimeout(2000)
+          // Try waiting more and checking again
+          await page.waitForTimeout(3000)
+          sidebarVisible = await taskSidebar.isVisible()
         }
-        expect(await taskSidebar.isVisible()).toBe(true)
+        
+        // If still not visible, try clicking again
+        if (!sidebarVisible) {
+          await taskCard.click({ force: true })
+          await page.waitForTimeout(3000)
+          sidebarVisible = await taskSidebar.isVisible()
+        }
+        
+        expect(sidebarVisible).toBe(true)
         
         // Verify task data is loaded (check if title is displayed)
-        const sidebarTitle = await taskSidebar.getTaskTitle()
-        expect(sidebarTitle).toBeTruthy()
+        if (sidebarVisible) {
+          const sidebarTitle = await taskSidebar.getTaskTitle().catch(() => '')
+          expect(sidebarTitle).toBeTruthy()
+        }
       } else {
         // Skip test if no tasks available
         expect(true).toBe(true)

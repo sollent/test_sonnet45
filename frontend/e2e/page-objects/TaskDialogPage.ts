@@ -36,8 +36,9 @@ export class TaskDialogPage {
   readonly recurrenceToggle: Locator
   readonly recurrenceTypeDropdown: Locator
   
-  // Actions
+  // Actions - multiple selectors for save button
   readonly saveButton: Locator
+  readonly saveButtonSelectors: Locator[]
   readonly cancelButton: Locator
   
   // Validation errors
@@ -96,8 +97,15 @@ export class TaskDialogPage {
       page.locator('.recurrence-options [role="combobox"]')
     ).first()
     
-    // Actions
+    // Actions - multiple selectors for save button
     this.saveButton = page.getByRole('button', { name: /сохранить|save/i })
+    this.saveButtonSelectors = [
+      page.getByRole('button', { name: /сохранить|save/i }),
+      page.locator('button').filter({ hasText: /сохранить|save/i }),
+      page.locator('.p-dialog-footer button').filter({ hasText: /сохранить|save/i }),
+      page.locator('button[type="submit"]'),
+      page.locator('.p-button').filter({ hasText: /сохранить|save/i })
+    ]
     this.cancelButton = page.getByRole('button', { name: /отмена|cancel/i })
     
     // Validation
@@ -379,8 +387,35 @@ export class TaskDialogPage {
    * Click save button
    */
   async save(): Promise<void> {
-    await this.saveButton.waitFor({ state: 'visible', timeout: 15000 })
-    await this.saveButton.click()
+    // Wait for dialog to be fully visible
+    await this.dialog.waitFor({ state: 'visible', timeout: 10000 })
+    await this.page.waitForTimeout(500)
+    
+    // Try multiple selectors for save button
+    let buttonFound = false
+    for (const selector of this.saveButtonSelectors) {
+      try {
+        const button = selector.first()
+        await button.waitFor({ state: 'visible', timeout: 5000 })
+        const isVisible = await button.isVisible()
+        const isEnabled = await button.isEnabled()
+        if (isVisible && isEnabled) {
+          await button.scrollIntoViewIfNeeded()
+          await this.page.waitForTimeout(300)
+          await button.click()
+          buttonFound = true
+          break
+        }
+      } catch {
+        continue
+      }
+    }
+    
+    if (!buttonFound) {
+      throw new Error('Save button not found or not clickable in task dialog')
+    }
+    
+    await this.page.waitForTimeout(500)
   }
 
   /**

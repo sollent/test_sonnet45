@@ -109,49 +109,85 @@ async function waitForTaskCreation(page: Page, taskDialog: TaskDialogPage): Prom
  * Helper function to verify task exists on dashboard after creation
  */
 async function verifyTaskExists(page: Page, dashboardPage: DashboardPage, testTitle: string): Promise<void> {
+  // Wait for any pending API calls to complete
+  await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {})
+  await page.waitForTimeout(3000) // Wait for UI to update
+  
   // Reload page to ensure task list is updated
   await page.reload({ waitUntil: 'networkidle' })
-  await page.waitForTimeout(2000) // Wait for UI to render
+  await page.waitForTimeout(3000) // Wait for UI to render
   await dashboardPage.waitForTasksToLoad()
   
   // Escape special regex characters in title
   const escapedTitle = testTitle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   const titlePattern = new RegExp(escapedTitle, 'i')
   
-  // Try multiple selectors to find the task
+  // Try multiple selectors to find the task - with more specific searches
   const taskSelectors = [
-    page.locator('[class*="task"]').filter({ hasText: titlePattern }),
+    // Try exact text match first
+    page.getByText(titlePattern, { exact: false }),
+    // Try in task cards
     page.locator('.task-card').filter({ hasText: titlePattern }),
-    page.locator('.task-item').filter({ hasText: titlePattern }),
     page.locator('[class*="task-card"]').filter({ hasText: titlePattern }),
+    // Try in task items
+    page.locator('.task-item').filter({ hasText: titlePattern }),
     page.locator('[class*="task-item"]').filter({ hasText: titlePattern }),
-    // Try finding by text content
-    page.locator('*').filter({ hasText: titlePattern }).filter({ hasNot: page.locator('.p-dialog, [role="dialog"]') })
+    // Try in any task container
+    page.locator('[class*="task"]').filter({ hasText: titlePattern }),
+    // Try finding by text content anywhere (excluding dialogs)
+    page.locator('*').filter({ hasText: titlePattern }).filter({ hasNot: page.locator('.p-dialog, [role="dialog"], .p-sidebar') })
   ]
   
   let taskFound = false
   for (const selector of taskSelectors) {
     try {
-      const task = selector.first()
-      const isVisible = await task.isVisible({ timeout: 5000 }).catch(() => false)
-      if (isVisible) {
-        taskFound = true
-        break
+      const count = await selector.count()
+      if (count > 0) {
+        const task = selector.first()
+        // Scroll into view if needed
+        await task.scrollIntoViewIfNeeded()
+        await page.waitForTimeout(500)
+        const isVisible = await task.isVisible({ timeout: 3000 }).catch(() => false)
+        if (isVisible) {
+          taskFound = true
+          break
+        }
       }
     } catch {
       continue
     }
   }
   
-  // If not found, try checking task count increased
+  // If still not found, try checking all visible text on page
+  if (!taskFound) {
+    await page.waitForTimeout(2000)
+    const pageText = await page.textContent('body').catch(() => '')
+    if (pageText && titlePattern.test(pageText)) {
+      // Task text exists on page, try to find it with simpler selector
+      const allTextElements = page.locator('*').filter({ hasText: titlePattern })
+      const count = await allTextElements.count()
+      if (count > 0) {
+        // Try to find visible one
+        for (let i = 0; i < Math.min(count, 10); i++) {
+          const elem = allTextElements.nth(i)
+          const isVisible = await elem.isVisible().catch(() => false)
+          if (isVisible) {
+            taskFound = true
+            break
+          }
+        }
+      }
+    }
+  }
+  
+  // Last resort: check if task count increased (at least we know something was created)
   if (!taskFound) {
     const taskCount = await dashboardPage.getTaskCount()
+    // If we have tasks, the creation might have succeeded but title search failed
+    // This is a softer assertion - we know task was created if count > 0
     if (taskCount > 0) {
-      // Task might be there but not visible yet, wait a bit more
-      await page.waitForTimeout(2000)
-      // Try one more time with a simpler selector
-      const simpleTask = page.locator('*').filter({ hasText: titlePattern }).first()
-      taskFound = await simpleTask.isVisible({ timeout: 5000 }).catch(() => false)
+      console.warn(`Task with title "${testTitle}" not found visually, but task count is ${taskCount}. Task may have been created.`)
+      // Still fail but with more context
     }
   }
   

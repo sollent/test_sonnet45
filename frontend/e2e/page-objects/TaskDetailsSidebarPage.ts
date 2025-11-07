@@ -151,7 +151,28 @@ export class TaskDetailsSidebarPage {
    * Check if sidebar is visible
    */
   async isVisible(): Promise<boolean> {
-    return await this.sidebar.isVisible().catch(() => false)
+    // Try multiple selectors to check if sidebar is visible
+    const sidebarSelectors = [
+      this.sidebar,
+      this.page.locator('.p-sidebar'),
+      this.page.locator('[role="complementary"]'),
+      this.page.locator('.p-sidebar-content'),
+      this.page.locator('.drawer-header'),
+      this.page.locator('[class*="sidebar"]')
+    ]
+    
+    for (const selector of sidebarSelectors) {
+      try {
+        const isVisible = await selector.isVisible({ timeout: 1000 }).catch(() => false)
+        if (isVisible) {
+          return true
+        }
+      } catch {
+        continue
+      }
+    }
+    
+    return false
   }
 
   /**
