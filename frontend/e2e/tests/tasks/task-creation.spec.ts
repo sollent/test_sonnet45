@@ -312,11 +312,39 @@ test.describe('Task Creation', () => {
 
     test('TC-CREATE-007: Create task with "Завтра" quick date', async ({ page }) => {
       // Open create dialog
-      const createButton = page.getByRole('button', { name: /создать задачу|create task/i }).or(
-        page.locator('button').filter({ has: page.locator('i.pi-plus, i.pi-file-edit') })
-      ).first()
-      await createButton.waitFor({ state: 'visible', timeout: 10000 })
+      const createButtonSelectors = [
+        page.locator('.floating-action-button'),
+        page.locator('[class*="floating-action"]'),
+        page.locator('button').filter({ has: page.locator('i.pi-plus') }).filter({ hasText: /создать|create/i }),
+        page.getByRole('button', { name: /создать задачу|create task/i })
+      ]
+      
+      let createButton: Locator | null = null
+      for (const selector of createButtonSelectors) {
+        try {
+          await selector.first().waitFor({ state: 'visible', timeout: 5000 })
+          createButton = selector.first()
+          break
+        } catch {
+          continue
+        }
+      }
+      
+      if (!createButton) {
+        const plusButtons = page.locator('button').filter({ has: page.locator('i.pi-plus') })
+        const count = await plusButtons.count()
+        if (count > 0) {
+          createButton = plusButtons.first()
+        }
+      }
+      
+      if (!createButton) {
+        throw new Error('Create task button not found')
+      }
+      
+      await createButton.scrollIntoViewIfNeeded()
       await createButton.click()
+      await page.waitForTimeout(1000)
       await taskDialog.waitForDialog()
       
       // Click "Завтра" button
@@ -346,11 +374,39 @@ test.describe('Task Creation', () => {
 
     test('TC-CREATE-008: Create task with "Послезавтра" quick date', async ({ page }) => {
       // Open create dialog
-      const createButton = page.getByRole('button', { name: /создать задачу|create task/i }).or(
-        page.locator('button').filter({ has: page.locator('i.pi-plus, i.pi-file-edit') })
-      ).first()
-      await createButton.waitFor({ state: 'visible', timeout: 10000 })
+      const createButtonSelectors = [
+        page.locator('.floating-action-button'),
+        page.locator('[class*="floating-action"]'),
+        page.locator('button').filter({ has: page.locator('i.pi-plus') }).filter({ hasText: /создать|create/i }),
+        page.getByRole('button', { name: /создать задачу|create task/i })
+      ]
+      
+      let createButton: Locator | null = null
+      for (const selector of createButtonSelectors) {
+        try {
+          await selector.first().waitFor({ state: 'visible', timeout: 5000 })
+          createButton = selector.first()
+          break
+        } catch {
+          continue
+        }
+      }
+      
+      if (!createButton) {
+        const plusButtons = page.locator('button').filter({ has: page.locator('i.pi-plus') })
+        const count = await plusButtons.count()
+        if (count > 0) {
+          createButton = plusButtons.first()
+        }
+      }
+      
+      if (!createButton) {
+        throw new Error('Create task button not found')
+      }
+      
+      await createButton.scrollIntoViewIfNeeded()
       await createButton.click()
+      await page.waitForTimeout(1000)
       await taskDialog.waitForDialog()
       
       // Click "Послезавтра" button
