@@ -342,8 +342,11 @@ class TagControllerTest extends WebTestCase
         // Act
         $this->request('POST', '/api/tags', [], $payload);
 
-        // Assert: Controller has bug with undefined array key, expect 500 for now
-        $this->assertResponseStatusCodeSame(Response::HTTP_INTERNAL_SERVER_ERROR);
+        // Assert: Validation should return 400 with error message
+        $this->assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
+        $data = $this->getResponseData();
+        $this->assertArrayHasKey('errors', $data);
+        $this->assertContains('Tag name is required', $data['errors']);
     }
 
     /** @test */

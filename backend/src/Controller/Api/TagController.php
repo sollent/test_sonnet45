@@ -172,7 +172,7 @@ class TagController extends AbstractController
         }
 
         $tag = new Tag();
-        $tag->setName($data['name']);
+        $tag->setName($data['name'] ?? '');
         $tag->setColor($data['color'] ?? '#3B82F6');
         $tag->setIcon($data['icon'] ?? null);
         $tag->setUser($user);

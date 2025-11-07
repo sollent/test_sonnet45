@@ -78,10 +78,12 @@ class TaskControllerTest extends WebTestCase
     public function testListTasksAuthenticated(): void
     {
         // Arrange: Create active (pending) tasks for authenticated user
+        // Active tasks must have dueDate or startDate >= today
         TaskFactory::createMany(5, [
             'user' => $this->user,
             'status' => TaskStatus::PENDING,
             'isArchived' => false,
+            'dueDate' => new \DateTimeImmutable('+1 day'), // Ensure tasks are "active"
         ]);
 
         // Act
@@ -112,10 +114,12 @@ class TaskControllerTest extends WebTestCase
         TaskFactory::createMany(3, [
             'user' => $this->user,
             'status' => TaskStatus::PENDING,
+            'dueDate' => new \DateTimeImmutable('+1 day'), // Ensure tasks are "active"
         ]);
         TaskFactory::createMany(2, [
             'user' => $this->user,
             'status' => TaskStatus::COMPLETED,
+            'dueDate' => new \DateTimeImmutable('+1 day'),
         ]);
 
         // Act: Filter by completed
@@ -153,10 +157,12 @@ class TaskControllerTest extends WebTestCase
         TaskFactory::createOne([
             'user' => $this->user,
             'title' => 'Important Meeting',
+            'dueDate' => new \DateTimeImmutable('+1 day'),
         ]);
         TaskFactory::createOne([
             'user' => $this->user,
             'title' => 'Buy groceries',
+            'dueDate' => new \DateTimeImmutable('+1 day'),
         ]);
 
         // Act
@@ -176,11 +182,17 @@ class TaskControllerTest extends WebTestCase
         $tag1 = TagFactory::createOne(['user' => $this->user, 'name' => 'work']);
         $tag2 = TagFactory::createOne(['user' => $this->user, 'name' => 'personal']);
 
-        $task1 = TaskFactory::createOne(['user' => $this->user]);
+        $task1 = TaskFactory::createOne([
+            'user' => $this->user,
+            'dueDate' => new \DateTimeImmutable('+1 day'),
+        ]);
         $task1->_real()->addTag($tag1->_real());
         $task1->_save();
 
-        $task2 = TaskFactory::createOne(['user' => $this->user]);
+        $task2 = TaskFactory::createOne([
+            'user' => $this->user,
+            'dueDate' => new \DateTimeImmutable('+1 day'),
+        ]);
         $task2->_real()->addTag($tag2->_real());
         $task2->_save();
 
@@ -201,10 +213,14 @@ class TaskControllerTest extends WebTestCase
         TaskFactory::createMany(2, [
             'user' => $this->user,
             'priority' => TaskPriority::HIGH,
+            'status' => TaskStatus::PENDING, // Prevent random CANCELLED status
+            'dueDate' => new \DateTimeImmutable('+1 day'),
         ]);
         TaskFactory::createOne([
             'user' => $this->user,
             'priority' => TaskPriority::LOW,
+            'status' => TaskStatus::PENDING,
+            'dueDate' => new \DateTimeImmutable('+1 day'),
         ]);
 
         // Act
@@ -223,10 +239,12 @@ class TaskControllerTest extends WebTestCase
         TaskFactory::createMany(2, [
             'user' => $this->user,
             'status' => TaskStatus::PENDING,
+            'dueDate' => new \DateTimeImmutable('+1 day'),
         ]);
         TaskFactory::createOne([
             'user' => $this->user,
             'status' => TaskStatus::IN_PROGRESS,
+            'dueDate' => new \DateTimeImmutable('+1 day'),
         ]);
 
         // Act
@@ -242,7 +260,10 @@ class TaskControllerTest extends WebTestCase
     public function testPaginationWithLimitAndOffset(): void
     {
         // Arrange
-        TaskFactory::createMany(10, ['user' => $this->user]);
+        TaskFactory::createMany(10, [
+            'user' => $this->user,
+            'dueDate' => new \DateTimeImmutable('+1 day'),
+        ]);
 
         // Act
         $this->request('GET', '/api/tasks?limit=5&offset=0');
@@ -431,12 +452,12 @@ class TaskControllerTest extends WebTestCase
     public function testCreateTaskWithTags(): void
     {
         // Arrange
-        $tag1 = TagFactory::createOne(['user' => $this->user]);
-        $tag2 = TagFactory::createOne(['user' => $this->user]);
+        $tag1 = TagFactory::createOne(['user' => $this->user, 'name' => 'work']);
+        $tag2 = TagFactory::createOne(['user' => $this->user, 'name' => 'urgent']);
 
         $payload = json_encode([
             'title' => 'Tagged Task',
-            'tagIds' => [$tag1->_real()->getId(), $tag2->_real()->getId()],
+            'tags' => ['work', 'urgent'], // Use tag names, not IDs
         ]);
 
         // Act
@@ -628,10 +649,10 @@ class TaskControllerTest extends WebTestCase
     {
         // Arrange
         $task = TaskFactory::createOne(['user' => $this->user]);
-        $tag = TagFactory::createOne(['user' => $this->user]);
+        $tag = TagFactory::createOne(['user' => $this->user, 'name' => 'important']);
         $taskId = $task->_real()->getId();
 
-        $payload = json_encode(['tagIds' => [$tag->_real()->getId()]]);
+        $payload = json_encode(['tags' => ['important']]); // Use tag names, not IDs
 
         // Act
         $this->request('PUT', "/api/tasks/{$taskId}", [], $payload);
@@ -1028,10 +1049,15 @@ class TaskControllerTest extends WebTestCase
             'user' => $this->user,
             'dueDate' => null,
             'startDate' => null,
+            'status' => TaskStatus::PENDING, // Prevent random CANCELLED status
+            'isArchived' => false, // Explicitly set to prevent any issues
+            'parentTask' => null, // Ensure these are top-level tasks
         ]);
         TaskFactory::createOne([
             'user' => $this->user,
             'dueDate' => new \DateTimeImmutable('+1 day'),
+            'status' => TaskStatus::PENDING,
+            'isArchived' => false,
         ]);
 
         // Act
@@ -1041,7 +1067,8 @@ class TaskControllerTest extends WebTestCase
         $this->assertResponseIsSuccessful();
         $data = $this->getResponseData();
 
-        $this->assertGreaterThanOrEqual(3, count($data));
+        $this->assertArrayHasKey('tasks', $data);
+        $this->assertGreaterThanOrEqual(3, count($data['tasks'])); // Count tasks, not response keys
     }
 
     /** @test */

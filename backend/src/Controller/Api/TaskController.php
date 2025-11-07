@@ -9,6 +9,7 @@ use App\Dto\Request\Task\TaskFilterDto;
 use App\Dto\Request\Task\UpdateTaskDto;
 use App\Dto\Response\Task\TaskResponseDto;
 use App\Entity\Task;
+use App\Enum\TaskPriority;
 use App\Enum\TaskStatus;
 use App\Repository\Database\TaskRepository;
 use App\Service\TaskService;
@@ -47,9 +48,9 @@ class TaskController extends AbstractController
     private function enrichDtoWithTranslations(TaskResponseDto $dto, Request $request): TaskResponseDto
     {
         $locale = $request->getLocale();
-        
-        $dto->priorityLabel = $this->translationService->translatePriority($dto->priority, $locale);
-        $dto->statusLabel = $this->translationService->translateStatus($dto->status, $locale);
+
+        $dto->priorityLabel = $this->translationService->translatePriority(TaskPriority::from($dto->priority), $locale);
+        $dto->statusLabel = $this->translationService->translateStatus(TaskStatus::from($dto->status), $locale);
         
         // Recursively enrich subtasks
         if (!empty($dto->subtasks)) {
@@ -292,9 +293,23 @@ class TaskController extends AbstractController
     {
         $data = json_decode($request->getContent(), true);
         $taskIds = $data['taskIds'] ?? [];
-        
-        $this->taskService->updateTaskSortOrders($this->getUser(), $taskIds);
-        
+
+        // Validate that taskIds is not empty
+        if (empty($taskIds)) {
+            return $this->json(['error' => 'Task IDs are required'], Response::HTTP_BAD_REQUEST);
+        }
+
+        // Validate that all task IDs exist and belong to the user
+        $user = $this->getUser();
+        foreach ($taskIds as $taskId) {
+            $task = $this->taskRepository->find($taskId);
+            if (!$task || $task->getUser() !== $user) {
+                return $this->json(['error' => 'Invalid task ID: ' . $taskId], Response::HTTP_BAD_REQUEST);
+            }
+        }
+
+        $this->taskService->updateTaskSortOrders($user, $taskIds);
+
         return new Response(null, Response::HTTP_NO_CONTENT);
     }
 
@@ -585,14 +600,20 @@ class TaskController extends AbstractController
     public function calendarDay(Request $request): JsonResponse
     {
         $dateStr = $request->query->get('date', date('Y-m-d'));
-        $date = new \DateTime($dateStr);
+
+        try {
+            $date = new \DateTime($dateStr);
+        } catch (\Exception $e) {
+            return $this->json(['error' => 'Invalid date format. Expected Y-m-d format.'], Response::HTTP_BAD_REQUEST);
+        }
+
         $includeCompleted = $request->query->getBoolean('includeCompleted', true);
-        
+
         $tasks = $this->taskRepository->findTasksByDay($this->getUser(), $date, $includeCompleted);
-        
+
         $dtos = array_map(fn($task) => TaskResponseDto::fromEntity($task, false), $tasks);
         $dtos = $this->enrichDtosWithTranslations($dtos, $request);
-        
+
         return $this->json($dtos);
     }
 }

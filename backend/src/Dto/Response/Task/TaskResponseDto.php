@@ -14,8 +14,8 @@ final class TaskResponseDto
     public int $id;
     public string $title;
     public ?string $description;
-    public TaskStatus $status;
-    public TaskPriority $priority;
+    public string $status;
+    public string $priority;
     public ?\DateTimeImmutable $startDate;
     public ?\DateTimeImmutable $dueDate;
     public ?\DateTimeImmutable $completedAt;
@@ -46,8 +46,8 @@ final class TaskResponseDto
         $dto->id = $task->getId();
         $dto->title = $task->getTitle();
         $dto->description = $task->getDescription();
-        $dto->status = $task->getStatus();
-        $dto->priority = $task->getPriority();
+        $dto->status = $task->getStatus()->value;
+        $dto->priority = $task->getPriority()->value;
         $dto->startDate = $task->getStartDate();
         $dto->dueDate = $task->getDueDate();
         $dto->completedAt = $task->getCompletedAt();
