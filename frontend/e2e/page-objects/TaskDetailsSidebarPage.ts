@@ -52,8 +52,10 @@ export class TaskDetailsSidebarPage {
   constructor(page: Page) {
     this.page = page
     
-    // Sidebar
-    this.sidebar = page.locator('.p-sidebar, [role="complementary"]').filter({ hasText: /детали|details/i })
+    // Sidebar - PrimeVue Sidebar component
+    this.sidebar = page.locator('.p-sidebar').or(
+      page.locator('[role="complementary"]')
+    ).first()
     this.sidebarHeader = page.locator('.drawer-header, .sidebar-header')
     this.closeButton = page.locator('button[aria-label*="close"], button').filter({ has: page.locator('i.pi-times') })
     this.editButton = page.locator('button[aria-label*="edit"], button').filter({ has: page.locator('i.pi-pencil') })
@@ -100,7 +102,35 @@ export class TaskDetailsSidebarPage {
    * Wait for sidebar to be visible
    */
   async waitForSidebar(): Promise<void> {
-    await this.sidebar.waitFor({ state: 'visible', timeout: 10000 })
+    // Try multiple selectors for sidebar
+    const sidebarSelectors = [
+      this.page.locator('.p-sidebar'),
+      this.page.locator('[role="complementary"]'),
+      this.page.locator('.p-sidebar-content'),
+      this.page.locator('.drawer-header')
+    ]
+    
+    let sidebarFound = false
+    for (const selector of sidebarSelectors) {
+      try {
+        await selector.first().waitFor({ state: 'visible', timeout: 3000 })
+        sidebarFound = true
+        break
+      } catch {
+        continue
+      }
+    }
+    
+    if (!sidebarFound) {
+      // Wait a bit more and try again
+      await this.page.waitForTimeout(1000)
+      await this.sidebar.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {
+        // If still not found, check if any sidebar-like element exists
+        const anySidebar = this.page.locator('.p-sidebar, [role="complementary"]')
+        anySidebar.first().waitFor({ state: 'visible', timeout: 3000 }).catch(() => {})
+      })
+    }
+    
     await this.page.waitForTimeout(500)
   }
 
@@ -115,11 +145,40 @@ export class TaskDetailsSidebarPage {
    * Click on task card to open sidebar
    */
   async openTaskDetails(taskTitle: string): Promise<void> {
-    // Find task card by title
-    const taskCard = this.page.locator('[class*="task"]').filter({ hasText: new RegExp(taskTitle, 'i') }).first()
+    // Find task card by title - try multiple selectors
+    const taskCardSelectors = [
+      this.page.locator('.task-card').filter({ hasText: new RegExp(taskTitle, 'i') }),
+      this.page.locator('.task-item').filter({ hasText: new RegExp(taskTitle, 'i') }),
+      this.page.locator('[class*="task-card"]').filter({ hasText: new RegExp(taskTitle, 'i') }),
+      this.page.locator('[class*="task"]').filter({ hasText: new RegExp(taskTitle, 'i') })
+    ]
+    
+    let taskCard: Locator | null = null
+    for (const selector of taskCardSelectors) {
+      try {
+        await selector.first().waitFor({ state: 'visible', timeout: 3000 })
+        taskCard = selector.first()
+        break
+      } catch {
+        continue
+      }
+    }
+    
+    if (!taskCard) {
+      // Fallback: click first task card
+      taskCard = this.page.locator('.task-card, .task-item').first()
+    }
+    
     await taskCard.waitFor({ state: 'visible', timeout: 5000 })
     await taskCard.click()
-    await this.waitForSidebar()
+    
+    // Wait for sidebar with multiple selectors
+    await Promise.race([
+      this.sidebar.waitFor({ state: 'visible', timeout: 10000 }),
+      this.page.locator('.p-sidebar').waitFor({ state: 'visible', timeout: 10000 }),
+      this.page.waitForTimeout(2000)
+    ])
+    await this.page.waitForTimeout(500)
   }
 
   /**

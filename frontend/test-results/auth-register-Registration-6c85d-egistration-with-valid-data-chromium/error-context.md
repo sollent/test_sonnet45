@@ -1,0 +1,49 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - generic [ref=e12]:
+    - generic [ref=e14]: 
+    - generic [ref=e15]:
+      - heading "Create Account" [level=1] [ref=e16]
+      - paragraph [ref=e17]: Join us today
+    - generic [ref=e19]:
+      - generic [ref=e20]:
+        - generic [ref=e21]: Email *
+        - textbox "Email *" [disabled] [ref=e22]:
+          - /placeholder: Join us today
+          - text: e2e-test-1762508672107-8550@example.com
+      - generic [ref=e23]:
+        - generic [ref=e24]: Password *
+        - generic [ref=e25]:
+          - textbox "Password" [disabled]: TestPassword123!
+          - img [ref=e26]
+          - generic [ref=e28]: Enter a password
+      - generic [ref=e29]:
+        - generic [ref=e30]: Confirm Password *
+        - generic [ref=e31]:
+          - textbox "Confirm Password" [disabled]: TestPassword123!
+          - img [ref=e32]
+          - generic [ref=e34]: Enter a password
+      - generic [ref=e35]:
+        - button "  Sign Up" [disabled]:
+          - generic:
+            - generic: 
+          - generic:
+            - generic: 
+            - text: Sign Up
+      - generic [ref=e37]: OR
+      - generic [ref=e42]:
+        - button "Doorgaan met Google. Wordt geopend in een nieuw tabblad." [ref=e44] [cursor=pointer]:
+          - generic [ref=e46]:
+            - img [ref=e48]
+            - generic [ref=e55]: Doorgaan met Google
+        - iframe
+    - paragraph [ref=e57]:
+      - text: Already have an account?
+      - link "Sign In" [ref=e58] [cursor=pointer]:
+        - /url: /login
+  - button "Language selector" [ref=e61] [cursor=pointer]:
+    - generic [ref=e62]: 🇬🇧
+    - generic [ref=e63]: EN
+```

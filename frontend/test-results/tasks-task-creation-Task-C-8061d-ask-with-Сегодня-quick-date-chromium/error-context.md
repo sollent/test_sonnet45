@@ -1,0 +1,250 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - banner [ref=e5]:
+        - generic [ref=e6]:
+          - heading "My Tasks" [level=1] [ref=e8]
+          - generic [ref=e9]:
+            - button "My Tasks" [ref=e10] [cursor=pointer]:
+              - generic [ref=e11]: 
+              - generic [ref=e12]: My Tasks
+            - button "Calendar" [ref=e13] [cursor=pointer]:
+              - generic [ref=e14]: 
+              - generic [ref=e15]: Calendar
+            - button "Analytics" [ref=e16] [cursor=pointer]:
+              - generic [ref=e17]: 
+              - generic [ref=e18]: Analytics
+          - generic [ref=e19]:
+            - button " sollent98@gmail.com" [ref=e20] [cursor=pointer]:
+              - generic [ref=e21]: 
+              - generic [ref=e22]: sollent98@gmail.com
+            - button "Logout" [ref=e23] [cursor=pointer]:
+              - generic [ref=e24]: 
+      - generic [ref=e26]:
+        - complementary [ref=e27]:
+          - generic [ref=e28]:
+            - generic [ref=e30]:
+              - generic [ref=e31]: 
+              - textbox "Search tasks..." [ref=e32]
+            - navigation [ref=e33]:
+              - heading "Filter by" [level=3] [ref=e34]
+              - generic [ref=e35]:
+                - button " All Tasks" [ref=e36] [cursor=pointer]:
+                  - generic [ref=e37]: 
+                  - generic [ref=e38]: All Tasks
+                - button " Today" [ref=e39] [cursor=pointer]:
+                  - generic [ref=e40]: 
+                  - generic [ref=e41]: Today
+                - button " Upcoming" [ref=e42] [cursor=pointer]:
+                  - generic [ref=e43]: 
+                  - generic [ref=e44]: Upcoming
+                - button " Overdue" [ref=e45] [cursor=pointer]:
+                  - generic [ref=e46]: 
+                  - generic [ref=e47]: Overdue
+                - button " No Due Date" [ref=e48] [cursor=pointer]:
+                  - generic [ref=e49]: 
+                  - generic [ref=e50]: No Due Date
+            - generic [ref=e51]:
+              - heading "Most Used" [level=3] [ref=e52]
+              - generic [ref=e53]:
+                - button "Работа 14" [ref=e54] [cursor=pointer]:
+                  - generic [ref=e56]: Работа
+                  - generic [ref=e57]: "14"
+                - button "Личное 11" [ref=e58] [cursor=pointer]:
+                  - generic [ref=e60]: Личное
+                  - generic [ref=e61]: "11"
+                - button "Покупки 8" [ref=e62] [cursor=pointer]:
+                  - generic [ref=e64]: Покупки
+                  - generic [ref=e65]: "8"
+                - button "Срочно 3" [ref=e66] [cursor=pointer]:
+                  - generic [ref=e68]: Срочно
+                  - generic [ref=e69]: "3"
+                - button "фывфы 2" [ref=e70] [cursor=pointer]:
+                  - generic [ref=e72]: фывфы
+                  - generic [ref=e73]: "2"
+        - main [ref=e74]:
+          - generic [ref=e76]:
+            - button "Cards View" [ref=e77] [cursor=pointer]:
+              - generic [ref=e78]: 
+            - button "Table View" [ref=e79] [cursor=pointer]:
+              - generic [ref=e80]: 
+          - generic [ref=e81]:
+            - generic [ref=e83]:
+              - button " Today" [ref=e84] [cursor=pointer]:
+                - generic [ref=e85]: 
+                - generic [ref=e86]: Today
+              - button " Urgent" [ref=e87] [cursor=pointer]:
+                - generic [ref=e88]: 
+                - generic [ref=e89]: Urgent
+              - button " Overdue" [ref=e90] [cursor=pointer]:
+                - generic [ref=e91]: 
+                - generic [ref=e92]: Overdue
+              - button " In Progress" [ref=e93] [cursor=pointer]:
+                - generic [ref=e94]: 
+                - generic [ref=e95]: In Progress
+            - button " Filters" [ref=e96] [cursor=pointer]:
+              - generic [ref=e97]: 
+              - generic [ref=e98]: Filters
+          - generic [ref=e99]:
+            - generic [ref=e100]:
+              - generic [ref=e101]:
+                - generic [ref=e102]:
+                  - heading "Today 🎉" [level=3] [ref=e104]:
+                    - text: Today
+                    - generic [ref=e105]: 🎉
+                  - generic [ref=e106]:
+                    - generic [ref=e108]:
+                      - generic [ref=e109]: "1"
+                      - generic [ref=e110]: /
+                      - generic [ref=e111]: "1"
+                    - generic [ref=e112]:
+                      - img [ref=e113]
+                      - generic [ref=e116]: 100%
+                - generic [ref=e121]:
+                  - text: ✨ All tasks completed!
+                  - generic [ref=e122]: Today
+              - generic [ref=e125] [cursor=pointer]:
+                - generic [ref=e126]: 
+                - generic [ref=e127]: ✅ Completed
+                - generic [ref=e128]: "1"
+            - generic [ref=e129]:
+              - generic [ref=e130]:
+                - generic [ref=e131]:
+                  - heading "Tomorrow 🎉" [level=3] [ref=e133]:
+                    - text: Tomorrow
+                    - generic [ref=e134]: 🎉
+                  - generic [ref=e135]:
+                    - generic [ref=e137]:
+                      - generic [ref=e138]: "1"
+                      - generic [ref=e139]: /
+                      - generic [ref=e140]: "1"
+                    - generic [ref=e141]:
+                      - img [ref=e142]
+                      - generic [ref=e145]: 100%
+                - generic [ref=e150]:
+                  - text: ✨ All tasks completed!
+                  - generic [ref=e151]: Tomorrow
+              - generic [ref=e154] [cursor=pointer]:
+                - generic [ref=e155]: 
+                - generic [ref=e156]: ✅ Completed
+                - generic [ref=e157]: "1"
+            - generic [ref=e158]:
+              - generic [ref=e159]:
+                - generic [ref=e160]:
+                  - heading "Sunday, November 9, 2025 🎉" [level=3] [ref=e162]:
+                    - text: Sunday, November 9, 2025
+                    - generic [ref=e163]: 🎉
+                  - generic [ref=e164]:
+                    - generic [ref=e166]:
+                      - generic [ref=e167]: "2"
+                      - generic [ref=e168]: /
+                      - generic [ref=e169]: "2"
+                    - generic [ref=e170]:
+                      - img [ref=e171]
+                      - generic [ref=e174]: 100%
+                - generic [ref=e179]:
+                  - text: ✨ All tasks completed!
+                  - generic [ref=e180]: Sunday, November 9, 2025
+              - generic [ref=e183] [cursor=pointer]:
+                - generic [ref=e184]: 
+                - generic [ref=e185]: ✅ Completed
+                - generic [ref=e186]: "2"
+            - generic [ref=e188]:
+              - generic [ref=e189]: ✨
+              - generic [ref=e190]: All tasks loaded (4 total)
+      - button "Create Task" [ref=e192] [cursor=pointer]:
+        - generic [ref=e193]: 
+        - generic [ref=e194]: Create Task
+    - button "Language selector" [ref=e197] [cursor=pointer]:
+      - generic [ref=e198]: 🇬🇧
+      - generic [ref=e199]: EN
+  - dialog [ref=e201]:
+    - generic [ref=e203]:
+      - generic [ref=e204]:
+        - generic [ref=e205]: 
+        - generic [ref=e206]:
+          - heading "New Task" [level=3] [ref=e207]
+          - paragraph [ref=e208]: Create your first task to get started
+      - button "Close" [ref=e210] [cursor=pointer]:
+        - img [ref=e211]
+    - generic [ref=e214]:
+      - generic [ref=e215]:
+        - generic [ref=e216]: Tasks *
+        - textbox "What needs to be done?" [active] [ref=e217]
+      - generic [ref=e218]:
+        - generic [ref=e219]: Description
+        - textbox "Add description..." [ref=e220]
+      - generic [ref=e221]:
+        - generic [ref=e222]:
+          - generic [ref=e223]:
+            - generic [ref=e224]: 
+            - generic [ref=e225]: Schedule Task
+          - button " Show Advanced Options" [ref=e226] [cursor=pointer]:
+            - generic [ref=e227]: 
+            - generic [ref=e228]: Show Advanced Options
+        - generic [ref=e230]:
+          - button " Today" [ref=e231] [cursor=pointer]:
+            - generic [ref=e232]: 
+            - generic [ref=e233]: Today
+          - button " Tomorrow" [ref=e234] [cursor=pointer]:
+            - generic [ref=e235]: 
+            - generic [ref=e236]: Tomorrow
+          - button " Day After Tomorrow" [ref=e237] [cursor=pointer]:
+            - generic [ref=e238]: 
+            - generic [ref=e239]: Day After Tomorrow
+      - generic [ref=e240]:
+        - generic [ref=e241]:
+          - generic [ref=e242]: Status
+          - generic [ref=e243] [cursor=pointer]:
+            - combobox "Pending" [ref=e244]
+            - img [ref=e246]
+        - generic [ref=e248]:
+          - generic [ref=e249]: Priority
+          - generic [ref=e250] [cursor=pointer]:
+            - combobox "Medium" [ref=e251]
+            - img [ref=e253]
+      - generic [ref=e255]:
+        - generic [ref=e256]: Tags
+        - generic [ref=e257]:
+          - listbox [ref=e258]:
+            - option [ref=e259]:
+              - combobox "Add tags (press Enter)" [ref=e260]
+          - status [ref=e261]: No results found
+        - generic [ref=e262]: Press Enter or comma to add tags
+        - generic [ref=e263]:
+          - generic [ref=e264]: "Popular tags:"
+          - generic [ref=e265]:
+            - generic "Работа" [ref=e266] [cursor=pointer]:
+              - generic [ref=e267]: Работа
+            - generic "Личное" [ref=e268] [cursor=pointer]:
+              - generic [ref=e269]: Личное
+            - generic "Покупки" [ref=e270] [cursor=pointer]:
+              - generic [ref=e271]: Покупки
+            - generic "Срочно" [ref=e272] [cursor=pointer]:
+              - generic [ref=e273]: Срочно
+            - generic "фывфыв" [ref=e274] [cursor=pointer]:
+              - generic [ref=e275]: фывфыв
+            - generic "фывфы" [ref=e276] [cursor=pointer]:
+              - generic [ref=e277]: фывфы
+            - generic "asdasads" [ref=e278] [cursor=pointer]:
+              - generic [ref=e279]: asdasads
+      - generic [ref=e280]:
+        - generic [ref=e281]:
+          - generic [ref=e282]: 
+          - text: Attachments
+        - generic [ref=e284] [cursor=pointer]:
+          - generic [ref=e285]: 
+          - paragraph [ref=e286]: Drag files here or click to select
+          - generic [ref=e287]: "Maximum size: 10MB"
+      - generic [ref=e291]:
+        - switch [ref=e292] [cursor=pointer]
+        - generic [ref=e294] [cursor=pointer]: No repeat
+    - generic [ref=e296]:
+      - button "Cancel" [ref=e297] [cursor=pointer]:
+        - generic [ref=e298]: Cancel
+      - button "Save" [ref=e299] [cursor=pointer]:
+        - generic [ref=e300]: Save
+```
