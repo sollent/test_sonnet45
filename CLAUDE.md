@@ -60,7 +60,7 @@
 | Topic | Document | Key Info |
 |-------|----------|----------|
 | **Daily Workflow** | [`docs/guides/DEVELOPMENT_WORKFLOW.md`](docs/guides/DEVELOPMENT_WORKFLOW.md) | Docker commands, migrations, PostgreSQL |
-| **Testing** | [`docs/guides/TESTING.md`](docs/guides/TESTING.md) | PHPUnit, Vitest, test organization |
+| **Testing** | [`docs/guides/testing/TESTING.md`](docs/guides/testing/TESTING.md) | PHPUnit, Vitest, test organization |
 | **Troubleshooting** | [`docs/guides/TROUBLESHOOTING.md`](docs/guides/TROUBLESHOOTING.md) | All solved issues & solutions |
 
 ---
@@ -123,7 +123,7 @@ npm run test:run
 → Read [`docs/backend/DATABASE.md`](docs/backend/DATABASE.md)
 
 **"How to test?"**
-→ Read [`docs/guides/TESTING.md`](docs/guides/TESTING.md)
+→ Read [`docs/guides/testing/TESTING.md`](docs/guides/testing/TESTING.md)
 
 **"Need complete context?"**
 → Start with [`docs/INDEX.md`](docs/INDEX.md) (2.5 hours reading path)
