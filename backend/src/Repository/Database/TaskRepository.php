@@ -41,6 +41,10 @@ class TaskRepository extends ServiceEntityRepository
         ?bool $onlyParentTasks = true
     ): array {
         $qb = $this->createQueryBuilder('t')
+            ->leftJoin('t.tags', 'tag')
+            ->leftJoin('t.user', 'u')
+            ->addSelect('tag')
+            ->addSelect('u')
             ->where('t.user = :user')
             ->setParameter('user', $user);
 
@@ -76,6 +80,10 @@ class TaskRepository extends ServiceEntityRepository
         $todayEnd = new \DateTimeImmutable('today 23:59:59');
 
         $qb = $this->createQueryBuilder('t')
+            ->leftJoin('t.tags', 'tag')
+            ->leftJoin('t.user', 'u')
+            ->addSelect('tag')
+            ->addSelect('u')
             ->where('t.user = :user')
             ->andWhere('t.parentTask IS NULL')
             ->andWhere('t.isArchived = false')
@@ -114,6 +122,10 @@ class TaskRepository extends ServiceEntityRepository
         $now = new \DateTimeImmutable();
 
         return $this->createQueryBuilder('t')
+            ->leftJoin('t.tags', 'tag')
+            ->leftJoin('t.user', 'u')
+            ->addSelect('tag')
+            ->addSelect('u')
             ->where('t.user = :user')
             ->andWhere('t.parentTask IS NULL')
             ->andWhere('t.isArchived = false')
@@ -139,6 +151,10 @@ class TaskRepository extends ServiceEntityRepository
         $endDate = new \DateTimeImmutable("+{$days} days");
 
         $qb = $this->createQueryBuilder('t')
+            ->leftJoin('t.tags', 'tag')
+            ->leftJoin('t.user', 'u')
+            ->addSelect('tag')
+            ->addSelect('u')
             ->where('t.user = :user')
             ->andWhere('t.parentTask IS NULL')
             ->andWhere('t.isArchived = false')
@@ -171,6 +187,10 @@ class TaskRepository extends ServiceEntityRepository
         $todayStart = new \DateTimeImmutable('today');
 
         $qb = $this->createQueryBuilder('t')
+            ->leftJoin('t.tags', 'tag')
+            ->leftJoin('t.user', 'u')
+            ->addSelect('tag')
+            ->addSelect('u')
             ->where('t.user = :user')
             ->andWhere('t.parentTask IS NULL')
             ->andWhere('t.isArchived = false')
@@ -253,6 +273,9 @@ class TaskRepository extends ServiceEntityRepository
     {
         return $this->createQueryBuilder('t')
             ->join('t.tags', 'tag')
+            ->leftJoin('t.user', 'u')
+            ->addSelect('tag')
+            ->addSelect('u')
             ->where('t.user = :user')
             ->andWhere('tag.id = :tagId')
             ->andWhere('t.parentTask IS NULL')
@@ -273,6 +296,10 @@ class TaskRepository extends ServiceEntityRepository
     public function searchTasks(User $user, string $query, ?TaskFilterDto $filters = null): array
     {
         $qb = $this->createQueryBuilder('t')
+            ->leftJoin('t.tags', 'tag')
+            ->leftJoin('t.user', 'u')
+            ->addSelect('tag')
+            ->addSelect('u')
             ->where('t.user = :user')
             ->andWhere('t.parentTask IS NULL')
             ->andWhere('t.isArchived = false')
@@ -330,44 +357,56 @@ class TaskRepository extends ServiceEntityRepository
      */
     public function findWithSubtasks(int $id): ?Task
     {
-        $task = $this->createQueryBuilder('t')
-            ->leftJoin('t.subtasks', 's')
+        $conn = $this->getEntityManager()->getConnection();
+
+        // Recursive CTE to load all subtasks in ONE query
+        $sql = "
+            WITH RECURSIVE subtask_tree AS (
+                -- Base case: get the main task
+                SELECT t.* FROM task t WHERE t.id = :id
+                UNION ALL
+                -- Recursive case: get all subtasks
+                SELECT t.* FROM task t
+                INNER JOIN subtask_tree st ON t.parent_task_id = st.id
+            )
+            SELECT id FROM subtask_tree
+        ";
+
+        $taskIds = $conn->executeQuery($sql, ['id' => $id])->fetchFirstColumn();
+
+        if (empty($taskIds)) {
+            return null;
+        }
+
+        // Load all tasks + tags + user in ONE query using IN clause
+        $tasks = $this->createQueryBuilder('t')
             ->leftJoin('t.tags', 'tag')
-            ->addSelect('s')
+            ->leftJoin('t.user', 'u')
             ->addSelect('tag')
-            ->where('t.id = :id')
-            ->setParameter('id', $id)
+            ->addSelect('u')
+            ->where('t.id IN (:ids)')
+            ->setParameter('ids', $taskIds)
             ->getQuery()
-            ->getOneOrNullResult();
-            
-        // If task has subtasks, load their subtasks recursively
-        if ($task && $task->getSubtasks()->count() > 0) {
-            foreach ($task->getSubtasks() as $subtask) {
-                $this->loadSubtasksRecursively($subtask);
+            ->getResult();
+
+        // Find and return the main task (Doctrine will automatically populate subtasks collection)
+        foreach ($tasks as $task) {
+            if ($task->getId() === $id) {
+                return $task;
             }
         }
-        
-        return $task;
+
+        return null;
     }
-    
+
     /**
+     * @deprecated No longer needed - use findWithSubtasks() with CTE
      * Recursively load subtasks
      */
     private function loadSubtasksRecursively(Task $task): void
     {
-        $subtasks = $this->createQueryBuilder('t')
-            ->leftJoin('t.tags', 'tag')
-            ->addSelect('tag')
-            ->where('t.parentTask = :parent')
-            ->setParameter('parent', $task)
-            ->getQuery()
-            ->getResult();
-            
-        foreach ($subtasks as $subtask) {
-            if ($subtask->getSubtasks()->count() > 0) {
-                $this->loadSubtasksRecursively($subtask);
-            }
-        }
+        // This method is deprecated and no longer used
+        // Kept for backward compatibility only
     }
 
     public function save(Task $entity, bool $flush = false): void
@@ -463,6 +502,10 @@ class TaskRepository extends ServiceEntityRepository
     public function findOverdueByUserPaginated(User $user, int $page, int $limit, ?TaskFilterDto $filters = null): Paginator
     {
         $qb = $this->createQueryBuilder('t')
+            ->leftJoin('t.tags', 'tag')
+            ->leftJoin('t.user', 'u')
+            ->addSelect('tag')
+            ->addSelect('u')
             ->where('t.user = :user')
             ->andWhere('t.parentTask IS NULL')
             ->andWhere('t.isArchived = false')
@@ -495,6 +538,10 @@ class TaskRepository extends ServiceEntityRepository
     public function findUnscheduledByUserPaginated(User $user, int $page, int $limit, ?TaskFilterDto $filters = null): Paginator
     {
         $qb = $this->createQueryBuilder('t')
+            ->leftJoin('t.tags', 'tag')
+            ->leftJoin('t.user', 'u')
+            ->addSelect('tag')
+            ->addSelect('u')
             ->where('t.user = :user')
             ->andWhere('t.parentTask IS NULL')
             ->andWhere('t.isArchived = false')
@@ -622,6 +669,10 @@ class TaskRepository extends ServiceEntityRepository
     public function findTasksCreatedBetween(User $user, \DateTimeInterface $start, \DateTimeInterface $end): array
     {
         return $this->createQueryBuilder('t')
+            ->leftJoin('t.tags', 'tag')
+            ->leftJoin('t.user', 'u')
+            ->addSelect('tag')
+            ->addSelect('u')
             ->where('t.user = :user')
             ->andWhere('t.parentTask IS NULL')
             ->andWhere('t.createdAt BETWEEN :start AND :end')
@@ -638,6 +689,10 @@ class TaskRepository extends ServiceEntityRepository
     public function findTasksCompletedBetween(User $user, \DateTimeInterface $start, \DateTimeInterface $end): array
     {
         return $this->createQueryBuilder('t')
+            ->leftJoin('t.tags', 'tag')
+            ->leftJoin('t.user', 'u')
+            ->addSelect('tag')
+            ->addSelect('u')
             ->where('t.user = :user')
             ->andWhere('t.parentTask IS NULL')
             ->andWhere('t.completedAt BETWEEN :start AND :end')
@@ -654,6 +709,10 @@ class TaskRepository extends ServiceEntityRepository
     public function getAverageCompletionTime(User $user): float
     {
         $tasks = $this->createQueryBuilder('t')
+            ->leftJoin('t.tags', 'tag')
+            ->leftJoin('t.user', 'u')
+            ->addSelect('tag')
+            ->addSelect('u')
             ->where('t.user = :user')
             ->andWhere('t.parentTask IS NULL')
             ->andWhere('t.completedAt IS NOT NULL')
@@ -661,11 +720,11 @@ class TaskRepository extends ServiceEntityRepository
             ->setParameter('user', $user)
             ->getQuery()
             ->getResult();
-        
+
         if (count($tasks) === 0) {
             return 0;
         }
-        
+
         $totalDays = 0;
         foreach ($tasks as $task) {
             $created = $task->getCreatedAt();
@@ -675,7 +734,7 @@ class TaskRepository extends ServiceEntityRepository
                 $totalDays += $diff->days;
             }
         }
-        
+
         return round($totalDays / count($tasks), 1);
     }
 
@@ -721,17 +780,21 @@ class TaskRepository extends ServiceEntityRepository
     public function getMostProductiveDay(User $user): ?string
     {
         $tasks = $this->createQueryBuilder('t')
+            ->leftJoin('t.tags', 'tag')
+            ->leftJoin('t.user', 'u')
+            ->addSelect('tag')
+            ->addSelect('u')
             ->where('t.user = :user')
             ->andWhere('t.parentTask IS NULL')
             ->andWhere('t.completedAt IS NOT NULL')
             ->setParameter('user', $user)
             ->getQuery()
             ->getResult();
-        
+
         if (count($tasks) === 0) {
             return null;
         }
-        
+
         $dayCount = [];
         foreach ($tasks as $task) {
             if ($task->getCompletedAt()) {
@@ -739,11 +802,11 @@ class TaskRepository extends ServiceEntityRepository
                 $dayCount[$dayName] = ($dayCount[$dayName] ?? 0) + 1;
             }
         }
-        
+
         if (empty($dayCount)) {
             return null;
         }
-        
+
         arsort($dayCount);
         return array_key_first($dayCount);
     }
@@ -883,9 +946,13 @@ class TaskRepository extends ServiceEntityRepository
     {
         $startDate = new \DateTimeImmutable("{$year}-01-01");
         $endDate = new \DateTimeImmutable("{$year}-12-31");
-        
+
         $qb = $this->createQueryBuilder('t');
         $tasks = $qb
+            ->leftJoin('t.tags', 'tag')
+            ->leftJoin('t.user', 'u')
+            ->addSelect('tag')
+            ->addSelect('u')
             ->where('t.user = :user')
             ->andWhere('t.parentTask IS NULL')
             ->andWhere('t.completedAt BETWEEN :start AND :end')
@@ -894,7 +961,7 @@ class TaskRepository extends ServiceEntityRepository
             ->setParameter('end', $endDate)
             ->getQuery()
             ->getResult();
-        
+
         $heatmap = [];
         foreach ($tasks as $task) {
             if ($task->getCompletedAt()) {
@@ -902,7 +969,7 @@ class TaskRepository extends ServiceEntityRepository
                 $heatmap[$date] = ($heatmap[$date] ?? 0) + 1;
             }
         }
-        
+
         return $heatmap;
     }
 
@@ -912,15 +979,19 @@ class TaskRepository extends ServiceEntityRepository
     public function getWeekdayProductivity(User $user): array
     {
         $tasks = $this->createQueryBuilder('t')
+            ->leftJoin('t.tags', 'tag')
+            ->leftJoin('t.user', 'u')
+            ->addSelect('tag')
+            ->addSelect('u')
             ->where('t.user = :user')
             ->andWhere('t.parentTask IS NULL')
             ->andWhere('t.completedAt IS NOT NULL')
             ->setParameter('user', $user)
             ->getQuery()
             ->getResult();
-        
+
         $days = ['Monday' => 0, 'Tuesday' => 0, 'Wednesday' => 0, 'Thursday' => 0, 'Friday' => 0, 'Saturday' => 0, 'Sunday' => 0];
-        
+
         foreach ($tasks as $task) {
             if ($task->getCompletedAt()) {
                 $dayName = $task->getCompletedAt()->format('l'); // Monday, Tuesday, etc.
@@ -929,7 +1000,7 @@ class TaskRepository extends ServiceEntityRepository
                 }
             }
         }
-        
+
         return $days;
     }
 
@@ -939,17 +1010,21 @@ class TaskRepository extends ServiceEntityRepository
     public function getMostProductiveHour(User $user): ?int
     {
         $tasks = $this->createQueryBuilder('t')
+            ->leftJoin('t.tags', 'tag')
+            ->leftJoin('t.user', 'u')
+            ->addSelect('tag')
+            ->addSelect('u')
             ->where('t.user = :user')
             ->andWhere('t.parentTask IS NULL')
             ->andWhere('t.completedAt IS NOT NULL')
             ->setParameter('user', $user)
             ->getQuery()
             ->getResult();
-        
+
         if (count($tasks) === 0) {
             return null;
         }
-        
+
         $hourCount = [];
         foreach ($tasks as $task) {
             if ($task->getCompletedAt()) {
@@ -957,11 +1032,11 @@ class TaskRepository extends ServiceEntityRepository
                 $hourCount[$hour] = ($hourCount[$hour] ?? 0) + 1;
             }
         }
-        
+
         if (empty($hourCount)) {
             return null;
         }
-        
+
         arsort($hourCount);
         return array_key_first($hourCount);
     }
