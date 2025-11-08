@@ -27,9 +27,9 @@
 ### Step 0: Read Documentation First! ⭐
 
 **CRITICAL - Start here (15 min):**
-1. [`docs/ai/START_HERE.md`](docs/ai/START_HERE.md) - Quick overview + checklist
-2. [`docs/ai/REFERENCE/PROMPTS_LIBRARY.md`](docs/ai/REFERENCE/PROMPTS_LIBRARY.md) - **⭐ MOST CRITICAL** - Copy exact prompts for Llama!
-3. [`docs/ai/INDEX.md`](docs/ai/INDEX.md) - Complete navigation map
+1. [`docs/ai/START_HERE.md`](START_HERE.md) - Quick overview + checklist
+2. [`docs/ai/REFERENCE/PROMPTS_LIBRARY.md`](REFERENCE/PROMPTS_LIBRARY.md) - **⭐ MOST CRITICAL** - Copy exact prompts for Llama!
+3. [`docs/ai/INDEX.md`](INDEX.md) - Complete navigation map
 
 **Why PROMPTS_LIBRARY is critical:**
 - Contains exact system prompts for Llama 3.2 3B
@@ -44,7 +44,7 @@
 **Goal:** Create database schema for voice commands
 
 **Read first:**
-- 📖 [`docs/ai/02_BACKEND/01_DOMAIN_MODEL.md`](docs/ai/02_BACKEND/01_DOMAIN_MODEL.md) - Complete entity specs
+- 📖 [`docs/ai/02_BACKEND/01_DOMAIN_MODEL.md`](02_BACKEND/01_DOMAIN_MODEL.md) - Complete entity specs
 
 **Implementation order:**
 
@@ -93,8 +93,8 @@ docker exec backend-psql16 psql -U user -d backend-app -c "\d voice_commands"
 **Goal:** Implement 5 core services (SOLID architecture)
 
 **Read first:**
-- 📖 [`docs/ai/02_BACKEND/02_SERVICES.md`](docs/ai/02_BACKEND/02_SERVICES.md) - Service layer patterns
-- ⭐ [`docs/ai/REFERENCE/PROMPTS_LIBRARY.md`](docs/ai/REFERENCE/PROMPTS_LIBRARY.md) - **Copy exact prompts!**
+- 📖 [`docs/ai/02_BACKEND/02_SERVICES.md`](02_BACKEND/02_SERVICES.md) - Service layer patterns
+- ⭐ [`docs/ai/REFERENCE/PROMPTS_LIBRARY.md`](REFERENCE/PROMPTS_LIBRARY.md) - **Copy exact prompts!**
 
 **Implementation order:**
 
@@ -165,7 +165,7 @@ curl -X POST http://localhost:11434/api/generate -d '{
 **Goal:** Implement 3 core command handlers (MVP scope)
 
 **Read first:**
-- 📖 [`docs/ai/02_BACKEND/03_COMMAND_HANDLERS.md`](docs/ai/02_BACKEND/03_COMMAND_HANDLERS.md) - Handler pattern
+- 📖 [`docs/ai/02_BACKEND/03_COMMAND_HANDLERS.md`](02_BACKEND/03_COMMAND_HANDLERS.md) - Handler pattern
 
 **Implementation order:**
 
@@ -227,7 +227,7 @@ $this->taskService->createTask($user, $title, $description);
 **Goal:** Create 3 REST endpoints for voice commands
 
 **Read first:**
-- 📖 [`docs/ai/02_BACKEND/04_API_ENDPOINTS.md`](docs/ai/02_BACKEND/04_API_ENDPOINTS.md) - API specs
+- 📖 [`docs/ai/02_BACKEND/04_API_ENDPOINTS.md`](02_BACKEND/04_API_ENDPOINTS.md) - API specs
 
 **Implementation:**
 
@@ -299,7 +299,7 @@ curl -X GET "http://localhost:8089/api/voice/history?days=7" \
 **Goal:** Async voice command processing with RabbitMQ
 
 **Read first:**
-- 📖 [`docs/ai/02_BACKEND/05_QUEUE_PROCESSING.md`](docs/ai/02_BACKEND/05_QUEUE_PROCESSING.md) - Queue setup
+- 📖 [`docs/ai/02_BACKEND/05_QUEUE_PROCESSING.md`](02_BACKEND/05_QUEUE_PROCESSING.md) - Queue setup
 
 **Implementation:**
 
@@ -373,7 +373,7 @@ docker logs -f backend-php83 | grep "ProcessVoiceCommandHandler"
 **Goal:** Voice recording button with real-time updates
 
 **Read first:**
-- 📖 [`docs/ai/03_FRONTEND/01_VOICE_RECORDING.md`](docs/ai/03_FRONTEND/01_VOICE_RECORDING.md) - Complete implementation
+- 📖 [`docs/ai/03_FRONTEND/01_VOICE_RECORDING.md`](03_FRONTEND/01_VOICE_RECORDING.md) - Complete implementation
 
 **Implementation order:**
 
@@ -471,8 +471,8 @@ onVoiceEvent('completed', (data) => {
 **Goal:** Install and configure AI services (Ollama, Whisper, Centrifugo)
 
 **Read first:**
-- 📖 [`docs/ai/01_INFRASTRUCTURE/01_SETUP.md`](docs/ai/01_INFRASTRUCTURE/01_SETUP.md) - System requirements
-- 📖 [`docs/ai/01_INFRASTRUCTURE/03_AI_SERVICES.md`](docs/ai/01_INFRASTRUCTURE/03_AI_SERVICES.md) - ⚠️ CRITICAL - Complete setup guide
+- 📖 [`docs/ai/01_INFRASTRUCTURE/01_SETUP.md`](01_INFRASTRUCTURE/01_SETUP.md) - System requirements
+- 📖 [`docs/ai/01_INFRASTRUCTURE/03_AI_SERVICES.md`](01_INFRASTRUCTURE/03_AI_SERVICES.md) - ⚠️ CRITICAL - Complete setup guide
 
 **Setup Order:**
 
@@ -607,7 +607,7 @@ CENTRIFUGO_SECRET=<your-secret>
 ## ⚠️ Critical Things to Remember
 
 ### 1. ⭐ ALWAYS Use Exact Prompts from Library
-**Location:** [`docs/ai/REFERENCE/PROMPTS_LIBRARY.md`](docs/ai/REFERENCE/PROMPTS_LIBRARY.md)
+**Location:** [`docs/ai/REFERENCE/PROMPTS_LIBRARY.md`](REFERENCE/PROMPTS_LIBRARY.md)
 
 **Why critical:** Without exact prompts, Llama will return garbage or incorrect JSON!
 
@@ -693,12 +693,12 @@ curl http://localhost:8000/health
 ## 🚨 Troubleshooting
 
 ### Problem: LLM returns invalid JSON
-→ Check [`PROMPTS_LIBRARY.md`](docs/ai/REFERENCE/PROMPTS_LIBRARY.md)
+→ Check [`PROMPTS_LIBRARY.md`](REFERENCE/PROMPTS_LIBRARY.md)
 → Verify `format: 'json'` in Ollama request
 → Check `temperature: 0.3` (not too high!)
 
 ### Problem: Task not found by voice
-→ Check `SmartSearchService` in [`02_SERVICES.md`](docs/ai/02_BACKEND/02_SERVICES.md)
+→ Check `SmartSearchService` in [`02_SERVICES.md`](02_BACKEND/02_SERVICES.md)
 → Adjust similarity threshold (default: 0.3)
 → Check PostgreSQL trigram extension installed
 
@@ -749,27 +749,27 @@ TOTAL: ~28 hours of focused work
 ## 📚 Documentation Navigation
 
 ### Start Here
-- 📄 [`docs/ai/START_HERE.md`](docs/ai/START_HERE.md) - Quick overview + full checklist
-- 📄 [`docs/ai/INDEX.md`](docs/ai/INDEX.md) - Complete navigation map
+- 📄 [`docs/ai/START_HERE.md`](START_HERE.md) - Quick overview + full checklist
+- 📄 [`docs/ai/INDEX.md`](INDEX.md) - Complete navigation map
 
 ### Backend (5 docs)
-1. [`docs/ai/02_BACKEND/01_DOMAIN_MODEL.md`](docs/ai/02_BACKEND/01_DOMAIN_MODEL.md) - VoiceCommand entity
-2. [`docs/ai/02_BACKEND/02_SERVICES.md`](docs/ai/02_BACKEND/02_SERVICES.md) - 5 core services
-3. [`docs/ai/02_BACKEND/03_COMMAND_HANDLERS.md`](docs/ai/02_BACKEND/03_COMMAND_HANDLERS.md) - Command pattern
-4. [`docs/ai/02_BACKEND/04_API_ENDPOINTS.md`](docs/ai/02_BACKEND/04_API_ENDPOINTS.md) - REST API
-5. [`docs/ai/02_BACKEND/05_QUEUE_PROCESSING.md`](docs/ai/02_BACKEND/05_QUEUE_PROCESSING.md) - Async queue
+1. [`docs/ai/02_BACKEND/01_DOMAIN_MODEL.md`](02_BACKEND/01_DOMAIN_MODEL.md) - VoiceCommand entity
+2. [`docs/ai/02_BACKEND/02_SERVICES.md`](02_BACKEND/02_SERVICES.md) - 5 core services
+3. [`docs/ai/02_BACKEND/03_COMMAND_HANDLERS.md`](02_BACKEND/03_COMMAND_HANDLERS.md) - Command pattern
+4. [`docs/ai/02_BACKEND/04_API_ENDPOINTS.md`](02_BACKEND/04_API_ENDPOINTS.md) - REST API
+5. [`docs/ai/02_BACKEND/05_QUEUE_PROCESSING.md`](02_BACKEND/05_QUEUE_PROCESSING.md) - Async queue
 
 ### Frontend (1 doc)
-- [`docs/ai/03_FRONTEND/01_VOICE_RECORDING.md`](docs/ai/03_FRONTEND/01_VOICE_RECORDING.md) - Complete UI implementation
+- [`docs/ai/03_FRONTEND/01_VOICE_RECORDING.md`](03_FRONTEND/01_VOICE_RECORDING.md) - Complete UI implementation
 
 ### Infrastructure (4 docs)
-1. [`docs/ai/01_INFRASTRUCTURE/01_SETUP.md`](docs/ai/01_INFRASTRUCTURE/01_SETUP.md) - System requirements
-2. [`docs/ai/01_INFRASTRUCTURE/02_DOCKER.md`](docs/ai/01_INFRASTRUCTURE/02_DOCKER.md) - Docker configs (optional)
-3. [`docs/ai/01_INFRASTRUCTURE/03_AI_SERVICES.md`](docs/ai/01_INFRASTRUCTURE/03_AI_SERVICES.md) - ⚠️ Ollama + Whisper + Centrifugo
-4. [`docs/ai/01_INFRASTRUCTURE/04_SECURITY.md`](docs/ai/01_INFRASTRUCTURE/04_SECURITY.md) - Security (optional for MVP)
+1. [`docs/ai/01_INFRASTRUCTURE/01_SETUP.md`](01_INFRASTRUCTURE/01_SETUP.md) - System requirements
+2. [`docs/ai/01_INFRASTRUCTURE/02_DOCKER.md`](01_INFRASTRUCTURE/02_DOCKER.md) - Docker configs (optional)
+3. [`docs/ai/01_INFRASTRUCTURE/03_AI_SERVICES.md`](01_INFRASTRUCTURE/03_AI_SERVICES.md) - ⚠️ Ollama + Whisper + Centrifugo
+4. [`docs/ai/01_INFRASTRUCTURE/04_SECURITY.md`](01_INFRASTRUCTURE/04_SECURITY.md) - Security (optional for MVP)
 
 ### Reference (Critical!)
-- ⭐⭐⭐ [`docs/ai/REFERENCE/PROMPTS_LIBRARY.md`](docs/ai/REFERENCE/PROMPTS_LIBRARY.md) - **MOST CRITICAL - LLM prompts**
+- ⭐⭐⭐ [`docs/ai/REFERENCE/PROMPTS_LIBRARY.md`](REFERENCE/PROMPTS_LIBRARY.md) - **MOST CRITICAL - LLM prompts**
 - [`docs/ai/REFERENCE/TESTING_STRATEGY.md`](docs/ai/REFERENCE/TESTING_STRATEGY.md) - Testing guide (optional)
 
 ---
@@ -792,7 +792,7 @@ Before marking as complete:
 
 ---
 
-**Good luck! Start with [`docs/ai/START_HERE.md`](docs/ai/START_HERE.md) for detailed instructions.**
+**Good luck! Start with [`docs/ai/START_HERE.md`](START_HERE.md) for detailed instructions.**
 
 ---
 
