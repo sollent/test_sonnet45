@@ -114,6 +114,17 @@ Recurring tasks functionality and implementation
 - Testing and troubleshooting
 - Usage examples for each recurrence type
 
+#### [`backend/TEST_COVERAGE.md`](backend/TEST_COVERAGE.md)
+**📊 NEW** - Complete backend test coverage report and analysis
+
+**Key Topics:**
+- Coverage statistics by layer (Controllers, Services, Repositories, etc.)
+- Test quality analysis (Unit, Integration, Functional)
+- Detailed tables with all 33 test files
+- What's covered vs. what's missing
+- Priority-based roadmap for missing tests
+- Recommendations for improving coverage to 90%+
+
 ---
 
 ### 🎨 Frontend (`project/frontend/`)
@@ -255,6 +266,7 @@ Voice AI Assistant implementation plan with LLM integration
 - [`backend/API_REFERENCE.md`](backend/API_REFERENCE.md) - API contracts
 - [`backend/DATABASE.md`](backend/DATABASE.md) - Schema design
 - [`backend/RECURRENCE_TASKS.md`](backend/RECURRENCE_TASKS.md) - Recurring tasks system
+- [`backend/TEST_COVERAGE.md`](backend/TEST_COVERAGE.md) - Test coverage report & roadmap
 
 ### For Frontend Development
 **Must Read:**
