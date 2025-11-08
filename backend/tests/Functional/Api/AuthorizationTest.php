@@ -278,13 +278,22 @@ class AuthorizationTest extends WebTestCase
     /** @test */
     public function testUserCannotListOtherUsersTasks(): void
     {
-        // Arrange: Create tasks for different users
+        // Arrange: Create tasks for different users with due dates (required by findActiveTasks)
         $otherUser1 = UserFactory::createOne()->_real();
         $otherUser2 = UserFactory::createOne()->_real();
 
-        TaskFactory::createMany(3, ['user' => $this->user]);
-        TaskFactory::createMany(2, ['user' => $otherUser1]);
-        TaskFactory::createMany(2, ['user' => $otherUser2]);
+        TaskFactory::createMany(3, [
+            'user' => $this->user,
+            'dueDate' => new \DateTimeImmutable('+1 day')
+        ]);
+        TaskFactory::createMany(2, [
+            'user' => $otherUser1,
+            'dueDate' => new \DateTimeImmutable('+2 days')
+        ]);
+        TaskFactory::createMany(2, [
+            'user' => $otherUser2,
+            'dueDate' => new \DateTimeImmutable('+3 days')
+        ]);
 
         // Act: List tasks
         $this->client->request(

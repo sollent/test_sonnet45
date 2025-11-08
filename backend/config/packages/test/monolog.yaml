@@ -1,0 +1,20 @@
+monolog:
+    handlers:
+        # Suppress all logs during tests to keep output clean
+        main:
+            type: null
+            level: debug
+            channels: ["!event"]
+
+        # Optional: write errors to file instead of console
+        # test_file:
+        #     type: stream
+        #     path: "%kernel.logs_dir%/test.log"
+        #     level: error
+
+        console:
+            type: console
+            process_psr_3_messages: false
+            channels: ["!event", "!doctrine"]
+            # Only show CRITICAL and higher (effectively silences most logs)
+            level: emergency
