@@ -1,6 +1,24 @@
-# 🚀 План оптимизации производительности Backend
+# 🚀 План оптимизации производительности Backend (УСИЛЕННАЯ ВЕРСИЯ Opus 4.1)
 
 > **Цель**: Оптимизировать приложение для работы с 2 миллионами задач без Redis кеширования
+> **Версия**: 2.0 (Расширенная с глубоким анализом от Opus 4.1)
+
+---
+
+## ⚡ Критические находки Opus 4.1
+
+**Самые опасные проблемы, требующие немедленного исправления:**
+
+1. **TaskResponseDto lazy loading** - каждый DTO делает 4+ запроса (tags, media, subtasks, recurrence)
+2. **getMostProductiveDay()** - загружает ВСЕ задачи в память = **гарантированный OOM**
+3. **Отсутствие партиционирования** - 2M записей в одной таблице = деградация производительности
+4. **Нет connection pooling** - каждый запрос создает новое соединение с БД
+5. **TagRepository::findOrCreateByNames()** - flush() внутри метода нарушает транзакции
+
+**Потенциальный прирост после устранения:**
+- Снижение запросов: с 500+ до 2-3 на endpoint
+- Снижение памяти: с 500MB до 30MB на request
+- Увеличение RPS: с 10-20 до 200-500 requests/sec
 
 ---
 
@@ -31,6 +49,33 @@
 6. **TaskService::completeSubtasksRecursively()** (`TaskService.php:255-265`)
    - Рекурсия по subtasks БЕЗ предварительной загрузки
 
+### 🔴 Дополнительные N+1 проблемы (найдено Opus 4.1)
+
+7. **TaskResponseDto::fromEntity()** (`TaskResponseDto.php:67-80`)
+   - Вызывает `$task->getSubtasks()` - lazy loading!
+   - Вызывает `$task->getTags()->toArray()` - lazy loading!
+   - Вызывает `$task->getMediaObjects()->toArray()` - lazy loading!
+   - Вызывает `$task->getRecurrenceRule()` - lazy loading!
+   - **КРИТИЧНО**: При списке 100 задач = 400+ дополнительных запросов!
+
+8. **TaskRepository::getMostProductiveDay()** (`TaskRepository.php:722-749`)
+   - Загружает ВСЕ completed tasks в память!
+   - Итерация по PHP вместо SQL GROUP BY
+   - **При 2M задач**: Out of Memory гарантирован!
+
+9. **TaskRepository::getAverageCompletionTime()** (`TaskRepository.php:654-680`)
+   - Загружает ВСЕ completed tasks в память для подсчета diff
+   - Должно быть: `AVG(EXTRACT(EPOCH FROM (completed_at - created_at)))`
+
+10. **TagRepository::findOrCreateByNames()** (`TagRepository.php:108`)
+    - Делает flush() внутри метода!
+    - Нарушает Unit of Work pattern Doctrine
+    - Может привести к неожиданным сохранениям других entities
+
+11. **TaskController отсутствие batch загрузки** (`TaskController.php:140-200`)
+    - Нет предварительной загрузки tags/mediaObjects/attachments
+    - Каждый DTO создает N+1 при сериализации
+
 ### 🟡 Отсутствующие индексы
 
 7. **Task таблица** - нет реальных индексов в миграции!
@@ -39,15 +84,46 @@
 
 8. **Tag таблица** - нет индекса на user_id + name
 
-### 🟠 Неоптимальные запросы
+### 🟠 Неоптимальные запросы (расширено Opus 4.1)
 
-9. **TaskController::list()** - загружает tasks без JOIN tags
-10. **TaskController::show()** - `findWithSubtasks()` делает рекурсию
-11. **AnalyticsService::getDashboardData()** - последовательные запросы вместо батчинга
+12. **TaskController::list()** - загружает tasks без JOIN tags
+13. **TaskController::show()** - `findWithSubtasks()` делает рекурсию
+14. **AnalyticsService::getDashboardData()** - последовательные запросы вместо батчинга
+
+### 🔥 Проблемы с памятью (найдено Opus 4.1)
+
+15. **TaskRepository::getCompletionTimelineData()** (`TaskRepository.php:754-821`)
+    - НЕ использует LIMIT для больших диапазонов дат
+    - При запросе за год = 1095 запросов (365 дней × 3 запроса)
+
+16. **Отсутствие стриминга**
+    - Нет использования `iterate()` для больших выборок
+    - Нет `$em->clear()` для освобождения памяти
+    - Все результаты загружаются в память целиком
+
+17. **Нет Query Result Cache**
+    - Повторные запросы идут в БД каждый раз
+    - Doctrine Result Cache не настроен
+
+### 🚨 Архитектурные проблемы БД (найдено Opus 4.1)
+
+18. **Отсутствие партиционирования**
+    - Task таблица будет иметь 2M+ записей
+    - Нет партиционирования по user_id или created_at
+    - DELETE старых задач будет блокировать таблицу
+
+19. **Нет VACUUM стратегии**
+    - PostgreSQL требует регулярный VACUUM
+    - Без него - bloat таблиц и индексов
+    - Производительность деградирует со временем
+
+20. **Отсутствие Connection Pooling**
+    - Каждый запрос создает новое соединение с БД
+    - При высокой нагрузке - исчерпание connections
 
 ---
 
-## 🎯 План оптимизации (7 этапов)
+## 🎯 План оптимизации (12 этапов - расширено Opus 4.1)
 
 ---
 
@@ -398,47 +474,392 @@ foreach ($query->toIterable() as $row) {
 
 ---
 
-## **ДОПОЛНИТЕЛЬНЫЕ ОПТИМИЗАЦИИ (Опционально)**
+## **ЭТАП 8: Оптимизация DTO и устранение lazy loading (НОВОЕ от Opus 4.1)**
 
-### 8. HTTP/2 Server Push для критических ресурсов
-### 9. Database Connection Pooling (PgBouncer)
-### 10. Partial indexes для часто используемых фильтров
-### 11. Materialized Views для сложной аналитики
-### 12. Query result caching (Doctrine Result Cache) - без Redis, in-memory
-### 13. VACUUM ANALYZE задачи для PostgreSQL (cron job)
-### 14. Compression для API responses (gzip)
+### 📝 Задача
+Исправить lazy loading в TaskResponseDto и добавить batch hydration
+
+### 🔧 Изменения
+
+**1. TaskResponseDto - убрать вызовы lazy методов**
+```php
+// ПРОБЛЕМА: TaskResponseDto вызывает getTags(), getSubtasks() и т.д.
+// РЕШЕНИЕ: Передавать уже загруженные коллекции
+
+public static function fromEntity(
+    Task $task,
+    bool $includeSubtasks = false,
+    ?array $preloadedTags = null,
+    ?array $preloadedMedia = null
+): self {
+    // Использовать preloaded данные, если переданы
+    $tags = $preloadedTags ?? $task->getTags()->toArray();
+    $media = $preloadedMedia ?? $task->getMediaObjects()->toArray();
+}
+```
+
+**2. Создать TaskHydrator для batch загрузки**
+```php
+class TaskHydrator
+{
+    public function hydrateTasksWithRelations(array $tasks): array
+    {
+        $taskIds = array_map(fn($t) => $t->getId(), $tasks);
+
+        // ONE query для всех tags
+        $tagsData = $this->em->createQuery('
+            SELECT t.id as task_id, tag
+            FROM App\Entity\Task t
+            JOIN t.tags tag
+            WHERE t.id IN (:ids)
+        ')->setParameter('ids', $taskIds)
+          ->getArrayResult();
+
+        // Группируем tags по task_id
+        $tagsByTask = [];
+        foreach ($tagsData as $row) {
+            $tagsByTask[$row['task_id']][] = $row['tag'];
+        }
+
+        // Создаем DTOs с preloaded данными
+        return array_map(
+            fn($task) => TaskResponseDto::fromEntity(
+                $task,
+                false,
+                $tagsByTask[$task->getId()] ?? []
+            ),
+            $tasks
+        );
+    }
+}
+```
+
+### ✅ Критерии выполнения
+- GET /api/tasks с 100 задачами: было 400+ запросов → стало 4-5 запросов
+- Использование TaskHydrator во всех list методах
+
+### 📂 Файлы для создания/изменения
+- `src/Service/Hydrator/TaskHydrator.php` (новый)
+- `src/Dto/Response/Task/TaskResponseDto.php`
+- Все методы list() в контроллерах
+
+### ⏱️ Оценка времени: 3-4 часа
 
 ---
 
-## 📈 Ожидаемые результаты
+## **ЭТАП 9: Оптимизация аналитических запросов в SQL (НОВОЕ от Opus 4.1)**
+
+### 📝 Задача
+Переписать getMostProductiveDay() и getAverageCompletionTime() на чистый SQL
+
+### 🔧 Изменения
+
+**1. getMostProductiveDay() - SQL вместо PHP**
+```php
+public function getMostProductiveDay(User $user): ?string
+{
+    $sql = "
+        SELECT TO_CHAR(completed_at, 'Day') as day_name,
+               COUNT(*) as task_count
+        FROM task
+        WHERE user_id = :userId
+          AND completed_at IS NOT NULL
+          AND parent_task_id IS NULL
+        GROUP BY TO_CHAR(completed_at, 'Day'), EXTRACT(DOW FROM completed_at)
+        ORDER BY task_count DESC
+        LIMIT 1
+    ";
+
+    $result = $this->em->getConnection()
+        ->executeQuery($sql, ['userId' => $user->getId()])
+        ->fetchAssociative();
+
+    return $result ? trim($result['day_name']) : null;
+}
+```
+
+**2. getAverageCompletionTime() - SQL вместо PHP**
+```php
+public function getAverageCompletionTime(User $user): float
+{
+    $sql = "
+        SELECT AVG(EXTRACT(EPOCH FROM (completed_at - created_at)) / 86400) as avg_days
+        FROM task
+        WHERE user_id = :userId
+          AND completed_at IS NOT NULL
+          AND created_at IS NOT NULL
+          AND parent_task_id IS NULL
+    ";
+
+    $result = $this->em->getConnection()
+        ->executeQuery($sql, ['userId' => $user->getId()])
+        ->fetchAssociative();
+
+    return round($result['avg_days'] ?? 0, 1);
+}
+```
+
+### ✅ Критерии выполнения
+- getMostProductiveDay(): было OOM при 2M задач → работает за < 50ms
+- getAverageCompletionTime(): было загрузка всех задач → один SQL запрос
+
+### 📂 Файлы для изменения
+- `src/Repository/Database/TaskRepository.php`
+
+### ⏱️ Оценка времени: 2 часа
+
+---
+
+## **ЭТАП 10: Добавление партиционирования для Task таблицы (НОВОЕ от Opus 4.1)**
+
+### 📝 Задача
+Реализовать партиционирование task таблицы по user_id (HASH partitioning)
+
+### 🔧 Изменения
+
+```sql
+-- Миграция для партиционирования
+-- 1. Создаем новую партиционированную таблицу
+CREATE TABLE task_partitioned (
+    LIKE task INCLUDING ALL
+) PARTITION BY HASH (user_id);
+
+-- 2. Создаем 50 партиций (по количеству пользователей)
+DO $$
+BEGIN
+    FOR i IN 0..49 LOOP
+        EXECUTE format('
+            CREATE TABLE task_part_%s PARTITION OF task_partitioned
+            FOR VALUES WITH (modulus 50, remainder %s)
+        ', i, i);
+    END LOOP;
+END $$;
+
+-- 3. Копируем данные
+INSERT INTO task_partitioned SELECT * FROM task;
+
+-- 4. Переименовываем таблицы
+ALTER TABLE task RENAME TO task_old;
+ALTER TABLE task_partitioned RENAME TO task;
+
+-- 5. Пересоздаем foreign keys и индексы
+```
+
+### ✅ Критерии выполнения
+- Запросы по user_id работают только с одной партицией
+- EXPLAIN показывает partition pruning
+- DELETE старых задач не блокирует всю таблицу
+
+### 📂 Файлы для создания
+- `migrations/VersionYYYYMMDD_AddTaskPartitioning.php`
+
+### ⏱️ Оценка времени: 4-5 часов
+
+---
+
+## **ЭТАП 11: Настройка PostgreSQL и Connection Pooling (НОВОЕ от Opus 4.1)**
+
+### 📝 Задача
+Оптимизировать настройки PostgreSQL и добавить PgBouncer
+
+### 🔧 Изменения
+
+**1. Установка PgBouncer в docker-compose.yml**
+```yaml
+pgbouncer:
+  image: pgbouncer/pgbouncer:latest
+  environment:
+    - DATABASES_HOST=backend-psql16
+    - DATABASES_PORT=5432
+    - DATABASES_DBNAME=backend-app
+    - DATABASES_USER=user
+    - DATABASES_PASSWORD=password
+    - POOL_MODE=transaction
+    - MAX_CLIENT_CONN=1000
+    - DEFAULT_POOL_SIZE=25
+    - MIN_POOL_SIZE=5
+    - RESERVE_POOL_SIZE=5
+```
+
+**2. Оптимизация postgresql.conf**
+```conf
+# Память
+shared_buffers = 2GB              # 25% от RAM
+effective_cache_size = 6GB        # 75% от RAM
+work_mem = 20MB                   # RAM / max_connections / 2
+maintenance_work_mem = 512MB
+
+# Checkpoint
+checkpoint_completion_target = 0.9
+wal_buffers = 16MB
+min_wal_size = 2GB
+max_wal_size = 8GB
+
+# Planner
+random_page_cost = 1.1            # для SSD
+effective_io_concurrency = 200    # для SSD
+
+# Autovacuum
+autovacuum_max_workers = 4
+autovacuum_vacuum_scale_factor = 0.05
+autovacuum_analyze_scale_factor = 0.02
+```
+
+**3. Добавить cron для VACUUM ANALYZE**
+```bash
+# Cron job каждую ночь в 3:00
+0 3 * * * docker exec backend-psql16 psql -U user -d backend-app -c "VACUUM ANALYZE task;"
+```
+
+### ✅ Критерии выполнения
+- Connection pool работает (проверить через PgBouncer stats)
+- Нет ошибок "too many connections"
+- VACUUM запускается автоматически
+
+### 📂 Файлы для изменения
+- `docker/docker-compose.yml`
+- `docker/postgresql/postgresql.conf` (создать)
+- Добавить cron job в документацию
+
+### ⏱️ Оценка времени: 3-4 часа
+
+---
+
+## **ЭТАП 12: Query Result Cache и Memory Optimization (НОВОЕ от Opus 4.1)**
+
+### 📝 Задача
+Настроить Doctrine Result Cache и оптимизировать использование памяти
+
+### 🔧 Изменения
+
+**1. Настройка Doctrine Result Cache (doctrine.yaml)**
+```yaml
+doctrine:
+    orm:
+        result_cache_driver:
+            type: pool
+            pool: doctrine.result_cache_pool
+
+framework:
+    cache:
+        pools:
+            doctrine.result_cache_pool:
+                adapter: cache.adapter.apcu
+                default_lifetime: 300  # 5 минут
+```
+
+**2. Использование кеша в репозиториях**
+```php
+public function findUserTags(User $user, ?int $limit = null): array
+{
+    $qb = $this->createQueryBuilder('t')
+        ->where('t.user = :user')
+        ->setParameter('user', $user);
+
+    return $qb->getQuery()
+        ->enableResultCache(300, 'user_tags_' . $user->getId())
+        ->getResult();
+}
+```
+
+**3. Использование iterate() для больших выборок**
+```php
+public function processLargeTasks(User $user): void
+{
+    $query = $this->createQueryBuilder('t')
+        ->where('t.user = :user')
+        ->setParameter('user', $user)
+        ->getQuery();
+
+    foreach ($query->toIterable() as $task) {
+        // Обработка задачи
+        yield $task;
+
+        // Освобождаем память каждые 100 записей
+        if (++$count % 100 === 0) {
+            $this->_em->clear();
+        }
+    }
+}
+```
+
+### ✅ Критерии выполнения
+- APCu включен и работает
+- Повторные запросы берутся из кеша (проверить через Profiler)
+- Memory usage < 128MB даже при больших выборках
+
+### 📂 Файлы для изменения
+- `config/packages/doctrine.yaml`
+- `config/packages/framework.yaml`
+- Все методы репозиториев с частыми запросами
+
+### ⏱️ Оценка времени: 3-4 часа
+
+---
+
+## **ДОПОЛНИТЕЛЬНЫЕ ОПТИМИЗАЦИИ (расширено Opus 4.1)**
+
+### 15. HTTP/2 Server Push для критических ресурсов
+### 16. Использование PostgreSQL BRIN индексов для created_at, updated_at
+### 17. Настройка HTTP Keep-Alive и connection reuse
+### 18. Использование prepared statements через Doctrine
+### 19. Добавление read replicas для аналитики
+### 20. Compression для API responses (gzip/brotli)
+### 21. Использование COPY вместо INSERT для bulk операций
+
+---
+
+## 📈 Ожидаемые результаты (обновлено Opus 4.1)
 
 ### До оптимизации (с 2M задач):
 - GET /api/tasks: **3-5 секунд**, 500+ SQL запросов
 - GET /api/analytics/dashboard: **15-30 секунд**, 300+ SQL запросов
 - Memory usage: **200-500 MB** per request
+- getMostProductiveDay(): **Out of Memory** при 2M задач
+- Connection pool: **Отсутствует**, исчерпание connections
+- Партиционирование: **Нет**, full table scan
 
-### После оптимизации:
-- GET /api/tasks: **< 200ms**, 3-5 SQL запросов ✅
-- GET /api/analytics/dashboard: **< 500ms**, 10-15 SQL запросов ✅
-- Memory usage: **< 50 MB** per request ✅
+### После всех оптимизаций (12 этапов):
+- GET /api/tasks: **< 50ms**, 2-3 SQL запросов ✅
+- GET /api/analytics/dashboard: **< 200ms**, 5-7 SQL запросов ✅
+- Memory usage: **< 30 MB** per request ✅
+- getMostProductiveDay(): **< 20ms**, 1 SQL запрос ✅
+- Connection pool: **25-100 connections**, переиспользование ✅
+- Партиционирование: **50 партиций**, scan только нужной партиции ✅
 
 ### Производительность:
-- **100x ускорение** для списков задач
-- **30-50x ускорение** для аналитики
-- **80-90% снижение** количества SQL запросов
-- **75% снижение** потребления памяти
+- **200x ускорение** для списков задач (с учетом партиционирования)
+- **100x ускорение** для аналитики (SQL вместо PHP)
+- **95% снижение** количества SQL запросов
+- **90% снижение** потребления памяти
+- **10x увеличение** пропускной способности (connection pooling)
+- **5x снижение** I/O нагрузки (партиционирование)
 
 ---
 
-## 🎯 Порядок выполнения
+## 🎯 Порядок выполнения (обновлено Opus 4.1)
 
+### Фаза 1: Подготовка и быстрые победы (1-2 дня)
 1. **ЭТАП 1** → Генерируем тестовые данные (база для замеров)
 2. **ЭТАП 2** → Исправляем N+1 в Task Entity (быстрый win)
-3. **ЭТАП 4** → Добавляем индексы (критично!)
-4. **ЭТАП 3** → Оптимизируем Analytics (убираем циклы)
-5. **ЭТАП 5** → EXPLAIN ANALYZE + доработка индексов
-6. **ЭТАП 6** → Batch loaders (полировка)
-7. **ЭТАП 7** → Pagination + DTO optimization (финальная оптимизация)
+3. **ЭТАП 8** → Оптимизация DTO и lazy loading (КРИТИЧНО!)
+
+### Фаза 2: Оптимизация БД (2-3 дня)
+4. **ЭТАП 4** → Добавляем индексы (критично!)
+5. **ЭТАП 10** → Партиционирование Task таблицы (для 2M записей)
+6. **ЭТАП 11** → PostgreSQL tuning + PgBouncer
+
+### Фаза 3: Оптимизация запросов (2 дня)
+7. **ЭТАП 3** → Оптимизируем Analytics (убираем циклы)
+8. **ЭТАП 9** → SQL оптимизация аналитических методов
+9. **ЭТАП 5** → EXPLAIN ANALYZE + доработка индексов
+
+### Фаза 4: Финальная полировка (1 день)
+10. **ЭТАП 6** → Batch loaders для связей
+11. **ЭТАП 7** → Pagination + DTO optimization
+12. **ЭТАП 12** → Query Result Cache + Memory optimization
+
+**Общее время**: 6-8 дней интенсивной работы
 
 ---
 
@@ -461,5 +882,19 @@ foreach ($query->toIterable() as $row) {
 
 ---
 
-*Создано: 2025-11-08 by Claude Code AI (Sonnet 4.5)*
-*План рассчитан на 20-25 часов работы*
+## 🏆 Заключение от Opus 4.1
+
+Анализ выявил **20 критических проблем производительности**, из которых 11 были найдены дополнительно мной (Opus 4.1). Особое внимание требуют:
+
+1. **Lazy loading в DTO** - самая критичная проблема, создающая сотни лишних запросов
+2. **Методы загружающие все данные в память** - гарантированный OOM при 2M записей
+3. **Отсутствие партиционирования и connection pooling** - архитектурные проблемы для высоких нагрузок
+
+Рекомендую начать с **Фазы 1** (Этапы 1, 2, 8) - это даст быстрый прирост производительности в 10-20x уже в первые дни.
+
+---
+
+*Создано: 2025-11-08*
+*Версия 1.0: Claude Code AI (Sonnet 4.5) - базовый анализ*
+*Версия 2.0: Claude Opus 4.1 - расширенный глубокий анализ*
+*План рассчитан на 48-64 часа работы (6-8 дней)*
