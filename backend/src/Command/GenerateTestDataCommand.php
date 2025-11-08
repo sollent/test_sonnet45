@@ -221,8 +221,24 @@ class GenerateTestDataCommand extends Command
 
         $batchCount = 0;
 
+        // Store user and tag IDs instead of entities
+        $userIds = [];
+        $tagIdsByUser = [];
+
         foreach ($this->userCache as $user) {
-            $userTags = $this->tagCache[$user->getId()] ?? [];
+            $userIds[] = $user->getId();
+            $tagIdsByUser[$user->getId()] = array_map(fn($tag) => $tag->getId(), $this->tagCache[$user->getId()] ?? []);
+        }
+
+        foreach ($userIds as $userId) {
+            // Get managed reference to user (no DB query)
+            $user = $this->em->getReference(User::class, $userId);
+
+            // Get managed references for tags
+            $userTags = [];
+            foreach ($tagIdsByUser[$userId] as $tagId) {
+                $userTags[] = $this->em->getReference(Tag::class, $tagId);
+            }
 
             for ($i = 0; $i < $tasksPerUser; $i++) {
                 $task = $this->createTask($user, $userTags);
@@ -240,9 +256,12 @@ class GenerateTestDataCommand extends Command
                     $this->em->flush();
                     $this->em->clear();
 
-                    // Re-fetch users and tags to maintain references
-                    $this->refetchUsers();
-                    $this->refetchTags();
+                    // Re-create managed references after clear
+                    $user = $this->em->getReference(User::class, $userId);
+                    $userTags = [];
+                    foreach ($tagIdsByUser[$userId] as $tagId) {
+                        $userTags[] = $this->em->getReference(Tag::class, $tagId);
+                    }
 
                     $batchCount = 0;
                 }
@@ -286,28 +305,29 @@ class GenerateTestDataCommand extends Command
         ];
         $task->setPriority(TaskPriority::from($this->weightedRandom($priorityWeights)));
 
-        // Note: createdAt is auto-set by AbstractEntity lifecycle callbacks
-        // Generate dates spanning 2022-2025
-        $baseDate = new \DateTime();
+        // Generate dates spanning 2022-2025 (3 years of history)
+        // Base date for this task (when it was "created")
+        $baseDate = $this->faker->dateTimeBetween('-3 years', '-1 day');
 
-        // 70% of tasks have due date
+        // 70% of tasks have due date (from base date to +6 months)
         if (rand(1, 100) <= 70) {
-            $dueDate = $this->faker->dateTimeBetween('now', '+6 months');
+            $dueDate = $this->faker->dateTimeBetween($baseDate, (clone $baseDate)->modify('+6 months'));
             $task->setDueDate(\DateTimeImmutable::createFromMutable($dueDate));
         }
 
-        // 30% have start date
-        if (rand(1, 100) <= 30 && $task->getDueDate()) {
-            $startDate = $this->faker->dateTimeBetween('now', $task->getDueDate()->format('Y-m-d'));
+        // 30% have start date (from base date to due date, or base date + 1 month if no due date)
+        if (rand(1, 100) <= 30) {
+            $endForStart = $task->getDueDate()
+                ? $task->getDueDate()->format('Y-m-d H:i:s')
+                : (clone $baseDate)->modify('+1 month')->format('Y-m-d H:i:s');
+
+            $startDate = $this->faker->dateTimeBetween($baseDate, $endForStart);
             $task->setStartDate(\DateTimeImmutable::createFromMutable($startDate));
         }
 
-        // Set completed_at for completed tasks
+        // Set completed_at for completed tasks (from base date to now)
         if ($task->getStatus() === TaskStatus::COMPLETED) {
-            $dueDate = $task->getDueDate();
-            $completedDate = $dueDate ? $dueDate->format('Y-m-d') : '+1 month';
-
-            $completedAt = $this->faker->dateTimeBetween('now', $completedDate);
+            $completedAt = $this->faker->dateTimeBetween($baseDate, 'now');
             $task->setCompletedAt(\DateTimeImmutable::createFromMutable($completedAt));
         }
 
