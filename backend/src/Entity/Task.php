@@ -87,6 +87,10 @@ class Task extends AbstractEntity
     #[Groups(['task:read', 'task:write'])]
     private Collection $mediaObjects;
 
+    #[ORM\OneToMany(targetEntity: TaskAttachment::class, mappedBy: 'task', cascade: ['persist', 'remove'], orphanRemoval: true)]
+    #[Groups(['task:read'])]
+    private Collection $attachments;
+
     #[ORM\Column]
     #[Groups(['task:read'])]
     private int $sortOrder = 0;
@@ -112,6 +116,7 @@ class Task extends AbstractEntity
         $this->subtasks = new ArrayCollection();
         $this->tags = new ArrayCollection();
         $this->mediaObjects = new ArrayCollection();
+        $this->attachments = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -328,6 +333,32 @@ class Task extends AbstractEntity
     public function clearMediaObjects(): static
     {
         $this->mediaObjects->clear();
+
+        return $this;
+    }
+
+    public function getAttachments(): Collection
+    {
+        return $this->attachments;
+    }
+
+    public function addAttachment(TaskAttachment $attachment): static
+    {
+        if (!$this->attachments->contains($attachment)) {
+            $this->attachments->add($attachment);
+            $attachment->setTask($this);
+        }
+
+        return $this;
+    }
+
+    public function removeAttachment(TaskAttachment $attachment): static
+    {
+        if ($this->attachments->removeElement($attachment)) {
+            if ($attachment->getTask() === $this) {
+                $attachment->setTask(null);
+            }
+        }
 
         return $this;
     }
