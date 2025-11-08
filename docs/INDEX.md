@@ -229,6 +229,19 @@ Production deployment guide
 - SSL/HTTPS setup
 - Monitoring & logs
 
+#### [`guides/VOICE_AI_ASSISTANT_PLAN.md`](guides/VOICE_AI_ASSISTANT_PLAN.md)
+Voice AI Assistant implementation plan with LLM integration
+
+**Key Topics:**
+- Technology stack (Llama 3.2, Ollama, Whisper, Centrifugo)
+- System architecture and data flow
+- 5-phase implementation plan (19 days)
+- Backend services structure (SOLID/GRASP)
+- Frontend components and WebSocket integration
+- Telegram bot integration
+- Testing strategy and critical points
+- Future scaling and multi-messenger support
+
 ---
 
 ## 🔑 Critical Knowledge Areas
