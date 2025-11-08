@@ -144,7 +144,9 @@ class GenerateTestDataFastCommand extends Command
         $hashedPassword = password_hash('password123', PASSWORD_BCRYPT);
 
         for ($i = 0; $i < $count; $i++) {
-            $email = sprintf('testuser%d@example.com', $i + 1);
+            // Add unique hash to avoid email conflicts when running multiple times
+            $uniqueHash = substr(md5(uniqid('', true)), 0, 8);
+            $email = sprintf('testuser%d_%s@example.com', $i + 1, $uniqueHash);
             $name = $this->connection->quote($this->faker->name());
             $createdAt = $updatedAt = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
 
@@ -288,6 +290,7 @@ class GenerateTestDataFastCommand extends Command
         $taskValues = [];
         $taskTagValues = [];
         $batchCount = 0;
+        $gcCounter = 0; // Counter for garbage collection
 
         $statuses = [
             TaskStatus::PENDING->value => 40,
@@ -354,6 +357,7 @@ class GenerateTestDataFastCommand extends Command
 
                 $this->totalTasksGenerated++;
                 $batchCount++;
+                $gcCounter++;
 
                 // Flush batch
                 if ($batchCount >= self::BATCH_SIZE) {
@@ -361,6 +365,12 @@ class GenerateTestDataFastCommand extends Command
                     $taskValues = [];
                     $taskTagValues = [];
                     $batchCount = 0;
+                }
+
+                // Garbage collection every 20,000 tasks to prevent memory exhaustion
+                if ($gcCounter >= 20000) {
+                    gc_collect_cycles();
+                    $gcCounter = 0;
                 }
 
                 $progressBar->advance();
