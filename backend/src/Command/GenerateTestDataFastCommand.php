@@ -198,7 +198,7 @@ class GenerateTestDataFastCommand extends Command
         $values = [];
 
         foreach ($userIds as $userId) {
-            $numTags = rand(5, 8);
+            $numTags = min(rand(12, 15), count($tagNames)); // 12-15 tags per user (or all available)
             $selectedNames = (array)array_rand(array_flip($tagNames), $numTags);
 
             foreach ($selectedNames as $tagName) {
@@ -289,6 +289,7 @@ class GenerateTestDataFastCommand extends Command
 
         $taskValues = [];
         $taskTagValues = [];
+        $recurrenceValues = [];
         $batchCount = 0;
         $gcCounter = 0; // Counter for garbage collection
 
@@ -338,10 +339,14 @@ class GenerateTestDataFastCommand extends Command
                 }
 
                 $isArchived = rand(1, 100) <= 10 ? 'true' : 'false';
+                $isRecurringTemplate = rand(1, 100) <= 35 ? 'true' : 'false'; // 30-40% recurring tasks
                 $sortOrder = 0;
 
+                // Main tasks don't have parent (subtasks will be generated separately)
+                $parentTaskId = 'NULL';
+
                 $taskValues[] = sprintf(
-                    "(%s, %s, '%s', '%s', %s, %s, %s, %d, NULL, 0, %s, false, '%s', '%s')",
+                    "(%s, %s, '%s', '%s', %s, %s, %s, %d, %s, 0, %s, %s, '%s', '%s')",
                     $title,
                     $description,
                     $status,
@@ -350,7 +355,9 @@ class GenerateTestDataFastCommand extends Command
                     $dueDate,
                     $completedAt,
                     $userId,
+                    $parentTaskId,
                     $isArchived,
+                    $isRecurringTemplate,
                     $createdAt,
                     $updatedAt
                 );
@@ -361,9 +368,14 @@ class GenerateTestDataFastCommand extends Command
 
                 // Flush batch
                 if ($batchCount >= self::BATCH_SIZE) {
-                    $this->insertTaskBatch($taskValues, $taskTagValues, $userTags);
+                    $insertedTaskIds = $this->insertTaskBatch($taskValues, $taskTagValues, $recurrenceValues, $userTags, $userId);
+
+                    // Generate subtasks for some of the inserted tasks (10-15% will have 5-15 subtasks each)
+                    $this->generateSubtasks($insertedTaskIds, $userId);
+
                     $taskValues = [];
                     $taskTagValues = [];
+                    $recurrenceValues = [];
                     $batchCount = 0;
                 }
 
@@ -379,23 +391,220 @@ class GenerateTestDataFastCommand extends Command
 
         // Insert remaining
         if (!empty($taskValues)) {
-            $this->insertTaskBatch($taskValues, $taskTagValues, []);
+            $insertedTaskIds = $this->insertTaskBatch($taskValues, $taskTagValues, $recurrenceValues, $userTags, $userId);
+            $this->generateSubtasks($insertedTaskIds, $userId);
         }
 
         $progressBar->finish();
         $io->newLine(2);
     }
 
-    private function insertTaskBatch(array &$taskValues, array &$taskTagValues, array $userTags): void
-    {
+    private function insertTaskBatch(
+        array &$taskValues,
+        array &$taskTagValues,
+        array &$recurrenceValues,
+        array $userTags,
+        int $userId
+    ): array {
         if (empty($taskValues)) {
+            return [];
+        }
+
+        // Insert tasks and get their IDs
+        $sql = "INSERT INTO task (title, description, status, priority, start_date, due_date, completed_at, user_id, parent_task_id, sort_order, is_archived, is_recurring_template, created_at, updated_at) VALUES "
+            . implode(', ', $taskValues) . " RETURNING id, is_recurring_template";
+
+        $result = $this->connection->executeQuery($sql);
+        $insertedTasks = $result->fetchAllAssociative();
+
+        $taskIds = [];
+        $recurringTaskIds = [];
+
+        foreach ($insertedTasks as $task) {
+            $taskIds[] = $task['id'];
+            if ($task['is_recurring_template']) {
+                $recurringTaskIds[] = $task['id'];
+            }
+        }
+
+        // Generate task_tags associations (3-7 tags per task, 80% of tasks have tags)
+        if (!empty($userTags) && !empty($taskIds)) {
+            $taskTagInserts = [];
+
+            foreach ($taskIds as $taskId) {
+                if (rand(1, 100) <= 80) { // 80% tasks have tags
+                    $numTags = rand(6, 12); // 6 to 12 tags per task
+                    $numTags = min($numTags, count($userTags)); // Don't exceed available tags
+
+                    $selectedTagIndices = array_rand($userTags, $numTags);
+                    if (!is_array($selectedTagIndices)) {
+                        $selectedTagIndices = [$selectedTagIndices];
+                    }
+
+                    foreach ($selectedTagIndices as $tagIndex) {
+                        $taskTagInserts[] = sprintf('(%d, %d)', $taskId, $userTags[$tagIndex]);
+                    }
+                }
+            }
+
+            // Batch insert task_tags
+            if (!empty($taskTagInserts)) {
+                $taskTagsSql = "INSERT INTO task_tags (task_id, tag_id) VALUES " . implode(', ', $taskTagInserts) . " ON CONFLICT DO NOTHING";
+                $this->connection->executeStatement($taskTagsSql);
+            }
+        }
+
+        // Generate recurrence_rules for recurring template tasks
+        if (!empty($recurringTaskIds) && $userId > 0) {
+            $recurrenceTypes = ['daily', 'weekly', 'monthly', 'yearly', 'custom'];
+            $recurrenceInserts = [];
+
+            foreach ($recurringTaskIds as $templateTaskId) {
+                $recurrenceType = $recurrenceTypes[array_rand($recurrenceTypes)];
+                $now = new \DateTimeImmutable();
+                $nextOccurrence = $now->modify('+1 day')->format('Y-m-d H:i:s');
+                $timeOfDay = $now->format('H:i:s');
+                $createdAt = $updatedAt = $now->format('Y-m-d H:i:s');
+
+                $interval = 'NULL';
+                $daysOfWeek = 'NULL';
+                $dayOfMonth = 'NULL';
+                $monthOfYear = 'NULL';
+
+                switch ($recurrenceType) {
+                    case 'daily':
+                        $interval = 1;
+                        break;
+                    case 'weekly':
+                        $daysOfWeek = "'" . json_encode([rand(1, 5)]) . "'"; // Random weekday
+                        $interval = 1;
+                        break;
+                    case 'monthly':
+                        $dayOfMonth = rand(1, 28);
+                        break;
+                    case 'yearly':
+                        $monthOfYear = rand(1, 12);
+                        $dayOfMonth = rand(1, 28);
+                        break;
+                    case 'custom':
+                        $interval = rand(2, 7); // Every 2-7 days
+                        break;
+                }
+
+                $endDate = rand(1, 100) <= 70 ? "'" . $now->modify('+1 year')->format('Y-m-d') . "'" : 'NULL';
+                $maxOccurrences = rand(1, 100) <= 50 ? rand(10, 100) : 'NULL';
+
+                $recurrenceInserts[] = sprintf(
+                    "(%d, %d, '%s', %s, %s, %s, %s, %s, %s, 0, '%s', '%s', true, '%s', '%s')",
+                    $templateTaskId,
+                    $userId,
+                    $recurrenceType,
+                    $interval,
+                    $daysOfWeek,
+                    $dayOfMonth,
+                    $monthOfYear,
+                    $endDate,
+                    $maxOccurrences,
+                    $nextOccurrence,
+                    $timeOfDay,
+                    $createdAt,
+                    $updatedAt
+                );
+            }
+
+            // Batch insert recurrence_rules
+            if (!empty($recurrenceInserts)) {
+                $recurrenceSql = "INSERT INTO recurrence_rules (template_task_id, created_by_id, recurrence_type, interval, days_of_week, day_of_month, month_of_year, end_date, max_occurrences, current_occurrences, next_occurrence_date, time_of_day, is_active, created_at, updated_at) VALUES "
+                    . implode(', ', $recurrenceInserts);
+                $this->connection->executeStatement($recurrenceSql);
+            }
+        }
+
+        return $taskIds;
+    }
+
+    /**
+     * Generate 5-15 subtasks for 10-15% of given parent tasks
+     */
+    private function generateSubtasks(array $parentTaskIds, int $userId): void
+    {
+        if (empty($parentTaskIds)) {
             return;
         }
 
-        $sql = "INSERT INTO task (title, description, status, priority, start_date, due_date, completed_at, user_id, parent_task_id, sort_order, is_archived, is_recurring_template, created_at, updated_at) VALUES "
-            . implode(', ', $taskValues);
+        // Select 10-15% of tasks to have subtasks
+        $percentWithSubtasks = rand(10, 15);
+        $numParents = (int)(count($parentTaskIds) * ($percentWithSubtasks / 100));
 
-        $this->connection->executeStatement($sql);
+        if ($numParents === 0) {
+            return;
+        }
+
+        // Randomly select which tasks will have subtasks
+        $selectedParents = [];
+        if ($numParents >= count($parentTaskIds)) {
+            $selectedParents = $parentTaskIds;
+        } else {
+            $parentCandidates = array_rand(array_flip($parentTaskIds), $numParents);
+            if (!is_array($parentCandidates)) {
+                $parentCandidates = [$parentCandidates];
+            }
+            $selectedParents = $parentCandidates;
+        }
+
+        $statuses = [
+            TaskStatus::PENDING->value => 50,
+            TaskStatus::IN_PROGRESS->value => 30,
+            TaskStatus::COMPLETED->value => 20,
+        ];
+
+        $priorities = [
+            TaskPriority::LOW->value => 40,
+            TaskPriority::MEDIUM->value => 40,
+            TaskPriority::HIGH->value => 15,
+            TaskPriority::URGENT->value => 5,
+        ];
+
+        foreach ($selectedParents as $parentId) {
+            $numSubtasks = rand(5, 15);
+            $subtaskValues = [];
+
+            for ($s = 0; $s < $numSubtasks; $s++) {
+                $title = $this->connection->quote("Subtask " . ($s + 1) . ": " . $this->faker->sentence(rand(2, 5)));
+                $description = rand(1, 100) <= 50 ? $this->connection->quote($this->faker->sentence()) : 'NULL';
+                $status = $this->weightedRandom($statuses);
+                $priority = $this->weightedRandom($priorities);
+
+                $now = new \DateTimeImmutable();
+                $createdAt = $updatedAt = $now->format('Y-m-d H:i:s');
+
+                $completedAt = 'NULL';
+                if ($status === TaskStatus::COMPLETED->value) {
+                    $completedAt = "'" . $now->format('Y-m-d H:i:s') . "'";
+                }
+
+                $subtaskValues[] = sprintf(
+                    "(%s, %s, '%s', '%s', NULL, NULL, %s, %d, %d, 0, false, false, '%s', '%s')",
+                    $title,
+                    $description,
+                    $status,
+                    $priority,
+                    $completedAt,
+                    $userId,
+                    $parentId,
+                    $createdAt,
+                    $updatedAt
+                );
+            }
+
+            // Insert subtasks in one batch per parent
+            if (!empty($subtaskValues)) {
+                $sql = "INSERT INTO task (title, description, status, priority, start_date, due_date, completed_at, user_id, parent_task_id, sort_order, is_archived, is_recurring_template, created_at, updated_at) VALUES "
+                    . implode(', ', $subtaskValues);
+                $this->connection->executeStatement($sql);
+                $this->totalTasksGenerated += count($subtaskValues);
+            }
+        }
     }
 
     private function weightedRandom(array $weights): string
