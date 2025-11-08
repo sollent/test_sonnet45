@@ -16,6 +16,17 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: TaskRepository::class)]
 #[ORM\Table(name: '`task`')]
+#[ORM\Index(name: 'idx_task_user_parent', columns: ['user_id', 'parent_task_id'])]
+#[ORM\Index(name: 'idx_task_user_status', columns: ['user_id', 'status'])]
+#[ORM\Index(name: 'idx_task_user_priority', columns: ['user_id', 'priority'])]
+#[ORM\Index(name: 'idx_task_user_archived', columns: ['user_id', 'is_archived'])]
+#[ORM\Index(name: 'idx_task_user_due_date', columns: ['user_id', 'due_date'])]
+#[ORM\Index(name: 'idx_task_user_completed_at', columns: ['user_id', 'completed_at'])]
+#[ORM\Index(name: 'idx_task_user_created_at', columns: ['user_id', 'created_at'])]
+#[ORM\Index(name: 'idx_task_user_parent_archived', columns: ['user_id', 'parent_task_id', 'is_archived'])]
+#[ORM\Index(name: 'idx_task_user_parent_status', columns: ['user_id', 'parent_task_id', 'status'])]
+#[ORM\Index(name: 'idx_task_user_status_archived', columns: ['user_id', 'status', 'is_archived'])]
+#[ORM\Index(name: 'idx_task_user_due_status', columns: ['user_id', 'due_date', 'status'])]
 #[ORM\HasLifecycleCallbacks]
 class Task extends AbstractEntity
 {

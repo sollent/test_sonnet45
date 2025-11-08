@@ -15,6 +15,8 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: TagRepository::class)]
 #[ORM\Table(name: '`tag`')]
 #[ORM\UniqueConstraint(name: 'unique_tag_per_user', columns: ['name', 'user_id'])]
+#[ORM\Index(name: 'idx_tag_user_name', columns: ['user_id', 'name'])]
+#[ORM\Index(name: 'idx_tag_user_usage', columns: ['user_id', 'usage_count'])]
 #[UniqueEntity(
     fields: ['name', 'user'],
     message: 'tag.name.already_exists',
