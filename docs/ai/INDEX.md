@@ -2,9 +2,78 @@
 
 > **Version**: 1.0.0
 > **Status**: Production-Ready Documentation
-> **Target Audience**: Development Team, DevOps, QA Engineers
-> **Estimated Implementation Time**: 19-25 days
+> **Target Audience**: Development Team, DevOps, QA Engineers, AI Assistants (Claude, GPT)
+> **Estimated Implementation Time**: 19-25 days (full enterprise) | 3-5 days (MVP)
 > **Technology Readiness Level**: TRL 6-7
+
+---
+
+## 🎯 Project Context & Business Logic
+
+### What is this project?
+
+This is a **Voice AI Assistant** feature for an existing **Task Management System** (Vue.js 3 + Symfony 7.1 + PostgreSQL). The AI assistant allows users to manage their tasks using natural **Russian language voice commands**, eliminating the need for manual input through UI.
+
+### Core Business Problem
+
+Users waste time navigating complex UIs to create, update, or filter tasks. Our solution: **speak naturally, and the AI does the work**.
+
+**Examples of voice commands:**
+
+1. **"Создай задачу на завтра с 15:00 по 16:30 - Сделать домашнее задание за ребенка, прикрепи теги 'Помощь ребенку', 'Срочные'"**
+   → AI creates a task with all specified parameters
+
+2. **"Покажи мне список задач на завтра и послезавтра с приоритетом 'Срочные'"**
+   → AI applies filters and displays matching tasks
+
+3. **"Для задачи 'Скопировать чужой контент' добавь три подзадачи - 'Скопировать статью', 'Проанализировать ее', 'Опубликовать на всех ресурсах'"**
+   → AI finds the task and creates 3 subtasks
+
+4. **"Для задачи 'Скопировать чужой контент' - отметь подзадачу 'Проанализировать ее' как завершенную"**
+   → AI finds task, finds subtask by fuzzy match, marks it complete
+
+5. **"Заверши три задачи на сегодня - 'Задача 1', 'Задача 2' и 'Задача 3'"**
+   → AI completes multiple tasks in bulk
+
+6. **"Перенеси оставшиеся незавершенные сегодняшние задачи на завтра!"**
+   → AI queries incomplete tasks, updates their due dates
+
+### How it works (Technical Flow)
+
+```
+User Action → Voice Recording → Backend API → Queue (RabbitMQ)
+                                                    ↓
+                                    ← WebSocket ← Processing Worker
+                                         ↓              ↓
+                                    Frontend      STT (Whisper)
+                                                      ↓
+                                                 LLM (Llama 3.2)
+                                                      ↓
+                                                  Parse JSON
+                                                      ↓
+                                              Execute Command
+                                                      ↓
+                                            Update Database
+```
+
+**Key Technical Requirements:**
+
+1. **Local LLM** (no external APIs): Llama 3.2 3B via Ollama
+2. **Runs on weak VPS**: 2 CPU cores, 4GB RAM, 40GB disk
+3. **Russian language support**: Both STT (Whisper) and LLM
+4. **Real-time updates**: Centrifugo WebSocket
+5. **Smart search**: Fuzzy matching for task names (tasks may have similar titles)
+6. **Future-ready**: Architecture allows Telegram, WhatsApp, Apple Watch integration
+
+### Architecture Principles
+
+- **SOLID, GRASP, GoF** design patterns throughout
+- **Performance-first**: Response time < 5 seconds
+- **Scalable**: Easy to add new command types and integrations
+- **Testable**: Code designed for Unit, Integration, Functional, E2E tests
+- **Privacy-first**: All AI processing happens locally on VPS
+
+---
 
 ## 📋 Executive Summary
 
