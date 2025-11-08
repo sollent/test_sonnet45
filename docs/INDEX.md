@@ -114,6 +114,17 @@ Recurring tasks functionality and implementation
 - Testing and troubleshooting
 - Usage examples for each recurrence type
 
+#### [`backend/TEST_COVERAGE.md`](backend/TEST_COVERAGE.md)
+**📊 NEW** - Complete backend test coverage report and analysis
+
+**Key Topics:**
+- Coverage statistics by layer (Controllers, Services, Repositories, etc.)
+- Test quality analysis (Unit, Integration, Functional)
+- Detailed tables with all 33 test files
+- What's covered vs. what's missing
+- Priority-based roadmap for missing tests
+- Recommendations for improving coverage to 90%+
+
 ---
 
 ### 🎨 Frontend (`project/frontend/`)
@@ -229,6 +240,19 @@ Production deployment guide
 - SSL/HTTPS setup
 - Monitoring & logs
 
+#### [`guides/VOICE_AI_ASSISTANT_PLAN.md`](guides/VOICE_AI_ASSISTANT_PLAN.md)
+Voice AI Assistant implementation plan with LLM integration
+
+**Key Topics:**
+- Technology stack (Llama 3.2, Ollama, Whisper, Centrifugo)
+- System architecture and data flow
+- 5-phase implementation plan (19 days)
+- Backend services structure (SOLID/GRASP)
+- Frontend components and WebSocket integration
+- Telegram bot integration
+- Testing strategy and critical points
+- Future scaling and multi-messenger support
+
 ---
 
 ## 🔑 Critical Knowledge Areas
@@ -242,6 +266,7 @@ Production deployment guide
 - [`backend/API_REFERENCE.md`](backend/API_REFERENCE.md) - API contracts
 - [`backend/DATABASE.md`](backend/DATABASE.md) - Schema design
 - [`backend/RECURRENCE_TASKS.md`](backend/RECURRENCE_TASKS.md) - Recurring tasks system
+- [`backend/TEST_COVERAGE.md`](backend/TEST_COVERAGE.md) - Test coverage report & roadmap
 
 ### For Frontend Development
 **Must Read:**
