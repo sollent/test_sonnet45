@@ -2,6 +2,8 @@
 
 > **For AI (Sonnet 4.5)**: This document provides step-by-step instructions for restructuring the project from a flat directory structure to a monorepo architecture with clear separation between application code and infrastructure.
 
+> **⚠️ IMPORTANT**: The user will create branch `feature/project-restructarization` BEFORE you start. You will do ALL work in this branch (no new branch creation needed). See Stage 0 for details.
+
 ---
 
 ## 📍 Context & Rationale
@@ -159,22 +161,31 @@ These files reference paths that will change:
 
 **IMPORTANT**: Before starting, create a backup branch!
 
+**NOTE**: The user will create a feature branch `feature/project-restructarization` BEFORE you start. You will work in this branch.
+
 ```bash
-# 1. Ensure working directory is clean
+# 1. Verify you are in the correct branch (created by user)
+git branch --show-current
+# Should show: feature/project-restructarization
+
+# 2. Ensure working directory is clean
 git status
 
-# 2. Commit any pending changes
+# 3. Commit any pending changes if needed
 git add .
 git commit -m "chore: save work before restructuring"
 
-# 3. Create backup branch
+# 4. Create backup branch from current branch
 git checkout -b backup/before-restructure
 
-# 4. Return to main branch
-git checkout feature/optimization-backend-global  # or your current branch
+# 5. Return to feature branch where restructuring will happen
+git checkout feature/project-restructarization
 
-# 5. Create new branch for restructuring
-git checkout -b refactor/monorepo-structure
+# 6. Verify you're back in the right branch
+git branch --show-current
+# Should show: feature/project-restructarization
+
+# You will do ALL restructuring work in this branch (no new branch needed)
 ```
 
 ---
@@ -784,7 +795,7 @@ BREAKING CHANGE: Docker commands now run from project root"
 git log -1 --stat
 
 # 5. (Optional) Push to remote
-git push origin refactor/monorepo-structure
+git push origin feature/project-restructarization
 ```
 
 ---
@@ -918,14 +929,19 @@ If you encounter issues during migration:
 
 ## 🤖 For Sonnet 4.5
 
+**Prerequisites:**
+- User has already created branch `feature/project-restructarization`
+- You are starting in this branch (verify in Stage 0)
+
 **You can execute this plan autonomously by:**
 
 1. Reading this document fully
-2. Following stages 0-11 in order
-3. Using Git commands exactly as shown
-4. Verifying at each checkpoint
-5. Creating backup branch before starting
-6. Committing changes only after full verification
+2. Verifying you are in `feature/project-restructarization` branch
+3. Following stages 0-11 in order
+4. Using Git commands exactly as shown
+5. Verifying at each checkpoint
+6. Creating backup branch in Stage 0 (automatic)
+7. Committing changes only after full verification (Stage 11)
 
 **Estimated time**: 30-45 minutes
 
@@ -933,8 +949,14 @@ If you encounter issues during migration:
 
 **Testing required**: Yes (Stage 10 verification)
 
+**Branch workflow:**
+- Work branch: `feature/project-restructarization` (created by user)
+- Backup branch: `backup/before-restructure` (you create in Stage 0)
+- No additional branches needed
+
 ---
 
-**Last Updated**: 2025-01-09
-**Version**: 1.0
+**Last Updated**: 2025-01-09 (Updated)
+**Version**: 1.1
 **Status**: Ready for implementation
+**Changes**: Updated Git workflow - work in `feature/project-restructarization` branch
