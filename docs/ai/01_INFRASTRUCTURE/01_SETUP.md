@@ -133,7 +133,7 @@ echo "✅ Directory structure created at $BASE_DIR"
 ## 🚀 Step-by-Step Installation
 
 ### Step 1: System Preparation
-
+### ВАЖНО!!! - МОЖНО ПРОПУСТИТЬ И НЕ ДЕЛАТЬ ЭТОТ СТЕП (Так как у меня Macos и мне скорее всего эти локальные пакеты не нужны - главное что у меня есть DOCKER)
 ```bash
 #!/bin/bash
 # Step 1.1: Update system
