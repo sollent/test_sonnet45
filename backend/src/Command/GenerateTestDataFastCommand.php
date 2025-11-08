@@ -74,8 +74,8 @@ class GenerateTestDataFastCommand extends Command
 
         $startTime = microtime(true);
 
-        // Disable autocommit for better performance
-        $this->connection->beginTransaction();
+        // Using auto-commit mode for safety (data saved every batch)
+        // No single big transaction - if interrupted, partial data will be saved
 
         try {
             // Step 1: Generate users
@@ -98,8 +98,6 @@ class GenerateTestDataFastCommand extends Command
             $io->section('Step 5/4: Rebuilding indexes...');
             $this->recreateIndexes($io);
 
-            $this->connection->commit();
-
             $duration = microtime(true) - $startTime;
 
             $io->success([
@@ -115,7 +113,6 @@ class GenerateTestDataFastCommand extends Command
             ]);
 
         } catch (\Exception $e) {
-            $this->connection->rollBack();
             $io->error('Generation failed: ' . $e->getMessage());
             return Command::FAILURE;
         }
