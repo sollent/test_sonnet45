@@ -186,15 +186,14 @@ class TaskRepository extends ServiceEntityRepository
     {
         $todayStart = new \DateTimeImmutable('today');
 
+        // OPTIMIZED APPROACH: Two-step query
+        // STEP 1: Get task IDs with correct LIMIT/OFFSET (NO JOINS to avoid Cartesian product)
         $qb = $this->createQueryBuilder('t')
-            ->leftJoin('t.tags', 'tag')
-            ->leftJoin('t.user', 'u')
-            ->addSelect('tag')
-            ->addSelect('u')
+            ->select('t.id')
             ->where('t.user = :user')
             ->andWhere('t.parentTask IS NULL')
             ->andWhere('t.isArchived = false')
-            ->andWhere('t.status != :cancelledStatus')  // Exclude cancelled tasks
+            ->andWhere('t.status != :cancelledStatus')
             ->andWhere('(
                 (t.dueDate IS NOT NULL AND t.dueDate >= :todayStart) OR
                 (t.startDate IS NOT NULL AND t.startDate >= :todayStart)
@@ -209,19 +208,12 @@ class TaskRepository extends ServiceEntityRepository
         }
 
         // Sort by DATE (day only) first, then by completion status within each day
-        // Using custom DATE() DQL function to extract just the date part (ignore time)
-        // COALESCE ensures we use startDate if dueDate is null
-        // This ensures tasks are grouped by day, with uncompleted tasks first within each day
         $qb->addSelect('DATE(COALESCE(t.dueDate, t.startDate)) AS HIDDEN dateOnly')
            ->addSelect('CASE WHEN t.status = :completedStatus THEN 1 ELSE 0 END AS HIDDEN completedOrder')
            ->setParameter('completedStatus', TaskStatus::COMPLETED)
-           // First sort by DATE only (groups tasks into days, ignoring time)
            ->orderBy('dateOnly', 'ASC')
-           // Then sort by completion status (0=uncompleted first, 1=completed after)
            ->addOrderBy('completedOrder', 'ASC')
-           // Then by priority within same completion status
            ->addOrderBy('t.priority', 'DESC')
-           // Finally by ID to ensure stable order for pagination
            ->addOrderBy('t.id', 'ASC');
 
         // Apply pagination
@@ -232,7 +224,64 @@ class TaskRepository extends ServiceEntityRepository
             $qb->setFirstResult($offset);
         }
 
-        return $qb->getQuery()->getResult();
+        $taskIds = array_column($qb->getQuery()->getResult(), 'id');
+
+        if (empty($taskIds)) {
+            return [];
+        }
+
+        // STEP 2: Load tasks WITHOUT relations first
+        $tasks = $this->createQueryBuilder('t')
+            ->where('t.id IN (:ids)')
+            ->setParameter('ids', $taskIds)
+            ->getQuery()
+            ->getResult();
+
+        // STEP 3: Preload only NECESSARY relations in separate batch queries
+        // Tags are needed for task:list serialization group
+        $this->getEntityManager()->createQuery('
+            SELECT t, tags
+            FROM App\Entity\Task t
+            LEFT JOIN t.tags tags
+            WHERE t.id IN (:ids)
+        ')
+        ->setParameter('ids', $taskIds)
+        ->getResult();
+
+        // Subtasks are needed for count calculation in DTO
+        $this->getEntityManager()->createQuery('
+            SELECT t, subtasks
+            FROM App\Entity\Task t
+            LEFT JOIN t.subtasks subtasks
+            WHERE t.id IN (:ids)
+        ')
+        ->setParameter('ids', $taskIds)
+        ->getResult();
+
+        // RecurrenceRule is accessed in serialization
+        $this->getEntityManager()->createQuery('
+            SELECT t, recurrence
+            FROM App\Entity\Task t
+            LEFT JOIN t.recurrenceRule recurrence
+            WHERE t.id IN (:ids)
+        ')
+        ->setParameter('ids', $taskIds)
+        ->getResult();
+
+        // Restore original order from STEP 1
+        $tasksById = [];
+        foreach ($tasks as $task) {
+            $tasksById[$task->getId()] = $task;
+        }
+
+        $orderedTasks = [];
+        foreach ($taskIds as $id) {
+            if (isset($tasksById[$id])) {
+                $orderedTasks[] = $tasksById[$id];
+            }
+        }
+
+        return $orderedTasks;
     }
 
     /**
