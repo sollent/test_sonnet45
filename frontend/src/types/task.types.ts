@@ -140,6 +140,7 @@ export interface TaskFilters {
   dateTo?: string
   priorities?: TaskPriority[]
   statuses?: TaskStatus[]
+  hideSubtasks?: boolean
 }
 
 export interface TaskFiltersState {

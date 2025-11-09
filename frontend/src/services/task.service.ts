@@ -76,6 +76,9 @@ class TaskService {
     if (filters?.statuses && filters.statuses.length > 0) {
       filters.statuses.forEach(status => params.append('statuses[]', status))
     }
+    if (filters?.hideSubtasks !== undefined) {
+      params.append('hideSubtasks', String(filters.hideSubtasks))
+    }
 
     // Pagination parameters
     if (limit !== undefined) {

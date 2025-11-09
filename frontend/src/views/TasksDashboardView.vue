@@ -46,6 +46,9 @@ const totalLoadedTasks = ref(0)  // Track total loaded tasks
 const isLoadingMore = ref(false)
 const hasMoreTasks = ref(true)
 
+// Hide subtasks toggle (default: true - hide subtasks for better performance)
+const hideSubtasks = ref(true)
+
 // Active filters count
 const activeFiltersCount = computed(() => {
   const filters = taskStore.activeFilters
@@ -128,7 +131,8 @@ async function handleQuickFilterChange(filters: Array<{ id: string; view: string
         tags: taskStore.activeFilters.tags,
         completed: taskStore.activeFilters.completed,
         dateFrom: taskStore.activeFilters.dateFrom,
-        dateTo: taskStore.activeFilters.dateTo
+        dateTo: taskStore.activeFilters.dateTo,
+        hideSubtasks: hideSubtasks.value
       }
 
       console.log(`Loading filter "${filter.id}" with view "${filter.view}"`, queryFilters)
@@ -194,6 +198,15 @@ async function handleQuickFilterChange(filters: Array<{ id: string; view: string
   }
 }
 
+// Handle hide subtasks toggle
+function handleHideSubtasksChange(newHideSubtasks: boolean) {
+  console.log('Hide subtasks changed:', newHideSubtasks)
+  hideSubtasks.value = newHideSubtasks
+
+  // Refresh current view with new hideSubtasks setting
+  refreshCurrentView()
+}
+
 // Handle filters apply
 function handleFiltersApply() {
   console.log('Filters applied')
@@ -232,7 +245,8 @@ async function loadMoreTasks() {
       dateFrom: taskStore.activeFilters.dateFrom,
       dateTo: taskStore.activeFilters.dateTo,
       priorities: taskStore.activeFilters.priorities,
-      statuses: taskStore.activeFilters.statuses
+      statuses: taskStore.activeFilters.statuses,
+      hideSubtasks: hideSubtasks.value
     }
 
     // Only add completed if it's explicitly set (not null)
@@ -440,7 +454,8 @@ function selectView(viewId: string) {
     dateFrom: taskStore.activeFilters.dateFrom,
     dateTo: taskStore.activeFilters.dateTo,
     priorities: taskStore.activeFilters.priorities,
-    statuses: taskStore.activeFilters.statuses
+    statuses: taskStore.activeFilters.statuses,
+    hideSubtasks: hideSubtasks.value
   }
 
   // Only add completed if it's explicitly set (not null)
@@ -493,7 +508,8 @@ async function refreshCurrentView() {
   // Build query filters from active filters
   const queryFilters = {
     view: selectedView.value === 'all' ? 'all' : selectedView.value,
-    ...taskStore.activeFilters
+    ...taskStore.activeFilters,
+    hideSubtasks: hideSubtasks.value
   }
 
   if (selectedView.value === 'overdue') {
@@ -727,7 +743,10 @@ async function handleTaskDeleted() {
         <!-- Quick Filters Row (Desktop & Mobile) -->
         <div class="filters-row">
           <div class="quick-filters-wrapper">
-            <QuickFilters @filters-change="handleQuickFilterChange" />
+            <QuickFilters
+              @filters-change="handleQuickFilterChange"
+              @hide-subtasks-change="handleHideSubtasksChange"
+            />
           </div>
           <button v-if="!isMobile" @click="isFiltersPanelVisible = true" class="advanced-filters-btn">
             <i class="pi pi-sliders-h"></i>

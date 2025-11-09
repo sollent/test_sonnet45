@@ -49,8 +49,12 @@ const quickFilters = computed(() => [
 
 const activeFilters = ref<string[]>([])
 
+// Hide subtasks toggle (default: true - subtasks are hidden for performance)
+const hideSubtasks = ref<boolean>(true)
+
 const emit = defineEmits<{
   (e: 'filters-change', filters: QuickFilter[]): void
+  (e: 'hide-subtasks-change', hideSubtasks: boolean): void
 }>()
 
 function toggleFilter(filter: QuickFilter) {
@@ -90,6 +94,11 @@ function clearAllFilters() {
   // Emit empty filters - parent will handle API call
   emit('filters-change', [])
 }
+
+function toggleHideSubtasks() {
+  hideSubtasks.value = !hideSubtasks.value
+  emit('hide-subtasks-change', hideSubtasks.value)
+}
 </script>
 
 <template>
@@ -104,7 +113,17 @@ function clearAllFilters() {
       <span>{{ filter.label }}</span>
       <span v-if="filter.count" class="count-badge">{{ filter.count }}</span>
     </button>
-    
+
+    <!-- Hide Subtasks Toggle Button -->
+    <button
+      :class="['quick-filter-btn', 'hide-subtasks-btn', { active: hideSubtasks }]"
+      @click="toggleHideSubtasks"
+      :title="hideSubtasks ? 'Подзадачи скрыты (быстрая загрузка)' : 'Подзадачи отображаются (полная загрузка)'"
+    >
+      <i :class="hideSubtasks ? 'pi pi-eye-slash' : 'pi pi-eye'"></i>
+      <span>{{ hideSubtasks ? 'Без подзадач' : 'С подзадачами' }}</span>
+    </button>
+
     <!-- Clear Filters Button -->
     <button
       v-if="taskStore.hasActiveFilters() || activeFilters.length > 0"
@@ -259,6 +278,39 @@ function clearAllFilters() {
 .clear-filters-btn:active {
   transform: translateY(0);
   box-shadow: 0 2px 8px rgba(251, 191, 36, 0.25);
+}
+
+/* Hide Subtasks Toggle Button - Special styling */
+.hide-subtasks-btn {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  border-color: #60a5fa;
+  color: #1e40af;
+  font-weight: 600;
+}
+
+.hide-subtasks-btn i {
+  color: #3b82f6;
+}
+
+.hide-subtasks-btn:hover {
+  background: linear-gradient(135deg, #bfdbfe 0%, #93c5fd 100%);
+  border-color: #3b82f6;
+  color: #1e3a8a;
+}
+
+.hide-subtasks-btn:hover i {
+  color: #2563eb;
+}
+
+.hide-subtasks-btn.active {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border-color: transparent;
+  color: white;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.hide-subtasks-btn.active i {
+  color: white;
 }
 
 /* Mobile - компактный wrap дизайн */

@@ -148,6 +148,11 @@ class TaskController extends AbstractController
         $limit = $request->query->get('limit') ? (int)$request->query->get('limit') : 150;
         $offset = $request->query->get('offset') ? (int)$request->query->get('offset') : 0;
 
+        // Get hideSubtasks parameter (default: true - hide subtasks for performance)
+        // When true: don't load subtasks in list view (faster, less data)
+        // When false: load all tasks with subtasks using Paginator (slower, more complete data)
+        $hideSubtasks = $request->query->get('hideSubtasks', 'true') === 'true';
+
         // Handle search
         $search = $request->query->get('search');
         if ($search) {
@@ -162,7 +167,7 @@ class TaskController extends AbstractController
                 'overdue' => $this->taskService->getOverdueTasksPaginated($user, 1, 50, $filters)['tasks'],
                 'upcoming' => $this->taskService->getUpcomingTasks($user, 30, $filters),
                 'unscheduled' => $this->taskService->getUnscheduledTasksPaginated($user, 1, 50, $filters)['tasks'],
-                default => $this->taskService->getActiveTasks($user, $filters, $limit, $offset)
+                default => $this->taskService->getActiveTasks($user, $filters, $limit, $offset, $hideSubtasks)
             };
         }
 

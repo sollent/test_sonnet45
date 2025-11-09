@@ -196,7 +196,7 @@ class TaskRepository extends ServiceEntityRepository
         return $qb->getQuery()->getResult();
     }
 
-    public function findActiveTasks(User $user, ?TaskFilterDto $filters = null, ?int $limit = null, ?int $offset = null): array
+    public function findActiveTasks(User $user, ?TaskFilterDto $filters = null, ?int $limit = null, ?int $offset = null, bool $hideSubtasks = true): array
     {
         $todayStart = new \DateTimeImmutable('today');
 
@@ -248,6 +248,16 @@ class TaskRepository extends ServiceEntityRepository
             $qb->setFirstResult($offset);
         }
 
+        // When loading subtasks: Use Paginator to handle LEFT JOIN + LIMIT correctly
+        // Without Paginator, LIMIT is applied to SQL rows (not Task entities)
+        // which causes duplicates when JOINing collections (subtasks)
+        // fetchJoinCollection=true wraps main query with LIMIT in subquery BEFORE JOIN
+        if (!$hideSubtasks) {
+            $paginator = new Paginator($qb->getQuery(), $fetchJoinCollection = true);
+            return iterator_to_array($paginator);
+        }
+
+        // When hiding subtasks: Simple query without Paginator (faster)
         return $qb->getQuery()->getResult();
     }
 
