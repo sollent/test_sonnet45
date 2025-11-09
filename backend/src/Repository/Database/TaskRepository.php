@@ -645,6 +645,51 @@ class TaskRepository extends ServiceEntityRepository
     }
 
     /**
+     * Count total overdue tasks (for pagination)
+     */
+    public function countOverdueByUser(User $user, ?TaskFilterDto $filters = null): int
+    {
+        $qb = $this->createQueryBuilder('t')
+            ->select('COUNT(t.id)')
+            ->where('t.user = :user')
+            ->andWhere('t.parentTask IS NULL')
+            ->andWhere('t.isArchived = false')
+            ->andWhere('t.status != :cancelledStatus')
+            ->andWhere('t.dueDate < :today')
+            ->setParameter('user', $user)
+            ->setParameter('today', new \DateTimeImmutable())
+            ->setParameter('cancelledStatus', TaskStatus::CANCELLED);
+
+        if ($filters) {
+            $this->applyFilters($qb, $filters);
+        }
+
+        return (int) $qb->getQuery()->getSingleScalarResult();
+    }
+
+    /**
+     * Count total unscheduled tasks (for pagination)
+     */
+    public function countUnscheduledByUser(User $user, ?TaskFilterDto $filters = null): int
+    {
+        $qb = $this->createQueryBuilder('t')
+            ->select('COUNT(t.id)')
+            ->where('t.user = :user')
+            ->andWhere('t.parentTask IS NULL')
+            ->andWhere('t.isArchived = false')
+            ->andWhere('t.status != :cancelledStatus')
+            ->andWhere('t.dueDate IS NULL')
+            ->setParameter('user', $user)
+            ->setParameter('cancelledStatus', TaskStatus::CANCELLED);
+
+        if ($filters) {
+            $this->applyFilters($qb, $filters);
+        }
+
+        return (int) $qb->getQuery()->getSingleScalarResult();
+    }
+
+    /**
      * Apply filters to query builder
      *
      * @param QueryBuilder $qb

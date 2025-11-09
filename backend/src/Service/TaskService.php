@@ -350,9 +350,12 @@ final class TaskService
             $tasks[] = $task;
         }
 
+        // Use separate count query for correct total (Paginator with fetchJoinCollection=false doesn't count correctly)
+        $total = $this->taskRepository->countUnscheduledByUser($user, $filters);
+
         return [
             'tasks' => $tasks,
-            'total' => count($paginator),
+            'total' => $total,
         ];
     }
 
@@ -405,9 +408,12 @@ final class TaskService
             $tasks[] = $task;
         }
 
+        // Use separate count query for correct total (Paginator with fetchJoinCollection=false doesn't count correctly)
+        $total = $this->taskRepository->countOverdueByUser($user, $filters);
+
         return [
             'tasks' => $tasks,
-            'total' => count($paginator),
+            'total' => $total,
         ];
     }
 
