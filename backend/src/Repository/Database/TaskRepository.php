@@ -517,48 +517,44 @@ class TaskRepository extends ServiceEntityRepository
 
     public function findOverdueByUserPaginated(User $user, int $page, int $limit, ?TaskFilterDto $filters = null): Paginator
     {
-        $qb = $this->createQueryBuilder('t')
-            ->leftJoin('t.tags', 'tag')
-            ->leftJoin('t.user', 'u')
-            ->leftJoin('t.subtasks', 'st')
-            ->leftJoin('t.recurrenceRule', 'rr')
-            ->leftJoin('st.recurrenceRule', 'st_rr')
-            ->addSelect('tag')
-            ->addSelect('u')
-            ->addSelect('st')
-            ->addSelect('rr')
-            ->addSelect('st_rr')
+        // OPTIMIZED: Two-step approach to avoid slow ROW_NUMBER() OVER() queries
+        // Step 1: Get task IDs with simple query (fast)
+        $idsQb = $this->createQueryBuilder('t')
+            ->select('t.id')
             ->where('t.user = :user')
             ->andWhere('t.parentTask IS NULL')
             ->andWhere('t.isArchived = false')
-            ->andWhere('t.status != :cancelledStatus')  // Exclude cancelled tasks
+            ->andWhere('t.status != :cancelledStatus')
             ->andWhere('t.dueDate < :today')
             ->setParameter('user', $user)
             ->setParameter('today', new \DateTimeImmutable())
             ->setParameter('cancelledStatus', TaskStatus::CANCELLED);
 
-        // Apply filters
+        // Apply filters to ID query
         if ($filters) {
-            $this->applyFilters($qb, $filters);
+            $this->applyFilters($idsQb, $filters);
         }
 
-        // Sort by completion status first (uncompleted first, then completed), then by date and priority
-        $qb->addSelect('CASE WHEN t.status = :completedStatus THEN 1 ELSE 0 END AS HIDDEN completedOrder')
-           ->setParameter('completedStatus', TaskStatus::COMPLETED)
-           ->orderBy('completedOrder', 'ASC')  // 0=uncompleted first, 1=completed after
-           ->addOrderBy('t.dueDate', 'ASC')
-           ->addOrderBy('t.priority', 'DESC')
-           ->addOrderBy('t.id', 'ASC');
+        // Sort and paginate IDs
+        $idsQb->addSelect('CASE WHEN t.status = :completedStatus THEN 1 ELSE 0 END AS HIDDEN completedOrder')
+              ->setParameter('completedStatus', TaskStatus::COMPLETED)
+              ->orderBy('completedOrder', 'ASC')
+              ->addOrderBy('t.dueDate', 'ASC')
+              ->addOrderBy('t.priority', 'DESC')
+              ->addOrderBy('t.id', 'ASC')
+              ->setFirstResult(($page - 1) * $limit)
+              ->setMaxResults($limit);
 
-        $query = $qb->getQuery()
-            ->setFirstResult(($page - 1) * $limit)
-            ->setMaxResults($limit);
+        $taskIds = array_column($idsQb->getQuery()->getScalarResult(), 'id');
 
-        return new Paginator($query);
-    }
+        if (empty($taskIds)) {
+            // Return empty paginator
+            $emptyQb = $this->createQueryBuilder('t')
+                ->where('1 = 0');
+            return new Paginator($emptyQb->getQuery());
+        }
 
-    public function findUnscheduledByUserPaginated(User $user, int $page, int $limit, ?TaskFilterDto $filters = null): Paginator
-    {
+        // Step 2: Load full data for these IDs with all joins (preserving order)
         $qb = $this->createQueryBuilder('t')
             ->leftJoin('t.tags', 'tag')
             ->leftJoin('t.user', 'u')
@@ -570,32 +566,82 @@ class TaskRepository extends ServiceEntityRepository
             ->addSelect('st')
             ->addSelect('rr')
             ->addSelect('st_rr')
+            ->where('t.id IN (:ids)')
+            ->setParameter('ids', $taskIds);
+
+        // Preserve original sort order using FIELD()
+        $qb->addSelect('CASE WHEN t.status = :completedStatus THEN 1 ELSE 0 END AS HIDDEN completedOrder')
+           ->setParameter('completedStatus', TaskStatus::COMPLETED)
+           ->orderBy('completedOrder', 'ASC')
+           ->addOrderBy('t.dueDate', 'ASC')
+           ->addOrderBy('t.priority', 'DESC')
+           ->addOrderBy('t.id', 'ASC');
+
+        return new Paginator($qb->getQuery(), false);
+    }
+
+    public function findUnscheduledByUserPaginated(User $user, int $page, int $limit, ?TaskFilterDto $filters = null): Paginator
+    {
+        // OPTIMIZED: Two-step approach to avoid slow ROW_NUMBER() OVER() queries
+        // Step 1: Get task IDs with simple query (fast)
+        $idsQb = $this->createQueryBuilder('t')
+            ->select('t.id')
             ->where('t.user = :user')
             ->andWhere('t.parentTask IS NULL')
             ->andWhere('t.isArchived = false')
-            ->andWhere('t.status != :cancelledStatus')  // Exclude cancelled tasks
+            ->andWhere('t.status != :cancelledStatus')
             ->andWhere('t.dueDate IS NULL')
             ->setParameter('user', $user)
             ->setParameter('cancelledStatus', TaskStatus::CANCELLED);
 
-        // Apply filters
+        // Apply filters to ID query
         if ($filters) {
-            $this->applyFilters($qb, $filters);
+            $this->applyFilters($idsQb, $filters);
         }
 
-        // Sort by completion status first (uncompleted first, then completed), then by date and priority
+        // Sort and paginate IDs
+        $idsQb->addSelect('CASE WHEN t.status = :completedStatus THEN 1 ELSE 0 END AS HIDDEN completedOrder')
+              ->setParameter('completedStatus', TaskStatus::COMPLETED)
+              ->orderBy('completedOrder', 'ASC')
+              ->addOrderBy('t.createdAt', 'DESC')
+              ->addOrderBy('t.priority', 'DESC')
+              ->addOrderBy('t.id', 'ASC')
+              ->setFirstResult(($page - 1) * $limit)
+              ->setMaxResults($limit);
+
+        $taskIds = array_column($idsQb->getQuery()->getScalarResult(), 'id');
+
+        if (empty($taskIds)) {
+            // Return empty paginator
+            $emptyQb = $this->createQueryBuilder('t')
+                ->where('1 = 0');
+            return new Paginator($emptyQb->getQuery());
+        }
+
+        // Step 2: Load full data for these IDs with all joins (preserving order)
+        $qb = $this->createQueryBuilder('t')
+            ->leftJoin('t.tags', 'tag')
+            ->leftJoin('t.user', 'u')
+            ->leftJoin('t.subtasks', 'st')
+            ->leftJoin('t.recurrenceRule', 'rr')
+            ->leftJoin('st.recurrenceRule', 'st_rr')
+            ->addSelect('tag')
+            ->addSelect('u')
+            ->addSelect('st')
+            ->addSelect('rr')
+            ->addSelect('st_rr')
+            ->where('t.id IN (:ids)')
+            ->setParameter('ids', $taskIds);
+
+        // Preserve original sort order
         $qb->addSelect('CASE WHEN t.status = :completedStatus THEN 1 ELSE 0 END AS HIDDEN completedOrder')
            ->setParameter('completedStatus', TaskStatus::COMPLETED)
-           ->orderBy('completedOrder', 'ASC')  // 0=uncompleted first, 1=completed after
+           ->orderBy('completedOrder', 'ASC')
            ->addOrderBy('t.createdAt', 'DESC')
            ->addOrderBy('t.priority', 'DESC')
            ->addOrderBy('t.id', 'ASC');
 
-        $query = $qb->getQuery()
-            ->setFirstResult(($page - 1) * $limit)
-            ->setMaxResults($limit);
-
-        return new Paginator($query);
+        return new Paginator($qb->getQuery(), false);
     }
 
     /**
