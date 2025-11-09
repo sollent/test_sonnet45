@@ -1,2 +1,25 @@
-memory_limit = 512M
+; ===== PERFORMANCE & MEMORY SETTINGS =====
+; Increased for handling large datasets (150+ tasks with subtasks)
+memory_limit = 4G
+max_execution_time = 300
+max_input_time = 300
+
+; File upload limits
+post_max_size = 100M
+upload_max_filesize = 100M
+
+; Realpath cache for better performance
+realpath_cache_size = 4M
+realpath_cache_ttl = 600
+
+; OPcache settings for maximum performance
+opcache.enable = 1
+opcache.memory_consumption = 256
+opcache.interned_strings_buffer = 16
+opcache.max_accelerated_files = 10000
+opcache.validate_timestamps = 1
+opcache.revalidate_freq = 2
+opcache.enable_cli = 1
+
+; Timezone
 date.timezone = Europe/Minsk
