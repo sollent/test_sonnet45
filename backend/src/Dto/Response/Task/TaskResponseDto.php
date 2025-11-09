@@ -56,7 +56,6 @@ final class TaskResponseDto
         $dto->isArchived = $task->isArchived();
         $dto->isCompleted = $task->isCompleted();
         $dto->isOverdue = $task->isOverdue();
-        $dto->completionProgress = $task->getCompletionProgress();
         $dto->isRecurringTemplate = $task->isRecurringTemplate();
 
         if ($includeMeta) {
@@ -64,16 +63,19 @@ final class TaskResponseDto
             $dto->updatedAt = $task->getUpdatedAt();
         }
 
-        // Only load subtasks if explicitly requested to avoid N+1 queries
+        // Always calculate subtask counts (subtasks are pre-loaded via JOIN in repository)
+        $subtasks = $task->getSubtasks();
+        $dto->subtaskCount = $subtasks->count();
+        $dto->completedSubtaskCount = $subtasks->filter(fn(Task $subtask) => $subtask->isCompleted())->count();
+
+        // Calculate completion progress based on subtasks
+        $dto->completionProgress = $task->getCompletionProgress();
+
+        // Only include full subtask details if explicitly requested
         if ($includeSubtasks) {
-            $subtasks = $task->getSubtasks();
-            $dto->subtaskCount = $subtasks->count();
-            $dto->completedSubtaskCount = $subtasks->filter(fn(Task $subtask) => $subtask->isCompleted())->count();
             $dto->hasNestedSubtasks = $subtasks->exists(fn($key, Task $subtask) => $subtask->getSubtasks()->count() > 0);
         } else {
-            // Set to 0 or null to avoid lazy loading in list views
-            $dto->subtaskCount = 0;
-            $dto->completedSubtaskCount = 0;
+            // For list views: don't check nested subtasks to avoid additional queries
             $dto->hasNestedSubtasks = false;
         }
 
