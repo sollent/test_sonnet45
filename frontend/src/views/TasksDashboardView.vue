@@ -536,19 +536,13 @@ async function handleTaskCardUpdated(updatedTask: Task) {
 }
 
 function handleTaskClick(task: Task) {
+  // Set selected task and open sidebar
+  // TaskDetailsSidebar will handle loading full task data with subtasks
   selectedTask.value = task
   isDetailsOpen.value = true
 
-  taskStore.fetchTask(task.id)
-    .then(fullTask => {
-      if (selectedTask.value?.id === fullTask.id) {
-        selectedTask.value = fullTask
-      }
-    })
-    .catch((error: any) => {
-      console.error('Failed to load task details', error)
-      showError(t('errors.fetch_failed'))
-    })
+  // Don't fetch here - TaskDetailsSidebar watch will do it
+  // This prevents duplicate API calls (was causing 3x requests)
 }
 
 function handleCreateTask() {

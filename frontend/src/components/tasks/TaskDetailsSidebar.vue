@@ -103,11 +103,21 @@ const localVisible = computed({
 // Use local task if available, otherwise use props
 const currentTask = computed(() => localTask.value || props.selectedTask || props.task)
 
+// Track last loaded task ID to prevent duplicate fetches
+const lastLoadedTaskId = ref<number | null>(null)
+
 // Watch for prop changes to sync local task and load full data
-watch(() => props.selectedTask || props.task, async (newTask) => {
+watch(() => props.selectedTask || props.task, async (newTask, oldTask) => {
   if (newTask) {
+    // Prevent duplicate fetches for the same task
+    if (newTask.id === lastLoadedTaskId.value) {
+      console.log('Task already loaded, skipping fetch:', newTask.id)
+      return
+    }
+
     // Set loading state FIRST, before setting localTask
     isLoadingFullTask.value = true
+    lastLoadedTaskId.value = newTask.id
 
     // Set basic task data without subtasks
     localTask.value = {
@@ -124,6 +134,7 @@ watch(() => props.selectedTask || props.task, async (newTask) => {
       console.error('Failed to load full task:', error)
       // Restore original task on error
       localTask.value = { ...newTask }
+      lastLoadedTaskId.value = null // Reset on error to allow retry
     } finally {
       isLoadingFullTask.value = false
     }
@@ -135,8 +146,9 @@ watch(() => props.selectedTask || props.task, async (newTask) => {
   } else {
     localTask.value = null
     isLoadingFullTask.value = false
+    lastLoadedTaskId.value = null // Reset when sidebar closes
   }
-}, { immediate: true, deep: true })
+}, { immediate: true })
 
 // Initialize tag suggestions when entering edit mode
 watch(editMode, (isEdit) => {

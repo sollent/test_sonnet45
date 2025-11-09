@@ -772,15 +772,14 @@ async function selectDay(day: any) {
   }
 }
 
-async function selectTask(task: Task) {
-  try {
-    // Load full task details including subtasks
-    const fullTask = await taskStore.fetchTask(task.id)
-    selectedTask.value = fullTask
-    showTaskDetails.value = true
-  } catch (error: any) {
-    showError(error.message || t('errors.fetch_failed'))
-  }
+function selectTask(task: Task) {
+  // Set selected task and open sidebar
+  // TaskDetailsSidebar will handle loading full task data with subtasks
+  selectedTask.value = task
+  showTaskDetails.value = true
+
+  // Don't fetch here - TaskDetailsSidebar watch will do it
+  // This prevents duplicate API calls
 }
 
 function openNewTaskDialog(date: Date) {
