@@ -76,26 +76,46 @@ Optimizations for low resources:
 ├── task-manager/                    # Main application (MONOREPO ROOT)
 │   ├── apps/                        # Application code
 │   │   ├── backend/                 # Symfony application
+│   │   │   ├── src/                 # PHP source code
+│   │   │   ├── config/              # Configuration files
+│   │   │   ├── migrations/          # Database migrations
+│   │   │   ├── tests/               # PHPUnit tests
+│   │   │   └── ...
 │   │   └── frontend/                # Vue.js application
+│   │       ├── src/                 # TypeScript source code
+│   │       ├── e2e/                 # E2E tests (Playwright)
+│   │       ├── public/              # Static assets
+│   │       └── ...
 │   ├── infrastructure/              # Infrastructure configs
 │   │   ├── docker/                  # Docker configurations
 │   │   │   ├── docker-compose.app.yml    # App services
 │   │   │   ├── docker-compose.ai.yml     # AI services (placeholder)
 │   │   │   ├── docker-compose.dev.yml    # Dev overrides
 │   │   │   ├── dev/                      # Dev configs (nginx, php)
+│   │   │   │   ├── nginx/                # Nginx configs
+│   │   │   │   └── php/                  # PHP-FPM configs
 │   │   │   └── cron/                     # Cron jobs
 │   │   └── ai-services/             # AI infrastructure (future)
-│   ├── scripts/                     # Utility scripts
-│   │   ├── setup-dev.sh
-│   │   ├── reset-db.sh
-│   │   └── health-check.sh
+│   │       ├── configs/             # AI service configs
+│   │       │   ├── ollama/
+│   │       │   ├── whisper/
+│   │       │   └── centrifugo/
+│   │       └── scripts/             # AI setup scripts
+│   ├── scripts/                     # Utility scripts (project-wide)
+│   │   ├── setup-dev.sh             # Development setup
+│   │   ├── reset-db.sh              # Database reset
+│   │   └── health-check.sh          # Health check
 │   ├── docs/                        # Documentation
-│   │   └── ai/                      # This documentation
+│   │   ├── ai/                      # Voice AI docs
+│   │   ├── backend/                 # Backend docs
+│   │   ├── frontend/                # Frontend docs
+│   │   └── guides/                  # Development guides
 │   ├── docker-compose.yml           # Main compose (includes all)
 │   ├── Makefile                     # Common commands
-│   └── CLAUDE.md                    # Quick reference
+│   ├── CLAUDE.md                    # Quick reference for AI
+│   └── RESTRUCTURE_PROJECT.md       # Restructuring plan
 │
-└── voice-ai-services/              # AI Services (SEPARATE REPO)
+└── voice-ai-services/              # AI Services (SEPARATE REPO - FUTURE)
     ├── docker-compose.yml           # AI services compose
     ├── .env                         # Environment variables
     ├── scripts/                     # Utility scripts
