@@ -172,7 +172,8 @@ export const useTaskStore = defineStore('task', () => {
   }
 
   async function fetchTask(id: number): Promise<Task> {
-    isLoading.value = true
+    // Don't set global isLoading - this is for a single task, not the entire list
+    // Setting isLoading would cause the entire task list to be hidden and re-rendered
     error.value = null
 
     try {
@@ -183,19 +184,17 @@ export const useTaskStore = defineStore('task', () => {
         console.log('First subtask:', task.subtasks[0])
       }
       selectedTask.value = task
-      
+
       // Update task in list if it exists
       const index = tasks.value.findIndex(t => t.id === id)
       if (index !== -1) {
         tasks.value[index] = task
       }
-      
+
       return task
     } catch (err: any) {
       error.value = err.message || 'Failed to fetch task'
       throw err
-    } finally {
-      isLoading.value = false
     }
   }
 
@@ -216,7 +215,8 @@ export const useTaskStore = defineStore('task', () => {
   }
 
   async function updateTask(id: number, taskData: UpdateTaskRequest): Promise<Task> {
-    isLoading.value = true
+    // Don't set global isLoading - this is for a single task update, not the entire list
+    // Setting isLoading would cause the entire task list to be hidden and re-rendered
     error.value = null
 
     try {
@@ -235,8 +235,6 @@ export const useTaskStore = defineStore('task', () => {
     } catch (err: any) {
       error.value = err.message || 'Failed to update task'
       throw err
-    } finally {
-      isLoading.value = false
     }
   }
 
