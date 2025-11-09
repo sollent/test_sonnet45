@@ -83,7 +83,7 @@ Mitigation Strategies:
 
 ```bash
 #!/bin/bash
-# File: ~/voice-ai-services/scripts/setup_firewall.sh
+# File: infrastructure/ai-services/scripts/setup_firewall.sh
 
 set -e
 
@@ -126,7 +126,7 @@ echo "✅ Firewall configured successfully"
 ### Network Segmentation
 
 ```yaml
-# File: ~/voice-ai-services/docker-compose.security.yml
+# File: infrastructure/ai-services/docker-compose.security.yml
 
 version: '3.8'
 
@@ -203,7 +203,7 @@ services:
 
 ```bash
 #!/bin/bash
-# File: ~/voice-ai-services/scripts/advanced_iptables.sh
+# File: infrastructure/ai-services/scripts/advanced_iptables.sh
 
 # Rate limiting for API endpoints
 iptables -N RATE_LIMIT
@@ -874,7 +874,7 @@ class CorsListener
 ### Dockerfile Security Best Practices
 
 ```dockerfile
-# File: ~/voice-ai-services/configs/secure/Dockerfile.secure
+# File: infrastructure/ai-services/configs/secure/Dockerfile.secure
 
 # Use specific version, not latest
 FROM python:3.11.6-slim-bookworm
@@ -941,7 +941,7 @@ CMD ["python", "-m", "uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8090"
 ### Container Runtime Security
 
 ```yaml
-# File: ~/voice-ai-services/docker-compose.secure.yml
+# File: infrastructure/ai-services/docker-compose.secure.yml
 
 version: '3.8'
 
@@ -1002,7 +1002,7 @@ services:
 
 ```bash
 #!/bin/bash
-# File: ~/voice-ai-services/scripts/security_scan.sh
+# File: infrastructure/ai-services/scripts/security_scan.sh
 
 set -e
 
@@ -1167,7 +1167,7 @@ class SecurityAuditLogger
 ### Monitoring Dashboard Configuration
 
 ```yaml
-# File: ~/voice-ai-services/configs/monitoring/security-dashboard.yml
+# File: infrastructure/ai-services/configs/monitoring/security-dashboard.yml
 
 dashboard:
   title: "Voice AI Security Dashboard"
@@ -1225,7 +1225,7 @@ dashboard:
 ### Incident Response Plan
 
 ```yaml
-# File: ~/voice-ai-services/INCIDENT_RESPONSE.yml
+# File: infrastructure/ai-services/INCIDENT_RESPONSE.yml
 
 incident_response_plan:
 
@@ -1292,7 +1292,7 @@ incident_response_plan:
 
 ```bash
 #!/bin/bash
-# File: ~/voice-ai-services/scripts/incident_response.sh
+# File: infrastructure/ai-services/scripts/incident_response.sh
 
 set -e
 

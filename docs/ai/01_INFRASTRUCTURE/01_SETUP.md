@@ -71,78 +71,55 @@ Optimizations for low resources:
 ### Complete Project Structure
 
 ```bash
-# Root project structure (NEW MONOREPO)
-/home/developer/projects/
-├── task-manager/                    # Main application (MONOREPO ROOT)
-│   ├── apps/                        # Application code
-│   │   ├── backend/                 # Symfony application
-│   │   │   ├── src/                 # PHP source code
-│   │   │   ├── config/              # Configuration files
-│   │   │   ├── migrations/          # Database migrations
-│   │   │   ├── tests/               # PHPUnit tests
-│   │   │   └── ...
-│   │   └── frontend/                # Vue.js application
-│   │       ├── src/                 # TypeScript source code
-│   │       ├── e2e/                 # E2E tests (Playwright)
-│   │       ├── public/              # Static assets
-│   │       └── ...
-│   ├── infrastructure/              # Infrastructure configs
-│   │   ├── docker/                  # Docker configurations
-│   │   │   ├── docker-compose.app.yml    # App services
-│   │   │   ├── docker-compose.ai.yml     # AI services (placeholder)
-│   │   │   ├── docker-compose.dev.yml    # Dev overrides
-│   │   │   ├── dev/                      # Dev configs (nginx, php)
-│   │   │   │   ├── nginx/                # Nginx configs
-│   │   │   │   └── php/                  # PHP-FPM configs
-│   │   │   └── cron/                     # Cron jobs
-│   │   └── ai-services/             # AI infrastructure (future)
-│   │       ├── configs/             # AI service configs
-│   │       │   ├── ollama/
-│   │       │   ├── whisper/
-│   │       │   └── centrifugo/
-│   │       └── scripts/             # AI setup scripts
-│   ├── scripts/                     # Utility scripts (project-wide)
-│   │   ├── setup-dev.sh             # Development setup
-│   │   ├── reset-db.sh              # Database reset
-│   │   └── health-check.sh          # Health check
-│   ├── docs/                        # Documentation
-│   │   ├── ai/                      # Voice AI docs
-│   │   ├── backend/                 # Backend docs
-│   │   ├── frontend/                # Frontend docs
-│   │   └── guides/                  # Development guides
-│   ├── docker-compose.yml           # Main compose (includes all)
-│   ├── Makefile                     # Common commands
-│   ├── CLAUDE.md                    # Quick reference for AI
-│   └── RESTRUCTURE_PROJECT.md       # Restructuring plan
-│
-└── voice-ai-services/              # AI Services (SEPARATE REPO - FUTURE)
-    ├── docker-compose.yml           # AI services compose
-    ├── .env                         # Environment variables
-    ├── scripts/                     # Utility scripts
-    │   ├── install.sh              # Installation script
-    │   ├── health-check.sh         # Health check script
-    │   ├── backup.sh               # Backup script
-    │   └── restore.sh              # Restore script
-    ├── configs/                     # Configuration files
-    │   ├── ollama/
-    │   │   └── modelfile           # Model configuration
-    │   ├── whisper/
-    │   │   ├── Dockerfile          # Whisper container
-    │   │   └── config.yml          # Whisper config
-    │   ├── centrifugo/
-    │   │   ├── config.json         # Centrifugo config
-    │   │   └── config.prod.json    # Production config
-    │   └── nginx/
-    │       └── ai-services.conf    # Nginx routing
-    ├── volumes/                     # Docker volumes
-    │   ├── ollama-data/
-    │   ├── whisper-models/
-    │   └── audio-uploads/
-    └── logs/                        # Service logs
-        ├── ollama/
-        ├── whisper/
-        └── centrifugo/
+# Project structure (MONOREPO)
+task-manager/                        # Project root
+├── apps/                            # Application code
+│   ├── backend/                     # Symfony application
+│   │   ├── src/                     # PHP source code
+│   │   ├── config/                  # Configuration files
+│   │   ├── migrations/              # Database migrations
+│   │   ├── tests/                   # PHPUnit tests
+│   │   └── ...
+│   └── frontend/                    # Vue.js application
+│       ├── src/                     # TypeScript source code
+│       ├── e2e/                     # E2E tests (Playwright)
+│       ├── public/                  # Static assets
+│       └── ...
+├── infrastructure/                  # Infrastructure configs
+│   ├── docker/                      # Docker configurations
+│   │   ├── docker-compose.app.yml   # App services
+│   │   ├── docker-compose.ai.yml    # AI services (placeholder)
+│   │   ├── docker-compose.dev.yml   # Dev overrides
+│   │   ├── dev/                     # Dev configs
+│   │   │   ├── nginx/               # Nginx configs
+│   │   │   └── php/                 # PHP-FPM configs
+│   │   └── cron/                    # Cron jobs
+│   └── ai-services/                 # AI infrastructure (future)
+│       ├── configs/                 # AI service configs (placeholders)
+│       │   ├── ollama/              # LLM configs
+│       │   ├── whisper/             # STT configs
+│       │   └── centrifugo/          # WebSocket configs
+│       └── scripts/                 # AI setup scripts (placeholders)
+├── scripts/                         # Utility scripts (project-wide)
+│   ├── setup-dev.sh                 # Development setup
+│   ├── reset-db.sh                  # Database reset
+│   └── health-check.sh              # Health check
+├── docs/                            # Documentation
+│   ├── ai/                          # Voice AI docs
+│   │   ├── 01_INFRASTRUCTURE/
+│   │   ├── 02_BACKEND/
+│   │   ├── 03_FRONTEND/
+│   │   └── REFERENCE/
+│   ├── backend/                     # Backend docs
+│   ├── frontend/                    # Frontend docs
+│   └── guides/                      # Development guides
+├── docker-compose.yml               # Main compose (includes all)
+├── Makefile                         # Common commands
+├── CLAUDE.md                        # Quick reference for AI
+└── RESTRUCTURE_PROJECT.md           # Restructuring plan
 ```
+
+**Note**: All infrastructure (including future AI services) is contained within this monorepo. The `infrastructure/ai-services/` directory contains placeholders and will be implemented during Voice AI development phase.
 
 ### Create Directory Structure Script
 
@@ -218,7 +195,7 @@ sudo sysctl -p
 
 #### 2.1 Main Environment File
 ```bash
-# File: ~/voice-ai-services/.env
+# File: infrastructure/ai-services/.env
 
 # Environment Configuration
 ENVIRONMENT=development
@@ -271,7 +248,7 @@ NETWORK_NAME=voice-ai-network
 
 #### 2.2 Docker Compose Configuration
 ```yaml
-# File: ~/voice-ai-services/docker-compose.yml
+# File: infrastructure/ai-services/docker-compose.yml
 
 version: '3.8'
 
@@ -405,7 +382,7 @@ services:
 
 #### 2.3 Whisper Dockerfile
 ```dockerfile
-# File: ~/voice-ai-services/configs/whisper/Dockerfile
+# File: infrastructure/ai-services/configs/whisper/Dockerfile
 
 FROM python:3.11-slim
 
@@ -450,7 +427,7 @@ CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8090", "--workers", "
 
 #### 2.4 Whisper API Application
 ```python
-# File: ~/voice-ai-services/configs/whisper/app.py
+# File: infrastructure/ai-services/configs/whisper/app.py
 
 import os
 import time
@@ -626,7 +603,7 @@ if __name__ == "__main__":
 
 #### 2.5 Centrifugo Configuration
 ```json
-// File: ~/voice-ai-services/configs/centrifugo/config.json
+// File: infrastructure/ai-services/configs/centrifugo/config.json
 {
   "token_hmac_secret_key": "${CENTRIFUGO_TOKEN_HMAC_SECRET}",
   "api_key": "${CENTRIFUGO_API_KEY}",
@@ -704,7 +681,7 @@ if __name__ == "__main__":
 #### 3.1 Main Installation Script
 ```bash
 #!/bin/bash
-# File: ~/voice-ai-services/scripts/install.sh
+# File: infrastructure/ai-services/scripts/install.sh
 
 set -e
 
@@ -826,7 +803,7 @@ main "$@"
 #### 3.2 Health Check Script
 ```bash
 #!/bin/bash
-# File: ~/voice-ai-services/scripts/health-check.sh
+# File: infrastructure/ai-services/scripts/health-check.sh
 
 set -e
 
