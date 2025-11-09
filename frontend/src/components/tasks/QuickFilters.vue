@@ -49,8 +49,8 @@ const quickFilters = computed(() => [
 
 const activeFilters = ref<string[]>([])
 
-// Only with subtasks toggle (default: true - show only complex tasks)
-const onlyWithSubtasks = ref<boolean>(true)
+// Only with subtasks toggle (default: false - show all tasks)
+const onlyWithSubtasks = ref<boolean>(false)
 
 const emit = defineEmits<{
   (e: 'filters-change', filters: QuickFilter[]): void

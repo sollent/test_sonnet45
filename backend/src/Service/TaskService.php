@@ -331,7 +331,7 @@ final class TaskService
         return $this->taskRepository->findUpcomingTasks($user, $days, $filters);
     }
 
-    public function getActiveTasks(User $user, ?TaskFilterDto $filters = null, ?int $limit = null, ?int $offset = null, bool $onlyWithSubtasks = true): array
+    public function getActiveTasks(User $user, ?TaskFilterDto $filters = null, ?int $limit = null, ?int $offset = null, bool $onlyWithSubtasks = false): array
     {
         return $this->taskRepository->findActiveTasks($user, $filters, $limit, $offset, $onlyWithSubtasks);
     }

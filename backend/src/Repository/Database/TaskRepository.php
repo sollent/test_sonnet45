@@ -196,7 +196,7 @@ class TaskRepository extends ServiceEntityRepository
         return $qb->getQuery()->getResult();
     }
 
-    public function findActiveTasks(User $user, ?TaskFilterDto $filters = null, ?int $limit = null, ?int $offset = null, bool $onlyWithSubtasks = true): array
+    public function findActiveTasks(User $user, ?TaskFilterDto $filters = null, ?int $limit = null, ?int $offset = null, bool $onlyWithSubtasks = false): array
     {
         $todayStart = new \DateTimeImmutable('today');
 
@@ -220,13 +220,18 @@ class TaskRepository extends ServiceEntityRepository
             ->setParameter('cancelledStatus', TaskStatus::CANCELLED);
 
         // Filter by tasks with/without subtasks
-        // When onlyWithSubtasks=true (default): Show ONLY tasks that have subtasks (complex tasks)
-        // When onlyWithSubtasks=false: Show ALL tasks with their subtasks
+        // When onlyWithSubtasks=true: Show ONLY tasks that have subtasks (complex tasks)
+        // When onlyWithSubtasks=false (default): Show ALL tasks with their subtasks
+        // OPTIMIZATION: Use subquery with EXISTS for better performance with indexes
         if ($onlyWithSubtasks) {
-            $qb->andWhere('EXISTS (
-                SELECT 1 FROM App\Entity\Task subtask
-                WHERE subtask.parentTask = t
-            )');
+            // Use optimized subquery that PostgreSQL can use with index on parent_task_id
+            $qb->andWhere('t.id IN (
+                SELECT DISTINCT parent_task_id
+                FROM task
+                WHERE parent_task_id IS NOT NULL
+                  AND user_id = :userId
+            )')
+            ->setParameter('userId', $user->getId());
         }
 
         // Apply filters

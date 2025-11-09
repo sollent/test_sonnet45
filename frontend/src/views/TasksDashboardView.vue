@@ -46,8 +46,8 @@ const totalLoadedTasks = ref(0)  // Track total loaded tasks
 const isLoadingMore = ref(false)
 const hasMoreTasks = ref(true)
 
-// Only with subtasks toggle (default: true - show only complex tasks with subtasks)
-const onlyWithSubtasks = ref(true)
+// Only with subtasks toggle (default: false - show all tasks with subtasks)
+const onlyWithSubtasks = ref(false)
 
 // Active filters count
 const activeFiltersCount = computed(() => {

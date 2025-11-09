@@ -148,10 +148,10 @@ class TaskController extends AbstractController
         $limit = $request->query->get('limit') ? (int)$request->query->get('limit') : 150;
         $offset = $request->query->get('offset') ? (int)$request->query->get('offset') : 0;
 
-        // Get onlyWithSubtasks parameter (default: true - show only complex tasks)
-        // When true (default): show ONLY tasks that have subtasks (complex tasks)
-        // When false: show ALL tasks with their subtasks
-        $onlyWithSubtasks = $request->query->get('onlyWithSubtasks', 'true') === 'true';
+        // Get onlyWithSubtasks parameter (default: false - show all tasks)
+        // When true: show ONLY tasks that have subtasks (complex tasks)
+        // When false (default): show ALL tasks with their subtasks
+        $onlyWithSubtasks = $request->query->get('onlyWithSubtasks', 'false') === 'true';
 
         // Handle search
         $search = $request->query->get('search');
