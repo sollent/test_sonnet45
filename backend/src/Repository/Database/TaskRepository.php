@@ -103,12 +103,17 @@ class TaskRepository extends ServiceEntityRepository
             ->setParameter('cancelledStatus', TaskStatus::CANCELLED);
 
         // Filter by tasks with/without subtasks
+        // OPTIMIZATION: Use IN subquery instead of EXISTS for better performance
+        // IN subquery executes ONCE and PostgreSQL caches results
+        // EXISTS would execute for EVERY row (slow on large datasets)
         if ($onlyWithSubtasks) {
-            $qb->andWhere('EXISTS (
-                SELECT 1 FROM App\Entity\Task subtask
-                WHERE subtask.parentTask = t
-                  AND subtask.user = :user
-            )');
+            $qb->andWhere('t.id IN (
+                SELECT DISTINCT parent_task_id
+                FROM task
+                WHERE parent_task_id IS NOT NULL
+                  AND user_id = :userId
+            )')
+            ->setParameter('userId', $user->getId());
         }
 
         // Apply filters
@@ -189,12 +194,17 @@ class TaskRepository extends ServiceEntityRepository
             ->setParameter('cancelledStatus', TaskStatus::CANCELLED);
 
         // Filter by tasks with/without subtasks
+        // OPTIMIZATION: Use IN subquery instead of EXISTS for better performance
+        // IN subquery executes ONCE and PostgreSQL caches results
+        // EXISTS would execute for EVERY row (slow on large datasets)
         if ($onlyWithSubtasks) {
-            $qb->andWhere('EXISTS (
-                SELECT 1 FROM App\Entity\Task subtask
-                WHERE subtask.parentTask = t
-                  AND subtask.user = :user
-            )');
+            $qb->andWhere('t.id IN (
+                SELECT DISTINCT parent_task_id
+                FROM task
+                WHERE parent_task_id IS NOT NULL
+                  AND user_id = :userId
+            )')
+            ->setParameter('userId', $user->getId());
         }
 
         // Apply filters
@@ -571,12 +581,17 @@ class TaskRepository extends ServiceEntityRepository
             ->setParameter('cancelledStatus', TaskStatus::CANCELLED);
 
         // Filter by tasks with/without subtasks
+        // OPTIMIZATION: Use IN subquery instead of EXISTS for better performance
+        // IN subquery executes ONCE and PostgreSQL caches results
+        // EXISTS would execute for EVERY row (slow on large datasets)
         if ($onlyWithSubtasks) {
-            $idsQb->andWhere('EXISTS (
-                SELECT 1 FROM App\Entity\Task subtask
-                WHERE subtask.parentTask = t
-                  AND subtask.user = :user
-            )');
+            $idsQb->andWhere('t.id IN (
+                SELECT DISTINCT parent_task_id
+                FROM task
+                WHERE parent_task_id IS NOT NULL
+                  AND user_id = :userId
+            )')
+            ->setParameter('userId', $user->getId());
         }
 
         // Apply filters to ID query
@@ -644,12 +659,17 @@ class TaskRepository extends ServiceEntityRepository
             ->setParameter('cancelledStatus', TaskStatus::CANCELLED);
 
         // Filter by tasks with/without subtasks
+        // OPTIMIZATION: Use IN subquery instead of EXISTS for better performance
+        // IN subquery executes ONCE and PostgreSQL caches results
+        // EXISTS would execute for EVERY row (slow on large datasets)
         if ($onlyWithSubtasks) {
-            $idsQb->andWhere('EXISTS (
-                SELECT 1 FROM App\Entity\Task subtask
-                WHERE subtask.parentTask = t
-                  AND subtask.user = :user
-            )');
+            $idsQb->andWhere('t.id IN (
+                SELECT DISTINCT parent_task_id
+                FROM task
+                WHERE parent_task_id IS NOT NULL
+                  AND user_id = :userId
+            )')
+            ->setParameter('userId', $user->getId());
         }
 
         // Apply filters to ID query
