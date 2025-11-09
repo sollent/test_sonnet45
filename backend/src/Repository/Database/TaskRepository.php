@@ -196,17 +196,21 @@ class TaskRepository extends ServiceEntityRepository
         return $qb->getQuery()->getResult();
     }
 
-    public function findActiveTasks(User $user, ?TaskFilterDto $filters = null, ?int $limit = null, ?int $offset = null, bool $hideSubtasks = true): array
+    public function findActiveTasks(User $user, ?TaskFilterDto $filters = null, ?int $limit = null, ?int $offset = null, bool $onlyWithSubtasks = true): array
     {
         $todayStart = new \DateTimeImmutable('today');
 
         $qb = $this->createQueryBuilder('t')
             ->leftJoin('t.recurrenceRule', 'rr')
             ->addSelect('rr')
+            ->leftJoin('t.subtasks', 'st')
+            ->addSelect('st')
+            ->leftJoin('st.recurrenceRule', 'st_rr')
+            ->addSelect('st_rr')
             ->where('t.user = :user')
             ->andWhere('t.parentTask IS NULL')
             ->andWhere('t.isArchived = false')
-            ->andWhere('t.status != :cancelledStatus')  // Exclude cancelled tasks
+            ->andWhere('t.status != :cancelledStatus')
             ->andWhere('(
                 (t.dueDate IS NOT NULL AND t.dueDate >= :todayStart) OR
                 (t.startDate IS NOT NULL AND t.startDate >= :todayStart)
@@ -215,14 +219,14 @@ class TaskRepository extends ServiceEntityRepository
             ->setParameter('todayStart', $todayStart)
             ->setParameter('cancelledStatus', TaskStatus::CANCELLED);
 
-        // Conditionally load subtasks based on hideSubtasks parameter
-        // When hideSubtasks=true: No JOIN with subtasks (faster, returns parent tasks only)
-        // When hideSubtasks=false: JOIN with subtasks (slower, returns all with subtasks)
-        if (!$hideSubtasks) {
-            $qb->leftJoin('t.subtasks', 'st')
-               ->addSelect('st')
-               ->leftJoin('st.recurrenceRule', 'st_rr')
-               ->addSelect('st_rr');
+        // Filter by tasks with/without subtasks
+        // When onlyWithSubtasks=true (default): Show ONLY tasks that have subtasks (complex tasks)
+        // When onlyWithSubtasks=false: Show ALL tasks with their subtasks
+        if ($onlyWithSubtasks) {
+            $qb->andWhere('EXISTS (
+                SELECT 1 FROM App\Entity\Task subtask
+                WHERE subtask.parentTask = t
+            )');
         }
 
         // Apply filters
@@ -254,17 +258,12 @@ class TaskRepository extends ServiceEntityRepository
             $qb->setFirstResult($offset);
         }
 
-        // When loading subtasks: Use Paginator to handle LEFT JOIN + LIMIT correctly
+        // Always use Paginator to handle LEFT JOIN + LIMIT correctly
         // Without Paginator, LIMIT is applied to SQL rows (not Task entities)
         // which causes duplicates when JOINing collections (subtasks)
         // fetchJoinCollection=true wraps main query with LIMIT in subquery BEFORE JOIN
-        if (!$hideSubtasks) {
-            $paginator = new Paginator($qb->getQuery(), $fetchJoinCollection = true);
-            return iterator_to_array($paginator);
-        }
-
-        // When hiding subtasks: Simple query without Paginator (faster)
-        return $qb->getQuery()->getResult();
+        $paginator = new Paginator($qb->getQuery(), $fetchJoinCollection = true);
+        return iterator_to_array($paginator);
     }
 
     /**

@@ -46,8 +46,8 @@ const totalLoadedTasks = ref(0)  // Track total loaded tasks
 const isLoadingMore = ref(false)
 const hasMoreTasks = ref(true)
 
-// Hide subtasks toggle (default: true - hide subtasks for better performance)
-const hideSubtasks = ref(true)
+// Only with subtasks toggle (default: true - show only complex tasks with subtasks)
+const onlyWithSubtasks = ref(true)
 
 // Active filters count
 const activeFiltersCount = computed(() => {
@@ -132,7 +132,7 @@ async function handleQuickFilterChange(filters: Array<{ id: string; view: string
         completed: taskStore.activeFilters.completed,
         dateFrom: taskStore.activeFilters.dateFrom,
         dateTo: taskStore.activeFilters.dateTo,
-        hideSubtasks: hideSubtasks.value
+        onlyWithSubtasks: onlyWithSubtasks.value
       }
 
       console.log(`Loading filter "${filter.id}" with view "${filter.view}"`, queryFilters)
@@ -198,12 +198,12 @@ async function handleQuickFilterChange(filters: Array<{ id: string; view: string
   }
 }
 
-// Handle hide subtasks toggle
-function handleHideSubtasksChange(newHideSubtasks: boolean) {
-  console.log('Hide subtasks changed:', newHideSubtasks)
-  hideSubtasks.value = newHideSubtasks
+// Handle only with subtasks toggle
+function handleOnlyWithSubtasksChange(newOnlyWithSubtasks: boolean) {
+  console.log('Only with subtasks changed:', newOnlyWithSubtasks)
+  onlyWithSubtasks.value = newOnlyWithSubtasks
 
-  // Re-load current view with new hideSubtasks setting
+  // Re-load current view with new onlyWithSubtasks setting
   // Use selectView to properly reset pagination state (hasMoreTasks, currentOffset)
   selectView(selectedView.value)
 }
@@ -247,7 +247,7 @@ async function loadMoreTasks() {
       dateTo: taskStore.activeFilters.dateTo,
       priorities: taskStore.activeFilters.priorities,
       statuses: taskStore.activeFilters.statuses,
-      hideSubtasks: hideSubtasks.value
+      onlyWithSubtasks: onlyWithSubtasks.value
     }
 
     // Only add completed if it's explicitly set (not null)
@@ -456,7 +456,7 @@ function selectView(viewId: string) {
     dateTo: taskStore.activeFilters.dateTo,
     priorities: taskStore.activeFilters.priorities,
     statuses: taskStore.activeFilters.statuses,
-    hideSubtasks: hideSubtasks.value
+    onlyWithSubtasks: onlyWithSubtasks.value
   }
 
   // Only add completed if it's explicitly set (not null)
@@ -510,7 +510,7 @@ async function refreshCurrentView() {
   const queryFilters = {
     view: selectedView.value === 'all' ? 'all' : selectedView.value,
     ...taskStore.activeFilters,
-    hideSubtasks: hideSubtasks.value
+    onlyWithSubtasks: onlyWithSubtasks.value
   }
 
   if (selectedView.value === 'overdue') {
@@ -746,7 +746,7 @@ async function handleTaskDeleted() {
           <div class="quick-filters-wrapper">
             <QuickFilters
               @filters-change="handleQuickFilterChange"
-              @hide-subtasks-change="handleHideSubtasksChange"
+              @only-with-subtasks-change="handleOnlyWithSubtasksChange"
             />
           </div>
           <button v-if="!isMobile" @click="isFiltersPanelVisible = true" class="advanced-filters-btn">
