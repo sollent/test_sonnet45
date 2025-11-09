@@ -64,20 +64,30 @@ final class TaskResponseDto
             $dto->updatedAt = $task->getUpdatedAt();
         }
 
-        $subtasks = $task->getSubtasks();
-        $dto->subtaskCount = $subtasks->count();
-        $dto->completedSubtaskCount = $subtasks->filter(fn(Task $subtask) => $subtask->isCompleted())->count();
-        $dto->hasNestedSubtasks = $subtasks->exists(fn($key, Task $subtask) => $subtask->getSubtasks()->count() > 0);
+        // Only load subtasks if explicitly requested to avoid N+1 queries
+        if ($includeSubtasks) {
+            $subtasks = $task->getSubtasks();
+            $dto->subtaskCount = $subtasks->count();
+            $dto->completedSubtaskCount = $subtasks->filter(fn(Task $subtask) => $subtask->isCompleted())->count();
+            $dto->hasNestedSubtasks = $subtasks->exists(fn($key, Task $subtask) => $subtask->getSubtasks()->count() > 0);
+        } else {
+            // Set to 0 or null to avoid lazy loading in list views
+            $dto->subtaskCount = 0;
+            $dto->completedSubtaskCount = 0;
+            $dto->hasNestedSubtasks = false;
+        }
 
-        // Map tags with lightweight payload
-        $dto->tags = array_map(
-            static fn($tag) => [
-                'id' => $tag->getId(),
-                'name' => $tag->getName(),
-                'color' => $tag->getColor(),
-            ],
-            $task->getTags()->toArray()
-        );
+        // Map tags with lightweight payload - only if initialized to avoid N+1
+        $dto->tags = $task->getTags()->isInitialized()
+            ? array_map(
+                static fn($tag) => [
+                    'id' => $tag->getId(),
+                    'name' => $tag->getName(),
+                    'color' => $tag->getColor(),
+                ],
+                $task->getTags()->toArray()
+            )
+            : [];
 
         // Map subtasks if requested
         if ($includeSubtasks) {
@@ -87,22 +97,24 @@ final class TaskResponseDto
             );
         }
 
-        // Map media objects
-        $dto->attachments = array_map(
-            static fn($media) => [
-                'id' => $media->getId(),
-                'fileName' => $media->getFileName(),
-                'originalName' => $media->getOriginalName(),
-                'mimeType' => $media->getMimeType(),
-                'fileSize' => $media->getFileSize(),
-                'fileSizeHuman' => $media->getHumanReadableSize(),
-                'fileType' => $media->getFileType(),
-                'filePath' => $media->getFilePath(),
-                'thumbnailPath' => $media->getThumbnailPath(),
-                'createdAt' => $media->getCreatedAt()->format('Y-m-d H:i:s'),
-            ],
-            $task->getMediaObjects()->toArray()
-        );
+        // Map media objects - only if initialized to avoid N+1
+        $dto->attachments = $task->getMediaObjects()->isInitialized()
+            ? array_map(
+                static fn($media) => [
+                    'id' => $media->getId(),
+                    'fileName' => $media->getFileName(),
+                    'originalName' => $media->getOriginalName(),
+                    'mimeType' => $media->getMimeType(),
+                    'fileSize' => $media->getFileSize(),
+                    'fileSizeHuman' => $media->getHumanReadableSize(),
+                    'fileType' => $media->getFileType(),
+                    'filePath' => $media->getFilePath(),
+                    'thumbnailPath' => $media->getThumbnailPath(),
+                    'createdAt' => $media->getCreatedAt()->format('Y-m-d H:i:s'),
+                ],
+                $task->getMediaObjects()->toArray()
+            )
+            : [];
 
         // Map recurrence rule if exists
         if ($task->getRecurrenceRule()) {
