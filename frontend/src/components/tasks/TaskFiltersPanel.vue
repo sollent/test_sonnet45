@@ -65,6 +65,7 @@ function formatDateForApi(date: Date): string {
 
 // Apply filters - only called when user clicks "Apply" button
 function applyFilters() {
+  // Update store filters and trigger ONE API call
   taskStore.setFilters(localFilters.value)
 }
 
@@ -81,6 +82,8 @@ function clearFilters() {
   dateFrom.value = null
   dateTo.value = null
   taskTypeFilter.value = 'all'
+
+  // Clear filters and trigger ONE API call
   taskStore.clearFilters()
 }
 

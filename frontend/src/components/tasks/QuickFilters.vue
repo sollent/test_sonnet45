@@ -76,11 +76,18 @@ function isActive(filterId: string): boolean {
 function clearAllFilters() {
   // Clear all quick filters
   activeFilters.value = []
-  
-  // Clear all filters in store
-  taskStore.clearFilters()
-  
-  // Emit empty filters
+
+  // Clear filters in store (without API call)
+  taskStore.activeFilters = {
+    tags: [],
+    completed: null,
+    dateFrom: null,
+    dateTo: null,
+    priorities: [],
+    statuses: []
+  }
+
+  // Emit empty filters - parent will handle API call
   emit('filters-change', [])
 }
 </script>

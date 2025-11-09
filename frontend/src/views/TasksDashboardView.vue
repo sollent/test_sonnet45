@@ -64,7 +64,16 @@ async function handleQuickFilterChange(filters: Array<{ id: string; view: string
 
   // If no filters are active, clear filters and show 'all' view
   if (filters.length === 0) {
-    taskStore.clearFilters()
+    // Clear filters WITHOUT API call
+    taskStore.activeFilters = {
+      tags: [],
+      completed: null,
+      dateFrom: null,
+      dateTo: null,
+      priorities: [],
+      statuses: []
+    }
+    // selectView() will make ONE API call
     selectView('all')
     return
   }
@@ -73,13 +82,14 @@ async function handleQuickFilterChange(filters: Array<{ id: string; view: string
   if (filters.length === 1) {
     const filter = filters[0]
 
-    // Set priority/status filters if they exist
-    taskStore.setFilters({
+    // Update filters WITHOUT API call
+    taskStore.activeFilters = {
       ...taskStore.activeFilters,
       priorities: filter.priority || [],
       statuses: filter.status || []
-    })
+    }
 
+    // selectView() will make ONE API call with updated filters
     selectView(filter.view)
     return
   }
@@ -167,12 +177,12 @@ async function handleQuickFilterChange(filters: Array<{ id: string; view: string
     // Store combined tasks in the main tasks array
     taskStore.tasks = uniqueTasks
 
-    // Update active filters
-    taskStore.setFilters({
+    // Update active filters WITHOUT API call (data already loaded)
+    taskStore.activeFilters = {
       ...taskStore.activeFilters,
       priorities: uniquePriorities,
       statuses: uniqueStatuses
-    })
+    }
 
     // Set view to 'all' to display combined data
     selectedView.value = 'all'

@@ -298,7 +298,10 @@ function apply() {
     localFilters.value.completed = null
   }
 
-  taskStore.setFilters(localFilters.value)
+  // Update store filters (without triggering API call)
+  taskStore.activeFilters = { ...localFilters.value }
+
+  // Emit event so parent can make ONE API call
   emit('apply')
   close()
 }
@@ -315,14 +318,14 @@ function clearAll() {
   dateRange.value = null
   taskType.value = 'all'
   activePreset.value = null
-  
+
   // Clear tag search
   tagSearchQuery.value = ''
   searchedTags.value = []
   if (tagSearchTimeout) {
     clearTimeout(tagSearchTimeout)
   }
-  
+
   // Apply cleared filters and close modal
   apply()
 }
