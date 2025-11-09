@@ -37,10 +37,10 @@ const isFiltersVisible = ref(false)
 const isFiltersPanelVisible = ref(false)
 const displayMode = ref<'cards' | 'list'>('cards')
 const overduePage = ref(1)
-const overdueLimit = ref(20)
+const overdueLimit = ref(200) // Changed from 20 to 200
 
 // Pagination state
-const PAGE_SIZE = 150
+const PAGE_SIZE = 200 // Changed from 150 to 200
 const currentOffset = ref(0)
 const totalLoadedTasks = ref(0)  // Track total loaded tasks
 const isLoadingMore = ref(false)
@@ -215,7 +215,7 @@ function handleFiltersApply() {
   refreshCurrentView()
 }
 const unscheduledPage = ref(1)
-const unscheduledLimit = ref(20)
+const unscheduledLimit = ref(200) // Changed from 20 to 200
 
 const currentLoading = computed(() => {
   if (selectedView.value === 'overdue') return taskStore.isOverdueLoading
@@ -916,7 +916,7 @@ async function handleTaskDeleted() {
             <Paginator
               :rows="selectedView === 'overdue' ? overdueLimit : unscheduledLimit"
               :total-records="selectedView === 'overdue' ? taskStore.overdueTotal : taskStore.unscheduledTotal"
-              :rows-per-page-options="[10, 20, 50]"
+              :rows-per-page-options="[50, 100, 200]"
               :pageLinkSize="isMobile ? 4 : 5"
               template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
               @page="selectedView === 'overdue' ? onOverduePageChange($event) : onUnscheduledPageChange($event)"
