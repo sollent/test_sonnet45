@@ -34,8 +34,8 @@ final class Version20251102_AddRecurrenceRules extends AbstractMigration
             is_active BOOLEAN NOT NULL DEFAULT true,
             created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
             updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-            CONSTRAINT FK_recurrence_template_task FOREIGN KEY (template_task_id) REFERENCES task (id) ON DELETE CASCADE,
-            CONSTRAINT FK_recurrence_created_by FOREIGN KEY (created_by_id) REFERENCES users (id)
+            CONSTRAINT FK_recurrence_template_task FOREIGN KEY (template_task_id) REFERENCES "task" (id) ON DELETE CASCADE,
+            CONSTRAINT FK_recurrence_created_by FOREIGN KEY (created_by_id) REFERENCES "users" (id)
         )');
 
         // Add indexes
@@ -44,25 +44,25 @@ final class Version20251102_AddRecurrenceRules extends AbstractMigration
         $this->addSql('CREATE INDEX IDX_recurrence_active_next ON recurrence_rules (is_active, next_occurrence_date)');
 
         // Add columns to task table
-        $this->addSql('ALTER TABLE task ADD is_recurring_template BOOLEAN NOT NULL DEFAULT false');
-        $this->addSql('ALTER TABLE task ADD generated_from_rule_id INT DEFAULT NULL');
-        $this->addSql('ALTER TABLE task ADD CONSTRAINT FK_task_generated_from_rule FOREIGN KEY (generated_from_rule_id) REFERENCES recurrence_rules (id) ON DELETE SET NULL');
-        $this->addSql('CREATE INDEX IDX_task_generated_from_rule ON task (generated_from_rule_id)');
-        $this->addSql('CREATE INDEX IDX_task_is_recurring_template ON task (is_recurring_template)');
+        $this->addSql('ALTER TABLE "task" ADD is_recurring_template BOOLEAN NOT NULL DEFAULT false');
+        $this->addSql('ALTER TABLE "task" ADD generated_from_rule_id INT DEFAULT NULL');
+        $this->addSql('ALTER TABLE "task" ADD CONSTRAINT FK_task_generated_from_rule FOREIGN KEY (generated_from_rule_id) REFERENCES recurrence_rules (id) ON DELETE SET NULL');
+        $this->addSql('CREATE INDEX IDX_task_generated_from_rule ON "task" (generated_from_rule_id)');
+        $this->addSql('CREATE INDEX IDX_task_is_recurring_template ON "task" (is_recurring_template)');
     }
 
     public function down(Schema $schema): void
     {
         // Drop foreign key constraints first
-        $this->addSql('ALTER TABLE task DROP CONSTRAINT IF EXISTS FK_task_generated_from_rule');
-        
+        $this->addSql('ALTER TABLE "task" DROP CONSTRAINT IF EXISTS FK_task_generated_from_rule');
+
         // Drop indexes
         $this->addSql('DROP INDEX IF EXISTS IDX_task_generated_from_rule');
         $this->addSql('DROP INDEX IF EXISTS IDX_task_is_recurring_template');
-        
+
         // Drop columns from task table
-        $this->addSql('ALTER TABLE task DROP COLUMN IF EXISTS is_recurring_template');
-        $this->addSql('ALTER TABLE task DROP COLUMN IF EXISTS generated_from_rule_id');
+        $this->addSql('ALTER TABLE "task" DROP COLUMN IF EXISTS is_recurring_template');
+        $this->addSql('ALTER TABLE "task" DROP COLUMN IF EXISTS generated_from_rule_id');
         
         // Drop recurrence_rules table
         $this->addSql('DROP TABLE IF EXISTS recurrence_rules');

@@ -27,8 +27,8 @@ final class Version20251102_AddTaskAttachments extends AbstractMigration
             file_type VARCHAR(50) NOT NULL,
             file_path VARCHAR(500) DEFAULT NULL,
             uploaded_at TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
-            CONSTRAINT FK_task_attachments_task FOREIGN KEY (task_id) REFERENCES tasks (id) ON DELETE CASCADE,
-            CONSTRAINT FK_task_attachments_uploaded_by FOREIGN KEY (uploaded_by_id) REFERENCES users (id)
+            CONSTRAINT FK_task_attachments_task FOREIGN KEY (task_id) REFERENCES "task" (id) ON DELETE CASCADE,
+            CONSTRAINT FK_task_attachments_uploaded_by FOREIGN KEY (uploaded_by_id) REFERENCES "users" (id)
         )');
         
         $this->addSql('CREATE INDEX IDX_task_attachments_task ON task_attachments (task_id)');

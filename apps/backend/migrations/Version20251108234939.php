@@ -27,70 +27,65 @@ final class Version20251108234939 extends AbstractMigration
         // ============================================
 
         // Most common query patterns: user + parent_task filtering
-        $this->addSql('CREATE INDEX idx_task_user_parent ON task (user_id, parent_task_id)');
+        $this->addSql('CREATE INDEX idx_task_user_parent ON "task" (user_id, parent_task_id)');
 
         // Filtering by status
-        $this->addSql('CREATE INDEX idx_task_user_status ON task (user_id, status)');
+        $this->addSql('CREATE INDEX idx_task_user_status ON "task" (user_id, status)');
 
         // Filtering by priority
-        $this->addSql('CREATE INDEX idx_task_user_priority ON task (user_id, priority)');
+        $this->addSql('CREATE INDEX idx_task_user_priority ON "task" (user_id, priority)');
 
         // Filtering archived tasks
-        $this->addSql('CREATE INDEX idx_task_user_archived ON task (user_id, is_archived)');
+        $this->addSql('CREATE INDEX idx_task_user_archived ON "task" (user_id, is_archived)');
 
         // Due date queries (calendar, overdue)
-        $this->addSql('CREATE INDEX idx_task_user_due_date ON task (user_id, due_date)');
+        $this->addSql('CREATE INDEX idx_task_user_due_date ON "task" (user_id, due_date)');
 
         // Analytics - completion tracking
-        $this->addSql('CREATE INDEX idx_task_user_completed_at ON task (user_id, completed_at)');
+        $this->addSql('CREATE INDEX idx_task_user_completed_at ON "task" (user_id, completed_at)');
 
         // Creation date queries (recent tasks)
-        $this->addSql('CREATE INDEX idx_task_user_created_at ON task (user_id, created_at)');
+        $this->addSql('CREATE INDEX idx_task_user_created_at ON "task" (user_id, created_at)');
 
         // ============================================
         // COMPOSITE INDEXES FOR COMPLEX FILTERING
         // ============================================
 
         // Subtasks filtering (not archived)
-        $this->addSql('CREATE INDEX idx_task_user_parent_archived ON task (user_id, parent_task_id, is_archived)');
+        $this->addSql('CREATE INDEX idx_task_user_parent_archived ON "task" (user_id, parent_task_id, is_archived)');
 
         // Subtasks with status filtering
-        $this->addSql('CREATE INDEX idx_task_user_parent_status ON task (user_id, parent_task_id, status)');
+        $this->addSql('CREATE INDEX idx_task_user_parent_status ON "task" (user_id, parent_task_id, status)');
 
         // Status + archived combination
-        $this->addSql('CREATE INDEX idx_task_user_status_archived ON task (user_id, status, is_archived)');
+        $this->addSql('CREATE INDEX idx_task_user_status_archived ON "task" (user_id, status, is_archived)');
 
         // Due date + status (overdue tasks)
-        $this->addSql('CREATE INDEX idx_task_user_due_status ON task (user_id, due_date, status)');
+        $this->addSql('CREATE INDEX idx_task_user_due_status ON "task" (user_id, due_date, status)');
 
         // ============================================
         // PARTIAL INDEXES FOR ANALYTICS
         // ============================================
 
         // Only completed tasks (for analytics)
-        $this->addSql('CREATE INDEX idx_task_completed_date ON task (user_id, completed_at) WHERE completed_at IS NOT NULL');
+        $this->addSql('CREATE INDEX idx_task_completed_date ON "task" (user_id, completed_at) WHERE completed_at IS NOT NULL');
 
         // Overdue tasks (not completed)
-        $this->addSql('CREATE INDEX idx_task_overdue ON task (user_id, due_date, status) WHERE status != \'completed\'');
+        $this->addSql('CREATE INDEX idx_task_overdue ON "task" (user_id, due_date, status) WHERE status != \'completed\'');
 
         // Active (non-archived) tasks with due dates
-        $this->addSql('CREATE INDEX idx_task_active ON task (user_id, due_date) WHERE is_archived = false');
+        $this->addSql('CREATE INDEX idx_task_active ON "task" (user_id, due_date) WHERE is_archived = false');
 
         // Root-level tasks (no parent)
-        $this->addSql('CREATE INDEX idx_task_parent_null ON task (user_id, status) WHERE parent_task_id IS NULL');
+        $this->addSql('CREATE INDEX idx_task_parent_null ON "task" (user_id, status) WHERE parent_task_id IS NULL');
 
-        // Recurring template tasks
-        $this->addSql('CREATE INDEX idx_task_recurring_template ON task (user_id, is_recurring_template) WHERE is_recurring_template = true');
-
-        // Generated from recurrence rule
-        $this->addSql('CREATE INDEX idx_task_generated_from_rule ON task (user_id, generated_from_rule_id) WHERE generated_from_rule_id IS NOT NULL');
+        // Note: idx_task_recurring_template and idx_task_generated_from_rule are already created
+        // in Version20251102_AddRecurrenceRules migration
     }
 
     public function down(Schema $schema): void
     {
-        // Drop all indexes in reverse order
-        $this->addSql('DROP INDEX IF EXISTS idx_task_generated_from_rule');
-        $this->addSql('DROP INDEX IF EXISTS idx_task_recurring_template');
+        // Drop all indexes in reverse order (skipping those created in RecurrenceRules migration)
         $this->addSql('DROP INDEX IF EXISTS idx_task_parent_null');
         $this->addSql('DROP INDEX IF EXISTS idx_task_active');
         $this->addSql('DROP INDEX IF EXISTS idx_task_overdue');

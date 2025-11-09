@@ -28,7 +28,7 @@ final class Version20251102_AddMediaObjects extends AbstractMigration
             file_path VARCHAR(500) NOT NULL,
             thumbnail_path VARCHAR(500) DEFAULT NULL,
             created_at TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
-            CONSTRAINT FK_media_objects_uploaded_by FOREIGN KEY (uploaded_by_id) REFERENCES users (id)
+            CONSTRAINT FK_media_objects_uploaded_by FOREIGN KEY (uploaded_by_id) REFERENCES "users" (id)
         )');
         
         $this->addSql('CREATE INDEX IDX_media_objects_uploaded_by ON media_objects (uploaded_by_id)');
@@ -39,7 +39,7 @@ final class Version20251102_AddMediaObjects extends AbstractMigration
             task_id INT NOT NULL,
             media_object_id INT NOT NULL,
             PRIMARY KEY(task_id, media_object_id),
-            CONSTRAINT FK_task_media_task FOREIGN KEY (task_id) REFERENCES tasks (id) ON DELETE CASCADE,
+            CONSTRAINT FK_task_media_task FOREIGN KEY (task_id) REFERENCES "task" (id) ON DELETE CASCADE,
             CONSTRAINT FK_task_media_media FOREIGN KEY (media_object_id) REFERENCES media_objects (id) ON DELETE CASCADE
         )');
         
