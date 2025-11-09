@@ -187,10 +187,6 @@ class TaskRepository extends ServiceEntityRepository
         $todayStart = new \DateTimeImmutable('today');
 
         $qb = $this->createQueryBuilder('t')
-            ->leftJoin('t.tags', 'tag')
-            ->leftJoin('t.user', 'u')
-            ->addSelect('tag')
-            ->addSelect('u')
             ->where('t.user = :user')
             ->andWhere('t.parentTask IS NULL')
             ->andWhere('t.isArchived = false')
