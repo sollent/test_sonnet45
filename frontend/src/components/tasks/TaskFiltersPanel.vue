@@ -63,7 +63,7 @@ function formatDateForApi(date: Date): string {
   return `${year}-${month}-${day}`
 }
 
-// Apply filters
+// Apply filters - only called when user clicks "Apply" button
 function applyFilters() {
   taskStore.setFilters(localFilters.value)
 }
@@ -84,7 +84,7 @@ function clearFilters() {
   taskStore.clearFilters()
 }
 
-// Toggle priority
+// Toggle priority - just update local state, don't apply immediately
 function togglePriority(priority: TaskPriority) {
   const index = localFilters.value.priorities.indexOf(priority)
   if (index > -1) {
@@ -92,10 +92,10 @@ function togglePriority(priority: TaskPriority) {
   } else {
     localFilters.value.priorities.push(priority)
   }
-  applyFilters()
+  // Don't call applyFilters() here - let user click "Apply" button
 }
 
-// Toggle status
+// Toggle status - just update local state, don't apply immediately
 function toggleStatus(status: TaskStatus) {
   const index = localFilters.value.statuses.indexOf(status)
   if (index > -1) {
@@ -103,10 +103,10 @@ function toggleStatus(status: TaskStatus) {
   } else {
     localFilters.value.statuses.push(status)
   }
-  applyFilters()
+  // Don't call applyFilters() here - let user click "Apply" button
 }
 
-// Toggle tag
+// Toggle tag - just update local state, don't apply immediately
 function toggleTag(tagId: number) {
   const index = localFilters.value.tags.indexOf(tagId)
   if (index > -1) {
@@ -114,27 +114,27 @@ function toggleTag(tagId: number) {
   } else {
     localFilters.value.tags.push(tagId)
   }
-  applyFilters()
+  // Don't call applyFilters() here - let user click "Apply" button
 }
 
-// Handle date change
+// Handle date change - just update local state, don't apply immediately
 function handleDateChange() {
   if (dateFrom.value) {
     localFilters.value.dateFrom = formatDateForApi(dateFrom.value)
   } else {
     localFilters.value.dateFrom = null
   }
-  
+
   if (dateTo.value) {
     localFilters.value.dateTo = formatDateForApi(dateTo.value)
   } else {
     localFilters.value.dateTo = null
   }
-  
-  applyFilters()
+
+  // Don't call applyFilters() here - let user click "Apply" button
 }
 
-// Watch task type filter
+// Watch task type filter - just update local state, don't apply immediately
 watch(taskTypeFilter, (newValue) => {
   if (newValue === 'completed') {
     localFilters.value.completed = true
@@ -143,7 +143,7 @@ watch(taskTypeFilter, (newValue) => {
   } else {
     localFilters.value.completed = null
   }
-  applyFilters()
+  // Don't call applyFilters() here - let user click "Apply" button
 })
 </script>
 
@@ -247,7 +247,6 @@ watch(taskTypeFilter, (newValue) => {
               optionValue="id"
               :placeholder="t('tasks.select_tags')"
               class="tags-select"
-              @change="applyFilters"
             />
           </div>
 

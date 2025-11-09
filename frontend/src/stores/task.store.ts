@@ -550,7 +550,7 @@ export const useTaskStore = defineStore('task', () => {
     // Refetch tasks with new filters
     fetchTasks(queryFilters)
   }
-  
+
   function clearFilters(): void {
     activeFilters.value = {
       tags: [],
@@ -560,12 +560,18 @@ export const useTaskStore = defineStore('task', () => {
       priorities: [],
       statuses: []
     }
-    
-    // Refetch tasks without filters
+
+    // Refetch tasks without filters - use same logic as initial load for 'all' view
     const baseFilter: TaskFilters = {
       view: currentFilter.value.view || 'all'
     }
-    fetchTasks(baseFilter)
+
+    // For 'all' view, always use pagination (limit + offset)
+    if (baseFilter.view === 'all') {
+      fetchTasks(baseFilter, false, 150, 0)
+    } else {
+      fetchTasks(baseFilter)
+    }
   }
   
   function hasActiveFilters(): boolean {
