@@ -306,7 +306,7 @@ PROMPT;
 **AI**: Use these to verify LLM works:
 
 ```php
-// File: backend/tests/LLMPromptTest.php
+// File: apps/backend/tests/LLMPromptTest.php
 
 $testCases = [
     // Case 1: Simple task creation

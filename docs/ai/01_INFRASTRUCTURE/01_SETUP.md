@@ -71,16 +71,31 @@ Optimizations for low resources:
 ### Complete Project Structure
 
 ```bash
-# Root project structure
+# Root project structure (NEW MONOREPO)
 /home/developer/projects/
-├── task-manager/                    # Main application
-│   ├── backend/                     # Symfony application
-│   ├── frontend/                    # Vue.js application
-│   ├── docker/                      # Main Docker configs
-│   └── docs/                        # Documentation
-│       └── ai/                      # This documentation
+├── task-manager/                    # Main application (MONOREPO ROOT)
+│   ├── apps/                        # Application code
+│   │   ├── backend/                 # Symfony application
+│   │   └── frontend/                # Vue.js application
+│   ├── infrastructure/              # Infrastructure configs
+│   │   ├── docker/                  # Docker configurations
+│   │   │   ├── docker-compose.app.yml    # App services
+│   │   │   ├── docker-compose.ai.yml     # AI services (placeholder)
+│   │   │   ├── docker-compose.dev.yml    # Dev overrides
+│   │   │   ├── dev/                      # Dev configs (nginx, php)
+│   │   │   └── cron/                     # Cron jobs
+│   │   └── ai-services/             # AI infrastructure (future)
+│   ├── scripts/                     # Utility scripts
+│   │   ├── setup-dev.sh
+│   │   ├── reset-db.sh
+│   │   └── health-check.sh
+│   ├── docs/                        # Documentation
+│   │   └── ai/                      # This documentation
+│   ├── docker-compose.yml           # Main compose (includes all)
+│   ├── Makefile                     # Common commands
+│   └── CLAUDE.md                    # Quick reference
 │
-└── voice-ai-services/              # AI Services (SEPARATE)
+└── voice-ai-services/              # AI Services (SEPARATE REPO)
     ├── docker-compose.yml           # AI services compose
     ├── .env                         # Environment variables
     ├── scripts/                     # Utility scripts

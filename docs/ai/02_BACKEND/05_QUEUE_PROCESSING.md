@@ -17,7 +17,7 @@ Voice processing is slow (2-5 seconds). Queue lets us:
 
 ```php
 <?php
-// File: backend/src/Message/ProcessVoiceCommandMessage.php
+// File: apps/backend/src/Message/ProcessVoiceCommandMessage.php
 
 namespace App\Message;
 
@@ -42,7 +42,7 @@ class ProcessVoiceCommandMessage
 
 ```php
 <?php
-// File: backend/src/MessageHandler/ProcessVoiceCommandHandler.php
+// File: apps/backend/src/MessageHandler/ProcessVoiceCommandHandler.php
 
 namespace App\MessageHandler;
 

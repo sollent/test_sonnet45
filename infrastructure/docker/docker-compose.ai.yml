@@ -1,0 +1,14 @@
+# AI Services Docker Compose
+# This is a PLACEHOLDER - will be implemented during Voice AI development
+
+version: '3.8'
+
+services:
+  # TODO: Add Ollama service (LLM)
+  # TODO: Add Whisper.cpp service (STT)
+  # TODO: Add Centrifugo service (WebSocket)
+
+  # Placeholder to prevent errors
+  ai-placeholder:
+    image: alpine:latest
+    command: echo "AI services not implemented yet"

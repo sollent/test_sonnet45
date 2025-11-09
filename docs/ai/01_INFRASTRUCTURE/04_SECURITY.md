@@ -244,7 +244,7 @@ iptables-save > /etc/iptables/rules.v4
 
 ```php
 <?php
-// File: backend/src/Security/JWTManager.php
+// File: apps/backend/src/Security/JWTManager.php
 
 namespace App\Security;
 
@@ -332,7 +332,7 @@ class JWTManager
 
 ```php
 <?php
-// File: backend/src/Security/ApiKeyAuthenticator.php
+// File: apps/backend/src/Security/ApiKeyAuthenticator.php
 
 namespace App\Security;
 
@@ -426,7 +426,7 @@ class ApiKeyAuthenticator extends AbstractAuthenticator
 
 ```php
 <?php
-// File: backend/src/Security/EncryptionService.php
+// File: apps/backend/src/Security/EncryptionService.php
 
 namespace App\Security;
 
@@ -556,7 +556,7 @@ class EncryptionService
 ### Database Encryption
 
 ```yaml
-# File: backend/config/packages/doctrine.yaml
+# File: apps/backend/config/packages/doctrine.yaml
 
 doctrine:
     dbal:
@@ -585,7 +585,7 @@ doctrine:
 ### Rate Limiting Configuration
 
 ```yaml
-# File: backend/config/packages/rate_limiter.yaml
+# File: apps/backend/config/packages/rate_limiter.yaml
 
 framework:
     rate_limiter:
@@ -618,7 +618,7 @@ framework:
 
 ```php
 <?php
-// File: backend/src/Security/InputSanitizer.php
+// File: apps/backend/src/Security/InputSanitizer.php
 
 namespace App\Security;
 
@@ -803,7 +803,7 @@ class InputSanitizer
 
 ```php
 <?php
-// File: backend/src/EventListener/CorsListener.php
+// File: apps/backend/src/EventListener/CorsListener.php
 
 namespace App\EventListener;
 
@@ -1050,7 +1050,7 @@ echo "✅ Security scans completed"
 
 ```php
 <?php
-// File: backend/src/Security/SecurityAuditLogger.php
+// File: apps/backend/src/Security/SecurityAuditLogger.php
 
 namespace App\Security;
 

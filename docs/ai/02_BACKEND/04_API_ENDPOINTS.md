@@ -18,7 +18,7 @@
 
 ```php
 <?php
-// File: backend/src/Controller/VoiceCommandController.php
+// File: apps/backend/src/Controller/VoiceCommandController.php
 
 namespace App\Controller;
 
@@ -329,7 +329,7 @@ export default new VoiceCommandService();
 
 ```php
 <?php
-// File: backend/tests/Controller/VoiceCommandControllerTest.php
+// File: apps/backend/tests/Controller/VoiceCommandControllerTest.php
 
 namespace App\Tests\Controller;
 

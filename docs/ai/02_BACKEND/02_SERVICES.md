@@ -41,7 +41,7 @@ backend/src/Service/VoiceAssistant/Integration/
 
 ```php
 <?php
-// File: backend/src/Service/VoiceAssistant/VoiceProcessingService.php
+// File: apps/backend/src/Service/VoiceAssistant/VoiceProcessingService.php
 
 namespace App\Service\VoiceAssistant;
 
@@ -148,7 +148,7 @@ class VoiceProcessingService
 
 ```php
 <?php
-// File: backend/src/Service/VoiceAssistant/LLMService.php
+// File: apps/backend/src/Service/VoiceAssistant/LLMService.php
 
 namespace App\Service\VoiceAssistant;
 
@@ -295,7 +295,7 @@ PROMPT;
 
 ```php
 <?php
-// File: backend/src/Service/VoiceAssistant/CommandExecutorService.php
+// File: apps/backend/src/Service/VoiceAssistant/CommandExecutorService.php
 
 namespace App\Service\VoiceAssistant;
 
@@ -433,7 +433,7 @@ class CommandExecutorService
 
 ```php
 <?php
-// File: backend/src/Service/VoiceAssistant/WebSocketPublisherService.php
+// File: apps/backend/src/Service/VoiceAssistant/WebSocketPublisherService.php
 
 namespace App\Service\VoiceAssistant;
 
@@ -507,7 +507,7 @@ class WebSocketPublisherService
 
 ```php
 <?php
-// File: backend/src/Service/VoiceAssistant/SmartSearchService.php
+// File: apps/backend/src/Service/VoiceAssistant/SmartSearchService.php
 
 namespace App\Service\VoiceAssistant;
 

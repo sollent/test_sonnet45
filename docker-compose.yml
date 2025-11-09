@@ -1,0 +1,17 @@
+# Main Docker Compose - Includes all sub-compose files
+# Location: /test_sonnet45/docker-compose.yml
+
+version: '3.8'
+
+# Include all infrastructure compose files
+include:
+  - path: ./infrastructure/docker/docker-compose.app.yml
+    env_file: ./apps/backend/.env
+
+  # AI services (placeholder for now)
+  - path: ./infrastructure/docker/docker-compose.ai.yml
+
+  # Development overrides (optional)
+  - path: ./infrastructure/docker/docker-compose.dev.yml
+
+# No services defined here - all in included files

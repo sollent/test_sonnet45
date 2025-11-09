@@ -1,0 +1,16 @@
+# Development Environment Overrides
+
+version: '3.8'
+
+services:
+  backend-nginx:
+    environment:
+      - NGINX_DEBUG=true
+
+  backend-php83:
+    environment:
+      - APP_ENV=dev
+      - APP_DEBUG=true
+    volumes:
+      # Enable hot reload for development
+      - ../../apps/backend:/var/www/html/apps/backend:cached

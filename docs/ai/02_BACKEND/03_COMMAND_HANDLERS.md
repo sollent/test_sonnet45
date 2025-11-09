@@ -18,7 +18,7 @@
 
 ```php
 <?php
-// File: backend/src/Service/VoiceAssistant/Command/Handlers/CommandHandlerInterface.php
+// File: apps/backend/src/Service/VoiceAssistant/Command/Handlers/CommandHandlerInterface.php
 
 namespace App\Service\VoiceAssistant\Command\Handlers;
 
@@ -41,7 +41,7 @@ interface CommandHandlerInterface
 
 ```php
 <?php
-// File: backend/src/Service/VoiceAssistant/Command/Handlers/CreateTaskHandler.php
+// File: apps/backend/src/Service/VoiceAssistant/Command/Handlers/CreateTaskHandler.php
 
 namespace App\Service\VoiceAssistant\Command\Handlers;
 
@@ -157,7 +157,7 @@ class CreateTaskHandler implements CommandHandlerInterface
 
 ```php
 <?php
-// File: backend/src/Service/VoiceAssistant/Command/Handlers/CompleteTaskHandler.php
+// File: apps/backend/src/Service/VoiceAssistant/Command/Handlers/CompleteTaskHandler.php
 
 namespace App\Service\VoiceAssistant\Command\Handlers;
 
@@ -242,7 +242,7 @@ class CompleteTaskHandler implements CommandHandlerInterface
 
 ```php
 <?php
-// File: backend/src/Service/VoiceAssistant/Command/Handlers/FilterTasksHandler.php
+// File: apps/backend/src/Service/VoiceAssistant/Command/Handlers/FilterTasksHandler.php
 
 namespace App\Service\VoiceAssistant\Command\Handlers;
 
@@ -346,7 +346,7 @@ class FilterTasksHandler implements CommandHandlerInterface
 
 ```php
 <?php
-// File: backend/src/Service/VoiceAssistant/Command/Handlers/CreateSubtaskHandler.php
+// File: apps/backend/src/Service/VoiceAssistant/Command/Handlers/CreateSubtaskHandler.php
 
 namespace App\Service\VoiceAssistant\Command\Handlers;
 
@@ -462,7 +462,7 @@ services:
 
 ```php
 <?php
-// File: backend/tests/CommandHandlersTest.php
+// File: apps/backend/tests/CommandHandlersTest.php
 
 namespace App\Tests;
 

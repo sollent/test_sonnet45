@@ -1,6 +1,6 @@
 # 🛠 Development Workflow - Daily Development Guide
 
-> **TL;DR**: Docker setup for backend (Symfony + PostgreSQL) via `docker/docker-compose.yml`, npm for frontend (Vue + Vite). Database migrations with Doctrine. Git workflow with feature branches.
+> **TL;DR**: Docker setup for backend (Symfony + PostgreSQL) via `docker-compose.yml` in root, npm for frontend (Vue + Vite). Database migrations with Doctrine. Git workflow with feature branches.
 
 ---
 
@@ -8,19 +8,27 @@
 
 ```
 test_sonnet45/
-├── docker/                         # Docker configuration
-│   ├── docker-compose.yml         # Main Docker Compose file (USE THIS!)
-│   ├── dev/
-│   │   ├── nginx/                 # Nginx configuration
-│   │   └── php/                   # PHP-FPM configuration
-│   └── cron/                      # Cron jobs
-├── backend/                        # Symfony application
-│   ├── src/                       # PHP source code
-│   ├── config/                    # Configuration files
-│   └── ...
-└── frontend/                       # Vue.js application
-    ├── src/                       # TypeScript source code
-    └── ...
+├── docker-compose.yml              # Main Docker Compose (includes infrastructure configs)
+├── Makefile                        # Common commands
+├── apps/
+│   ├── backend/                    # Symfony application
+│   │   ├── src/                    # PHP source code
+│   │   ├── config/                 # Configuration files
+│   │   └── ...
+│   └── frontend/                   # Vue.js application
+│       ├── src/                    # TypeScript source code
+│       └── ...
+├── infrastructure/
+│   ├── docker/                     # Docker configuration
+│   │   ├── docker-compose.app.yml  # App services
+│   │   ├── docker-compose.ai.yml   # AI services (placeholder)
+│   │   ├── docker-compose.dev.yml  # Dev overrides
+│   │   ├── dev/
+│   │   │   ├── nginx/              # Nginx configuration
+│   │   │   └── php/                # PHP-FPM configuration
+│   │   └── cron/                   # Cron jobs
+│   └── ai-services/                # AI infrastructure (placeholder)
+└── scripts/                        # Utility scripts
 ```
 
 ---
@@ -36,10 +44,10 @@ cd test_sonnet45
 
 ### 2. Backend Setup (Docker)
 
-**IMPORTANT**: Docker configuration is in `docker/docker-compose.yml`
+**IMPORTANT**: Docker configuration is `docker-compose.yml` in project root
 
 ```bash
-cd backend
+cd apps/backend
 
 # Copy environment file
 cp .env .env.local
@@ -57,7 +65,7 @@ openssl genpkey -algorithm RSA -out config/jwt/private.pem -pkeyopt rsa_keygen_b
 openssl rsa -pubout -in config/jwt/private.pem -out config/jwt/public.pem
 
 # Start Docker services (from project root)
-cd ../docker
+cd ../..
 docker-compose up -d
 
 # Install dependencies
@@ -73,7 +81,7 @@ docker exec backend-php83 php bin/console doctrine:fixtures:load
 ### 3. Frontend Setup
 
 ```bash
-cd frontend
+cd apps/frontend
 
 # Install dependencies
 npm install

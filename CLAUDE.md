@@ -70,11 +70,11 @@
 ### Docker (Backend)
 
 ```bash
-# Start all services (from docker/ directory)
-cd docker && docker-compose up -d
+# Start all services (from project root)
+docker-compose up -d
 
 # Stop services
-cd docker && docker-compose down
+docker-compose down
 
 # View logs
 docker logs -f backend-php83
@@ -86,13 +86,13 @@ docker exec backend-php83 php bin/console <command>
 docker exec backend-php83 php bin/console doctrine:migrations:migrate
 ```
 
-**IMPORTANT**: Docker config is at `docker/docker-compose.yml`
+**IMPORTANT**: Main Docker config is `docker-compose.yml` in root (includes infrastructure/docker/*.yml)
 
 ### Frontend
 
 ```bash
 # Start dev server
-cd frontend && npm run dev
+cd apps/frontend && npm run dev
 
 # Build for production
 npm run build
@@ -155,6 +155,8 @@ npm run test:run
 ```
 test_sonnet45/
 ├── CLAUDE.md                       # ← You are here!
+├── docker-compose.yml              # Main Docker compose (includes)
+├── Makefile                        # Common commands
 ├── docs/                           # ← Complete documentation
 │   ├── INDEX.md                   # ← Start here for full navigation
 │   ├── CODING_STANDARDS.md        # ⚠️ CRITICAL
@@ -173,23 +175,29 @@ test_sonnet45/
 │       ├── DEVELOPMENT_WORKFLOW.md
 │       ├── TESTING.md
 │       └── TROUBLESHOOTING.md
-├── docker/
-│   └── docker-compose.yml          # Main Docker config
-├── backend/                        # Symfony 7.1
-│   ├── src/
-│   │   ├── Controller/
-│   │   ├── Service/
-│   │   ├── Repository/
-│   │   ├── Entity/
-│   │   └── Dto/
-│   └── config/
-└── frontend/                       # Vue.js 3.4
-    ├── src/
-    │   ├── components/
-    │   ├── views/
-    │   ├── stores/
-    │   └── services/
-    └── package.json
+├── apps/
+│   ├── backend/                    # Symfony 7.1
+│   │   ├── src/
+│   │   │   ├── Controller/
+│   │   │   ├── Service/
+│   │   │   ├── Repository/
+│   │   │   ├── Entity/
+│   │   │   └── Dto/
+│   │   └── config/
+│   └── frontend/                   # Vue.js 3.4
+│       ├── src/
+│       │   ├── components/
+│       │   ├── views/
+│       │   ├── stores/
+│       │   └── services/
+│       └── package.json
+├── infrastructure/
+│   ├── docker/
+│   │   ├── docker-compose.app.yml
+│   │   ├── docker-compose.ai.yml   # AI services (placeholder)
+│   │   └── docker-compose.dev.yml
+│   └── ai-services/                # AI infrastructure (placeholder)
+└── scripts/                        # Utility scripts
 ```
 
 ---
