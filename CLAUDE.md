@@ -60,7 +60,7 @@
 | Topic | Document | Key Info |
 |-------|----------|----------|
 | **Daily Workflow** | [`docs/guides/DEVELOPMENT_WORKFLOW.md`](docs/guides/DEVELOPMENT_WORKFLOW.md) | Docker commands, migrations, PostgreSQL |
-| **Testing** | [`docs/guides/TESTING.md`](docs/guides/TESTING.md) | PHPUnit, Vitest, test organization |
+| **Testing** | [`docs/guides/testing/TESTING.md`](docs/guides/testing/TESTING.md) | PHPUnit, Vitest, test organization |
 | **Troubleshooting** | [`docs/guides/TROUBLESHOOTING.md`](docs/guides/TROUBLESHOOTING.md) | All solved issues & solutions |
 
 ---
@@ -123,7 +123,7 @@ npm run test:run
 → Read [`docs/backend/DATABASE.md`](docs/backend/DATABASE.md)
 
 **"How to test?"**
-→ Read [`docs/guides/TESTING.md`](docs/guides/TESTING.md)
+→ Read [`docs/guides/testing/TESTING.md`](docs/guides/testing/TESTING.md)
 
 **"Need complete context?"**
 → Start with [`docs/INDEX.md`](docs/INDEX.md) (2.5 hours reading path)
@@ -273,3 +273,5 @@ If you're a new Claude Code instance or need complete context:
 - Когда сталкиваешься с трудностями как пересобрать backend или frontend чтобы запустить тестировани (не важно - через bash скрипты или через mcp браузер) - всегда смотри в доку @docs/INDEX.md и оттуда в Development Workflow
 - Делай коммит после каждого выполненного тобой промта - с понятным заголовком и супер минимальным описанием! И ГЛАВНОЕ ИМЕЙ ВВИДУ - ДЕЛАЙ КОММИТЫ ТОЛЬКО ТЕХ ИЗМЕНЕНИЙ КОТОРЫЕ СДЕЛАЛ ИМЕННО ТЫ, потому что параллельно с тобой могу работать я или другая нейронка - например курсор, и все происходит в одной ветке!
 - Всегда когда пишешь какую-то документацию пиши ее нужной директории внутри @docs/ там уже решай куда ложить в корень @docs/ или в @docs/frontend/ @docs/backend/ @docs/guides/ , всегда обновляй @docs/INDEX.md и обновляй в нем нужную инфу и навигацию по документации
+- Всегда смотри в доку @docs/* и предварительно изучай все файлы md и в подпапках все доки в md формате - чтобы обновлять контекст каждый раз (особенно когда я очищаю чат через /clear)
+- не забывай делать коммит после любых изменениях которые ты вносишь и когда ты закончил работа (по моему промту) - сразу делай коммит! чтобы я потом в случае чего мог откатить его

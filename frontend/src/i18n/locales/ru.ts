@@ -158,8 +158,6 @@ export default {
     not_configured: 'Не настроено',
     enabled: 'Включено',
     disabled: 'Отключено',
-    connected: 'Подключено',
-    not_connected: 'Не подключено',
 
     // Notifications section
     notifications_settings: 'Настройки уведомлений',
@@ -453,9 +451,8 @@ export default {
     task_details: 'Детали задачи',
     no_tasks: 'Пока нет задач',
     no_tasks_description: 'Создайте свою первую задачу, чтобы начать',
-    
+
     // Task fields
-    title: 'Задачи',
     task_title: 'Название',
     task_description: 'Описание',
     task_status: 'Статус',
@@ -581,16 +578,14 @@ export default {
     date_from: 'С',
     date_to: 'До',
     period: 'Период',
-    team: 'Команда',
     all_teams: 'Все команды',
-    my_tasks: 'Мои задачи',
     unassigned: 'Без исполнителя',
     task_type: 'Тип задач',
     active: 'Активные',
     completed: 'Завершенные',
     status_execution: 'Статус выполнения',
     urgent: 'Срочно',
-    search_placeholder: 'Поиск по названию, описанию, тегам',
+    search_by_title: 'Поиск по названию, описанию, тегам',
     select_tags: 'Выберите теги',
     select_priorities: 'Выберите приоритеты',
     select_statuses: 'Выберите статусы',
@@ -614,15 +609,14 @@ export default {
     invalid_file_type: 'Недопустимый тип файла',
     upload_error: 'Ошибка загрузки файла',
     delete_error: 'Ошибка удаления файла',
-    add_tag_placeholder: 'Добавить теги',
-    
+
     // Messages
     task_created: 'Задача успешно создана',
     task_updated: 'Задача успешно обновлена',
     task_deleted: 'Задача успешно удалена',
     task_completed: 'Задача отмечена как завершенная',
     task_archived: 'Задача архивирована',
-    
+
     // Placeholders
     search_placeholder: 'Поиск задач...',
     title_placeholder: 'Что нужно сделать?',
@@ -631,14 +625,11 @@ export default {
     edit_task_description: 'Измените детали вашей задачи',
     creating_subtask: 'Создание подзадачи для выбранной задачи',
     add_tag_placeholder: 'Добавить теги (нажмите Enter)',
-    
-    // Filter presets
-    all_tasks: 'Все задачи',
-    my_tasks: 'Мои задачи',
-    this_week: 'На этой неделе',
+
+    // Filter presets (moved to Views section above)
     important: 'Важные',
     team: 'Командные',
-    
+
     // Recurrence
     repeat: 'Повторять',
     no_repeat: 'Без повторений',

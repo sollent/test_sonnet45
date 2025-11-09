@@ -56,7 +56,6 @@ final class TaskResponseDto
         $dto->isArchived = $task->isArchived();
         $dto->isCompleted = $task->isCompleted();
         $dto->isOverdue = $task->isOverdue();
-        $dto->completionProgress = $task->getCompletionProgress();
         $dto->isRecurringTemplate = $task->isRecurringTemplate();
 
         if ($includeMeta) {
@@ -64,20 +63,33 @@ final class TaskResponseDto
             $dto->updatedAt = $task->getUpdatedAt();
         }
 
+        // Always calculate subtask counts (subtasks are pre-loaded via JOIN in repository)
         $subtasks = $task->getSubtasks();
         $dto->subtaskCount = $subtasks->count();
         $dto->completedSubtaskCount = $subtasks->filter(fn(Task $subtask) => $subtask->isCompleted())->count();
-        $dto->hasNestedSubtasks = $subtasks->exists(fn($key, Task $subtask) => $subtask->getSubtasks()->count() > 0);
 
-        // Map tags with lightweight payload
-        $dto->tags = array_map(
-            static fn($tag) => [
-                'id' => $tag->getId(),
-                'name' => $tag->getName(),
-                'color' => $tag->getColor(),
-            ],
-            $task->getTags()->toArray()
-        );
+        // Calculate completion progress based on subtasks
+        $dto->completionProgress = $task->getCompletionProgress();
+
+        // Only include full subtask details if explicitly requested
+        if ($includeSubtasks) {
+            $dto->hasNestedSubtasks = $subtasks->exists(fn($key, Task $subtask) => $subtask->getSubtasks()->count() > 0);
+        } else {
+            // For list views: don't check nested subtasks to avoid additional queries
+            $dto->hasNestedSubtasks = false;
+        }
+
+        // Map tags with lightweight payload - only if initialized to avoid N+1
+        $dto->tags = $task->getTags()->isInitialized()
+            ? array_map(
+                static fn($tag) => [
+                    'id' => $tag->getId(),
+                    'name' => $tag->getName(),
+                    'color' => $tag->getColor(),
+                ],
+                $task->getTags()->toArray()
+            )
+            : [];
 
         // Map subtasks if requested
         if ($includeSubtasks) {
@@ -87,22 +99,24 @@ final class TaskResponseDto
             );
         }
 
-        // Map media objects
-        $dto->attachments = array_map(
-            static fn($media) => [
-                'id' => $media->getId(),
-                'fileName' => $media->getFileName(),
-                'originalName' => $media->getOriginalName(),
-                'mimeType' => $media->getMimeType(),
-                'fileSize' => $media->getFileSize(),
-                'fileSizeHuman' => $media->getHumanReadableSize(),
-                'fileType' => $media->getFileType(),
-                'filePath' => $media->getFilePath(),
-                'thumbnailPath' => $media->getThumbnailPath(),
-                'createdAt' => $media->getCreatedAt()->format('Y-m-d H:i:s'),
-            ],
-            $task->getMediaObjects()->toArray()
-        );
+        // Map media objects - only if initialized to avoid N+1
+        $dto->attachments = $task->getMediaObjects()->isInitialized()
+            ? array_map(
+                static fn($media) => [
+                    'id' => $media->getId(),
+                    'fileName' => $media->getFileName(),
+                    'originalName' => $media->getOriginalName(),
+                    'mimeType' => $media->getMimeType(),
+                    'fileSize' => $media->getFileSize(),
+                    'fileSizeHuman' => $media->getHumanReadableSize(),
+                    'fileType' => $media->getFileType(),
+                    'filePath' => $media->getFilePath(),
+                    'thumbnailPath' => $media->getThumbnailPath(),
+                    'createdAt' => $media->getCreatedAt()->format('Y-m-d H:i:s'),
+                ],
+                $task->getMediaObjects()->toArray()
+            )
+            : [];
 
         // Map recurrence rule if exists
         if ($task->getRecurrenceRule()) {

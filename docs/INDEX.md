@@ -202,7 +202,7 @@ Common issues and their solutions
 - Docker issues
 - Database connection issues
 
-#### [`guides/TESTING.md`](guides/TESTING.md)
+#### [`guides/testing/TESTING.md`](guides/testing/TESTING.md)
 Comprehensive testing strategy for backend and frontend
 
 **Key Topics:**
@@ -217,7 +217,7 @@ Comprehensive testing strategy for backend and frontend
 - Detailed examples for each test type
 - Troubleshooting common test issues
 
-#### [`guides/E2E_TESTING_PLAN.md`](guides/E2E_TESTING_PLAN.md)
+#### [`guides/e2e/E2E_TESTING_PLAN.md`](guides/e2e/E2E_TESTING_PLAN.md)
 Complete End-to-End (E2E) browser testing plan and strategy
 
 **Key Topics:**
@@ -230,6 +230,16 @@ Complete End-to-End (E2E) browser testing plan and strategy
 - Test coverage goals and success metrics
 - Page objects structure and best practices
 
+#### [`guides/e2e/E2E_GIT_WORKFLOW.md`](guides/e2e/E2E_GIT_WORKFLOW.md)
+Git workflow guide for E2E tests development in separate branch
+
+**Key Topics:**
+- Branch management for E2E tests
+- Synchronization with main branch without switching
+- Rebase vs Merge strategies
+- Pull request workflow
+- Critical rules for parallel AI work
+
 #### [`guides/DEPLOYMENT.md`](guides/DEPLOYMENT.md)
 Production deployment guide
 
@@ -240,7 +250,7 @@ Production deployment guide
 - SSL/HTTPS setup
 - Monitoring & logs
 
-#### [`guides/VOICE_AI_ASSISTANT_PLAN.md`](guides/VOICE_AI_ASSISTANT_PLAN.md)
+#### [`guides/voice-ai/VOICE_AI_ASSISTANT_PLAN.md`](guides/voice-ai/VOICE_AI_ASSISTANT_PLAN.md)
 Voice AI Assistant implementation plan with LLM integration
 
 **Key Topics:**
@@ -252,6 +262,29 @@ Voice AI Assistant implementation plan with LLM integration
 - Telegram bot integration
 - Testing strategy and critical points
 - Future scaling and multi-messenger support
+
+#### [`guides/voice-ai/VOICE_AI_TESTING_STRATEGY.md`](guides/voice-ai/VOICE_AI_TESTING_STRATEGY.md)
+Testing strategy for Voice AI Assistant feature
+
+**Key Topics:**
+- Unit tests for services (LLM, STT, Command Executor)
+- Integration tests for full voice command flow
+- Mocking strategies for AI services
+- Performance testing for voice processing
+- Edge cases and error handling tests
+
+#### [`guides/performance/PERFORMANCE_OPTIMIZATION_PLAN.md`](guides/performance/PERFORMANCE_OPTIMIZATION_PLAN.md)
+Backend performance optimization plan for 2M+ tasks (Enhanced by Opus 4.1)
+
+**Key Topics:**
+- Critical N+1 query problems identified
+- DTO lazy loading issues
+- Database indexing strategy (15+ composite indexes)
+- PostgreSQL optimization and connection pooling
+- Query result caching with Doctrine
+- 11-stage implementation plan (6-8 days)
+- Expected 100x performance improvement
+- Memory optimization strategies
 
 ---
 
