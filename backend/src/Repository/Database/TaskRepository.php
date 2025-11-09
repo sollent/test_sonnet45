@@ -222,16 +222,14 @@ class TaskRepository extends ServiceEntityRepository
         // Filter by tasks with/without subtasks
         // When onlyWithSubtasks=true: Show ONLY tasks that have subtasks (complex tasks)
         // When onlyWithSubtasks=false (default): Show ALL tasks with their subtasks
-        // OPTIMIZATION: Use subquery with EXISTS for better performance with indexes
+        // OPTIMIZATION: Use DQL subquery with proper entity reference
         if ($onlyWithSubtasks) {
-            // Use optimized subquery that PostgreSQL can use with index on parent_task_id
-            $qb->andWhere('t.id IN (
-                SELECT DISTINCT parent_task_id
-                FROM task
-                WHERE parent_task_id IS NOT NULL
-                  AND user_id = :userId
-            )')
-            ->setParameter('userId', $user->getId());
+            // Use DQL subquery - PostgreSQL will optimize with index on parent_task_id
+            $qb->andWhere('EXISTS (
+                SELECT 1 FROM App\Entity\Task subtask
+                WHERE subtask.parentTask = t
+                  AND subtask.user = :user
+            )');
         }
 
         // Apply filters
