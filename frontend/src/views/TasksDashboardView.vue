@@ -203,8 +203,9 @@ function handleHideSubtasksChange(newHideSubtasks: boolean) {
   console.log('Hide subtasks changed:', newHideSubtasks)
   hideSubtasks.value = newHideSubtasks
 
-  // Refresh current view with new hideSubtasks setting
-  refreshCurrentView()
+  // Re-load current view with new hideSubtasks setting
+  // Use selectView to properly reset pagination state (hasMoreTasks, currentOffset)
+  selectView(selectedView.value)
 }
 
 // Handle filters apply
