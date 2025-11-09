@@ -103,17 +103,25 @@ class TaskRepository extends ServiceEntityRepository
             ->setParameter('cancelledStatus', TaskStatus::CANCELLED);
 
         // Filter by tasks with/without subtasks
-        // OPTIMIZATION: Use IN subquery instead of EXISTS for better performance
-        // IN subquery executes ONCE and PostgreSQL caches results
-        // EXISTS would execute for EVERY row (slow on large datasets)
+        // OPTIMIZATION: Use native SQL + IN instead of DQL EXISTS for better performance
+        // Native SQL query executes ONCE and PostgreSQL caches results + uses partial index
+        // DQL EXISTS would execute for EVERY row (slow on large datasets)
         if ($onlyWithSubtasks) {
-            $qb->andWhere('t.id IN (
-                SELECT DISTINCT parent_task_id
-                FROM task
-                WHERE parent_task_id IS NOT NULL
-                  AND user_id = :userId
-            )')
-            ->setParameter('userId', $user->getId());
+            $conn = $this->getEntityManager()->getConnection();
+            $stmt = $conn->executeQuery(
+                'SELECT DISTINCT parent_task_id FROM task WHERE parent_task_id IS NOT NULL AND user_id = ?',
+                [$user->getId()],
+                [\Doctrine\DBAL\ParameterType::INTEGER]
+            );
+            $parentIds = $stmt->fetchFirstColumn();
+
+            if (!empty($parentIds)) {
+                $qb->andWhere('t.id IN (:parentTaskIds)')
+                   ->setParameter('parentTaskIds', $parentIds);
+            } else {
+                // No tasks with subtasks found - return empty result
+                $qb->andWhere('1 = 0');
+            }
         }
 
         // Apply filters
@@ -194,17 +202,25 @@ class TaskRepository extends ServiceEntityRepository
             ->setParameter('cancelledStatus', TaskStatus::CANCELLED);
 
         // Filter by tasks with/without subtasks
-        // OPTIMIZATION: Use IN subquery instead of EXISTS for better performance
-        // IN subquery executes ONCE and PostgreSQL caches results
-        // EXISTS would execute for EVERY row (slow on large datasets)
+        // OPTIMIZATION: Use native SQL + IN instead of DQL EXISTS for better performance
+        // Native SQL query executes ONCE and PostgreSQL caches results + uses partial index
+        // DQL EXISTS would execute for EVERY row (slow on large datasets)
         if ($onlyWithSubtasks) {
-            $qb->andWhere('t.id IN (
-                SELECT DISTINCT parent_task_id
-                FROM task
-                WHERE parent_task_id IS NOT NULL
-                  AND user_id = :userId
-            )')
-            ->setParameter('userId', $user->getId());
+            $conn = $this->getEntityManager()->getConnection();
+            $stmt = $conn->executeQuery(
+                'SELECT DISTINCT parent_task_id FROM task WHERE parent_task_id IS NOT NULL AND user_id = ?',
+                [$user->getId()],
+                [\Doctrine\DBAL\ParameterType::INTEGER]
+            );
+            $parentIds = $stmt->fetchFirstColumn();
+
+            if (!empty($parentIds)) {
+                $qb->andWhere('t.id IN (:parentTaskIds)')
+                   ->setParameter('parentTaskIds', $parentIds);
+            } else {
+                // No tasks with subtasks found - return empty result
+                $qb->andWhere('1 = 0');
+            }
         }
 
         // Apply filters
@@ -254,14 +270,24 @@ class TaskRepository extends ServiceEntityRepository
         // Filter by tasks with/without subtasks
         // When onlyWithSubtasks=true: Show ONLY tasks that have subtasks (complex tasks)
         // When onlyWithSubtasks=false (default): Show ALL tasks with their subtasks
-        // OPTIMIZATION: Use DQL subquery with proper entity reference
+        // OPTIMIZATION: Use native SQL + IN instead of DQL EXISTS for better performance
+        // Native SQL query executes ONCE and PostgreSQL caches results + uses partial index
         if ($onlyWithSubtasks) {
-            // Use DQL subquery - PostgreSQL will optimize with index on parent_task_id
-            $qb->andWhere('EXISTS (
-                SELECT 1 FROM App\Entity\Task subtask
-                WHERE subtask.parentTask = t
-                  AND subtask.user = :user
-            )');
+            $conn = $this->getEntityManager()->getConnection();
+            $stmt = $conn->executeQuery(
+                'SELECT DISTINCT parent_task_id FROM task WHERE parent_task_id IS NOT NULL AND user_id = ?',
+                [$user->getId()],
+                [\Doctrine\DBAL\ParameterType::INTEGER]
+            );
+            $parentIds = $stmt->fetchFirstColumn();
+
+            if (!empty($parentIds)) {
+                $qb->andWhere('t.id IN (:parentTaskIds)')
+                   ->setParameter('parentTaskIds', $parentIds);
+            } else {
+                // No tasks with subtasks found - return empty result
+                $qb->andWhere('1 = 0');
+            }
         }
 
         // Apply filters
@@ -581,17 +607,25 @@ class TaskRepository extends ServiceEntityRepository
             ->setParameter('cancelledStatus', TaskStatus::CANCELLED);
 
         // Filter by tasks with/without subtasks
-        // OPTIMIZATION: Use IN subquery instead of EXISTS for better performance
-        // IN subquery executes ONCE and PostgreSQL caches results
-        // EXISTS would execute for EVERY row (slow on large datasets)
+        // OPTIMIZATION: Use native SQL to get parent IDs, then filter with IN
+        // Native SQL query executes ONCE and PostgreSQL caches results + uses partial index
         if ($onlyWithSubtasks) {
-            $idsQb->andWhere('t.id IN (
-                SELECT DISTINCT parent_task_id
-                FROM task
-                WHERE parent_task_id IS NOT NULL
-                  AND user_id = :userId
-            )')
-            ->setParameter('userId', $user->getId());
+            $conn = $this->getEntityManager()->getConnection();
+            $stmt = $conn->executeQuery(
+                'SELECT DISTINCT parent_task_id FROM task WHERE parent_task_id IS NOT NULL AND user_id = ?',
+                [$user->getId()],
+                [\Doctrine\DBAL\ParameterType::INTEGER]
+            );
+            $parentIds = $stmt->fetchFirstColumn();
+
+            if (!empty($parentIds)) {
+                $idsQb->andWhere('t.id IN (:parentTaskIds)')
+                      ->setParameter('parentTaskIds', $parentIds);
+            } else {
+                // No tasks with subtasks found - return empty paginator
+                $emptyQb = $this->createQueryBuilder('t')->where('1 = 0');
+                return new Paginator($emptyQb->getQuery());
+            }
         }
 
         // Apply filters to ID query
@@ -659,17 +693,25 @@ class TaskRepository extends ServiceEntityRepository
             ->setParameter('cancelledStatus', TaskStatus::CANCELLED);
 
         // Filter by tasks with/without subtasks
-        // OPTIMIZATION: Use IN subquery instead of EXISTS for better performance
-        // IN subquery executes ONCE and PostgreSQL caches results
-        // EXISTS would execute for EVERY row (slow on large datasets)
+        // OPTIMIZATION: Use native SQL to get parent IDs, then filter with IN
+        // Native SQL query executes ONCE and PostgreSQL caches results + uses partial index
         if ($onlyWithSubtasks) {
-            $idsQb->andWhere('t.id IN (
-                SELECT DISTINCT parent_task_id
-                FROM task
-                WHERE parent_task_id IS NOT NULL
-                  AND user_id = :userId
-            )')
-            ->setParameter('userId', $user->getId());
+            $conn = $this->getEntityManager()->getConnection();
+            $stmt = $conn->executeQuery(
+                'SELECT DISTINCT parent_task_id FROM task WHERE parent_task_id IS NOT NULL AND user_id = ?',
+                [$user->getId()],
+                [\Doctrine\DBAL\ParameterType::INTEGER]
+            );
+            $parentIds = $stmt->fetchFirstColumn();
+
+            if (!empty($parentIds)) {
+                $idsQb->andWhere('t.id IN (:parentTaskIds)')
+                      ->setParameter('parentTaskIds', $parentIds);
+            } else {
+                // No tasks with subtasks found - return empty paginator
+                $emptyQb = $this->createQueryBuilder('t')->where('1 = 0');
+                return new Paginator($emptyQb->getQuery());
+            }
         }
 
         // Apply filters to ID query
