@@ -225,7 +225,10 @@ const currentLoading = computed(() => {
 
 // Load more tasks for infinite scroll
 async function loadMoreTasks() {
-  if (isLoadingMore.value || !hasMoreTasks.value || selectedView.value !== 'all') {
+  // Support pagination for 'all' and 'upcoming' views
+  const supportsPagination = ['all', 'upcoming'].includes(selectedView.value)
+
+  if (isLoadingMore.value || !hasMoreTasks.value || !supportsPagination) {
     console.log('[Infinite Scroll] Skipping load:', { isLoadingMore: isLoadingMore.value, hasMoreTasks: hasMoreTasks.value, view: selectedView.value })
     return
   }
@@ -241,7 +244,7 @@ async function loadMoreTasks() {
   try {
     // Build filters, explicitly removing completed if it's null
     const filters: any = {
-      view: 'all',
+      view: selectedView.value, // Use current view (all or upcoming)
       tags: taskStore.activeFilters.tags,
       dateFrom: taskStore.activeFilters.dateFrom,
       dateTo: taskStore.activeFilters.dateTo,
@@ -472,9 +475,9 @@ function selectView(viewId: string) {
     unscheduledPage.value = 1
     const filters = { ...taskStore.activeFilters, onlyWithSubtasks: onlyWithSubtasks.value }
     taskStore.fetchUnscheduledTasksPaginated(unscheduledPage.value, unscheduledLimit.value, filters)
-  } else if (viewId === 'all') {
-    // Use pagination for 'all' view with initial load
-    console.log('[View Change] Loading initial tasks for view=all with filters:', queryFilters)
+  } else if (viewId === 'all' || viewId === 'upcoming') {
+    // Use pagination for 'all' and 'upcoming' views with initial load
+    console.log(`[View Change] Loading initial tasks for view=${viewId} with filters:`, queryFilters)
     console.log('[View Change] activeFilters.completed:', taskStore.activeFilters.completed)
     taskStore.fetchTasks(queryFilters, false, PAGE_SIZE, 0).then(loadedCount => {
       currentOffset.value = loadedCount
@@ -495,10 +498,8 @@ function selectView(viewId: string) {
       }
 
     })
-  } else if (viewId === 'all') {
-    // For 'all' view, use pagination even in this branch
-    taskStore.fetchTasks(queryFilters, false, PAGE_SIZE, 0)
   } else {
+    // For today and other views without pagination
     taskStore.fetchTasks(queryFilters)
   }
 
@@ -510,7 +511,7 @@ function selectView(viewId: string) {
 async function refreshCurrentView() {
   // Build query filters from active filters
   const queryFilters = {
-    view: selectedView.value === 'all' ? 'all' : selectedView.value,
+    view: selectedView.value,
     ...taskStore.activeFilters,
     onlyWithSubtasks: onlyWithSubtasks.value
   }
@@ -521,10 +522,11 @@ async function refreshCurrentView() {
   } else if (selectedView.value === 'unscheduled') {
     const filters = { ...taskStore.activeFilters, onlyWithSubtasks: onlyWithSubtasks.value }
     await taskStore.fetchUnscheduledTasksPaginated(unscheduledPage.value, unscheduledLimit.value, filters)
-  } else if (selectedView.value === 'all') {
-    // For 'all' view, always use pagination
+  } else if (selectedView.value === 'all' || selectedView.value === 'upcoming') {
+    // For 'all' and 'upcoming' views, always use pagination
     await taskStore.fetchTasks(queryFilters, false, PAGE_SIZE, 0)
   } else {
+    // For 'today' and other views without pagination
     await taskStore.fetchTasks(queryFilters)
   }
 }
@@ -816,8 +818,8 @@ async function handleTaskDeleted() {
               />
             </div>
 
-            <!-- Load More Button -->
-            <div v-if="selectedView === 'all'" class="load-more-container">
+            <!-- Load More Button (for 'all' and 'upcoming' views) -->
+            <div v-if="['all', 'upcoming'].includes(selectedView)" class="load-more-container">
               <!-- Loading State -->
               <div v-if="isLoadingMore" class="load-more-loader">
                 <Skeleton height="120px" class="mb-4" borderRadius="16px" />
