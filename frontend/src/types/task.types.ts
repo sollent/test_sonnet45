@@ -150,6 +150,7 @@ export interface TaskFiltersState {
   dateTo: string | null
   priorities: TaskPriority[]
   statuses: TaskStatus[]
+  onlyWithSubtasks?: boolean
 }
 
 export interface CreateTagRequest {

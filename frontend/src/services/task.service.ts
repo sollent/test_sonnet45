@@ -272,6 +272,9 @@ class TaskService {
     if (filters?.statuses && filters.statuses.length > 0) {
       filters.statuses.forEach(status => params.append('statuses[]', status))
     }
+    if (filters?.onlyWithSubtasks !== undefined) {
+      params.append('onlyWithSubtasks', String(filters.onlyWithSubtasks))
+    }
 
     const queryString = params.toString()
     const url = queryString ? `${API_ENDPOINTS.TASKS_OVERDUE}?${queryString}` : API_ENDPOINTS.TASKS_OVERDUE
@@ -303,6 +306,9 @@ class TaskService {
     }
     if (filters?.statuses && filters.statuses.length > 0) {
       filters.statuses.forEach(status => params.append('statuses[]', status))
+    }
+    if (filters?.onlyWithSubtasks !== undefined) {
+      params.append('onlyWithSubtasks', String(filters.onlyWithSubtasks))
     }
 
     const queryString = params.toString()

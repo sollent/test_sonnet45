@@ -466,10 +466,12 @@ function selectView(viewId: string) {
 
   if (viewId === 'overdue') {
     overduePage.value = 1
-    taskStore.fetchOverdueTasksPaginated(overduePage.value, overdueLimit.value)
+    const filters = { ...taskStore.activeFilters, onlyWithSubtasks: onlyWithSubtasks.value }
+    taskStore.fetchOverdueTasksPaginated(overduePage.value, overdueLimit.value, filters)
   } else if (viewId === 'unscheduled') {
     unscheduledPage.value = 1
-    taskStore.fetchUnscheduledTasksPaginated(unscheduledPage.value, unscheduledLimit.value)
+    const filters = { ...taskStore.activeFilters, onlyWithSubtasks: onlyWithSubtasks.value }
+    taskStore.fetchUnscheduledTasksPaginated(unscheduledPage.value, unscheduledLimit.value, filters)
   } else if (viewId === 'all') {
     // Use pagination for 'all' view with initial load
     console.log('[View Change] Loading initial tasks for view=all with filters:', queryFilters)
@@ -514,9 +516,11 @@ async function refreshCurrentView() {
   }
 
   if (selectedView.value === 'overdue') {
-    await taskStore.fetchOverdueTasksPaginated(overduePage.value, overdueLimit.value)
+    const filters = { ...taskStore.activeFilters, onlyWithSubtasks: onlyWithSubtasks.value }
+    await taskStore.fetchOverdueTasksPaginated(overduePage.value, overdueLimit.value, filters)
   } else if (selectedView.value === 'unscheduled') {
-    await taskStore.fetchUnscheduledTasksPaginated(unscheduledPage.value, unscheduledLimit.value)
+    const filters = { ...taskStore.activeFilters, onlyWithSubtasks: onlyWithSubtasks.value }
+    await taskStore.fetchUnscheduledTasksPaginated(unscheduledPage.value, unscheduledLimit.value, filters)
   } else if (selectedView.value === 'all') {
     // For 'all' view, always use pagination
     await taskStore.fetchTasks(queryFilters, false, PAGE_SIZE, 0)
@@ -528,13 +532,15 @@ async function refreshCurrentView() {
 function onOverduePageChange(event: PageState) {
   overduePage.value = event.page + 1
   overdueLimit.value = event.rows
-  taskStore.fetchOverdueTasksPaginated(overduePage.value, overdueLimit.value)
+  const filters = { ...taskStore.activeFilters, onlyWithSubtasks: onlyWithSubtasks.value }
+  taskStore.fetchOverdueTasksPaginated(overduePage.value, overdueLimit.value, filters)
 }
 
 function onUnscheduledPageChange(event: PageState) {
   unscheduledPage.value = event.page + 1
   unscheduledLimit.value = event.rows
-  taskStore.fetchUnscheduledTasksPaginated(unscheduledPage.value, unscheduledLimit.value)
+  const filters = { ...taskStore.activeFilters, onlyWithSubtasks: onlyWithSubtasks.value }
+  taskStore.fetchUnscheduledTasksPaginated(unscheduledPage.value, unscheduledLimit.value, filters)
 }
 
 async function handleToggleTask(task: Task) {

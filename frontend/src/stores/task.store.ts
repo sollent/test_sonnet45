@@ -484,6 +484,10 @@ export const useTaskStore = defineStore('task', () => {
       queryFilters.statuses = filters.statuses
     }
 
+    if (filters.onlyWithSubtasks !== undefined) {
+      queryFilters.onlyWithSubtasks = filters.onlyWithSubtasks
+    }
+
     return queryFilters
   }
 
