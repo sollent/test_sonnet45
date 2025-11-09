@@ -326,9 +326,9 @@ final class TaskService
     /**
      * Get upcoming tasks for user
      */
-    public function getUpcomingTasks(User $user, int $days = 7, ?TaskFilterDto $filters = null): array
+    public function getUpcomingTasks(User $user, int $days = 7, ?TaskFilterDto $filters = null, ?int $limit = null, ?int $offset = null): array
     {
-        return $this->taskRepository->findUpcomingTasks($user, $days, $filters);
+        return $this->taskRepository->findUpcomingTasks($user, $days, $filters, $limit, $offset);
     }
 
     public function getActiveTasks(User $user, ?TaskFilterDto $filters = null, ?int $limit = null, ?int $offset = null): array
@@ -339,6 +339,22 @@ final class TaskService
     public function countActiveTasks(User $user, ?TaskFilterDto $filters = null): int
     {
         return $this->taskRepository->countActiveTasks($user, $filters);
+    }
+
+    /**
+     * Get ALL tasks for user (for 'all' view) with pagination
+     */
+    public function getAllTasks(User $user, ?TaskFilterDto $filters = null, ?int $limit = null, ?int $offset = null): array
+    {
+        return $this->taskRepository->findAllTasks($user, $filters, $limit, $offset);
+    }
+
+    /**
+     * Count ALL tasks for user (for 'all' view pagination)
+     */
+    public function countAllTasks(User $user, ?TaskFilterDto $filters = null): int
+    {
+        return $this->taskRepository->countAllTasks($user, $filters);
     }
 
     public function getUnscheduledTasksPaginated(User $user, int $page, int $limit, ?TaskFilterDto $filters = null): array

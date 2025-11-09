@@ -151,7 +151,7 @@ class TaskRepository extends ServiceEntityRepository
      *
      * @return Task[]
      */
-    public function findUpcomingTasks(User $user, int $days = 7, ?TaskFilterDto $filters = null): array
+    public function findUpcomingTasks(User $user, int $days = 7, ?TaskFilterDto $filters = null, ?int $limit = null, ?int $offset = null): array
     {
         $tomorrow = new \DateTimeImmutable('tomorrow');
         $endDate = new \DateTimeImmutable("+{$days} days");
@@ -189,9 +189,15 @@ class TaskRepository extends ServiceEntityRepository
            ->orderBy('dateOnly', 'ASC')  // Group by day
            ->addOrderBy('completedOrder', 'ASC')  // 0=uncompleted first, 1=completed after
            ->addOrderBy('t.priority', 'DESC')
-           ->addOrderBy('t.id', 'ASC')
-           // PERFORMANCE: Limit to 200 tasks to prevent loading thousands of tasks
-           ->setMaxResults(200);
+           ->addOrderBy('t.id', 'ASC');
+
+        // Apply pagination
+        if ($limit !== null) {
+            $qb->setMaxResults($limit);
+        }
+        if ($offset !== null) {
+            $qb->setFirstResult($offset);
+        }
 
         return $qb->getQuery()->getResult();
     }
@@ -273,6 +279,73 @@ class TaskRepository extends ServiceEntityRepository
             ->setParameter('cancelledStatus', TaskStatus::CANCELLED);
 
         // Apply filters
+        if ($filters) {
+            $this->applyFilters($qb, $filters);
+        }
+
+        return (int) $qb->getQuery()->getSingleScalarResult();
+    }
+
+    /**
+     * Find ALL tasks for user (for 'all' view) with pagination
+     * Returns ALL non-archived, non-cancelled tasks regardless of dates
+     *
+     * @return Task[]
+     */
+    public function findAllTasks(User $user, ?TaskFilterDto $filters = null, ?int $limit = null, ?int $offset = null): array
+    {
+        $qb = $this->createQueryBuilder('t')
+            ->leftJoin('t.recurrenceRule', 'rr')
+            ->addSelect('rr')
+            ->leftJoin('t.subtasks', 'st')
+            ->addSelect('st')
+            ->leftJoin('st.recurrenceRule', 'st_rr')
+            ->addSelect('st_rr')
+            ->where('t.user = :user')
+            ->andWhere('t.parentTask IS NULL')
+            ->andWhere('t.isArchived = false')
+            ->andWhere('t.status != :cancelledStatus')
+            ->setParameter('user', $user)
+            ->setParameter('cancelledStatus', TaskStatus::CANCELLED);
+
+        // Apply filters if provided
+        if ($filters) {
+            $this->applyFilters($qb, $filters);
+        }
+
+        // Sort: completion status first, then priority, then ID
+        $qb->addSelect('CASE WHEN t.status = :completedStatus THEN 1 ELSE 0 END AS HIDDEN completedOrder')
+           ->setParameter('completedStatus', TaskStatus::COMPLETED)
+           ->orderBy('completedOrder', 'ASC')  // 0=uncompleted first, 1=completed after
+           ->addOrderBy('t.priority', 'DESC')
+           ->addOrderBy('t.id', 'ASC');
+
+        // Apply pagination
+        if ($limit !== null) {
+            $qb->setMaxResults($limit);
+        }
+        if ($offset !== null) {
+            $qb->setFirstResult($offset);
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
+    /**
+     * Count ALL tasks for user (for 'all' view pagination)
+     */
+    public function countAllTasks(User $user, ?TaskFilterDto $filters = null): int
+    {
+        $qb = $this->createQueryBuilder('t')
+            ->select('COUNT(t.id)')
+            ->where('t.user = :user')
+            ->andWhere('t.parentTask IS NULL')
+            ->andWhere('t.isArchived = false')
+            ->andWhere('t.status != :cancelledStatus')
+            ->setParameter('user', $user)
+            ->setParameter('cancelledStatus', TaskStatus::CANCELLED);
+
+        // Apply filters if provided
         if ($filters) {
             $this->applyFilters($qb, $filters);
         }
