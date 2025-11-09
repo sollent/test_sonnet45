@@ -43,8 +43,10 @@ class TaskRepository extends ServiceEntityRepository
         $qb = $this->createQueryBuilder('t')
             ->leftJoin('t.tags', 'tag')
             ->leftJoin('t.user', 'u')
+            ->leftJoin('t.recurrenceRule', 'recurrenceRule') // FIX N+1: Eager load recurrence rules
             ->addSelect('tag')
             ->addSelect('u')
+            ->addSelect('recurrenceRule') // FIX N+1: Include recurrence rules in SELECT
             ->where('t.user = :user')
             ->setParameter('user', $user);
 
@@ -154,8 +156,10 @@ class TaskRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('t')
             ->leftJoin('t.tags', 'tag')
             ->leftJoin('t.user', 'u')
+            ->leftJoin('t.recurrenceRule', 'recurrenceRule') // FIX N+1: Eager load recurrence rules
             ->addSelect('tag')
             ->addSelect('u')
+            ->addSelect('recurrenceRule') // FIX N+1: Include recurrence rules in SELECT
             ->where('t.user = :user')
             ->andWhere('t.parentTask IS NULL')
             ->andWhere('t.isArchived = false')
@@ -390,8 +394,10 @@ class TaskRepository extends ServiceEntityRepository
         $qb = $this->createQueryBuilder('t')
             ->leftJoin('t.tags', 'tag')
             ->leftJoin('t.user', 'u')
+            ->leftJoin('t.recurrenceRule', 'recurrenceRule') // FIX N+1: Eager load recurrence rules
             ->addSelect('tag')
             ->addSelect('u')
+            ->addSelect('recurrenceRule') // FIX N+1: Include recurrence rules in SELECT
             ->where('t.user = :user')
             ->andWhere('t.parentTask IS NULL')
             ->andWhere('t.isArchived = false')
@@ -470,12 +476,14 @@ class TaskRepository extends ServiceEntityRepository
             return null;
         }
 
-        // Load all tasks + tags + user in ONE query using IN clause
+        // Load all tasks + tags + user + recurrenceRule in ONE query using IN clause
         $tasks = $this->createQueryBuilder('t')
             ->leftJoin('t.tags', 'tag')
             ->leftJoin('t.user', 'u')
+            ->leftJoin('t.recurrenceRule', 'recurrenceRule') // FIX N+1: Eager load recurrence rules
             ->addSelect('tag')
             ->addSelect('u')
+            ->addSelect('recurrenceRule') // FIX N+1: Include recurrence rules in SELECT
             ->where('t.id IN (:ids)')
             ->setParameter('ids', $taskIds)
             ->getQuery()
@@ -526,7 +534,11 @@ class TaskRepository extends ServiceEntityRepository
     {
         $qb = $this->createQueryBuilder('t')
             ->leftJoin('t.tags', 'tag')
+            ->leftJoin('t.user', 'u')
+            ->leftJoin('t.recurrenceRule', 'recurrenceRule') // FIX N+1: Eager load recurrence rules
             ->addSelect('tag')
+            ->addSelect('u')
+            ->addSelect('recurrenceRule') // FIX N+1: Include recurrence rules in SELECT
             ->where('t.user = :user')
             ->andWhere('t.parentTask IS NULL') // Only root tasks
             ->andWhere('(
@@ -954,8 +966,10 @@ class TaskRepository extends ServiceEntityRepository
         $tasks = $this->createQueryBuilder('t')
             ->leftJoin('t.tags', 'tag')
             ->leftJoin('t.user', 'u')
+            ->leftJoin('t.recurrenceRule', 'recurrenceRule') // FIX N+1: Eager load recurrence rules
             ->addSelect('tag')
             ->addSelect('u')
+            ->addSelect('recurrenceRule') // FIX N+1: Include recurrence rules in SELECT
             ->where('t.user = :user')
             ->andWhere('t.parentTask IS NULL')
             ->andWhere('t.completedAt IS NOT NULL')
@@ -1025,8 +1039,10 @@ class TaskRepository extends ServiceEntityRepository
         $tasks = $this->createQueryBuilder('t')
             ->leftJoin('t.tags', 'tag')
             ->leftJoin('t.user', 'u')
+            ->leftJoin('t.recurrenceRule', 'recurrenceRule') // FIX N+1: Eager load recurrence rules
             ->addSelect('tag')
             ->addSelect('u')
+            ->addSelect('recurrenceRule') // FIX N+1: Include recurrence rules in SELECT
             ->where('t.user = :user')
             ->andWhere('t.parentTask IS NULL')
             ->andWhere('t.completedAt IS NOT NULL')
@@ -1226,8 +1242,10 @@ class TaskRepository extends ServiceEntityRepository
         $tasks = $this->createQueryBuilder('t')
             ->leftJoin('t.tags', 'tag')
             ->leftJoin('t.user', 'u')
+            ->leftJoin('t.recurrenceRule', 'recurrenceRule') // FIX N+1: Eager load recurrence rules
             ->addSelect('tag')
             ->addSelect('u')
+            ->addSelect('recurrenceRule') // FIX N+1: Include recurrence rules in SELECT
             ->where('t.user = :user')
             ->andWhere('t.parentTask IS NULL')
             ->andWhere('t.completedAt IS NOT NULL')
@@ -1257,8 +1275,10 @@ class TaskRepository extends ServiceEntityRepository
         $tasks = $this->createQueryBuilder('t')
             ->leftJoin('t.tags', 'tag')
             ->leftJoin('t.user', 'u')
+            ->leftJoin('t.recurrenceRule', 'recurrenceRule') // FIX N+1: Eager load recurrence rules
             ->addSelect('tag')
             ->addSelect('u')
+            ->addSelect('recurrenceRule') // FIX N+1: Include recurrence rules in SELECT
             ->where('t.user = :user')
             ->andWhere('t.parentTask IS NULL')
             ->andWhere('t.completedAt IS NOT NULL')
