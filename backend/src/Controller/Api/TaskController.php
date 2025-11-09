@@ -163,10 +163,10 @@ class TaskController extends AbstractController
             $view = $request->query->get('view', 'all');
 
             $tasks = match ($view) {
-                'today' => $this->taskService->getTodayTasks($user, $filters),
-                'overdue' => $this->taskService->getOverdueTasksPaginated($user, 1, 50, $filters)['tasks'],
-                'upcoming' => $this->taskService->getUpcomingTasks($user, 30, $filters),
-                'unscheduled' => $this->taskService->getUnscheduledTasksPaginated($user, 1, 50, $filters)['tasks'],
+                'today' => $this->taskService->getTodayTasks($user, $filters, $onlyWithSubtasks),
+                'overdue' => $this->taskService->getOverdueTasksPaginated($user, 1, 50, $filters, $onlyWithSubtasks)['tasks'],
+                'upcoming' => $this->taskService->getUpcomingTasks($user, 30, $filters, $onlyWithSubtasks),
+                'unscheduled' => $this->taskService->getUnscheduledTasksPaginated($user, 1, 50, $filters, $onlyWithSubtasks)['tasks'],
                 default => $this->taskService->getActiveTasks($user, $filters, $limit, $offset, $onlyWithSubtasks)
             };
         }

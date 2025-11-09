@@ -310,9 +310,9 @@ final class TaskService
     /**
      * Get today's tasks for user
      */
-    public function getTodayTasks(User $user, ?TaskFilterDto $filters = null): array
+    public function getTodayTasks(User $user, ?TaskFilterDto $filters = null, bool $onlyWithSubtasks = false): array
     {
-        return $this->taskRepository->findTodayTasks($user, $filters);
+        return $this->taskRepository->findTodayTasks($user, $filters, $onlyWithSubtasks);
     }
 
     /**
@@ -326,9 +326,9 @@ final class TaskService
     /**
      * Get upcoming tasks for user
      */
-    public function getUpcomingTasks(User $user, int $days = 7, ?TaskFilterDto $filters = null): array
+    public function getUpcomingTasks(User $user, int $days = 7, ?TaskFilterDto $filters = null, bool $onlyWithSubtasks = false): array
     {
-        return $this->taskRepository->findUpcomingTasks($user, $days, $filters);
+        return $this->taskRepository->findUpcomingTasks($user, $days, $filters, $onlyWithSubtasks);
     }
 
     public function getActiveTasks(User $user, ?TaskFilterDto $filters = null, ?int $limit = null, ?int $offset = null, bool $onlyWithSubtasks = false): array
@@ -341,9 +341,9 @@ final class TaskService
         return $this->taskRepository->countActiveTasks($user, $filters);
     }
 
-    public function getUnscheduledTasksPaginated(User $user, int $page, int $limit, ?TaskFilterDto $filters = null): array
+    public function getUnscheduledTasksPaginated(User $user, int $page, int $limit, ?TaskFilterDto $filters = null, bool $onlyWithSubtasks = false): array
     {
-        $paginator = $this->taskRepository->findUnscheduledByUserPaginated($user, $page, $limit, $filters);
+        $paginator = $this->taskRepository->findUnscheduledByUserPaginated($user, $page, $limit, $filters, $onlyWithSubtasks);
 
         $tasks = [];
         foreach ($paginator as $task) {
@@ -399,9 +399,9 @@ final class TaskService
         $this->entityManager->flush();
     }
 
-    public function getOverdueTasksPaginated(User $user, int $page, int $limit, ?TaskFilterDto $filters = null): array
+    public function getOverdueTasksPaginated(User $user, int $page, int $limit, ?TaskFilterDto $filters = null, bool $onlyWithSubtasks = false): array
     {
-        $paginator = $this->taskRepository->findOverdueByUserPaginated($user, $page, $limit, $filters);
+        $paginator = $this->taskRepository->findOverdueByUserPaginated($user, $page, $limit, $filters, $onlyWithSubtasks);
 
         $tasks = [];
         foreach ($paginator as $task) {

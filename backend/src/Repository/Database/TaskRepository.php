@@ -74,7 +74,7 @@ class TaskRepository extends ServiceEntityRepository
      *
      * @return Task[]
      */
-    public function findTodayTasks(User $user, ?TaskFilterDto $filters = null): array
+    public function findTodayTasks(User $user, ?TaskFilterDto $filters = null, bool $onlyWithSubtasks = false): array
     {
         $todayStart = new \DateTimeImmutable('today');
         $todayEnd = new \DateTimeImmutable('today 23:59:59');
@@ -102,6 +102,15 @@ class TaskRepository extends ServiceEntityRepository
             ->setParameter('todayEnd', $todayEnd)
             ->setParameter('cancelledStatus', TaskStatus::CANCELLED);
 
+        // Filter by tasks with/without subtasks
+        if ($onlyWithSubtasks) {
+            $qb->andWhere('EXISTS (
+                SELECT 1 FROM App\Entity\Task subtask
+                WHERE subtask.parentTask = t
+                  AND subtask.user = :user
+            )');
+        }
+
         // Apply filters
         if ($filters) {
             $this->applyFilters($qb, $filters);
@@ -115,7 +124,9 @@ class TaskRepository extends ServiceEntityRepository
            ->addOrderBy('t.dueDate', 'ASC')
            ->addOrderBy('t.id', 'ASC');
 
-        return $qb->getQuery()->getResult();
+        // Use Paginator for correct LEFT JOIN + LIMIT handling
+        $paginator = new Paginator($qb->getQuery(), $fetchJoinCollection = true);
+        return iterator_to_array($paginator);
     }
 
     /**
@@ -151,7 +162,7 @@ class TaskRepository extends ServiceEntityRepository
      *
      * @return Task[]
      */
-    public function findUpcomingTasks(User $user, int $days = 7, ?TaskFilterDto $filters = null): array
+    public function findUpcomingTasks(User $user, int $days = 7, ?TaskFilterDto $filters = null, bool $onlyWithSubtasks = false): array
     {
         $tomorrow = new \DateTimeImmutable('tomorrow');
         $endDate = new \DateTimeImmutable("+{$days} days");
@@ -177,6 +188,15 @@ class TaskRepository extends ServiceEntityRepository
             ->setParameter('endDate', $endDate)
             ->setParameter('cancelledStatus', TaskStatus::CANCELLED);
 
+        // Filter by tasks with/without subtasks
+        if ($onlyWithSubtasks) {
+            $qb->andWhere('EXISTS (
+                SELECT 1 FROM App\Entity\Task subtask
+                WHERE subtask.parentTask = t
+                  AND subtask.user = :user
+            )');
+        }
+
         // Apply filters
         if ($filters) {
             $this->applyFilters($qb, $filters);
@@ -193,7 +213,9 @@ class TaskRepository extends ServiceEntityRepository
            // PERFORMANCE: Limit to 200 tasks to prevent loading thousands of tasks
            ->setMaxResults(200);
 
-        return $qb->getQuery()->getResult();
+        // Use Paginator for correct LEFT JOIN + LIMIT handling
+        $paginator = new Paginator($qb->getQuery(), $fetchJoinCollection = true);
+        return iterator_to_array($paginator);
     }
 
     public function findActiveTasks(User $user, ?TaskFilterDto $filters = null, ?int $limit = null, ?int $offset = null, bool $onlyWithSubtasks = false): array
@@ -533,7 +555,7 @@ class TaskRepository extends ServiceEntityRepository
         return $this->findTasksByDateRange($user, $startDate, $endDate, $includeCompleted);
     }
 
-    public function findOverdueByUserPaginated(User $user, int $page, int $limit, ?TaskFilterDto $filters = null): Paginator
+    public function findOverdueByUserPaginated(User $user, int $page, int $limit, ?TaskFilterDto $filters = null, bool $onlyWithSubtasks = false): Paginator
     {
         // OPTIMIZED: Two-step approach to avoid slow ROW_NUMBER() OVER() queries
         // Step 1: Get task IDs with simple query (fast)
@@ -547,6 +569,15 @@ class TaskRepository extends ServiceEntityRepository
             ->setParameter('user', $user)
             ->setParameter('today', new \DateTimeImmutable())
             ->setParameter('cancelledStatus', TaskStatus::CANCELLED);
+
+        // Filter by tasks with/without subtasks
+        if ($onlyWithSubtasks) {
+            $idsQb->andWhere('EXISTS (
+                SELECT 1 FROM App\Entity\Task subtask
+                WHERE subtask.parentTask = t
+                  AND subtask.user = :user
+            )');
+        }
 
         // Apply filters to ID query
         if ($filters) {
@@ -598,7 +629,7 @@ class TaskRepository extends ServiceEntityRepository
         return new Paginator($qb->getQuery(), false);
     }
 
-    public function findUnscheduledByUserPaginated(User $user, int $page, int $limit, ?TaskFilterDto $filters = null): Paginator
+    public function findUnscheduledByUserPaginated(User $user, int $page, int $limit, ?TaskFilterDto $filters = null, bool $onlyWithSubtasks = false): Paginator
     {
         // OPTIMIZED: Two-step approach to avoid slow ROW_NUMBER() OVER() queries
         // Step 1: Get task IDs with simple query (fast)
@@ -611,6 +642,15 @@ class TaskRepository extends ServiceEntityRepository
             ->andWhere('t.dueDate IS NULL')
             ->setParameter('user', $user)
             ->setParameter('cancelledStatus', TaskStatus::CANCELLED);
+
+        // Filter by tasks with/without subtasks
+        if ($onlyWithSubtasks) {
+            $idsQb->andWhere('EXISTS (
+                SELECT 1 FROM App\Entity\Task subtask
+                WHERE subtask.parentTask = t
+                  AND subtask.user = :user
+            )');
+        }
 
         // Apply filters to ID query
         if ($filters) {
