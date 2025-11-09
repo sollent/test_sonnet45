@@ -203,10 +203,6 @@ class TaskRepository extends ServiceEntityRepository
         $qb = $this->createQueryBuilder('t')
             ->leftJoin('t.recurrenceRule', 'rr')
             ->addSelect('rr')
-            ->leftJoin('t.subtasks', 'st')
-            ->addSelect('st')
-            ->leftJoin('st.recurrenceRule', 'st_rr')
-            ->addSelect('st_rr')
             ->where('t.user = :user')
             ->andWhere('t.parentTask IS NULL')
             ->andWhere('t.isArchived = false')
@@ -218,6 +214,16 @@ class TaskRepository extends ServiceEntityRepository
             ->setParameter('user', $user)
             ->setParameter('todayStart', $todayStart)
             ->setParameter('cancelledStatus', TaskStatus::CANCELLED);
+
+        // Conditionally load subtasks based on hideSubtasks parameter
+        // When hideSubtasks=true: No JOIN with subtasks (faster, returns parent tasks only)
+        // When hideSubtasks=false: JOIN with subtasks (slower, returns all with subtasks)
+        if (!$hideSubtasks) {
+            $qb->leftJoin('t.subtasks', 'st')
+               ->addSelect('st')
+               ->leftJoin('st.recurrenceRule', 'st_rr')
+               ->addSelect('st_rr');
+        }
 
         // Apply filters
         if ($filters) {
