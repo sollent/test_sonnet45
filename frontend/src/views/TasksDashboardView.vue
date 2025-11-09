@@ -615,7 +615,8 @@ async function handleTaskUpdated() {
 async function handleTaskDeleted() {
   isDetailsOpen.value = false
   selectedTask.value = null
-  await refreshCurrentView()
+  // Don't call refreshCurrentView() - store.deleteTask() already removed the task optimistically
+  // Calling refreshCurrentView() would reload the entire list and reset scroll position
 }
 </script>
 

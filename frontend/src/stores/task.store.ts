@@ -199,7 +199,9 @@ export const useTaskStore = defineStore('task', () => {
   }
 
   async function createTask(taskData: CreateTaskRequest): Promise<Task> {
-    isLoading.value = true
+    // Don't set global isLoading - this is for a single task creation, not the entire list
+    // Setting isLoading would cause the entire task list to be hidden and re-rendered
+    // Components (TaskDialog, TaskDetailsSidebar) have their own local loading states
     error.value = null
 
     try {
@@ -209,8 +211,6 @@ export const useTaskStore = defineStore('task', () => {
     } catch (err: any) {
       error.value = err.message || 'Failed to create task'
       throw err
-    } finally {
-      isLoading.value = false
     }
   }
 
