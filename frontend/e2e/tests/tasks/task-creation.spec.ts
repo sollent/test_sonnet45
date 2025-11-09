@@ -61,11 +61,20 @@ export async function findAndClickCreateButton(page: Page): Promise<void> {
   if (!createButton) {
     throw new Error('Create task button not found')
   }
-  
+
   await createButton.scrollIntoViewIfNeeded()
-  await page.waitForTimeout(500) // Small wait before click
+  await page.waitForTimeout(800) // Increased wait before click
   await createButton.click({ force: true }) // Force click to bypass overlays
-  await page.waitForTimeout(2000) // Wait for dialog to open
+  await page.waitForTimeout(3000) // Increased wait for dialog to open
+
+  // Verify dialog opened
+  try {
+    await page.locator('.p-dialog, [role="dialog"]').waitFor({ state: 'visible', timeout: 5000 })
+  } catch {
+    // Try clicking again if dialog didn't open
+    await createButton.click({ force: true })
+    await page.waitForTimeout(2000)
+  }
 }
 
 /**

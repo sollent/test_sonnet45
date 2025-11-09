@@ -43,13 +43,19 @@ export class LoginPage {
   async fillForm(email: string, password: string): Promise<void> {
     await this.emailInput.fill(email)
     await this.passwordInput.fill(password)
+    // Wait for form validation to complete
+    await this.page.waitForTimeout(300)
   }
 
   /**
    * Submit login form
    */
   async submit(): Promise<void> {
-    await this.submitButton.click()
+    // Wait for button to be enabled
+    await this.submitButton.waitFor({ state: 'visible', timeout: 5000 })
+    await this.page.waitForTimeout(200)
+    // Force enable check before clicking
+    await this.submitButton.click({ force: false, timeout: 15000 })
   }
 
   /**

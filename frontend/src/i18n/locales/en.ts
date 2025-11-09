@@ -158,8 +158,6 @@ export default {
     not_configured: 'Not Configured',
     enabled: 'Enabled',
     disabled: 'Disabled',
-    connected: 'Connected',
-    not_connected: 'Not Connected',
 
     // Notifications section
     notifications_settings: 'Notification Settings',
@@ -453,9 +451,8 @@ export default {
     task_details: 'Task Details',
     no_tasks: 'No tasks yet',
     no_tasks_description: 'Create your first task to get started',
-    
+
     // Task fields
-    title: 'Tasks',
     task_title: 'Title',
     task_description: 'Description',
     task_status: 'Status',
@@ -574,16 +571,14 @@ export default {
     date_from: 'From',
     date_to: 'To',
     period: 'Period',
-    team: 'Team',
     all_teams: 'All Teams',
-    my_tasks: 'My Tasks',
     unassigned: 'Unassigned',
     task_type: 'Task Type',
     active: 'Active',
     completed: 'Completed',
     status_execution: 'Execution Status',
     urgent: 'Urgent',
-    search_placeholder: 'Search by title, description, tags',
+    search_by_title: 'Search by title, description, tags',
     select_tags: 'Select Tags',
     select_priorities: 'Select Priorities',
     select_statuses: 'Select Statuses',
@@ -607,26 +602,21 @@ export default {
     invalid_file_type: 'Invalid file type',
     upload_error: 'Upload error',
     delete_error: 'Delete error',
-    add_tag_placeholder: 'Add tags',
-    
-    // Messages
-    task_created: 'Task created successfully',
-    
+
     // Statistics
     total_tasks: 'Total Tasks',
     pending_tasks: 'Pending',
     in_progress_tasks: 'In Progress',
     completed_tasks_count: 'Completed',
     overdue_tasks_count: 'Overdue',
-    unscheduled_tasks: 'No Due Date',
-    
+
     // Messages
     task_created: 'Task created successfully',
     task_updated: 'Task updated successfully',
     task_deleted: 'Task deleted successfully',
     task_completed: 'Task marked as completed',
     task_archived: 'Task archived',
-    
+
     // Placeholders
     search_placeholder: 'Search tasks...',
     title_placeholder: 'What needs to be done?',
@@ -635,14 +625,11 @@ export default {
     edit_task_description: 'Edit your task details',
     creating_subtask: 'Creating subtask for selected task',
     add_tag_placeholder: 'Add tags (press Enter)',
-    
-    // Filter presets
-    all_tasks: 'All Tasks',
-    my_tasks: 'My Tasks',
-    this_week: 'This Week',
+
+    // Filter presets (moved to Views section above)
     important: 'Important',
     team: 'Team',
-    
+
     // Recurrence
     repeat: 'Repeat',
     no_repeat: 'No repeat',
