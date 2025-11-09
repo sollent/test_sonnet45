@@ -143,7 +143,7 @@ npm run test:run
 ❌ **DON'T**: Mix business logic with HTTP layer
 
 ### Docker
-✅ **DO**: Use `docker/docker-compose.yml` (main config)
+✅ **DO**: Use `docker-compose.yml` in root (main config, includes infrastructure/docker/*.yml)
 ✅ **DO**: Run backend commands via `docker exec backend-php83`
 ✅ **DO**: Check logs: `docker logs -f backend-php83`
 ❌ **DON'T**: Run PHP commands directly on host
@@ -240,7 +240,7 @@ test_sonnet45/
 ## 💡 Pro Tips
 
 1. **Always read CODING_STANDARDS.md** before writing code
-2. **All Docker commands** run from `docker/` directory or use `-f docker/docker-compose.yml`
+2. **All Docker commands** run from project root using `docker-compose.yml`
 3. **Frontend state** managed by Pinia stores (no Vuex!)
 4. **Backend layers**: Controller → Service → Repository → Entity
 5. **TypeScript strict mode** - no `any` types allowed!

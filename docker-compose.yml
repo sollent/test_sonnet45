@@ -11,7 +11,5 @@ include:
   # AI services (placeholder for now)
   - path: ./infrastructure/docker/docker-compose.ai.yml
 
-  # Development overrides (optional)
-  - path: ./infrastructure/docker/docker-compose.dev.yml
-
 # No services defined here - all in included files
+# For development overrides, use: docker-compose.override.yml (auto-loaded)

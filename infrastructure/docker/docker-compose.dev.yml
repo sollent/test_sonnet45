@@ -3,14 +3,14 @@
 version: '3.8'
 
 services:
-  backend-nginx:
+  nginx:
     environment:
       - NGINX_DEBUG=true
 
-  backend-php83:
+  php83-fpm:
     environment:
       - APP_ENV=dev
       - APP_DEBUG=true
     volumes:
       # Enable hot reload for development
-      - ../../apps/backend:/var/www/html/apps/backend:cached
+      - ../../apps/backend:/var/www/backend-app:cached
