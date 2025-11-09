@@ -752,6 +752,7 @@ async function handleTaskDeleted() {
         <div class="filters-row">
           <div class="quick-filters-wrapper">
             <QuickFilters
+              :current-view="selectedView"
               @filters-change="handleQuickFilterChange"
               @only-with-subtasks-change="handleOnlyWithSubtasksChange"
             />

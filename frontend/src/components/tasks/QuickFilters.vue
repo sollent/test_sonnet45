@@ -18,6 +18,15 @@ interface QuickFilter {
   count?: number
 }
 
+// Props for current view
+interface Props {
+  currentView?: string
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  currentView: 'all'
+})
+
 const quickFilters = computed(() => [
   {
     id: 'today',
@@ -51,6 +60,12 @@ const activeFilters = ref<string[]>([])
 
 // Only with subtasks toggle (default: false - show all tasks)
 const onlyWithSubtasks = ref<boolean>(false)
+
+// Check if current view should show subtasks toggle
+// Hide for overdue and unscheduled views
+const shouldShowSubtasksToggle = computed(() => {
+  return props.currentView !== 'overdue' && props.currentView !== 'unscheduled'
+})
 
 const emit = defineEmits<{
   (e: 'filters-change', filters: QuickFilter[]): void
@@ -114,8 +129,9 @@ function toggleOnlyWithSubtasks() {
       <span v-if="filter.count" class="count-badge">{{ filter.count }}</span>
     </button>
 
-    <!-- Only With Subtasks Toggle Button -->
+    <!-- Only With Subtasks Toggle Button (hidden for overdue and unscheduled views) -->
     <button
+      v-if="shouldShowSubtasksToggle"
       :class="['quick-filter-btn', 'only-with-subtasks-btn', { active: onlyWithSubtasks }]"
       @click="toggleOnlyWithSubtasks"
       :title="onlyWithSubtasks ? 'Показаны только комплексные задачи (с подзадачами)' : 'Показаны все задачи с подзадачами'"
