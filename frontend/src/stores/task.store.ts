@@ -548,7 +548,12 @@ export const useTaskStore = defineStore('task', () => {
     }
 
     // Refetch tasks with new filters
-    fetchTasks(queryFilters)
+    // Always use pagination for 'all' view to prevent loading ALL tasks
+    if (queryFilters.view === 'all' || !queryFilters.view) {
+      fetchTasks(queryFilters, false, 150, 0)
+    } else {
+      fetchTasks(queryFilters)
+    }
   }
 
   function clearFilters(): void {
@@ -594,20 +599,35 @@ export const useTaskStore = defineStore('task', () => {
       ...currentFilter.value,
       search: query
     }
-    fetchTasks(queryFilters)
+    // Always use pagination for 'all' view
+    if (queryFilters.view === 'all' || !queryFilters.view) {
+      fetchTasks(queryFilters, false, 150, 0)
+    } else {
+      fetchTasks(queryFilters)
+    }
   }
-  
+
   // Clear search
   function clearSearch(): void {
     searchQuery.value = ''
-    fetchTasks(currentFilter.value)
+    // Always use pagination for 'all' view
+    if (currentFilter.value.view === 'all' || !currentFilter.value.view) {
+      fetchTasks(currentFilter.value, false, 150, 0)
+    } else {
+      fetchTasks(currentFilter.value)
+    }
   }
-  
+
   // Set current view
   function setCurrentView(view: string): void {
     currentView.value = view
     currentFilter.value = { view } as TaskFilters
-    fetchTasks(currentFilter.value)
+    // Always use pagination for 'all' view
+    if (view === 'all') {
+      fetchTasks(currentFilter.value, false, 150, 0)
+    } else {
+      fetchTasks(currentFilter.value)
+    }
   }
 
   function resetStore(): void {

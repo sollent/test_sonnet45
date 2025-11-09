@@ -467,6 +467,9 @@ function selectView(viewId: string) {
       }
 
     })
+  } else if (viewId === 'all') {
+    // For 'all' view, use pagination even in this branch
+    taskStore.fetchTasks(queryFilters, false, PAGE_SIZE, 0)
   } else {
     taskStore.fetchTasks(queryFilters)
   }
@@ -487,6 +490,9 @@ async function refreshCurrentView() {
     await taskStore.fetchOverdueTasksPaginated(overduePage.value, overdueLimit.value)
   } else if (selectedView.value === 'unscheduled') {
     await taskStore.fetchUnscheduledTasksPaginated(unscheduledPage.value, unscheduledLimit.value)
+  } else if (selectedView.value === 'all') {
+    // For 'all' view, always use pagination
+    await taskStore.fetchTasks(queryFilters, false, PAGE_SIZE, 0)
   } else {
     await taskStore.fetchTasks(queryFilters)
   }

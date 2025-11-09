@@ -142,10 +142,11 @@ class TaskController extends AbstractController
         #[MapQueryString] TaskFilterDto $filters = new TaskFilterDto()
     ): JsonResponse {
         $user = $this->getUser();
-        
-        // Get pagination parameters
-        $limit = $request->query->get('limit') ? (int)$request->query->get('limit') : null;
-        $offset = $request->query->get('offset') ? (int)$request->query->get('offset') : null;
+
+        // Get pagination parameters with default limit for security
+        // Always enforce limit to prevent loading ALL tasks (DoS protection)
+        $limit = $request->query->get('limit') ? (int)$request->query->get('limit') : 150;
+        $offset = $request->query->get('offset') ? (int)$request->query->get('offset') : 0;
 
         // Handle search
         $search = $request->query->get('search');
