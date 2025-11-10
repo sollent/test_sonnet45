@@ -1,0 +1,41 @@
+doctrine:
+    orm:
+        # ВАЖНО! Отключаем авто-генерацию proxy в prod
+        # Proxy классы генерируются один раз при deploy
+        auto_generate_proxy_classes: false
+
+        # Директория для proxy классов (используем build dir для оптимизации)
+        proxy_dir: '%kernel.build_dir%/doctrine/orm/Proxies'
+
+        # Query Cache - кеширование парсинга DQL (всегда включаем в prod)
+        # APCu - самый быстрый in-memory кеш
+        query_cache_driver:
+            type: pool
+            pool: doctrine.system_cache_pool
+
+        # Metadata Cache - кеширование метаданных entities (КРИТИЧНО для prod!)
+        # Без этого производительность деградирует в 5-10 раз
+        metadata_cache_driver:
+            type: pool
+            pool: doctrine.system_cache_pool
+
+        # Result Cache - кеширование результатов запросов
+        # Используется выборочно через enableResultCache() в репозиториях
+        result_cache_driver:
+            type: pool
+            pool: doctrine.result_cache_pool
+
+framework:
+    cache:
+        pools:
+            # Query + Metadata Cache - APCu, долгое хранение
+            # TTL 1 час - метаданные и DQL запросы меняются редко
+            doctrine.system_cache_pool:
+                adapter: cache.adapter.apcu
+                default_lifetime: 3600  # 1 час
+
+            # Result Cache - APCu, короткое хранение
+            # TTL 5 минут - данные могут меняться чаще
+            doctrine.result_cache_pool:
+                adapter: cache.adapter.apcu
+                default_lifetime: 300  # 5 минут
