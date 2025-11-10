@@ -1,77 +1,81 @@
-и и# 📊 Phase 2.1: Domain Model & Architecture
+# 📊 Фаза 2.1: Доменная Модель и Архитектура
 
-> **Document Version**: 1.0.0
-> **Last Updated**: 2025-11-08
-> **Estimated Time**: 1 day
-> **Complexity**: HIGH
-> **Prerequisites**: Understanding of DDD, Symfony, SOLID principles
+> **Версия Документа**: 1.0.0
+> **Последнее Обновление**: 2025-11-08
+> **Время Реализации**: 1 день
+> **Сложность**: ВЫСОКАЯ
+> **Требования**: Понимание DDD, Symfony, принципов SOLID
 
-## 📋 Table of Contents
+## 📋 Содержание
 
-1. [Domain-Driven Design Overview](#domain-driven-design-overview)
-2. [Entities & Value Objects](#entities--value-objects)
-3. [Aggregates & Repositories](#aggregates--repositories)
-4. [Domain Events](#domain-events)
-5. [Database Schema](#database-schema)
-6. [Doctrine Configuration](#doctrine-configuration)
-7. [Business Rules](#business-rules)
-8. [Code Examples](#code-examples)
+1. [Обзор Domain-Driven Design](#обзор-domain-driven-design)
+2. [Сущности и Объекты-Значения](#сущности-и-объекты-значения)
+3. [Агрегаты и Репозитории](#агрегаты-и-репозитории)
+4. [Доменные События](#доменные-события)
+5. [Схема Базы Данных](#схема-базы-данных)
+6. [Конфигурация Doctrine](#конфигурация-doctrine)
+7. [Бизнес-Правила](#бизнес-правила)
+8. [Примеры Кода](#примеры-кода)
 
 ---
 
-## 🏗️ Domain-Driven Design Overview
+## 🏗️ Обзор Domain-Driven Design
 
-### Bounded Contexts
+### Ограниченные Контексты
 
 ```yaml
-Voice AI Assistant Domain:
-  Core Domain:
-    - Voice Command Processing
-    - Command Execution
-    - Natural Language Understanding
+Домен Голосового AI Ассистента:
+  Основной Домен:
+    - Обработка Голосовых Команд
+    - Выполнение Команд
+    - Понимание Естественного Языка
 
-  Supporting Subdomains:
-    - User Management (existing)
-    - Task Management (existing)
-    - Analytics (existing)
+  Поддерживающие Поддомены:
+    - Управление Пользователями (существующий)
+    - Управление Задачами (существующий)
+    - Аналитика (существующий)
 
-  Generic Subdomains:
-    - Authentication
-    - Notification
-    - File Storage
+  Общие Поддомены:
+    - Аутентификация
+    - Уведомления
+    - Файловое Хранилище
 
-Ubiquitous Language:
-  - Voice Command: Audio or text input from user
-  - Transcription: Converted audio to text
-  - Parsed Command: Structured command from LLM
-  - Command Result: Outcome of command execution
-  - Command Handler: Service that executes commands
-  - Voice Session: Continuous interaction context
+Единый Язык:
+  - Voice Command (Голосовая Команда): Аудио или текстовый ввод от пользователя
+  - Transcription (Транскрипция): Преобразованное аудио в текст
+  - Parsed Command (Распознанная Команда): Структурированная команда от LLM
+  - Command Result (Результат Команды): Итог выполнения команды
+  - Command Handler (Обработчик Команды): Сервис, выполняющий команды
+  - Voice Session (Голосовая Сессия): Контекст непрерывного взаимодействия
 ```
 
-### Architecture Layers
+### Архитектурные Слои
 
 ```
 ┌─────────────────────────────────────┐
 │         Presentation Layer          │
+│      (Слой Представления)           │
 │    (Controllers, API Endpoints)     │
 ├─────────────────────────────────────┤
 │        Application Layer            │
+│      (Слой Приложения)              │
 │  (Command Handlers, DTOs, Events)   │
 ├─────────────────────────────────────┤
 │          Domain Layer               │
+│        (Доменный Слой)              │
 │  (Entities, Value Objects, Rules)   │
 ├─────────────────────────────────────┤
 │       Infrastructure Layer          │
+│     (Инфраструктурный Слой)         │
 │  (Repositories, External Services)  │
 └─────────────────────────────────────┘
 ```
 
 ---
 
-## 🎯 Entities & Value Objects
+## 🎯 Сущности и Объекты-Значения
 
-### VoiceCommand Entity
+### Сущность VoiceCommand
 
 ```php
 <?php
@@ -374,7 +378,7 @@ class VoiceCommand
 }
 ```
 
-### Value Objects
+### Объекты-Значения
 
 ```php
 <?php
@@ -677,7 +681,7 @@ final class ParsedCommand
 }
 ```
 
-### UserTelegramLink Entity
+### Сущность UserTelegramLink
 
 ```php
 <?php
@@ -840,7 +844,7 @@ class UserTelegramLink
 }
 ```
 
-### VoiceSession Entity
+### Сущность VoiceSession
 
 ```php
 <?php
@@ -1042,7 +1046,7 @@ class VoiceSession
 
 ---
 
-## 🏭 Aggregates & Repositories
+## 🏭 Агрегаты и Репозитории
 
 ### VoiceCommandRepository
 
@@ -1311,7 +1315,7 @@ class VoiceCommandRepository extends ServiceEntityRepository
 
 ---
 
-## 📢 Domain Events
+## 📢 Доменные События
 
 ### VoiceCommandEvent
 
@@ -1393,9 +1397,9 @@ class VoiceCommandFailedEvent extends VoiceCommandEvent
 
 ---
 
-## 💾 Database Schema
+## 💾 Схема Базы Данных
 
-### Migration Files
+### Файлы Миграций
 
 ```php
 <?php
@@ -1540,9 +1544,9 @@ final class Version20250108VoiceCommandTables extends AbstractMigration
 
 ---
 
-## ⚙️ Doctrine Configuration
+## ⚙️ Конфигурация Doctrine
 
-### Doctrine Configuration
+### Настройка Doctrine
 
 ```yaml
 # File: apps/backend/config/packages/doctrine.yaml
@@ -1576,7 +1580,7 @@ doctrine:
                 SIMILARITY: App\DQL\Similarity
 ```
 
-### Custom Doctrine Types
+### Пользовательские Типы Doctrine
 
 ```php
 <?php
@@ -1616,9 +1620,9 @@ class CommandTypeType extends Type
 
 ---
 
-## 📏 Business Rules
+## 📏 Бизнес-Правила
 
-### Command Validation Rules
+### Правила Валидации Команд
 
 ```php
 <?php
@@ -1632,37 +1636,37 @@ use App\Entity\User;
 class VoiceCommandRules
 {
     /**
-     * Maximum commands per user per hour
+     * Максимум команд на пользователя в час
      */
     public const MAX_COMMANDS_PER_HOUR = 100;
 
     /**
-     * Maximum audio file size in MB
+     * Максимальный размер аудио файла в МБ
      */
     public const MAX_AUDIO_FILE_SIZE_MB = 10;
 
     /**
-     * Maximum audio duration in seconds
+     * Максимальная длительность аудио в секундах
      */
     public const MAX_AUDIO_DURATION_SECONDS = 30;
 
     /**
-     * Maximum text command length
+     * Максимальная длина текстовой команды
      */
     public const MAX_TEXT_COMMAND_LENGTH = 1000;
 
     /**
-     * Command expiry time in seconds
+     * Время истечения команды в секундах
      */
     public const COMMAND_EXPIRY_SECONDS = 300;
 
     /**
-     * Minimum confidence threshold
+     * Минимальный порог уверенности
      */
     public const MIN_CONFIDENCE_THRESHOLD = 0.5;
 
     /**
-     * Commands requiring confirmation
+     * Команды требующие подтверждения
      */
     private const DANGEROUS_ACTIONS = [
         'delete_all_tasks',
@@ -1721,13 +1725,13 @@ class VoiceCommandRules
 
 ---
 
-## 💻 Code Examples
+## 💻 Примеры Кода
 
-### Using the Domain Model
+### Использование Доменной Модели
 
 ```php
 <?php
-// Example: Creating and processing a voice command
+// Пример: Создание и обработка голосовой команды
 
 use App\Entity\VoiceCommand;
 use App\Entity\User;
@@ -1735,7 +1739,7 @@ use App\ValueObject\CommandType;
 use App\ValueObject\TranscriptionResult;
 use App\ValueObject\ParsedCommand;
 
-// Create a new voice command
+// Создать новую голосовую команду
 $user = $userRepository->find($userId);
 $command = new VoiceCommand(
     $user,
@@ -1743,13 +1747,13 @@ $command = new VoiceCommand(
     'web'
 );
 
-// Set audio file
+// Установить аудио файл
 $command->setAudioFile('/uploads/voice/command_123.wav', 5000);
 
-// Start processing
+// Начать обработку
 $command->startProcessing();
 
-// Add transcription result
+// Добавить результат транскрипции
 $transcription = new TranscriptionResult(
     'Создай задачу купить молоко завтра в 15:00',
     'ru',
@@ -1759,7 +1763,7 @@ $transcription = new TranscriptionResult(
 );
 $command->setTranscription($transcription);
 
-// Parse command
+// Распознать команду
 $parsed = new ParsedCommand(
     'create_task',
     [
@@ -1773,10 +1777,10 @@ $parsed = new ParsedCommand(
 );
 $command->setParsedCommand($parsed);
 
-// Execute
+// Выполнить
 $command->markAsExecuting();
 
-// Complete with result
+// Завершить с результатом
 $result = [
     'task_id' => 'task_456',
     'created' => true,
@@ -1784,22 +1788,22 @@ $result = [
 ];
 $command->complete($result);
 
-// Save
+// Сохранить
 $voiceCommandRepository->save($command, true);
 ```
 
 ---
 
-## ✅ Next Steps
+## ✅ Следующие Шаги
 
-1. ✅ Domain Model complete
-2. → Implement [Service Layer](02_SERVICES.md)
-3. → Create [Command Handlers](03_COMMAND_HANDLERS.md)
-4. → Define [API Endpoints](04_API_ENDPOINTS.md)
+1. ✅ Доменная модель завершена
+2. → Реализовать [Слой Сервисов](02_SERVICES.md)
+3. → Создать [Обработчики Команд](03_COMMAND_HANDLERS.md)
+4. → Определить [API Эндпоинты](04_API_ENDPOINTS.md)
 
 ---
 
-**Document Status**: Complete
-**Domain Model Version**: 1.0.0
-**Last Updated**: 2025-11-08
-**Author**: Backend Architecture Team
+**Статус Документа**: Завершён
+**Версия Доменной Модели**: 1.0.0
+**Последнее Обновление**: 2025-11-08
+**Автор**: Команда Бэкенд Архитектуры
