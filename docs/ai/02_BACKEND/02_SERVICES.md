@@ -1,32 +1,32 @@
-# 🚀 Phase 2.2: Service Layer Implementation Guide
+# 🚀 Фаза 2.2: Руководство по Реализации Слоя Сервисов
 
-> **For AI Assistant**: This is a step-by-step guide to implement the service layer. Follow each step in order. Adapt code to existing project structure.
+> **Для AI Ассистента**: Это пошаговое руководство для реализации слоя сервисов. Следуй каждому шагу по порядку. Адаптируй код к существующей структуре проекта.
 
-## 📋 Quick Navigation
+## 📋 Быстрая Навигация
 
-- **Previous**: [Domain Model](01_DOMAIN_MODEL.md) - Complete this first!
-- **Next**: [Command Handlers](03_COMMAND_HANDLERS.md) - After services are ready
-- **Project Root**: `backend/` directory
-
----
-
-## 🎯 What We're Building
-
-We need 5 core services for Voice AI Assistant MVP:
-
-1. **VoiceProcessingService** - Handles audio/text commands
-2. **LLMService** - Communicates with Ollama
-3. **CommandExecutorService** - Executes parsed commands
-4. **WebSocketPublisherService** - Sends real-time updates
-5. **SmartSearchService** - Finds tasks by voice description
+- **Предыдущее**: [Доменная Модель](01_DOMAIN_MODEL.md) - Завершите это сначала!
+- **Следующее**: [Обработчики Команд](03_COMMAND_HANDLERS.md) - После готовности сервисов
+- **Корень Проекта**: `backend/` директория
 
 ---
 
-## 📝 Step-by-Step Implementation
+## 🎯 Что Мы Создаём
 
-### Step 1: Create Base Service Structure
+Нам нужно 5 основных сервисов для Voice AI Assistant MVP:
 
-**AI Assistant Action**: Create these directories first:
+1. **VoiceProcessingService** - Обрабатывает аудио/текстовые команды
+2. **LLMService** - Взаимодействует с Ollama
+3. **CommandExecutorService** - Выполняет распознанные команды
+4. **WebSocketPublisherService** - Отправляет обновления в реальном времени
+5. **SmartSearchService** - Находит задачи по голосовому описанию
+
+---
+
+## 📝 Пошаговая Реализация
+
+### Шаг 1: Создать Базовую Структуру Сервисов
+
+**Действие AI Ассистента**: Сначала создайте эти директории:
 
 ```bash
 backend/src/Service/VoiceAssistant/
@@ -35,9 +35,9 @@ backend/src/Service/VoiceAssistant/Command/Handlers/
 backend/src/Service/VoiceAssistant/Integration/
 ```
 
-### Step 2: VoiceProcessingService
+### Шаг 2: VoiceProcessingService
 
-**AI Assistant**: Create this service to handle incoming voice commands.
+**AI Ассистент**: Создайте этот сервис для обработки входящих голосовых команд.
 
 ```php
 <?php
@@ -142,9 +142,9 @@ class VoiceProcessingService
 }
 ```
 
-### Step 3: LLMService for Ollama Integration
+### Шаг 3: LLMService для Интеграции с Ollama
 
-**AI Assistant**: This service talks to Ollama. Adapt the URL based on your Docker setup.
+**AI Ассистент**: Этот сервис взаимодействует с Ollama. Адаптируйте URL на основе вашей настройки Docker.
 
 ```php
 <?php
@@ -289,9 +289,9 @@ PROMPT;
 }
 ```
 
-### Step 4: CommandExecutorService
+### Шаг 4: CommandExecutorService
 
-**AI Assistant**: This service executes parsed commands. It uses existing TaskService.
+**AI Ассистент**: Этот сервис выполняет распознанные команды. Использует существующий TaskService.
 
 ```php
 <?php
@@ -427,9 +427,9 @@ class CommandExecutorService
 }
 ```
 
-### Step 5: WebSocketPublisherService
+### Шаг 5: WebSocketPublisherService
 
-**AI Assistant**: Sends real-time updates via Centrifugo.
+**AI Ассистент**: Отправляет обновления в реальном времени через Centrifugo.
 
 ```php
 <?php
@@ -501,9 +501,9 @@ class WebSocketPublisherService
 }
 ```
 
-### Step 6: SmartSearchService
+### Шаг 6: SmartSearchService
 
-**AI Assistant**: Finds tasks using fuzzy matching. Uses existing Task entity.
+**AI Ассистент**: Находит задачи используя нечеткое сопоставление. Использует существующую сущность Task.
 
 ```php
 <?php
@@ -590,11 +590,11 @@ class SmartSearchService
 
 ---
 
-## 🔧 Service Configuration
+## 🔧 Конфигурация Сервисов
 
-### Step 7: Register Services in Symfony
+### Шаг 7: Зарегистрировать Сервисы в Symfony
 
-**AI Assistant**: Add this to `backend/config/services.yaml`:
+**AI Ассистент**: Добавьте это в `backend/config/services.yaml`:
 
 ```yaml
 services:
@@ -620,9 +620,9 @@ services:
     App\Service\VoiceAssistant\SmartSearchService: ~
 ```
 
-### Step 8: Add Environment Variables
+### Шаг 8: Добавить Переменные Окружения
 
-**AI Assistant**: Add to `backend/.env`:
+**AI Ассистент**: Добавьте в `backend/.env`:
 
 ```env
 # Voice AI Configuration
@@ -634,11 +634,11 @@ CENTRIFUGO_API_KEY=your-api-key-here
 
 ---
 
-## ✅ Testing Your Services
+## ✅ Тестирование Ваших Сервисов
 
-### Quick Test Script
+### Скрипт Быстрого Теста
 
-**AI Assistant**: Create `backend/tests/VoiceServiceTest.php`:
+**AI Ассистент**: Создайте `backend/tests/VoiceServiceTest.php`:
 
 ```php
 <?php
@@ -683,90 +683,90 @@ class VoiceServiceTest extends KernelTestCase
 }
 ```
 
-Run test:
+Запустите тест:
 ```bash
 docker exec backend-php83 php bin/phpunit tests/VoiceServiceTest.php
 ```
 
 ---
 
-## 🚨 Common Issues & Solutions
+## 🚨 Частые Проблемы и Решения
 
-### Issue: Ollama connection refused
+### Проблема: Отказ соединения с Ollama
 ```php
-// Change URL in LLMService if Docker networking differs
-private string $ollamaUrl = 'http://host.docker.internal:11434';  // For Mac/Windows
-// OR
-private string $ollamaUrl = 'http://172.17.0.1:11434';  // For Linux
+// Измените URL в LLMService если сеть Docker отличается
+private string $ollamaUrl = 'http://host.docker.internal:11434';  // Для Mac/Windows
+// ИЛИ
+private string $ollamaUrl = 'http://172.17.0.1:11434';  // Для Linux
 ```
 
-### Issue: Task not found by voice
+### Проблема: Задача не найдена по голосу
 ```php
-// In SmartSearchService, adjust similarity threshold:
-'OR similarity(t.title, :description) > 0.2'  // Lower = more matches
+// В SmartSearchService, настройте порог схожести:
+'OR similarity(t.title, :description) > 0.2'  // Ниже = больше совпадений
 ```
 
-### Issue: WebSocket not updating
+### Проблема: WebSocket не обновляется
 ```bash
-# Check Centrifugo is running:
+# Проверьте что Centrifugo запущен:
 docker ps | grep centrifugo
-# Check API key matches in .env
+# Проверьте что API key совпадает в .env
 ```
 
 ---
 
-## 📊 Service Architecture Diagram
+## 📊 Диаграмма Архитектуры Сервисов
 
 ```
-User Voice Input
+Голосовой Ввод Пользователя
       ↓
 VoiceProcessingService
       ↓
-   Queue
+   Очередь
       ↓
 LLMService (Ollama)
       ↓
 CommandExecutorService
-      ├── SmartSearchService (find tasks)
-      └── TaskService (execute)
+      ├── SmartSearchService (поиск задач)
+      └── TaskService (выполнение)
            ↓
 WebSocketPublisherService → Frontend
 ```
 
 ---
 
-## ✅ Checklist for AI Assistant
+## ✅ Чеклист для AI Ассистента
 
-- [ ] Created all service directories
-- [ ] Implemented VoiceProcessingService
-- [ ] Implemented LLMService with Ollama
-- [ ] Implemented CommandExecutorService
-- [ ] Implemented WebSocketPublisherService
-- [ ] Implemented SmartSearchService
-- [ ] Added service configuration to services.yaml
-- [ ] Added environment variables
-- [ ] Tested at least one service
-
----
-
-## 🎯 Next Steps
-
-**Services are ready!** Now proceed to:
-
-1. → [Command Handlers](03_COMMAND_HANDLERS.md) - Implement specific command logic
-2. → [API Endpoints](04_API_ENDPOINTS.md) - Create REST endpoints
-3. → [Queue Processing](05_QUEUE_PROCESSING.md) - Set up async processing
+- [ ] Созданы все директории сервисов
+- [ ] Реализован VoiceProcessingService
+- [ ] Реализован LLMService с Ollama
+- [ ] Реализован CommandExecutorService
+- [ ] Реализован WebSocketPublisherService
+- [ ] Реализован SmartSearchService
+- [ ] Добавлена конфигурация сервисов в services.yaml
+- [ ] Добавлены переменные окружения
+- [ ] Протестирован хотя бы один сервис
 
 ---
 
-**Remember for AI**:
-- Adapt code to existing project structure
-- Use existing TaskService and Task entity
-- Check Docker networking for service URLs
-- Don't overthink - this is MVP, make it work first
+## 🎯 Следующие Шаги
+
+**Сервисы готовы!** Теперь переходите к:
+
+1. → [Обработчики Команд](03_COMMAND_HANDLERS.md) - Реализовать специфическую логику команд
+2. → [API Эндпоинты](04_API_ENDPOINTS.md) - Создать REST эндпоинты
+3. → [Обработка Очереди](05_QUEUE_PROCESSING.md) - Настроить асинхронную обработку
 
 ---
 
-**Document Status**: Simplified for AI Implementation
-**Complexity**: Medium
-**Time to Implement**: 2-3 hours
+**Помните для AI**:
+- Адаптируйте код к существующей структуре проекта
+- Используйте существующие TaskService и сущность Task
+- Проверяйте сеть Docker для URL сервисов
+- Не усложняйте - это MVP, сначала сделайте рабочим
+
+---
+
+**Статус Документа**: Упрощён для AI Реализации
+**Сложность**: Средняя
+**Время Реализации**: 2-3 часа
