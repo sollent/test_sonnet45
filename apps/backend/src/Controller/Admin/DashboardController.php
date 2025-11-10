@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller\Admin;
 
+use App\Entity\RecurrenceRule;
 use App\Entity\Tag;
 use App\Entity\Task;
 use App\Entity\TaskAttachment;
@@ -63,6 +64,8 @@ class DashboardController extends AbstractDashboardController
         yield MenuItem::linkToCrud('Tags', 'fa fa-tags', Tag::class)
             ->setPermission('ROLE_ADMIN');
         yield MenuItem::linkToCrud('Attachments', 'fa fa-paperclip', TaskAttachment::class)
+            ->setPermission('ROLE_ADMIN');
+        yield MenuItem::linkToCrud('Recurrence Rules', 'fa fa-repeat', RecurrenceRule::class)
             ->setPermission('ROLE_ADMIN');
 
         yield MenuItem::section();
