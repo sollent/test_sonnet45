@@ -51,9 +51,9 @@ class TaskAttachmentCrudController extends AbstractCrudController
                 $attachment->getOriginalName()
             ))
 
-            // Pagination
-            ->setPaginatorPageSize(30)
-            ->setPaginatorRangeSize(4)
+            // Pagination - reduced for performance
+            ->setPaginatorPageSize(20)
+            ->setPaginatorRangeSize(3)
 
             // Search
             ->setSearchFields(['originalName', 'fileName', 'mimeType', 'task.title', 'uploadedBy.email'])

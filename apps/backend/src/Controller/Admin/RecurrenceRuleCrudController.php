@@ -64,9 +64,9 @@ class RecurrenceRuleCrudController extends AbstractCrudController
                 $rule->getTemplateTask()->getTitle()
             ))
 
-            // Pagination
-            ->setPaginatorPageSize(20)
-            ->setPaginatorRangeSize(4)
+            // Pagination - reduced for performance
+            ->setPaginatorPageSize(15)
+            ->setPaginatorRangeSize(3)
 
             // Search
             ->setSearchFields(['recurrenceType', 'templateTask.title', 'createdBy.email'])

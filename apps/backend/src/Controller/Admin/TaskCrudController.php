@@ -58,9 +58,9 @@ class TaskCrudController extends AbstractCrudController
             ->setPageTitle('edit', fn (Task $task) => sprintf('Edit: %s', $task->getTitle()))
             ->setPageTitle('detail', fn (Task $task) => sprintf('Task: %s', $task->getTitle()))
 
-            // Pagination
-            ->setPaginatorPageSize(30)
-            ->setPaginatorRangeSize(4)
+            // Pagination - reduced for performance
+            ->setPaginatorPageSize(15)
+            ->setPaginatorRangeSize(3)
 
             // Search
             ->setSearchFields(['title', 'description', 'user.email'])
@@ -155,40 +155,43 @@ class TaskCrudController extends AbstractCrudController
                 ->setColumns('col-md-6');
         }
 
-        // Tags - many-to-many with autocomplete
-        yield AssociationField::new('tags', 'Tags')
-            ->autocomplete()
-            ->formatValue(function ($value, Task $task) {
-                $tags = $task->getTags();
-                if ($tags->isEmpty()) {
-                    return '-';
-                }
-
-                $tagNames = [];
-                foreach ($tags as $tag) {
-                    $tagNames[] = sprintf(
-                        '<span class="badge" style="background-color: %s; color: white;">%s</span>',
-                        $tag->getColor(),
-                        $tag->getName()
-                    );
-                }
-
-                // Show max 3 tags on index
-                if (Crud::PAGE_INDEX === $this->getContext()->getCrud()->getCurrentPage()) {
-                    $displayTags = array_slice($tagNames, 0, 3);
-                    $remaining = count($tagNames) - 3;
-
-                    if ($remaining > 0) {
-                        $displayTags[] = sprintf('<span class="badge badge-secondary">+%d</span>', $remaining);
+        // Tags - simplified for INDEX, detailed for DETAIL/EDIT
+        if (Crud::PAGE_INDEX === $pageName) {
+            // On INDEX - just show count (no N+1 queries)
+            yield IntegerField::new('tagsCount', 'Tags')
+                ->formatValue(function ($value, Task $task) {
+                    $count = $task->getTags()->count();
+                    if ($count === 0) {
+                        return '<span class="text-muted">-</span>';
+                    }
+                    return sprintf('<span class="badge badge-info">%d tag%s</span>', $count, $count > 1 ? 's' : '');
+                })
+                ->onlyOnIndex();
+        } else {
+            // On DETAIL/EDIT - show full formatted tags
+            yield AssociationField::new('tags', 'Tags')
+                ->autocomplete()
+                ->formatValue(function ($value, Task $task) {
+                    $tags = $task->getTags();
+                    if ($tags->isEmpty()) {
+                        return '<span class="text-muted">No tags</span>';
                     }
 
-                    return implode(' ', $displayTags);
-                }
+                    $tagNames = [];
+                    foreach ($tags as $tag) {
+                        $tagNames[] = sprintf(
+                            '<span class="badge" style="background-color: %s; color: white;">%s</span>',
+                            htmlspecialchars($tag->getColor()),
+                            htmlspecialchars($tag->getName())
+                        );
+                    }
 
-                return implode(' ', $tagNames);
-            })
-            ->setHelp('Associated tags')
-            ->setColumns('col-md-12');
+                    return implode(' ', $tagNames);
+                })
+                ->setHelp('Associated tags')
+                ->setColumns('col-md-12')
+                ->hideOnIndex();
+        }
 
         // Dates
         yield DateTimeField::new('startDate', 'Start Date')
@@ -218,31 +221,17 @@ class TaskCrudController extends AbstractCrudController
             ->hideOnIndex()
             ->setColumns('col-md-3');
 
-        // Computed field: Subtask count
-        if (Crud::PAGE_INDEX === $pageName || Crud::PAGE_DETAIL === $pageName) {
+        // Computed field: Subtask count (simplified for performance)
+        if (Crud::PAGE_INDEX === $pageName) {
             yield IntegerField::new('subtaskCount', 'Subtasks')
                 ->formatValue(function ($value, Task $task) {
                     $count = $task->getSubtasks()->count();
 
                     if ($count === 0) {
-                        return '-';
+                        return '<span class="text-muted">-</span>';
                     }
 
-                    $completed = 0;
-                    foreach ($task->getSubtasks() as $subtask) {
-                        if ($subtask->isCompleted()) {
-                            $completed++;
-                        }
-                    }
-
-                    $percentage = $count > 0 ? round(($completed / $count) * 100) : 0;
-
-                    return sprintf(
-                        '%d/%d <small class="text-muted">(%d%%)</small>',
-                        $completed,
-                        $count,
-                        $percentage
-                    );
+                    return sprintf('<span class="badge badge-secondary">%d</span>', $count);
                 })
                 ->onlyOnIndex();
         }
@@ -440,6 +429,7 @@ class TaskCrudController extends AbstractCrudController
 
     /**
      * Optimize query with eager loading to prevent N+1 problems
+     * IMPORTANT: Only eager load what's actually displayed on INDEX page!
      */
     public function createIndexQueryBuilder(
         SearchDto $searchDto,
@@ -449,13 +439,10 @@ class TaskCrudController extends AbstractCrudController
     ): QueryBuilder {
         $qb = parent::createIndexQueryBuilder($searchDto, $entityDto, $fields, $filters);
 
-        // Eager load user and tags to avoid N+1 queries
+        // ONLY eager load user (displayed on INDEX)
+        // Tags and subtasks are now shown as COUNT only, so no eager loading needed!
         $qb->leftJoin('entity.user', 'u')
-           ->addSelect('u')
-           ->leftJoin('entity.tags', 't')
-           ->addSelect('t')
-           ->leftJoin('entity.subtasks', 's')
-           ->addSelect('s');
+           ->addSelect('u');
 
         return $qb;
     }

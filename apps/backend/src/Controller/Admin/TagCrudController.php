@@ -50,9 +50,9 @@ class TagCrudController extends AbstractCrudController
             ->setPageTitle('edit', fn (Tag $tag) => sprintf('Edit tag: %s', $tag->getName()))
             ->setPageTitle('detail', fn (Tag $tag) => sprintf('Tag: %s', $tag->getName()))
 
-            // Pagination
-            ->setPaginatorPageSize(30)
-            ->setPaginatorRangeSize(4)
+            // Pagination - reduced for performance
+            ->setPaginatorPageSize(20)
+            ->setPaginatorRangeSize(3)
 
             // Search
             ->setSearchFields(['name', 'icon', 'user.email'])
@@ -140,7 +140,7 @@ class TagCrudController extends AbstractCrudController
             ->setHelp('Number of tasks using this tag')
             ->hideOnForm();
 
-        // Associated tasks - only on detail
+        // Associated tasks - only on detail (simplified for performance)
         if (Crud::PAGE_DETAIL === $pageName) {
             yield Field::new('tasks', 'Associated Tasks')
                 ->formatValue(function ($value, Tag $tag) {
@@ -152,7 +152,7 @@ class TagCrudController extends AbstractCrudController
 
                     $html = '<ul class="list-group list-group-flush">';
 
-                    $displayLimit = 10; // Show max 10 tasks
+                    $displayLimit = 5; // Reduced from 10 to 5 for performance
                     $count = 0;
 
                     foreach ($tasks as $task) {
@@ -169,23 +169,15 @@ class TagCrudController extends AbstractCrudController
                         $statusBadge = $task->isCompleted() ? 'success' : 'secondary';
                         $statusIcon = $task->isCompleted() ? 'check-circle' : 'circle-o';
 
+                        // Simplified without generateUrl (just show task info)
                         $html .= sprintf(
-                            '<li class="list-group-item d-flex justify-content-between align-items-center">
-                                <span>
-                                    <i class="fa fa-%s text-%s"></i> %s
-                                </span>
-                                <a href="%s" class="btn btn-sm btn-primary">
-                                    <i class="fa fa-eye"></i>
-                                </a>
+                            '<li class="list-group-item">
+                                <i class="fa fa-%s text-%s"></i> <strong>%s</strong> <small class="text-muted">(#%d)</small>
                             </li>',
                             $statusIcon,
                             $statusBadge,
                             htmlspecialchars($task->getTitle()),
-                            $this->generateUrl('admin', [
-                                'crudAction' => 'detail',
-                                'crudControllerFqcn' => TaskCrudController::class,
-                                'entityId' => $task->getId(),
-                            ])
+                            $task->getId()
                         );
 
                         $count++;
