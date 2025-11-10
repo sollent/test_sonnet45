@@ -1,19 +1,19 @@
-# 🎤 Phase 3.1: Voice Recording - Frontend Implementation
+# 🎤 Фаза 3.1: Запись Голоса - Реализация Frontend
 
-> **For AI**: Simple voice recording in Vue.js. Copy, adapt, done.
+> **Для AI**: Простая запись голоса в Vue.js. Скопировать, адаптировать, готово.
 
-## 🎯 What We're Building
+## 🎯 Что Мы Создаем
 
-1. Voice recording button
-2. Record audio in browser
-3. Send to backend
-4. Show real-time updates via WebSocket
+1. Кнопка записи голоса
+2. Запись аудио в браузере
+3. Отправка на backend
+4. Отображение обновлений в реальном времени через WebSocket
 
 ---
 
-## 📦 Step 1: Voice Recording Composable
+## 📦 Шаг 1: Composable Записи Голоса
 
-**AI**: Create `frontend/src/composables/useVoiceRecording.ts`:
+**AI**: Создай `frontend/src/composables/useVoiceRecording.ts`:
 
 ```typescript
 import { ref, computed } from 'vue';
@@ -136,9 +136,9 @@ export function useVoiceRecording() {
 
 ---
 
-## 🌐 Step 2: Voice Command Service
+## 🌐 Шаг 2: Сервис Голосовых Команд
 
-**AI**: Create `frontend/src/services/voiceCommand.service.ts`:
+**AI**: Создай `frontend/src/services/voiceCommand.service.ts`:
 
 ```typescript
 import axios from 'axios';
@@ -147,14 +147,14 @@ class VoiceCommandService {
     private baseUrl = '/api/voice';
 
     /**
-     * Submit audio command
+     * Отправить аудио команду
      */
     async submitAudioCommand(audioBlob: Blob): Promise<string> {
         const formData = new FormData();
         formData.append('audio', audioBlob, 'recording.webm');
         formData.append('source', 'web');
 
-        const response = await axios.post(`${this->baseUrl}/command`, formData, {
+        const response = await axios.post(`${this.baseUrl}/command`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data'
             }
@@ -164,7 +164,7 @@ class VoiceCommandService {
     }
 
     /**
-     * Submit text command
+     * Отправить текстовую команду
      */
     async submitTextCommand(text: string): Promise<string> {
         const response = await axios.post(`${this.baseUrl}/command`, {
@@ -176,7 +176,7 @@ class VoiceCommandService {
     }
 
     /**
-     * Get command status
+     * Получить статус команды
      */
     async getCommandStatus(commandId: string) {
         const response = await axios.get(`${this.baseUrl}/command/${commandId}`);
@@ -184,7 +184,7 @@ class VoiceCommandService {
     }
 
     /**
-     * Get command history
+     * Получить историю команд
      */
     async getHistory(days: number = 7) {
         const response = await axios.get(`${this.baseUrl}/history`, {
@@ -199,14 +199,14 @@ export default new VoiceCommandService();
 
 ---
 
-## 🎨 Step 3: Voice Assistant Component
+## 🎨 Шаг 3: Компонент Голосового Ассистента
 
-**AI**: Create `frontend/src/components/VoiceAssistant/VoiceButton.vue`:
+**AI**: Создай `frontend/src/components/VoiceAssistant/VoiceButton.vue`:
 
 ```vue
 <template>
   <div class="voice-assistant">
-    <!-- Voice Button -->
+    <!-- Кнопка Голоса -->
     <button
       @click="toggleRecording"
       :class="['voice-btn', { recording: isRecording, processing: isProcessing }]"
@@ -217,17 +217,17 @@ export default new VoiceCommandService();
       <i v-if="isProcessing" class="pi pi-spin pi-spinner"></i>
     </button>
 
-    <!-- Status Text -->
+    <!-- Текст Статуса -->
     <div v-if="statusText" class="status-text">
       {{ statusText }}
     </div>
 
-    <!-- Error Message -->
+    <!-- Сообщение об Ошибке -->
     <div v-if="error" class="error-message">
       {{ error }}
     </div>
 
-    <!-- Recent Result -->
+    <!-- Последний Результат -->
     <div v-if="lastResult" class="result-message">
       {{ lastResult.message }}
     </div>
@@ -250,14 +250,14 @@ const {
 const { onVoiceEvent } = useWebSocket();
 const lastResult = ref<any>(null);
 
-// Status text
+// Текст статуса
 const statusText = computed(() => {
   if (isRecording.value) return 'Запись...';
   if (isProcessing.value) return 'Обработка...';
   return '';
 });
 
-// Toggle recording
+// Переключение записи
 const toggleRecording = () => {
   if (isRecording.value) {
     stopRecording();
@@ -266,11 +266,11 @@ const toggleRecording = () => {
   }
 };
 
-// Listen for WebSocket updates
+// Слушать WebSocket обновления
 onVoiceEvent('completed', (data) => {
   lastResult.value = data.result;
 
-  // Clear after 3 seconds
+  // Очистить через 3 секунды
   setTimeout(() => {
     lastResult.value = null;
   }, 3000);
@@ -364,9 +364,9 @@ onVoiceEvent('completed', (data) => {
 
 ---
 
-## 📡 Step 4: WebSocket Integration
+## 📡 Шаг 4: Интеграция WebSocket
 
-**AI**: Create `frontend/src/composables/useWebSocket.ts`:
+**AI**: Создай `frontend/src/composables/useWebSocket.ts`:
 
 ```typescript
 import { ref, onMounted, onUnmounted } from 'vue';
@@ -379,7 +379,7 @@ export function useWebSocket() {
     const connected = ref(false);
 
     const connect = () => {
-        const wsToken = authStore.centrifugoToken; // Get from auth
+        const wsToken = authStore.centrifugoToken; // Получить из auth
 
         client.value = new Centrifuge('ws://localhost:8000/connection/websocket', {
             token: wsToken,
@@ -398,7 +398,7 @@ export function useWebSocket() {
 
         client.value.connect();
 
-        // Subscribe to user's voice channel
+        // Подписаться на канал голоса пользователя
         const userId = authStore.user?.id;
         if (userId) {
             const channel = `voice:user#${userId}`;
@@ -421,7 +421,7 @@ export function useWebSocket() {
     const handleVoiceEvent = (data: any) => {
         console.log('Voice event:', data);
 
-        // Emit events based on type
+        // Эмитить события на основе типа
         const eventType = data.event;
 
         if (eventType === 'command.completed') {
@@ -463,17 +463,17 @@ export function useWebSocket() {
 
 ---
 
-## 🎯 Step 5: Add to Main View
+## 🎯 Шаг 5: Добавить в Главный View
 
-**AI**: Add to your main task view:
+**AI**: Добавь в свой главный view задач:
 
 ```vue
 <template>
   <div class="tasks-view">
-    <!-- Existing task list -->
+    <!-- Существующий список задач -->
     <TaskList />
 
-    <!-- Voice Assistant Button (floating) -->
+    <!-- Кнопка Голосового Ассистента (плавающая) -->
     <div class="voice-assistant-fab">
       <VoiceButton />
     </div>
@@ -496,70 +496,70 @@ import VoiceButton from '@/components/VoiceAssistant/VoiceButton.vue';
 
 ---
 
-## ✅ Testing
+## ✅ Тестирование
 
-**AI**: Test in browser:
+**AI**: Протестируй в браузере:
 
-1. Open app in Chrome/Firefox
-2. Click microphone button
-3. Allow microphone access
-4. Say: "Создай задачу купить молоко"
-5. Click stop
-6. Check WebSocket events in console
-7. Check task created
+1. Открой приложение в Chrome/Firefox
+2. Нажми кнопку микрофона
+3. Разреши доступ к микрофону
+4. Скажи: "Создай задачу купить молоко"
+5. Нажми стоп
+6. Проверь WebSocket события в консоли
+7. Проверь что задача создана
 
 ---
 
-## 🚨 Browser Compatibility
+## 🚨 Совместимость с Браузерами
 
-Works in:
-- ✅ Chrome/Edge (best)
+Работает в:
+- ✅ Chrome/Edge (лучше всего)
 - ✅ Firefox
 - ✅ Safari (macOS/iOS)
-- ⚠️ Mobile browsers (test on device)
+- ⚠️ Мобильные браузеры (тестируй на устройстве)
 
 ---
 
-## 📊 Flow Diagram
+## 📊 Диаграмма Потока
 
 ```
-User clicks button
+Пользователь нажимает кнопку
       ↓
-Request mic permission
+Запрос разрешения микрофона
       ↓
-Start recording
+Начало записи
       ↓
-User speaks
+Пользователь говорит
       ↓
-Click stop
+Нажатие стоп
       ↓
-Create Blob
+Создание Blob
       ↓
-Send to /api/voice/command
+Отправка на /api/voice/command
       ↓
-Show "Processing..."
+Показ "Обработка..."
       ↓
-WebSocket receives "completed"
+WebSocket получает "completed"
       ↓
-Show result message
+Показ сообщения результата
       ↓
-Auto-hide after 3s
+Автоскрытие через 3с
 ```
 
 ---
 
-## ✅ Checklist
+## ✅ Чеклист
 
-- [ ] Created useVoiceRecording composable
-- [ ] Created voiceCommand service
-- [ ] Created VoiceButton component
-- [ ] Created useWebSocket composable
-- [ ] Added to main view
-- [ ] Tested recording
-- [ ] Tested WebSocket updates
+- [ ] Создан composable useVoiceRecording
+- [ ] Создан сервис voiceCommand
+- [ ] Создан компонент VoiceButton
+- [ ] Создан composable useWebSocket
+- [ ] Добавлено в главный view
+- [ ] Протестирована запись
+- [ ] Протестированы WebSocket обновления
 
 ---
 
-**Time to Implement**: 1-2 hours
-**Complexity**: Medium
-**Browser Requirement**: HTTPS or localhost (for mic access)
+**Время Реализации**: 1-2 часа
+**Сложность**: Средняя
+**Требование Браузера**: HTTPS или localhost (для доступа к микрофону)
