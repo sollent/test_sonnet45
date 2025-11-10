@@ -97,6 +97,11 @@ const localVisible = computed({
   set: (value) => {
     emit('update:showSidebar', value)
     emit('update:visible', value)
+
+    // Reset lastLoadedTaskId when sidebar closes to force refetch on reopen
+    if (!value) {
+      lastLoadedTaskId.value = null
+    }
   }
 })
 
@@ -325,6 +330,10 @@ function resetEditData() {
 
 function toggleEditMode() {
   if (editMode.value) {
+    // Exiting edit mode - reset changes
+    resetEditData()
+  } else {
+    // Entering edit mode - initialize editData with current task data
     resetEditData()
   }
   editMode.value = !editMode.value
