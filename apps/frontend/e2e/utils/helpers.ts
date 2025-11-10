@@ -69,9 +69,11 @@ export function generateUniqueString(prefix = 'test'): string {
 
 /**
  * Set application locale (language)
+ * IMPORTANT: Must be called BEFORE navigating to any page
+ * Uses addInitScript to ensure locale is set before app initializes
  */
 export async function setLocale(page: Page, locale: 'en' | 'ru' = 'ru'): Promise<void> {
-  await page.evaluate((loc) => {
+  await page.addInitScript((loc) => {
     localStorage.setItem('locale', loc)
   }, locale)
 }
