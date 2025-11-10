@@ -621,17 +621,15 @@ class TaskRepository extends ServiceEntityRepository
     }
 
     /**
-     * OPTIMIZED: Find tasks for calendar month with ALL related data in 3-4 queries (no N+1)
-     * Returns raw data arrays ready for DTO creation
+     * OPTIMIZED: Universal method for fetching tasks by date range with raw SQL
+     * Used by calendar/day, calendar/week, calendar/month endpoints
      *
-     * Performance: 2577 queries → 4 queries (640x improvement!)
+     * Returns raw data arrays (no Doctrine entities, no N+1)
+     * Performance: 2500+ queries → 4 queries (600x+ improvement!)
      */
-    public function findTasksForMonthRaw(User $user, int $year, int $month, bool $includeCompleted = true): array
+    private function findTasksByDateRangeRaw(User $user, \DateTime $startDate, \DateTime $endDate, bool $includeCompleted = true): array
     {
         $conn = $this->getEntityManager()->getConnection();
-        $startDate = new \DateTime("$year-$month-01");
-        $endDate = clone $startDate;
-        $endDate->modify('last day of this month')->setTime(23, 59, 59);
 
         // Step 1: Get ALL parent tasks for the month
         $parentsSql = "
@@ -796,6 +794,46 @@ class TaskRepository extends ServiceEntityRepository
         }
 
         return $result;
+    }
+
+    /**
+     * OPTIMIZED: Get tasks for specific day with raw SQL (no N+1)
+     */
+    public function findTasksByDayRaw(User $user, \DateTime $date, bool $includeCompleted = true): array
+    {
+        $startOfDay = clone $date;
+        $startOfDay->setTime(0, 0, 0);
+
+        $endOfDay = clone $date;
+        $endOfDay->setTime(23, 59, 59);
+
+        return $this->findTasksByDateRangeRaw($user, $startOfDay, $endOfDay, $includeCompleted);
+    }
+
+    /**
+     * OPTIMIZED: Get tasks for week with raw SQL (no N+1)
+     */
+    public function findTasksForWeekRaw(User $user, \DateTime $weekStart, bool $includeCompleted = true): array
+    {
+        $startDate = clone $weekStart;
+        $startDate->setTime(0, 0, 0);
+
+        $endDate = clone $weekStart;
+        $endDate->modify('+6 days')->setTime(23, 59, 59);
+
+        return $this->findTasksByDateRangeRaw($user, $startDate, $endDate, $includeCompleted);
+    }
+
+    /**
+     * OPTIMIZED: Get tasks for month with raw SQL (no N+1)
+     */
+    public function findTasksForMonthRaw(User $user, int $year, int $month, bool $includeCompleted = true): array
+    {
+        $startDate = new \DateTime("$year-$month-01");
+        $endDate = clone $startDate;
+        $endDate->modify('last day of this month')->setTime(23, 59, 59);
+
+        return $this->findTasksByDateRangeRaw($user, $startDate, $endDate, $includeCompleted);
     }
 
     /**

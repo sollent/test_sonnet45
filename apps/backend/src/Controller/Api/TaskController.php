@@ -579,12 +579,13 @@ class TaskController extends AbstractController
         $weekStartStr = $request->query->get('weekStart', (new \DateTime('monday this week'))->format('Y-m-d'));
         $weekStart = new \DateTime($weekStartStr);
         $includeCompleted = $request->query->getBoolean('includeCompleted', true);
-        
-        $tasks = $this->taskRepository->findTasksForWeek($this->getUser(), $weekStart, $includeCompleted);
-        
-        $dtos = array_map(fn($task) => TaskResponseDto::fromEntity($task, false), $tasks);
+
+        // OPTIMIZED: Use raw SQL queries (4 queries instead of 2500+)
+        $tasksRawData = $this->taskRepository->findTasksForWeekRaw($this->getUser(), $weekStart, $includeCompleted);
+
+        $dtos = array_map(fn($taskData) => TaskResponseDto::fromRawData($taskData), $tasksRawData);
         $dtos = $this->enrichDtosWithTranslations($dtos, $request);
-        
+
         return $this->json($dtos);
     }
 
@@ -618,9 +619,10 @@ class TaskController extends AbstractController
 
         $includeCompleted = $request->query->getBoolean('includeCompleted', true);
 
-        $tasks = $this->taskRepository->findTasksByDay($this->getUser(), $date, $includeCompleted);
+        // OPTIMIZED: Use raw SQL queries (4 queries instead of 2500+)
+        $tasksRawData = $this->taskRepository->findTasksByDayRaw($this->getUser(), $date, $includeCompleted);
 
-        $dtos = array_map(fn($task) => TaskResponseDto::fromEntity($task, false), $tasks);
+        $dtos = array_map(fn($taskData) => TaskResponseDto::fromRawData($taskData), $tasksRawData);
         $dtos = $this->enrichDtosWithTranslations($dtos, $request);
 
         return $this->json($dtos);
