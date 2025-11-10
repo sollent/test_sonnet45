@@ -70,6 +70,9 @@ class GenerateTestDataFastCommand extends Command
         if ($clearExisting) {
             $io->section('Clearing existing data...');
             $this->clearExistingData($io);
+        } else {
+            // If not clearing, sync sequences with current max IDs to avoid conflicts
+            $this->syncSequences($io);
         }
 
         $startTime = microtime(true);
@@ -124,12 +127,41 @@ class GenerateTestDataFastCommand extends Command
     {
         $io->text('Truncating tables...');
 
+        // Order matters: clear child tables first to avoid FK violations
         $this->connection->executeStatement('TRUNCATE TABLE task_tags CASCADE');
+        $this->connection->executeStatement('TRUNCATE TABLE recurrence_rules RESTART IDENTITY CASCADE');
         $this->connection->executeStatement('TRUNCATE TABLE task RESTART IDENTITY CASCADE');
         $this->connection->executeStatement('TRUNCATE TABLE tag RESTART IDENTITY CASCADE');
         $this->connection->executeStatement('TRUNCATE TABLE users RESTART IDENTITY CASCADE');
 
         $io->success('Existing data cleared!');
+    }
+
+    private function syncSequences(SymfonyStyle $io): void
+    {
+        $io->text('Syncing sequences with current data...');
+
+        // Sync all sequences to avoid "duplicate key" errors when inserting new records
+        $sequences = [
+            'users_id_seq' => 'users',
+            'tag_id_seq' => 'tag',
+            'task_id_seq' => 'task',
+            'recurrence_rules_id_seq' => 'recurrence_rules',
+        ];
+
+        $synced = 0;
+        foreach ($sequences as $sequenceName => $tableName) {
+            try {
+                $this->connection->executeStatement(
+                    "SELECT setval('$sequenceName', (SELECT COALESCE(MAX(id), 1) FROM $tableName), true)"
+                );
+                $synced++;
+            } catch (\Exception $e) {
+                $io->warning("Failed to sync sequence $sequenceName: " . $e->getMessage());
+            }
+        }
+
+        $io->text(sprintf('Synced %d sequences', $synced));
     }
 
     private function generateUsersFast(int $count, SymfonyStyle $io): array

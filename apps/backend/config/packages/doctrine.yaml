@@ -2,54 +2,43 @@ doctrine:
     dbal:
         url: '%env(resolve:DATABASE_URL)%'
 
-        # IMPORTANT: You MUST configure your server version,
-        # either here or in the DATABASE_URL env var (see .env file)
-        #server_version: '16'
-
+        # Профилирование запросов (автоматически включается в debug режиме)
         profiling_collect_backtrace: '%kernel.debug%'
+
+        # Использование savepoints для вложенных транзакций
         use_savepoints: true
+
     orm:
+        # Авто-генерация proxy классов (будет переопределено в prod)
         auto_generate_proxy_classes: true
+
+        # Lazy ghost objects для ленивой загрузки (Doctrine 3.x)
         enable_lazy_ghost_objects: true
+
+        # Валидация и отчетность
         report_fields_where_declared: true
         validate_xml_mapping: true
+
+        # Стратегия именования таблиц (snake_case)
         naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
+
+        # Автоматическое обнаружение Entity
         auto_mapping: true
+
+        # Mapping для Entity классов
         mappings:
             App:
-                type: attribute
+                type: attribute          # Используем PHP 8 атрибуты
                 is_bundle: false
                 dir: '%kernel.project_dir%/src/Entity'
                 prefix: 'App\Entity'
                 alias: App
+
+        # Controller resolver
         controller_resolver:
             auto_mapping: false
+
+        # Custom DQL functions
         dql:
             datetime_functions:
                 date: App\Doctrine\DQL\DateFunction
-
-when@test:
-    doctrine:
-        dbal:
-            # "TEST_TOKEN" is typically set by ParaTest
-            dbname_suffix: '_test%env(default::TEST_TOKEN)%'
-
-when@prod:
-    doctrine:
-        orm:
-            auto_generate_proxy_classes: false
-            proxy_dir: '%kernel.build_dir%/doctrine/orm/Proxies'
-            query_cache_driver:
-                type: pool
-                pool: doctrine.system_cache_pool
-            result_cache_driver:
-                type: pool
-                pool: doctrine.result_cache_pool
-
-    framework:
-        cache:
-            pools:
-                doctrine.result_cache_pool:
-                    adapter: cache.app
-                doctrine.system_cache_pool:
-                    adapter: cache.system

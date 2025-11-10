@@ -1,0 +1,32 @@
+doctrine:
+    orm:
+        # Query Cache - кеш парсинга DQL (ускоряет повторные запросы)
+        # Включаем даже в dev для небольшого ускорения
+        query_cache_driver:
+            type: pool
+            pool: doctrine.system_cache_pool
+
+        # Metadata Cache - НЕ включаем в dev
+        # Чтобы изменения в Entity сразу применялись без cache:clear
+        # metadata_cache_driver:
+        #     type: pool
+        #     pool: doctrine.system_cache_pool
+
+        # Result Cache - используем array (очищается каждый request)
+        # Можно временно закомментировать если мешает отладке
+        result_cache_driver:
+            type: pool
+            pool: doctrine.result_cache_pool
+
+framework:
+    cache:
+        pools:
+            # Query Cache + Metadata Cache - filesystem (быстро, не требует расширений)
+            doctrine.system_cache_pool:
+                adapter: cache.adapter.filesystem
+
+            # Result Cache - array (автоматически очищается при каждом запросе)
+            # Не мешает отладке, так как кеш живет только во время одного request
+            doctrine.result_cache_pool:
+                adapter: cache.adapter.array
+                # default_lifetime не нужен для array adapter

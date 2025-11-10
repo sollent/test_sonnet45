@@ -125,4 +125,78 @@ final class TaskResponseDto
 
         return $dto;
     }
+
+    /**
+     * OPTIMIZED: Create DTO from raw database array (no Doctrine entities, no lazy loading)
+     * Used by findTasksForMonthRaw() for maximum performance
+     */
+    public static function fromRawData(array $data): self
+    {
+        $dto = new self();
+        $dto->id = (int)$data['id'];
+        $dto->title = $data['title'];
+        $dto->description = $data['description'];
+        $dto->status = $data['status'];
+        $dto->priority = $data['priority'];
+
+        // Parse dates
+        $dto->startDate = $data['start_date'] ? new \DateTimeImmutable($data['start_date']) : null;
+        $dto->dueDate = $data['due_date'] ? new \DateTimeImmutable($data['due_date']) : null;
+        $dto->completedAt = $data['completed_at'] ? new \DateTimeImmutable($data['completed_at']) : null;
+        $dto->createdAt = $data['created_at'] ? new \DateTimeImmutable($data['created_at']) : null;
+        $dto->updatedAt = $data['updated_at'] ? new \DateTimeImmutable($data['updated_at']) : null;
+
+        $dto->parentTaskId = isset($data['parent_task_id']) ? (int)$data['parent_task_id'] : null;
+        $dto->sortOrder = (int)$data['sort_order'];
+        $dto->isArchived = (bool)$data['is_archived'];
+        $dto->isRecurringTemplate = (bool)$data['is_recurring_template'];
+
+        // Calculate computed fields
+        $dto->isCompleted = $data['status'] === 'completed';
+        $dto->isOverdue = !$dto->isCompleted && $dto->dueDate && $dto->dueDate < new \DateTimeImmutable();
+
+        // Subtasks data (already populated in raw data)
+        $subtasks = $data['subtasks'] ?? [];
+        $dto->subtaskCount = count($subtasks);
+        $dto->completedSubtaskCount = count(array_filter($subtasks, fn($s) => $s['status'] === 'completed'));
+
+        // Calculate completion progress
+        if ($dto->subtaskCount > 0) {
+            $dto->completionProgress = round(($dto->completedSubtaskCount / $dto->subtaskCount) * 100, 2);
+        } else {
+            $dto->completionProgress = $dto->isCompleted ? 100.0 : 0.0;
+        }
+
+        // Map tags (already in raw format)
+        $dto->tags = $data['tags'] ?? [];
+
+        // Map subtasks recursively
+        $dto->subtasks = array_map(fn($subtask) => self::fromRawData($subtask), $subtasks);
+
+        // Map recurrence rule if exists
+        if (isset($data['rr_id']) && $data['rr_id']) {
+            $dto->recurrenceRule = RecurrenceRuleDto::fromRawData([
+                'id' => $data['rr_id'],
+                'recurrence_type' => $data['recurrence_type'],
+                'interval' => $data['interval'],
+                'days_of_week' => $data['days_of_week'],
+                'day_of_month' => $data['day_of_month'],
+                'month_of_year' => $data['month_of_year'],
+                'end_date' => $data['end_date'],
+                'max_occurrences' => $data['max_occurrences'],
+                'current_occurrences' => $data['current_occurrences'],
+                'next_occurrence_date' => $data['next_occurrence_date'],
+                'time_of_day' => $data['time_of_day'],
+                'is_active' => $data['is_active'],
+            ]);
+        }
+
+        // hasNestedSubtasks not calculated for performance (not needed in calendar view)
+        $dto->hasNestedSubtasks = false;
+
+        // Attachments empty for calendar view (not needed)
+        $dto->attachments = [];
+
+        return $dto;
+    }
 }

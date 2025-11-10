@@ -1,0 +1,28 @@
+doctrine:
+    dbal:
+        # "TEST_TOKEN" is typically set by ParaTest for parallel test execution
+        dbname_suffix: '_test%env(default::TEST_TOKEN)%'
+
+    orm:
+        # В тестах отключаем ВСЕ кеши для предсказуемости и изоляции
+        # Каждый тест должен работать с актуальными данными
+
+        # Query Cache - array (очищается после каждого теста)
+        query_cache_driver:
+            type: pool
+            pool: doctrine.test_cache_pool
+
+        # Result Cache - array (очищается после каждого теста)
+        result_cache_driver:
+            type: pool
+            pool: doctrine.test_cache_pool
+
+        # Metadata Cache - не задаем, будет использоваться дефолтный (в памяти)
+
+framework:
+    cache:
+        pools:
+            # Array cache - автоматически очищается после каждого теста
+            # Обеспечивает изоляцию тестов друг от друга
+            doctrine.test_cache_pool:
+                adapter: cache.adapter.array
