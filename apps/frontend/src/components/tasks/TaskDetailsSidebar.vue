@@ -155,6 +155,29 @@ watch(() => props.selectedTask || props.task, async (newTask, oldTask) => {
   }
 }, { immediate: true })
 
+// Watch sidebar visibility to force refetch when reopening
+watch(localVisible, async (isVisible, wasVisible) => {
+  // When sidebar opens (false -> true), force refetch of current task
+  if (isVisible && !wasVisible && currentTask.value) {
+    const taskId = currentTask.value.id
+    console.log('Sidebar reopened, forcing refetch for task:', taskId)
+
+    // Reset lastLoadedTaskId and manually fetch fresh data
+    lastLoadedTaskId.value = null
+    isLoadingFullTask.value = true
+
+    try {
+      const fullTask = await taskStore.fetchTask(taskId)
+      localTask.value = { ...fullTask }
+      lastLoadedTaskId.value = taskId
+    } catch (error) {
+      console.error('Failed to reload task on sidebar reopen:', error)
+    } finally {
+      isLoadingFullTask.value = false
+    }
+  }
+})
+
 // Initialize tag suggestions when entering edit mode
 watch(editMode, (isEdit) => {
   if (isEdit && currentTask.value) {
@@ -430,9 +453,22 @@ async function handleSave() {
   isSubmitting.value = true
 
   try {
-    await taskStore.updateTask(currentTask.value.id, editData.value)
+    const updatedTask = await taskStore.updateTask(currentTask.value.id, editData.value)
     showSuccess(t('tasks.task_updated'))
     editMode.value = false
+
+    // Update localTask with fresh data from server
+    if (updatedTask) {
+      localTask.value = { ...updatedTask }
+      // Also emit the updated task to parent
+      if (props.selectedTask) {
+        emit('update:selectedTask', updatedTask)
+      }
+      if (props.task) {
+        emit('update:task', updatedTask)
+      }
+    }
+
     emit('task-updated')
   } catch (error: any) {
     showError(error.message || t('errors.unknown_error'))
