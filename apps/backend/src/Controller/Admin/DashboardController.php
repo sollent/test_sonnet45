@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller\Admin;
 
+use App\Entity\Tag;
 use App\Entity\Task;
 use App\Entity\User;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Dashboard;
@@ -57,6 +58,8 @@ class DashboardController extends AbstractDashboardController
 
         yield MenuItem::section('Task Management');
         yield MenuItem::linkToCrud('Tasks', 'fa fa-tasks', Task::class)
+            ->setPermission('ROLE_ADMIN');
+        yield MenuItem::linkToCrud('Tags', 'fa fa-tags', Tag::class)
             ->setPermission('ROLE_ADMIN');
 
         yield MenuItem::section();
