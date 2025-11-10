@@ -1,0 +1,139 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\Unit\Service\Recurrence\Strategy;
+
+use App\Entity\RecurrenceRule;
+use App\Service\Recurrence\Strategy\YearlyRecurrenceStrategy;
+use PHPUnit\Framework\TestCase;
+
+class YearlyRecurrenceStrategyTest extends TestCase
+{
+    private YearlyRecurrenceStrategy $strategy;
+
+    protected function setUp(): void
+    {
+        $this->strategy = new YearlyRecurrenceStrategy();
+    }
+
+    /** @test */
+    public function testCalculateNextOccurrenceMovesToNextYear(): void
+    {
+        $currentDate = new \DateTime('2025-05-15');
+        $rule = $this->createMock(RecurrenceRule::class);
+        $rule->method('getDayOfMonth')->willReturn(15);
+        $rule->method('getMonthOfYear')->willReturn(5); // May
+        $rule->method('getTimeOfDay')->willReturn(null);
+        $rule->method('getEndDate')->willReturn(null);
+        $rule->method('getMaxOccurrences')->willReturn(null);
+        $rule->method('getCurrentOccurrences')->willReturn(0);
+
+        $nextDate = $this->strategy->calculateNextOccurrence($currentDate, $rule);
+
+        $this->assertNotNull($nextDate);
+        $this->assertEquals('2026-05-15', $nextDate->format('Y-m-d'));
+    }
+
+    /** @test */
+    public function testAppliesTimeOfDayIfSet(): void
+    {
+        $currentDate = new \DateTime('2025-05-15');
+        $timeOfDay = new \DateTime('14:30:00');
+
+        $rule = $this->createMock(RecurrenceRule::class);
+        $rule->method('getDayOfMonth')->willReturn(15);
+        $rule->method('getMonthOfYear')->willReturn(5);
+        $rule->method('getTimeOfDay')->willReturn($timeOfDay);
+        $rule->method('getEndDate')->willReturn(null);
+        $rule->method('getMaxOccurrences')->willReturn(null);
+        $rule->method('getCurrentOccurrences')->willReturn(0);
+
+        $nextDate = $this->strategy->calculateNextOccurrence($currentDate, $rule);
+
+        $this->assertEquals('14:30:00', $nextDate->format('H:i:s'));
+    }
+
+    /** @test */
+    public function testRespectsEndDate(): void
+    {
+        $currentDate = new \DateTime('2025-05-15');
+        $endDate = new \DateTime('2025-12-31');
+
+        $rule = $this->createMock(RecurrenceRule::class);
+        $rule->method('getDayOfMonth')->willReturn(15);
+        $rule->method('getMonthOfYear')->willReturn(5);
+        $rule->method('getTimeOfDay')->willReturn(null);
+        $rule->method('getEndDate')->willReturn($endDate);
+        $rule->method('getMaxOccurrences')->willReturn(null);
+        $rule->method('getCurrentOccurrences')->willReturn(0);
+
+        $nextDate = $this->strategy->calculateNextOccurrence($currentDate, $rule);
+
+        $this->assertNull($nextDate);
+    }
+
+    /** @test */
+    public function testRespectsMaxOccurrences(): void
+    {
+        $currentDate = new \DateTime('2025-05-15');
+
+        $rule = $this->createMock(RecurrenceRule::class);
+        $rule->method('getDayOfMonth')->willReturn(15);
+        $rule->method('getMonthOfYear')->willReturn(5);
+        $rule->method('getTimeOfDay')->willReturn(null);
+        $rule->method('getEndDate')->willReturn(null);
+        $rule->method('getMaxOccurrences')->willReturn(5);
+        $rule->method('getCurrentOccurrences')->willReturn(5);
+
+        $nextDate = $this->strategy->calculateNextOccurrence($currentDate, $rule);
+
+        $this->assertNull($nextDate);
+    }
+
+    /** @test */
+    public function testSupportsOnlyYearlyType(): void
+    {
+        $this->assertTrue($this->strategy->supports(RecurrenceRule::TYPE_YEARLY));
+        $this->assertFalse($this->strategy->supports(RecurrenceRule::TYPE_DAILY));
+    }
+
+    /** @test */
+    public function testGetPreviewDatesReturnsCorrectCount(): void
+    {
+        $startDate = new \DateTime('2025-05-15');
+
+        $rule = $this->createMock(RecurrenceRule::class);
+        $rule->method('getDayOfMonth')->willReturn(15);
+        $rule->method('getMonthOfYear')->willReturn(5);
+        $rule->method('getTimeOfDay')->willReturn(null);
+        $rule->method('getEndDate')->willReturn(null);
+        $rule->method('getMaxOccurrences')->willReturn(null);
+        $rule->method('getCurrentOccurrences')->willReturn(0);
+
+        $previewDates = $this->strategy->getPreviewDates($startDate, $rule, 3);
+
+        $this->assertCount(3, $previewDates);
+        $this->assertEquals('2026-05-15', $previewDates[0]->format('Y-m-d'));
+        $this->assertEquals('2027-05-15', $previewDates[1]->format('Y-m-d'));
+    }
+
+    /** @test */
+    public function testGetPreviewDatesStopsAtEndDate(): void
+    {
+        $startDate = new \DateTime('2025-05-15');
+        $endDate = new \DateTime('2027-01-01');
+
+        $rule = $this->createMock(RecurrenceRule::class);
+        $rule->method('getDayOfMonth')->willReturn(15);
+        $rule->method('getMonthOfYear')->willReturn(5);
+        $rule->method('getTimeOfDay')->willReturn(null);
+        $rule->method('getEndDate')->willReturn($endDate);
+        $rule->method('getMaxOccurrences')->willReturn(null);
+        $rule->method('getCurrentOccurrences')->willReturn(0);
+
+        $previewDates = $this->strategy->getPreviewDates($startDate, $rule, 10);
+
+        $this->assertLessThanOrEqual(2, count($previewDates));
+    }
+}

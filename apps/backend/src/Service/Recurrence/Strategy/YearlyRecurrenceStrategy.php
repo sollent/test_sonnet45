@@ -12,14 +12,18 @@ class YearlyRecurrenceStrategy implements RecurrenceStrategyInterface
         $dayOfMonth = $rule->getDayOfMonth() ?? 1;
         $monthOfYear = $rule->getMonthOfYear() ?? 1;
         $next = clone $currentDate;
-        
+
         // Move to next year
         if ($next instanceof \DateTime) {
             $nextYear = (int)$next->format('Y') + 1;
-            $next->setDate($nextYear, $monthOfYear, min($dayOfMonth, cal_days_in_month(CAL_GREGORIAN, $monthOfYear, $nextYear)));
+            // Get days in target month using native DateTime
+            $daysInMonth = (int)(new \DateTime("{$nextYear}-{$monthOfYear}-01"))->format('t');
+            $next->setDate($nextYear, $monthOfYear, min($dayOfMonth, $daysInMonth));
         } else {
             $nextYear = (int)$next->format('Y') + 1;
-            $next = $next->setDate($nextYear, $monthOfYear, min($dayOfMonth, cal_days_in_month(CAL_GREGORIAN, $monthOfYear, $nextYear)));
+            // Get days in target month using native DateTime
+            $daysInMonth = (int)(new \DateTime("{$nextYear}-{$monthOfYear}-01"))->format('t');
+            $next = $next->setDate($nextYear, $monthOfYear, min($dayOfMonth, $daysInMonth));
         }
         
         // Apply time of day if set
