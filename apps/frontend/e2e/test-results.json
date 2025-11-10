@@ -103,12 +103,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 11004,
+                      "duration": 11596,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-10T13:20:07.749Z",
+                      "startTime": "2025-11-10T20:22:10.239Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -137,12 +137,12 @@
                       "workerIndex": 1,
                       "parallelIndex": 1,
                       "status": "passed",
-                      "duration": 5378,
+                      "duration": 6132,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-10T13:20:07.759Z",
+                      "startTime": "2025-11-10T20:22:10.227Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -171,12 +171,12 @@
                       "workerIndex": 2,
                       "parallelIndex": 2,
                       "status": "passed",
-                      "duration": 7885,
+                      "duration": 8387,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-10T13:20:07.749Z",
+                      "startTime": "2025-11-10T20:22:10.229Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -205,12 +205,12 @@
                       "workerIndex": 3,
                       "parallelIndex": 3,
                       "status": "passed",
-                      "duration": 8565,
+                      "duration": 8564,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-10T13:20:07.755Z",
+                      "startTime": "2025-11-10T20:22:10.247Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -239,12 +239,12 @@
                       "workerIndex": 4,
                       "parallelIndex": 4,
                       "status": "passed",
-                      "duration": 16830,
+                      "duration": 16864,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-10T13:20:07.764Z",
+                      "startTime": "2025-11-10T20:22:10.229Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -273,12 +273,12 @@
                       "workerIndex": 5,
                       "parallelIndex": 5,
                       "status": "passed",
-                      "duration": 6032,
+                      "duration": 6152,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-10T13:20:07.748Z",
+                      "startTime": "2025-11-10T20:22:10.230Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -324,12 +324,12 @@
                       "workerIndex": 6,
                       "parallelIndex": 6,
                       "status": "passed",
-                      "duration": 13415,
+                      "duration": 14188,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-10T13:20:07.770Z",
+                      "startTime": "2025-11-10T20:22:10.232Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -375,12 +375,12 @@
                       "workerIndex": 7,
                       "parallelIndex": 7,
                       "status": "passed",
-                      "duration": 11493,
+                      "duration": 16990,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-10T13:20:07.752Z",
+                      "startTime": "2025-11-10T20:22:10.233Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -409,12 +409,12 @@
                       "workerIndex": 1,
                       "parallelIndex": 1,
                       "status": "passed",
-                      "duration": 4260,
+                      "duration": 4399,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-10T13:20:14.157Z",
+                      "startTime": "2025-11-10T20:22:17.062Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -443,12 +443,12 @@
                       "workerIndex": 5,
                       "parallelIndex": 5,
                       "status": "passed",
-                      "duration": 20809,
+                      "duration": 15332,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-10T13:20:14.819Z",
+                      "startTime": "2025-11-10T20:22:17.143Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -477,12 +477,12 @@
                       "workerIndex": 2,
                       "parallelIndex": 2,
                       "status": "passed",
-                      "duration": 5351,
+                      "duration": 5447,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-10T13:20:16.671Z",
+                      "startTime": "2025-11-10T20:22:19.259Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -511,12 +511,12 @@
                       "workerIndex": 3,
                       "parallelIndex": 3,
                       "status": "passed",
-                      "duration": 5855,
+                      "duration": 6063,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-10T13:20:17.349Z",
+                      "startTime": "2025-11-10T20:22:19.567Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -545,12 +545,12 @@
                       "workerIndex": 1,
                       "parallelIndex": 1,
                       "status": "passed",
-                      "duration": 22069,
+                      "duration": 16808,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-10T13:20:18.454Z",
+                      "startTime": "2025-11-10T20:22:21.497Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -579,12 +579,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 4947,
+                      "duration": 4795,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-10T13:20:19.791Z",
+                      "startTime": "2025-11-10T20:22:22.534Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -634,15 +634,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 7,
-                          "parallelIndex": 7,
+                          "workerIndex": 2,
+                          "parallelIndex": 2,
                           "status": "passed",
-                          "duration": 13714,
+                          "duration": 13141,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2025-11-10T13:20:20.298Z",
+                          "startTime": "2025-11-10T20:22:24.784Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -668,15 +668,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 2,
-                          "parallelIndex": 2,
+                          "workerIndex": 6,
+                          "parallelIndex": 6,
                           "status": "passed",
-                          "duration": 18301,
+                          "duration": 17230,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2025-11-10T13:20:22.133Z",
+                          "startTime": "2025-11-10T20:22:25.127Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -702,10 +702,10 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 6,
-                          "parallelIndex": 6,
+                          "workerIndex": 3,
+                          "parallelIndex": 3,
                           "status": "failed",
-                          "duration": 16117,
+                          "duration": 15537,
                           "error": {
                             "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m",
                             "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n    at /Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/tests/calendar/calendar.spec.ts:101:26",
@@ -729,7 +729,7 @@
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2025-11-10T13:20:22.269Z",
+                          "startTime": "2025-11-10T20:22:25.820Z",
                           "annotations": [],
                           "attachments": [
                             {
@@ -776,15 +776,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 3,
-                          "parallelIndex": 3,
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
                           "status": "passed",
-                          "duration": 17335,
+                          "duration": 18112,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2025-11-10T13:20:23.262Z",
+                          "startTime": "2025-11-10T20:22:27.406Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -810,15 +810,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 0,
-                          "parallelIndex": 0,
+                          "workerIndex": 4,
+                          "parallelIndex": 4,
                           "status": "passed",
-                          "duration": 16500,
+                          "duration": 18331,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2025-11-10T13:20:24.938Z",
+                          "startTime": "2025-11-10T20:22:27.756Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -844,10 +844,10 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 4,
-                          "parallelIndex": 4,
+                          "workerIndex": 7,
+                          "parallelIndex": 7,
                           "status": "failed",
-                          "duration": 20352,
+                          "duration": 20167,
                           "error": {
                             "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"ноябрь\"\u001b[39m\nReceived string:    \u001b[31m\"november 2025\"\u001b[39m",
                             "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"ноябрь\"\u001b[39m\nReceived string:    \u001b[31m\"november 2025\"\u001b[39m\n    at /Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/tests/calendar/calendar.spec.ts:179:40",
@@ -871,7 +871,7 @@
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2025-11-10T13:20:25.624Z",
+                          "startTime": "2025-11-10T20:22:28.003Z",
                           "annotations": [],
                           "attachments": [
                             {
@@ -926,15 +926,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 7,
-                          "parallelIndex": 7,
+                          "workerIndex": 5,
+                          "parallelIndex": 5,
                           "status": "passed",
-                          "duration": 29890,
+                          "duration": 30592,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2025-11-10T13:20:34.120Z",
+                          "startTime": "2025-11-10T20:22:32.566Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -960,15 +960,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 5,
-                          "parallelIndex": 5,
+                          "workerIndex": 2,
+                          "parallelIndex": 2,
                           "status": "passed",
-                          "duration": 28827,
+                          "duration": 29671,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2025-11-10T13:20:35.722Z",
+                          "startTime": "2025-11-10T20:22:37.973Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -983,7 +983,7 @@
                 },
                 {
                   "title": "TC-CAL-009: Create task from calendar date",
-                  "ok": true,
+                  "ok": false,
                   "tags": [],
                   "tests": [
                     {
@@ -994,20 +994,60 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 8,
-                          "parallelIndex": 6,
-                          "status": "passed",
-                          "duration": 24296,
-                          "errors": [],
+                          "workerIndex": 1,
+                          "parallelIndex": 1,
+                          "status": "failed",
+                          "duration": 21062,
+                          "error": {
+                            "message": "TimeoutError: locator.waitFor: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.calendar-day, .day, [class*=\"calendar-day\"], [class*=\"day-cell\"]').filter({ hasText: /^12$/ }).first() to be visible\u001b[22m\n",
+                            "stack": "TimeoutError: locator.waitFor: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.calendar-day, .day, [class*=\"calendar-day\"], [class*=\"day-cell\"]').filter({ hasText: /^12$/ }).first() to be visible\u001b[22m\n\n    at CalendarPage.clickDay (/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/page-objects/CalendarPage.ts:140:19)\n    at /Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/tests/calendar/calendar.spec.ts:275:26",
+                            "location": {
+                              "file": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/page-objects/CalendarPage.ts",
+                              "column": 19,
+                              "line": 140
+                            },
+                            "snippet": "\u001b[90m   at \u001b[39m../page-objects/CalendarPage.ts:140\n\n\u001b[0m \u001b[90m 138 |\u001b[39m     \u001b[90m// Find day cell with specific number\u001b[39m\n \u001b[90m 139 |\u001b[39m     \u001b[36mconst\u001b[39m dayCell \u001b[33m=\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mcalendarDays\u001b[33m.\u001b[39mfilter({ hasText\u001b[33m:\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mRegExp\u001b[39m(\u001b[32m`^${dayNumber}$`\u001b[39m) })\u001b[33m.\u001b[39mfirst()\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 140 |\u001b[39m     \u001b[36mawait\u001b[39m dayCell\u001b[33m.\u001b[39mwaitFor({ state\u001b[33m:\u001b[39m \u001b[32m'visible'\u001b[39m\u001b[33m,\u001b[39m timeout\u001b[33m:\u001b[39m \u001b[35m5000\u001b[39m })\n \u001b[90m     |\u001b[39m                   \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 141 |\u001b[39m     \u001b[36mawait\u001b[39m dayCell\u001b[33m.\u001b[39mscrollIntoViewIfNeeded()\n \u001b[90m 142 |\u001b[39m     \u001b[36mawait\u001b[39m dayCell\u001b[33m.\u001b[39mclick()\n \u001b[90m 143 |\u001b[39m     \u001b[36mawait\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mpage\u001b[33m.\u001b[39mwaitForTimeout(\u001b[35m1000\u001b[39m)\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/page-objects/CalendarPage.ts",
+                                "column": 19,
+                                "line": 140
+                              },
+                              "message": "TimeoutError: locator.waitFor: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.calendar-day, .day, [class*=\"calendar-day\"], [class*=\"day-cell\"]').filter({ hasText: /^12$/ }).first() to be visible\u001b[22m\n\n\n\u001b[90m   at \u001b[39m../page-objects/CalendarPage.ts:140\n\n\u001b[0m \u001b[90m 138 |\u001b[39m     \u001b[90m// Find day cell with specific number\u001b[39m\n \u001b[90m 139 |\u001b[39m     \u001b[36mconst\u001b[39m dayCell \u001b[33m=\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mcalendarDays\u001b[33m.\u001b[39mfilter({ hasText\u001b[33m:\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mRegExp\u001b[39m(\u001b[32m`^${dayNumber}$`\u001b[39m) })\u001b[33m.\u001b[39mfirst()\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 140 |\u001b[39m     \u001b[36mawait\u001b[39m dayCell\u001b[33m.\u001b[39mwaitFor({ state\u001b[33m:\u001b[39m \u001b[32m'visible'\u001b[39m\u001b[33m,\u001b[39m timeout\u001b[33m:\u001b[39m \u001b[35m5000\u001b[39m })\n \u001b[90m     |\u001b[39m                   \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 141 |\u001b[39m     \u001b[36mawait\u001b[39m dayCell\u001b[33m.\u001b[39mscrollIntoViewIfNeeded()\n \u001b[90m 142 |\u001b[39m     \u001b[36mawait\u001b[39m dayCell\u001b[33m.\u001b[39mclick()\n \u001b[90m 143 |\u001b[39m     \u001b[36mawait\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mpage\u001b[33m.\u001b[39mwaitForTimeout(\u001b[35m1000\u001b[39m)\u001b[0m\n\u001b[2m    at CalendarPage.clickDay (/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/page-objects/CalendarPage.ts:140:19)\u001b[22m\n\u001b[2m    at /Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/tests/calendar/calendar.spec.ts:275:26\u001b[22m"
+                            }
+                          ],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2025-11-10T13:20:42.619Z",
+                          "startTime": "2025-11-10T20:22:38.471Z",
                           "annotations": [],
-                          "attachments": []
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/test-results/calendar-calendar-Calendar-64362-ate-task-from-calendar-date-chromium/test-failed-1.png"
+                            },
+                            {
+                              "name": "video",
+                              "contentType": "video/webm",
+                              "path": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/test-results/calendar-calendar-Calendar-64362-ate-task-from-calendar-date-chromium/video.webm"
+                            },
+                            {
+                              "name": "error-context",
+                              "contentType": "text/markdown",
+                              "path": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/test-results/calendar-calendar-Calendar-64362-ate-task-from-calendar-date-chromium/error-context.md"
+                            }
+                          ],
+                          "errorLocation": {
+                            "file": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/page-objects/CalendarPage.ts",
+                            "column": 19,
+                            "line": 140
+                          }
                         }
                       ],
-                      "status": "expected"
+                      "status": "unexpected"
                     }
                   ],
                   "id": "4edc3a56a798f857a987-17b1e5f35226636fcfb8",
@@ -1054,15 +1094,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 2,
-                          "parallelIndex": 2,
+                          "workerIndex": 8,
+                          "parallelIndex": 3,
                           "status": "passed",
-                          "duration": 15609,
+                          "duration": 16122,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2025-11-10T13:20:40.491Z",
+                          "startTime": "2025-11-10T20:22:44.544Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -1088,15 +1128,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 1,
-                          "parallelIndex": 1,
+                          "workerIndex": 6,
+                          "parallelIndex": 6,
                           "status": "passed",
-                          "duration": 15650,
+                          "duration": 16485,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2025-11-10T13:20:40.605Z",
+                          "startTime": "2025-11-10T20:22:42.489Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -1122,15 +1162,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 3,
-                          "parallelIndex": 3,
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
                           "status": "passed",
-                          "duration": 12924,
+                          "duration": 13013,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2025-11-10T13:20:40.673Z",
+                          "startTime": "2025-11-10T20:22:45.757Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -1164,15 +1204,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 0,
-                          "parallelIndex": 0,
+                          "workerIndex": 4,
+                          "parallelIndex": 4,
                           "status": "passed",
-                          "duration": 14949,
+                          "duration": 17341,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2025-11-10T13:20:41.497Z",
+                          "startTime": "2025-11-10T20:22:46.151Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -1199,14 +1239,14 @@
                       "results": [
                         {
                           "workerIndex": 9,
-                          "parallelIndex": 4,
+                          "parallelIndex": 7,
                           "status": "passed",
-                          "duration": 16529,
+                          "duration": 16498,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2025-11-10T13:20:51.568Z",
+                          "startTime": "2025-11-10T20:22:52.553Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -1232,15 +1272,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 3,
-                          "parallelIndex": 3,
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
                           "status": "passed",
-                          "duration": 17618,
+                          "duration": 17873,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2025-11-10T13:20:53.705Z",
+                          "startTime": "2025-11-10T20:22:58.833Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -1266,15 +1306,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 2,
-                          "parallelIndex": 2,
+                          "workerIndex": 6,
+                          "parallelIndex": 6,
                           "status": "passed",
-                          "duration": 18159,
+                          "duration": 19662,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2025-11-10T13:20:56.139Z",
+                          "startTime": "2025-11-10T20:22:59.028Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -1308,15 +1348,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 1,
-                          "parallelIndex": 1,
+                          "workerIndex": 8,
+                          "parallelIndex": 3,
                           "status": "passed",
-                          "duration": 22287,
+                          "duration": 23713,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2025-11-10T13:20:56.308Z",
+                          "startTime": "2025-11-10T20:23:01.267Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -1342,15 +1382,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 0,
-                          "parallelIndex": 0,
+                          "workerIndex": 10,
+                          "parallelIndex": 1,
                           "status": "passed",
-                          "duration": 21927,
+                          "duration": 22810,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2025-11-10T13:20:56.479Z",
+                          "startTime": "2025-11-10T20:23:05.615Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -1376,15 +1416,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 7,
-                          "parallelIndex": 7,
+                          "workerIndex": 5,
+                          "parallelIndex": 5,
                           "status": "passed",
-                          "duration": 21002,
+                          "duration": 22192,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2025-11-10T13:21:04.076Z",
+                          "startTime": "2025-11-10T20:23:03.316Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -1395,6 +1435,476 @@
                   "id": "747340cde928aa6c3216-337eb13f2e569ab11780",
                   "file": "dashboard/dashboard.spec.ts",
                   "line": 385,
+                  "column": 5
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "filters/filters.spec.ts",
+      "file": "filters/filters.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Filters",
+          "file": "filters/filters.spec.ts",
+          "line": 10,
+          "column": 6,
+          "specs": [],
+          "suites": [
+            {
+              "title": "6.1 Quick Filters",
+              "file": "filters/filters.spec.ts",
+              "line": 72,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "TC-FILTER-001: Apply \"На сегодня\" quick filter",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 4,
+                          "parallelIndex": 4,
+                          "status": "failed",
+                          "duration": 26308,
+                          "error": {
+                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('button', { name: /На сегодня/i }).first()\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('button', { name: /На сегодня/i }).first()\u001b[22m\n",
+                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('button', { name: /На сегодня/i }).first()\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('button', { name: /На сегодня/i }).first()\u001b[22m\n\n    at /Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/tests/filters/filters.spec.ts:80:39",
+                            "location": {
+                              "file": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/tests/filters/filters.spec.ts",
+                              "column": 39,
+                              "line": 80
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 78 |\u001b[39m       \u001b[90m// Click \"На сегодня\" quick filter\u001b[39m\n \u001b[90m 79 |\u001b[39m       \u001b[36mconst\u001b[39m todayFilterButton \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m { name\u001b[33m:\u001b[39m \u001b[35m/На сегодня/i\u001b[39m })\u001b[33m.\u001b[39mfirst()\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 80 |\u001b[39m       \u001b[36mawait\u001b[39m expect(todayFilterButton)\u001b[33m.\u001b[39mtoBeVisible({ timeout\u001b[33m:\u001b[39m \u001b[35m5000\u001b[39m })\n \u001b[90m    |\u001b[39m                                       \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 81 |\u001b[39m       \u001b[36mawait\u001b[39m todayFilterButton\u001b[33m.\u001b[39mclick()\n \u001b[90m 82 |\u001b[39m       \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForTimeout(\u001b[35m1500\u001b[39m)\n \u001b[90m 83 |\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/tests/filters/filters.spec.ts",
+                                "column": 39,
+                                "line": 80
+                              },
+                              "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('button', { name: /На сегодня/i }).first()\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('button', { name: /На сегодня/i }).first()\u001b[22m\n\n\n\u001b[0m \u001b[90m 78 |\u001b[39m       \u001b[90m// Click \"На сегодня\" quick filter\u001b[39m\n \u001b[90m 79 |\u001b[39m       \u001b[36mconst\u001b[39m todayFilterButton \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m { name\u001b[33m:\u001b[39m \u001b[35m/На сегодня/i\u001b[39m })\u001b[33m.\u001b[39mfirst()\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 80 |\u001b[39m       \u001b[36mawait\u001b[39m expect(todayFilterButton)\u001b[33m.\u001b[39mtoBeVisible({ timeout\u001b[33m:\u001b[39m \u001b[35m5000\u001b[39m })\n \u001b[90m    |\u001b[39m                                       \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 81 |\u001b[39m       \u001b[36mawait\u001b[39m todayFilterButton\u001b[33m.\u001b[39mclick()\n \u001b[90m 82 |\u001b[39m       \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForTimeout(\u001b[35m1500\u001b[39m)\n \u001b[90m 83 |\u001b[39m\u001b[0m\n\u001b[2m    at /Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/tests/filters/filters.spec.ts:80:39\u001b[22m"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-11-10T20:23:03.574Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/test-results/filters-filters-Filters-6--32585-ply-На-сегодня-quick-filter-chromium/test-failed-1.png"
+                            },
+                            {
+                              "name": "video",
+                              "contentType": "video/webm",
+                              "path": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/test-results/filters-filters-Filters-6--32585-ply-На-сегодня-quick-filter-chromium/video.webm"
+                            },
+                            {
+                              "name": "error-context",
+                              "contentType": "text/markdown",
+                              "path": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/test-results/filters-filters-Filters-6--32585-ply-На-сегодня-quick-filter-chromium/error-context.md"
+                            }
+                          ],
+                          "errorLocation": {
+                            "file": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/tests/filters/filters.spec.ts",
+                            "column": 39,
+                            "line": 80
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "2c1c7214469a8e9e1872-9abb0c45a3d2b67193eb",
+                  "file": "filters/filters.spec.ts",
+                  "line": 73,
+                  "column": 5
+                },
+                {
+                  "title": "TC-FILTER-002: Apply \"Срочные\" quick filter",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 2,
+                          "parallelIndex": 2,
+                          "status": "failed",
+                          "duration": 25243,
+                          "error": {
+                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('button', { name: /Срочные/i }).first()\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('button', { name: /Срочные/i }).first()\u001b[22m\n",
+                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('button', { name: /Срочные/i }).first()\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('button', { name: /Срочные/i }).first()\u001b[22m\n\n    at /Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/tests/filters/filters.spec.ts:101:40",
+                            "location": {
+                              "file": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/tests/filters/filters.spec.ts",
+                              "column": 40,
+                              "line": 101
+                            },
+                            "snippet": "\u001b[0m \u001b[90m  99 |\u001b[39m       \u001b[90m// Click \"Срочные\" quick filter\u001b[39m\n \u001b[90m 100 |\u001b[39m       \u001b[36mconst\u001b[39m urgentFilterButton \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m { name\u001b[33m:\u001b[39m \u001b[35m/Срочные/i\u001b[39m })\u001b[33m.\u001b[39mfirst()\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 101 |\u001b[39m       \u001b[36mawait\u001b[39m expect(urgentFilterButton)\u001b[33m.\u001b[39mtoBeVisible({ timeout\u001b[33m:\u001b[39m \u001b[35m5000\u001b[39m })\n \u001b[90m     |\u001b[39m                                        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 102 |\u001b[39m       \u001b[36mawait\u001b[39m urgentFilterButton\u001b[33m.\u001b[39mclick()\n \u001b[90m 103 |\u001b[39m       \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForTimeout(\u001b[35m1500\u001b[39m)\n \u001b[90m 104 |\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/tests/filters/filters.spec.ts",
+                                "column": 40,
+                                "line": 101
+                              },
+                              "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('button', { name: /Срочные/i }).first()\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('button', { name: /Срочные/i }).first()\u001b[22m\n\n\n\u001b[0m \u001b[90m  99 |\u001b[39m       \u001b[90m// Click \"Срочные\" quick filter\u001b[39m\n \u001b[90m 100 |\u001b[39m       \u001b[36mconst\u001b[39m urgentFilterButton \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m { name\u001b[33m:\u001b[39m \u001b[35m/Срочные/i\u001b[39m })\u001b[33m.\u001b[39mfirst()\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 101 |\u001b[39m       \u001b[36mawait\u001b[39m expect(urgentFilterButton)\u001b[33m.\u001b[39mtoBeVisible({ timeout\u001b[33m:\u001b[39m \u001b[35m5000\u001b[39m })\n \u001b[90m     |\u001b[39m                                        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 102 |\u001b[39m       \u001b[36mawait\u001b[39m urgentFilterButton\u001b[33m.\u001b[39mclick()\n \u001b[90m 103 |\u001b[39m       \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForTimeout(\u001b[35m1500\u001b[39m)\n \u001b[90m 104 |\u001b[39m\u001b[0m\n\u001b[2m    at /Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/tests/filters/filters.spec.ts:101:40\u001b[22m"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-11-10T20:23:07.739Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/test-results/filters-filters-Filters-6--ebe4d--Apply-Срочные-quick-filter-chromium/test-failed-1.png"
+                            },
+                            {
+                              "name": "video",
+                              "contentType": "video/webm",
+                              "path": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/test-results/filters-filters-Filters-6--ebe4d--Apply-Срочные-quick-filter-chromium/video.webm"
+                            },
+                            {
+                              "name": "error-context",
+                              "contentType": "text/markdown",
+                              "path": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/test-results/filters-filters-Filters-6--ebe4d--Apply-Срочные-quick-filter-chromium/error-context.md"
+                            }
+                          ],
+                          "errorLocation": {
+                            "file": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/tests/filters/filters.spec.ts",
+                            "column": 40,
+                            "line": 101
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "2c1c7214469a8e9e1872-9ba36e4c3dd84f165ffa",
+                  "file": "filters/filters.spec.ts",
+                  "line": 98,
+                  "column": 5
+                },
+                {
+                  "title": "TC-FILTER-003: Apply \"Просроченные\" quick filter",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 9,
+                          "parallelIndex": 7,
+                          "status": "failed",
+                          "duration": 24518,
+                          "error": {
+                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('button', { name: /Просроченные/i }).first()\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('button', { name: /Просроченные/i }).first()\u001b[22m\n",
+                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('button', { name: /Просроченные/i }).first()\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('button', { name: /Просроченные/i }).first()\u001b[22m\n\n    at /Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/tests/filters/filters.spec.ts:118:41",
+                            "location": {
+                              "file": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/tests/filters/filters.spec.ts",
+                              "column": 41,
+                              "line": 118
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 116 |\u001b[39m       \u001b[90m// Click \"Просроченные\" quick filter\u001b[39m\n \u001b[90m 117 |\u001b[39m       \u001b[36mconst\u001b[39m overdueFilterButton \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m { name\u001b[33m:\u001b[39m \u001b[35m/Просроченные/i\u001b[39m })\u001b[33m.\u001b[39mfirst()\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 118 |\u001b[39m       \u001b[36mawait\u001b[39m expect(overdueFilterButton)\u001b[33m.\u001b[39mtoBeVisible({ timeout\u001b[33m:\u001b[39m \u001b[35m5000\u001b[39m })\n \u001b[90m     |\u001b[39m                                         \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 119 |\u001b[39m       \u001b[36mawait\u001b[39m overdueFilterButton\u001b[33m.\u001b[39mclick()\n \u001b[90m 120 |\u001b[39m       \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForTimeout(\u001b[35m1500\u001b[39m)\n \u001b[90m 121 |\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/tests/filters/filters.spec.ts",
+                                "column": 41,
+                                "line": 118
+                              },
+                              "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('button', { name: /Просроченные/i }).first()\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('button', { name: /Просроченные/i }).first()\u001b[22m\n\n\n\u001b[0m \u001b[90m 116 |\u001b[39m       \u001b[90m// Click \"Просроченные\" quick filter\u001b[39m\n \u001b[90m 117 |\u001b[39m       \u001b[36mconst\u001b[39m overdueFilterButton \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m { name\u001b[33m:\u001b[39m \u001b[35m/Просроченные/i\u001b[39m })\u001b[33m.\u001b[39mfirst()\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 118 |\u001b[39m       \u001b[36mawait\u001b[39m expect(overdueFilterButton)\u001b[33m.\u001b[39mtoBeVisible({ timeout\u001b[33m:\u001b[39m \u001b[35m5000\u001b[39m })\n \u001b[90m     |\u001b[39m                                         \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 119 |\u001b[39m       \u001b[36mawait\u001b[39m overdueFilterButton\u001b[33m.\u001b[39mclick()\n \u001b[90m 120 |\u001b[39m       \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForTimeout(\u001b[35m1500\u001b[39m)\n \u001b[90m 121 |\u001b[39m\u001b[0m\n\u001b[2m    at /Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/tests/filters/filters.spec.ts:118:41\u001b[22m"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-11-10T20:23:09.661Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/test-results/filters-filters-Filters-6--ff69e-y-Просроченные-quick-filter-chromium/test-failed-1.png"
+                            },
+                            {
+                              "name": "video",
+                              "contentType": "video/webm",
+                              "path": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/test-results/filters-filters-Filters-6--ff69e-y-Просроченные-quick-filter-chromium/video.webm"
+                            },
+                            {
+                              "name": "error-context",
+                              "contentType": "text/markdown",
+                              "path": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/test-results/filters-filters-Filters-6--ff69e-y-Просроченные-quick-filter-chromium/error-context.md"
+                            }
+                          ],
+                          "errorLocation": {
+                            "file": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/tests/filters/filters.spec.ts",
+                            "column": 41,
+                            "line": 118
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "2c1c7214469a8e9e1872-d9d15a266db5093baf11",
+                  "file": "filters/filters.spec.ts",
+                  "line": 115,
+                  "column": 5
+                },
+                {
+                  "title": "TC-FILTER-004: Apply \"В процессе\" quick filter",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "failed",
+                          "duration": 22838,
+                          "error": {
+                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('button', { name: /В процессе/i }).first()\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('button', { name: /В процессе/i }).first()\u001b[22m\n",
+                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('button', { name: /В процессе/i }).first()\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('button', { name: /В процессе/i }).first()\u001b[22m\n\n    at /Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/tests/filters/filters.spec.ts:135:44",
+                            "location": {
+                              "file": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/tests/filters/filters.spec.ts",
+                              "column": 44,
+                              "line": 135
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 133 |\u001b[39m       \u001b[90m// Click \"В процессе\" quick filter\u001b[39m\n \u001b[90m 134 |\u001b[39m       \u001b[36mconst\u001b[39m inProgressFilterButton \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m { name\u001b[33m:\u001b[39m \u001b[35m/В процессе/i\u001b[39m })\u001b[33m.\u001b[39mfirst()\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 135 |\u001b[39m       \u001b[36mawait\u001b[39m expect(inProgressFilterButton)\u001b[33m.\u001b[39mtoBeVisible({ timeout\u001b[33m:\u001b[39m \u001b[35m5000\u001b[39m })\n \u001b[90m     |\u001b[39m                                            \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 136 |\u001b[39m       \u001b[36mawait\u001b[39m inProgressFilterButton\u001b[33m.\u001b[39mclick()\n \u001b[90m 137 |\u001b[39m       \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForTimeout(\u001b[35m1500\u001b[39m)\n \u001b[90m 138 |\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/tests/filters/filters.spec.ts",
+                                "column": 44,
+                                "line": 135
+                              },
+                              "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('button', { name: /В процессе/i }).first()\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('button', { name: /В процессе/i }).first()\u001b[22m\n\n\n\u001b[0m \u001b[90m 133 |\u001b[39m       \u001b[90m// Click \"В процессе\" quick filter\u001b[39m\n \u001b[90m 134 |\u001b[39m       \u001b[36mconst\u001b[39m inProgressFilterButton \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m { name\u001b[33m:\u001b[39m \u001b[35m/В процессе/i\u001b[39m })\u001b[33m.\u001b[39mfirst()\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 135 |\u001b[39m       \u001b[36mawait\u001b[39m expect(inProgressFilterButton)\u001b[33m.\u001b[39mtoBeVisible({ timeout\u001b[33m:\u001b[39m \u001b[35m5000\u001b[39m })\n \u001b[90m     |\u001b[39m                                            \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 136 |\u001b[39m       \u001b[36mawait\u001b[39m inProgressFilterButton\u001b[33m.\u001b[39mclick()\n \u001b[90m 137 |\u001b[39m       \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForTimeout(\u001b[35m1500\u001b[39m)\n \u001b[90m 138 |\u001b[39m\u001b[0m\n\u001b[2m    at /Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/tests/filters/filters.spec.ts:135:44\u001b[22m"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-11-10T20:23:16.820Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/test-results/filters-filters-Filters-6--b9bc5-ply-В-процессе-quick-filter-chromium/test-failed-1.png"
+                            },
+                            {
+                              "name": "video",
+                              "contentType": "video/webm",
+                              "path": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/test-results/filters-filters-Filters-6--b9bc5-ply-В-процессе-quick-filter-chromium/video.webm"
+                            },
+                            {
+                              "name": "error-context",
+                              "contentType": "text/markdown",
+                              "path": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/test-results/filters-filters-Filters-6--b9bc5-ply-В-процессе-quick-filter-chromium/error-context.md"
+                            }
+                          ],
+                          "errorLocation": {
+                            "file": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/tests/filters/filters.spec.ts",
+                            "column": 44,
+                            "line": 135
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "2c1c7214469a8e9e1872-f39260a7aeafd131f9eb",
+                  "file": "filters/filters.spec.ts",
+                  "line": 132,
+                  "column": 5
+                },
+                {
+                  "title": "TC-FILTER-005: Apply multiple quick filters",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 6,
+                          "parallelIndex": 6,
+                          "status": "failed",
+                          "duration": 36091,
+                          "error": {
+                            "message": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: /На сегодня/i }).first()\u001b[22m\n",
+                            "stack": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: /На сегодня/i }).first()\u001b[22m\n\n    at /Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/tests/filters/filters.spec.ts:155:31",
+                            "location": {
+                              "file": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/tests/filters/filters.spec.ts",
+                              "column": 31,
+                              "line": 155
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 153 |\u001b[39m       \u001b[90m// Click \"На сегодня\" filter\u001b[39m\n \u001b[90m 154 |\u001b[39m       \u001b[36mconst\u001b[39m todayFilterButton \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m { name\u001b[33m:\u001b[39m \u001b[35m/На сегодня/i\u001b[39m })\u001b[33m.\u001b[39mfirst()\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 155 |\u001b[39m       \u001b[36mawait\u001b[39m todayFilterButton\u001b[33m.\u001b[39mclick()\n \u001b[90m     |\u001b[39m                               \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 156 |\u001b[39m       \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForTimeout(\u001b[35m1500\u001b[39m)\n \u001b[90m 157 |\u001b[39m\n \u001b[90m 158 |\u001b[39m       \u001b[90m// Verify filter is applied\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/tests/filters/filters.spec.ts",
+                                "column": 31,
+                                "line": 155
+                              },
+                              "message": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: /На сегодня/i }).first()\u001b[22m\n\n\n\u001b[0m \u001b[90m 153 |\u001b[39m       \u001b[90m// Click \"На сегодня\" filter\u001b[39m\n \u001b[90m 154 |\u001b[39m       \u001b[36mconst\u001b[39m todayFilterButton \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m { name\u001b[33m:\u001b[39m \u001b[35m/На сегодня/i\u001b[39m })\u001b[33m.\u001b[39mfirst()\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 155 |\u001b[39m       \u001b[36mawait\u001b[39m todayFilterButton\u001b[33m.\u001b[39mclick()\n \u001b[90m     |\u001b[39m                               \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 156 |\u001b[39m       \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForTimeout(\u001b[35m1500\u001b[39m)\n \u001b[90m 157 |\u001b[39m\n \u001b[90m 158 |\u001b[39m       \u001b[90m// Verify filter is applied\u001b[39m\u001b[0m\n\u001b[2m    at /Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/tests/filters/filters.spec.ts:155:31\u001b[22m"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-11-10T20:23:18.818Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/test-results/filters-filters-Filters-6--1e906-pply-multiple-quick-filters-chromium/test-failed-1.png"
+                            },
+                            {
+                              "name": "video",
+                              "contentType": "video/webm",
+                              "path": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/test-results/filters-filters-Filters-6--1e906-pply-multiple-quick-filters-chromium/video.webm"
+                            },
+                            {
+                              "name": "error-context",
+                              "contentType": "text/markdown",
+                              "path": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/test-results/filters-filters-Filters-6--1e906-pply-multiple-quick-filters-chromium/error-context.md"
+                            }
+                          ],
+                          "errorLocation": {
+                            "file": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/tests/filters/filters.spec.ts",
+                            "column": 31,
+                            "line": 155
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "2c1c7214469a8e9e1872-b2868e914d5f07b0abdd",
+                  "file": "filters/filters.spec.ts",
+                  "line": 149,
+                  "column": 5
+                },
+                {
+                  "title": "TC-FILTER-006: Clear quick filters",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 8,
+                          "parallelIndex": 3,
+                          "status": "failed",
+                          "duration": 34467,
+                          "error": {
+                            "message": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: /На сегодня/i }).first()\u001b[22m\n",
+                            "stack": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: /На сегодня/i }).first()\u001b[22m\n\n    at /Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/tests/filters/filters.spec.ts:182:31",
+                            "location": {
+                              "file": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/tests/filters/filters.spec.ts",
+                              "column": 31,
+                              "line": 182
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 180 |\u001b[39m       \u001b[90m// Apply a quick filter first\u001b[39m\n \u001b[90m 181 |\u001b[39m       \u001b[36mconst\u001b[39m todayFilterButton \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m { name\u001b[33m:\u001b[39m \u001b[35m/На сегодня/i\u001b[39m })\u001b[33m.\u001b[39mfirst()\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 182 |\u001b[39m       \u001b[36mawait\u001b[39m todayFilterButton\u001b[33m.\u001b[39mclick()\n \u001b[90m     |\u001b[39m                               \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 183 |\u001b[39m       \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForTimeout(\u001b[35m1500\u001b[39m)\n \u001b[90m 184 |\u001b[39m\n \u001b[90m 185 |\u001b[39m       \u001b[90m// Verify filter is applied\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/tests/filters/filters.spec.ts",
+                                "column": 31,
+                                "line": 182
+                              },
+                              "message": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: /На сегодня/i }).first()\u001b[22m\n\n\n\u001b[0m \u001b[90m 180 |\u001b[39m       \u001b[90m// Apply a quick filter first\u001b[39m\n \u001b[90m 181 |\u001b[39m       \u001b[36mconst\u001b[39m todayFilterButton \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m { name\u001b[33m:\u001b[39m \u001b[35m/На сегодня/i\u001b[39m })\u001b[33m.\u001b[39mfirst()\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 182 |\u001b[39m       \u001b[36mawait\u001b[39m todayFilterButton\u001b[33m.\u001b[39mclick()\n \u001b[90m     |\u001b[39m                               \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 183 |\u001b[39m       \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForTimeout(\u001b[35m1500\u001b[39m)\n \u001b[90m 184 |\u001b[39m\n \u001b[90m 185 |\u001b[39m       \u001b[90m// Verify filter is applied\u001b[39m\u001b[0m\n\u001b[2m    at /Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/tests/filters/filters.spec.ts:182:31\u001b[22m"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-11-10T20:23:25.091Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/test-results/filters-filters-Filters-6--3b300-TER-006-Clear-quick-filters-chromium/test-failed-1.png"
+                            },
+                            {
+                              "name": "video",
+                              "contentType": "video/webm",
+                              "path": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/test-results/filters-filters-Filters-6--3b300-TER-006-Clear-quick-filters-chromium/video.webm"
+                            },
+                            {
+                              "name": "error-context",
+                              "contentType": "text/markdown",
+                              "path": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/test-results/filters-filters-Filters-6--3b300-TER-006-Clear-quick-filters-chromium/error-context.md"
+                            }
+                          ],
+                          "errorLocation": {
+                            "file": "/Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/tests/filters/filters.spec.ts",
+                            "column": 31,
+                            "line": 182
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "2c1c7214469a8e9e1872-daab321759510a71bee4",
+                  "file": "filters/filters.spec.ts",
+                  "line": 179,
                   "column": 5
                 }
               ]
@@ -1432,7 +1942,7 @@
                       "workerIndex": 5,
                       "parallelIndex": 5,
                       "status": "failed",
-                      "duration": 48079,
+                      "duration": 50119,
                       "error": {
                         "message": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: /сегодня|today/i }).first()\u001b[22m\n\u001b[2m    - locator resolved to <button class=\"view-item\" data-v-10693190=\"\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    29 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is visible, enabled and stable\u001b[22m\n\u001b[2m       - scrolling into view if needed\u001b[22m\n\u001b[2m       - done scrolling\u001b[22m\n\u001b[2m       - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n",
                         "stack": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: /сегодня|today/i }).first()\u001b[22m\n\u001b[2m    - locator resolved to <button class=\"view-item\" data-v-10693190=\"\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    29 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is visible, enabled and stable\u001b[22m\n\u001b[2m       - scrolling into view if needed\u001b[22m\n\u001b[2m       - done scrolling\u001b[22m\n\u001b[2m       - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\n    at /Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/tests/tasks/task-completion.spec.ts:54:25",
@@ -1456,7 +1966,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-10T13:21:04.598Z",
+                      "startTime": "2025-11-10T20:23:25.587Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1503,10 +2013,10 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 8,
-                      "parallelIndex": 6,
+                      "workerIndex": 10,
+                      "parallelIndex": 1,
                       "status": "failed",
-                      "duration": 49608,
+                      "duration": 48604,
                       "error": {
                         "message": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: /сегодня|today/i }).first()\u001b[22m\n\u001b[2m    - locator resolved to <button class=\"view-item\" data-v-10693190=\"\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    29 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is visible, enabled and stable\u001b[22m\n\u001b[2m       - scrolling into view if needed\u001b[22m\n\u001b[2m       - done scrolling\u001b[22m\n\u001b[2m       - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n",
                         "stack": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: /сегодня|today/i }).first()\u001b[22m\n\u001b[2m    - locator resolved to <button class=\"view-item\" data-v-10693190=\"\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    29 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is visible, enabled and stable\u001b[22m\n\u001b[2m       - scrolling into view if needed\u001b[22m\n\u001b[2m       - done scrolling\u001b[22m\n\u001b[2m       - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\n    at /Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/tests/tasks/task-completion.spec.ts:122:25",
@@ -1530,7 +2040,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-10T13:21:07.566Z",
+                      "startTime": "2025-11-10T20:23:29.078Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1577,10 +2087,10 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 9,
+                      "workerIndex": 11,
                       "parallelIndex": 4,
                       "status": "failed",
-                      "duration": 49360,
+                      "duration": 50232,
                       "error": {
                         "message": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: /сегодня|today/i }).first()\u001b[22m\n\u001b[2m    - locator resolved to <button class=\"view-item\" data-v-10693190=\"\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    29 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is visible, enabled and stable\u001b[22m\n\u001b[2m       - scrolling into view if needed\u001b[22m\n\u001b[2m       - done scrolling\u001b[22m\n\u001b[2m       - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n",
                         "stack": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: /сегодня|today/i }).first()\u001b[22m\n\u001b[2m    - locator resolved to <button class=\"view-item\" data-v-10693190=\"\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    29 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is visible, enabled and stable\u001b[22m\n\u001b[2m       - scrolling into view if needed\u001b[22m\n\u001b[2m       - done scrolling\u001b[22m\n\u001b[2m       - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\n    at /Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/tests/tasks/task-completion.spec.ts:184:25",
@@ -1604,7 +2114,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-10T13:21:08.686Z",
+                      "startTime": "2025-11-10T20:23:33.930Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1651,10 +2161,10 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 3,
-                      "parallelIndex": 3,
+                      "workerIndex": 12,
+                      "parallelIndex": 2,
                       "status": "failed",
-                      "duration": 50416,
+                      "duration": 50183,
                       "error": {
                         "message": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: /сегодня|today/i }).first()\u001b[22m\n\u001b[2m    - locator resolved to <button class=\"view-item\" data-v-10693190=\"\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    29 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is visible, enabled and stable\u001b[22m\n\u001b[2m       - scrolling into view if needed\u001b[22m\n\u001b[2m       - done scrolling\u001b[22m\n\u001b[2m       - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n",
                         "stack": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: /сегодня|today/i }).first()\u001b[22m\n\u001b[2m    - locator resolved to <button class=\"view-item\" data-v-10693190=\"\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    29 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is visible, enabled and stable\u001b[22m\n\u001b[2m       - scrolling into view if needed\u001b[22m\n\u001b[2m       - done scrolling\u001b[22m\n\u001b[2m       - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\n    at /Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/tests/tasks/task-completion.spec.ts:251:25",
@@ -1678,7 +2188,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-10T13:21:11.497Z",
+                      "startTime": "2025-11-10T20:23:36.774Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1725,10 +2235,10 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 2,
-                      "parallelIndex": 2,
+                      "workerIndex": 13,
+                      "parallelIndex": 7,
                       "status": "failed",
-                      "duration": 50083,
+                      "duration": 50750,
                       "error": {
                         "message": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: /сегодня|today/i }).first()\u001b[22m\n\u001b[2m    - locator resolved to <button class=\"view-item\" data-v-10693190=\"\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    29 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is visible, enabled and stable\u001b[22m\n\u001b[2m       - scrolling into view if needed\u001b[22m\n\u001b[2m       - done scrolling\u001b[22m\n\u001b[2m       - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n",
                         "stack": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: /сегодня|today/i }).first()\u001b[22m\n\u001b[2m    - locator resolved to <button class=\"view-item\" data-v-10693190=\"\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    29 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is visible, enabled and stable\u001b[22m\n\u001b[2m       - scrolling into view if needed\u001b[22m\n\u001b[2m       - done scrolling\u001b[22m\n\u001b[2m       - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\n    at /Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/tests/tasks/task-completion.spec.ts:331:25",
@@ -1752,7 +2262,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-10T13:21:14.404Z",
+                      "startTime": "2025-11-10T20:23:37.868Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1823,15 +2333,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 0,
+                          "workerIndex": 14,
                           "parallelIndex": 0,
                           "status": "passed",
-                          "duration": 19160,
+                          "duration": 18925,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2025-11-10T13:21:18.461Z",
+                          "startTime": "2025-11-10T20:23:43.383Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -1857,15 +2367,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 1,
-                          "parallelIndex": 1,
+                          "workerIndex": 15,
+                          "parallelIndex": 6,
                           "status": "passed",
-                          "duration": 21170,
+                          "duration": 20842,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2025-11-10T13:21:18.635Z",
+                          "startTime": "2025-11-10T20:23:56.701Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -1891,15 +2401,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 7,
-                          "parallelIndex": 7,
+                          "workerIndex": 16,
+                          "parallelIndex": 3,
                           "status": "passed",
-                          "duration": 26882,
+                          "duration": 26203,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2025-11-10T13:21:25.131Z",
+                          "startTime": "2025-11-10T20:24:01.313Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -1933,15 +2443,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 0,
+                          "workerIndex": 14,
                           "parallelIndex": 0,
                           "status": "passed",
-                          "duration": 18741,
+                          "duration": 19789,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2025-11-10T13:21:37.650Z",
+                          "startTime": "2025-11-10T20:24:02.768Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -1975,15 +2485,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 1,
-                          "parallelIndex": 1,
+                          "workerIndex": 17,
+                          "parallelIndex": 5,
                           "status": "passed",
-                          "duration": 9353,
+                          "duration": 11665,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2025-11-10T13:21:39.827Z",
+                          "startTime": "2025-11-10T20:24:17.490Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -2009,15 +2519,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 1,
+                          "workerIndex": 18,
                           "parallelIndex": 1,
                           "status": "passed",
-                          "duration": 10109,
+                          "duration": 11469,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2025-11-10T13:21:49.199Z",
+                          "startTime": "2025-11-10T20:24:19.917Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -2069,15 +2579,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 7,
-                          "parallelIndex": 7,
+                          "workerIndex": 15,
+                          "parallelIndex": 6,
                           "status": "passed",
-                          "duration": 11603,
+                          "duration": 11587,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2025-11-10T13:21:52.062Z",
+                          "startTime": "2025-11-10T20:24:17.930Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -2103,15 +2613,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 10,
-                          "parallelIndex": 5,
+                          "workerIndex": 14,
+                          "parallelIndex": 0,
                           "status": "passed",
-                          "duration": 12149,
+                          "duration": 12286,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2025-11-10T13:21:54.737Z",
+                          "startTime": "2025-11-10T20:24:22.616Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -2145,15 +2655,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 0,
-                          "parallelIndex": 0,
+                          "workerIndex": 19,
+                          "parallelIndex": 4,
                           "status": "passed",
-                          "duration": 11578,
+                          "duration": 15175,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2025-11-10T13:21:56.494Z",
+                          "startTime": "2025-11-10T20:24:29.535Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -2179,15 +2689,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 11,
-                          "parallelIndex": 6,
+                          "workerIndex": 16,
+                          "parallelIndex": 3,
                           "status": "passed",
-                          "duration": 12923,
+                          "duration": 14412,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2025-11-10T13:21:59.782Z",
+                          "startTime": "2025-11-10T20:24:27.890Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -2213,15 +2723,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 12,
-                          "parallelIndex": 4,
+                          "workerIndex": 17,
+                          "parallelIndex": 5,
                           "status": "passed",
-                          "duration": 12975,
+                          "duration": 27777,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2025-11-10T13:22:00.961Z",
+                          "startTime": "2025-11-10T20:24:29.565Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -2255,15 +2765,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 1,
-                          "parallelIndex": 1,
+                          "workerIndex": 15,
+                          "parallelIndex": 6,
                           "status": "passed",
-                          "duration": 24148,
+                          "duration": 28029,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2025-11-10T13:21:59.357Z",
+                          "startTime": "2025-11-10T20:24:29.558Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -2289,15 +2799,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 13,
-                          "parallelIndex": 3,
+                          "workerIndex": 20,
+                          "parallelIndex": 2,
                           "status": "passed",
-                          "duration": 12713,
+                          "duration": 14800,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2025-11-10T13:22:05.379Z",
+                          "startTime": "2025-11-10T20:24:32.913Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -2342,10 +2852,10 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 7,
+                      "workerIndex": 21,
                       "parallelIndex": 7,
                       "status": "failed",
-                      "duration": 44260,
+                      "duration": 46714,
                       "error": {
                         "message": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: /создать задачу|create task/i }).or(locator('button').filter({ has: locator('i.pi-plus, i.pi-file-edit') })).first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" data-v-ad87ef84=\"\" data-pc-name=\"button\" data-pd-ripple=\"true\" data-pc-section=\"root\" aria-label=\"Create Task\" class=\"p-button p-component p-button-rounded fab-button\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    29 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is visible, enabled and stable\u001b[22m\n\u001b[2m       - scrolling into view if needed\u001b[22m\n\u001b[2m       - done scrolling\u001b[22m\n\u001b[2m       - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n",
                         "stack": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: /создать задачу|create task/i }).or(locator('button').filter({ has: locator('i.pi-plus, i.pi-file-edit') })).first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" data-v-ad87ef84=\"\" data-pc-name=\"button\" data-pd-ripple=\"true\" data-pc-section=\"root\" aria-label=\"Create Task\" class=\"p-button p-component p-button-rounded fab-button\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    29 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is visible, enabled and stable\u001b[22m\n\u001b[2m       - scrolling into view if needed\u001b[22m\n\u001b[2m       - done scrolling\u001b[22m\n\u001b[2m       - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\n    at /Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/tests/tasks/task-search.spec.ts:49:44",
@@ -2369,7 +2879,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-10T13:22:03.712Z",
+                      "startTime": "2025-11-10T20:24:34.876Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2416,10 +2926,10 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 14,
-                      "parallelIndex": 2,
+                      "workerIndex": 18,
+                      "parallelIndex": 1,
                       "status": "failed",
-                      "duration": 44082,
+                      "duration": 44946,
                       "error": {
                         "message": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: /создать задачу|create task/i }).or(locator('button').filter({ has: locator('i.pi-plus, i.pi-file-edit') })).first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" data-v-ad87ef84=\"\" data-pc-name=\"button\" data-pd-ripple=\"true\" data-pc-section=\"root\" aria-label=\"Create Task\" class=\"p-button p-component p-button-rounded fab-button\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    29 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is visible, enabled and stable\u001b[22m\n\u001b[2m       - scrolling into view if needed\u001b[22m\n\u001b[2m       - done scrolling\u001b[22m\n\u001b[2m       - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n",
                         "stack": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: /создать задачу|create task/i }).or(locator('button').filter({ has: locator('i.pi-plus, i.pi-file-edit') })).first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" data-v-ad87ef84=\"\" data-pc-name=\"button\" data-pd-ripple=\"true\" data-pc-section=\"root\" aria-label=\"Create Task\" class=\"p-button p-component p-button-rounded fab-button\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    29 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is visible, enabled and stable\u001b[22m\n\u001b[2m       - scrolling into view if needed\u001b[22m\n\u001b[2m       - done scrolling\u001b[22m\n\u001b[2m       - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\n    at /Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/tests/tasks/task-search.spec.ts:49:44",
@@ -2443,7 +2953,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-10T13:22:08.132Z",
+                      "startTime": "2025-11-10T20:24:31.814Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2490,10 +3000,10 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 10,
-                      "parallelIndex": 5,
+                      "workerIndex": 14,
+                      "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 44128,
+                      "duration": 45387,
                       "error": {
                         "message": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: /создать задачу|create task/i }).or(locator('button').filter({ has: locator('i.pi-plus, i.pi-file-edit') })).first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" data-v-ad87ef84=\"\" data-pc-name=\"button\" data-pd-ripple=\"true\" data-pc-section=\"root\" aria-label=\"Create Task\" class=\"p-button p-component p-button-rounded fab-button\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    29 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is visible, enabled and stable\u001b[22m\n\u001b[2m       - scrolling into view if needed\u001b[22m\n\u001b[2m       - done scrolling\u001b[22m\n\u001b[2m       - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n",
                         "stack": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: /создать задачу|create task/i }).or(locator('button').filter({ has: locator('i.pi-plus, i.pi-file-edit') })).first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" data-v-ad87ef84=\"\" data-pc-name=\"button\" data-pd-ripple=\"true\" data-pc-section=\"root\" aria-label=\"Create Task\" class=\"p-button p-component p-button-rounded fab-button\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    29 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is visible, enabled and stable\u001b[22m\n\u001b[2m       - scrolling into view if needed\u001b[22m\n\u001b[2m       - done scrolling\u001b[22m\n\u001b[2m       - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\n    at /Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/tests/tasks/task-search.spec.ts:49:44",
@@ -2517,7 +3027,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-10T13:22:07.373Z",
+                      "startTime": "2025-11-10T20:24:35.029Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2564,10 +3074,10 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
+                      "workerIndex": 16,
+                      "parallelIndex": 3,
                       "status": "failed",
-                      "duration": 43674,
+                      "duration": 45418,
                       "error": {
                         "message": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: /создать задачу|create task/i }).or(locator('button').filter({ has: locator('i.pi-plus, i.pi-file-edit') })).first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" data-v-ad87ef84=\"\" data-pc-name=\"button\" data-pd-ripple=\"true\" data-pc-section=\"root\" aria-label=\"Create Task\" class=\"p-button p-component p-button-rounded fab-button\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    29 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is visible, enabled and stable\u001b[22m\n\u001b[2m       - scrolling into view if needed\u001b[22m\n\u001b[2m       - done scrolling\u001b[22m\n\u001b[2m       - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n",
                         "stack": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: /создать задачу|create task/i }).or(locator('button').filter({ has: locator('i.pi-plus, i.pi-file-edit') })).first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" data-v-ad87ef84=\"\" data-pc-name=\"button\" data-pd-ripple=\"true\" data-pc-section=\"root\" aria-label=\"Create Task\" class=\"p-button p-component p-button-rounded fab-button\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    29 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is visible, enabled and stable\u001b[22m\n\u001b[2m       - scrolling into view if needed\u001b[22m\n\u001b[2m       - done scrolling\u001b[22m\n\u001b[2m       - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\n    at /Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/tests/tasks/task-search.spec.ts:49:44",
@@ -2591,7 +3101,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-10T13:22:08.152Z",
+                      "startTime": "2025-11-10T20:24:42.374Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2638,10 +3148,10 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 11,
-                      "parallelIndex": 6,
+                      "workerIndex": 19,
+                      "parallelIndex": 4,
                       "status": "failed",
-                      "duration": 42881,
+                      "duration": 44144,
                       "error": {
                         "message": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: /создать задачу|create task/i }).or(locator('button').filter({ has: locator('i.pi-plus, i.pi-file-edit') })).first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" data-v-ad87ef84=\"\" data-pc-name=\"button\" data-pd-ripple=\"true\" data-pc-section=\"root\" aria-label=\"Create Task\" class=\"p-button p-component p-button-rounded fab-button\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    29 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is visible, enabled and stable\u001b[22m\n\u001b[2m       - scrolling into view if needed\u001b[22m\n\u001b[2m       - done scrolling\u001b[22m\n\u001b[2m       - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n",
                         "stack": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: /создать задачу|create task/i }).or(locator('button').filter({ has: locator('i.pi-plus, i.pi-file-edit') })).first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" data-v-ad87ef84=\"\" data-pc-name=\"button\" data-pd-ripple=\"true\" data-pc-section=\"root\" aria-label=\"Create Task\" class=\"p-button p-component p-button-rounded fab-button\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    29 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is visible, enabled and stable\u001b[22m\n\u001b[2m       - scrolling into view if needed\u001b[22m\n\u001b[2m       - done scrolling\u001b[22m\n\u001b[2m       - <div data-pc-section=\"mask\" class=\"p-dialog-mask p-component-overlay p-component-overlay-enter\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\n    at /Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45/apps/frontend/e2e/tests/tasks/task-search.spec.ts:49:44",
@@ -2665,7 +3175,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-10T13:22:13.351Z",
+                      "startTime": "2025-11-10T20:24:45.343Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2706,11 +3216,11 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2025-11-10T13:20:06.061Z",
-    "duration": 170286.54499999998,
-    "expected": 44,
+    "startTime": "2025-11-10T20:22:08.901Z",
+    "duration": 200693.541,
+    "expected": 43,
     "skipped": 0,
-    "unexpected": 12,
+    "unexpected": 19,
     "flaky": 0
   }
 }

@@ -50,6 +50,10 @@ export default defineConfig({
     actionTimeout: 15000,
     /* Navigation timeout */
     navigationTimeout: 30000,
+    /* Set browser locale to Russian for all tests */
+    locale: 'ru-RU',
+    /* Set timezone */
+    timezoneId: 'Europe/Moscow',
   },
   
   /* Test timeout */

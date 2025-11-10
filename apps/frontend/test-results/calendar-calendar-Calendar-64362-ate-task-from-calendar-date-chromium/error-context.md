@@ -1,0 +1,110 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - generic [ref=e4]:
+    - banner [ref=e5]:
+      - generic [ref=e6]:
+        - heading "Calendar" [level=1] [ref=e8]
+        - generic [ref=e9]:
+          - button "My Tasks" [ref=e10] [cursor=pointer]:
+            - generic [ref=e11]: 
+            - generic [ref=e12]: My Tasks
+          - button "Calendar" [ref=e13] [cursor=pointer]:
+            - generic [ref=e14]: 
+            - generic [ref=e15]: Calendar
+          - button "Analytics" [ref=e16] [cursor=pointer]:
+            - generic [ref=e17]: 
+            - generic [ref=e18]: Analytics
+        - generic [ref=e19]:
+          - button " sollent98@gmail.com" [ref=e20] [cursor=pointer]:
+            - generic [ref=e21]: 
+            - generic [ref=e22]: sollent98@gmail.com
+          - button "" [ref=e23] [cursor=pointer]:
+            - generic [ref=e24]: 
+    - generic [ref=e26]:
+      - generic [ref=e27]:
+        - button "Month" [ref=e28] [cursor=pointer]:
+          - generic [ref=e29]: Month
+        - button "Week" [ref=e30] [cursor=pointer]:
+          - generic [ref=e31]: Week
+      - generic [ref=e32]:
+        - button "" [ref=e33] [cursor=pointer]:
+          - generic [ref=e34]: 
+        - heading "November 2025" [level=2] [ref=e35]
+        - button "" [ref=e36] [cursor=pointer]:
+          - generic [ref=e37]: 
+        - button "Today" [ref=e38] [cursor=pointer]:
+          - generic [ref=e39]: Today
+    - generic [ref=e40]:
+      - generic [ref=e41]:
+        - generic [ref=e42]: Mon
+        - generic [ref=e43]: Tue
+        - generic [ref=e44]: Wed
+        - generic [ref=e45]: Thu
+        - generic [ref=e46]: Fri
+        - generic [ref=e47]: Sat
+        - generic [ref=e48]: Sun
+        - generic [ref=e50] [cursor=pointer]: "27"
+        - generic [ref=e52] [cursor=pointer]: "28"
+        - generic [ref=e54] [cursor=pointer]: "29"
+        - generic [ref=e56] [cursor=pointer]: "30"
+        - generic [ref=e58] [cursor=pointer]: "31"
+        - generic [ref=e60] [cursor=pointer]: "1"
+        - generic [ref=e62] [cursor=pointer]: "2"
+        - generic [ref=e64] [cursor=pointer]: "3"
+        - generic [ref=e66] [cursor=pointer]: "4"
+        - generic [ref=e68] [cursor=pointer]: "5"
+        - generic [ref=e70] [cursor=pointer]: "6"
+        - generic [ref=e72] [cursor=pointer]: "7"
+        - generic [ref=e74] [cursor=pointer]: "8"
+        - generic [ref=e76] [cursor=pointer]: "9"
+        - generic [ref=e78] [cursor=pointer]: "10"
+        - generic [ref=e80] [cursor=pointer]: "11"
+        - generic [ref=e81] [cursor=pointer]:
+          - generic [ref=e82]: "12"
+          - generic [ref=e83]:
+            - generic "Task Created from Calendar" [ref=e84]
+            - generic "Task Created from Calendar" [ref=e85]
+            - generic "Task Created from Calendar" [ref=e86]
+            - generic [ref=e87]: "+1"
+        - generic [ref=e89] [cursor=pointer]: "13"
+        - generic [ref=e91] [cursor=pointer]: "14"
+        - generic [ref=e93] [cursor=pointer]: "15"
+        - generic [ref=e95] [cursor=pointer]: "16"
+        - generic [ref=e97] [cursor=pointer]: "17"
+        - generic [ref=e99] [cursor=pointer]: "18"
+        - generic [ref=e101] [cursor=pointer]: "19"
+        - generic [ref=e103] [cursor=pointer]: "20"
+        - generic [ref=e105] [cursor=pointer]: "21"
+        - generic [ref=e107] [cursor=pointer]: "22"
+        - generic [ref=e109] [cursor=pointer]: "23"
+        - generic [ref=e111] [cursor=pointer]: "24"
+        - generic [ref=e113] [cursor=pointer]: "25"
+        - generic [ref=e115] [cursor=pointer]: "26"
+        - generic [ref=e117] [cursor=pointer]: "27"
+        - generic [ref=e119] [cursor=pointer]: "28"
+        - generic [ref=e121] [cursor=pointer]: "29"
+        - generic [ref=e123] [cursor=pointer]: "30"
+        - generic [ref=e125] [cursor=pointer]: "1"
+        - generic [ref=e127] [cursor=pointer]: "2"
+        - generic [ref=e129] [cursor=pointer]: "3"
+        - generic [ref=e131] [cursor=pointer]: "4"
+        - generic [ref=e133] [cursor=pointer]: "5"
+        - generic [ref=e135] [cursor=pointer]: "6"
+        - generic [ref=e137] [cursor=pointer]: "7"
+      - generic [ref=e138]:
+        - generic [ref=e139]:
+          - heading "Monday, November 10, 2025 0" [level=3] [ref=e140]:
+            - text: Monday, November 10, 2025
+            - generic [ref=e141]: "0"
+          - button "New Task" [ref=e142] [cursor=pointer]:
+            - generic [ref=e143]: 
+            - generic [ref=e144]: New Task
+        - generic [ref=e146]:
+          - generic [ref=e147]: 
+          - paragraph [ref=e148]: No tasks for this day
+  - button "Language selector" [ref=e151] [cursor=pointer]:
+    - generic [ref=e152]: 🇬🇧
+    - generic [ref=e153]: EN
+```

@@ -708,8 +708,6 @@ class TaskTest extends TestCase
 
 - [ ] Task entity business logic tests (1 hour)
 - [ ] RecurrenceRule entity tests (1 hour)
-- [ ] SeedTasksCommand tests (1 hour)
-- [ ] GenerateUserJourneyCommand tests (1 hour)
 - [ ] GenerateTestDataFastCommand tests (1 hour)
 
 **Result**: Overall coverage 95%+

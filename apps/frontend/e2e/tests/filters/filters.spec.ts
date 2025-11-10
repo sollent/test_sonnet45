@@ -4,7 +4,7 @@ import { TaskDialogPage } from '../../page-objects/TaskDialogPage'
 import { FiltersModalPage } from '../../page-objects/FiltersModalPage'
 import { LoginPage } from '../../page-objects/LoginPage'
 import { testLoginUsers } from '../../fixtures/auth.fixture'
-import { clearAuth } from '../../utils/helpers'
+import { clearAuth, setLocale } from '../../utils/helpers'
 import { createTasksViaAPI, getTaskDate } from '../../utils/api-helpers'
 
 test.describe('Filters', () => {
@@ -25,6 +25,9 @@ test.describe('Filters', () => {
     // Clear cookies and storage
     await context.clearCookies()
     await clearAuth(page)
+
+    // Set Russian locale for UI elements
+    await setLocale(page, 'ru')
 
     const { email, password } = testLoginUsers.valid
 
@@ -57,12 +60,16 @@ test.describe('Filters', () => {
     await page.waitForLoadState('networkidle')
     await page.waitForTimeout(2000)
 
-    // Navigate to "All tasks" view
+    // Navigate to "All tasks" view - CRITICAL: filter buttons only exist in certain views
+    // Wait for the dashboard to fully load first
+    await page.waitForSelector('main', { state: 'visible', timeout: 10000 })
+    await page.waitForTimeout(1000)
+
+    // Now click "All tasks" button in sidebar
     const allTasksButton = page.getByRole('button', { name: /все задачи/i }).first()
-    if (await allTasksButton.isVisible().catch(() => false)) {
-      await allTasksButton.click()
-      await page.waitForTimeout(1500)
-    }
+    await expect(allTasksButton).toBeVisible({ timeout: 10000 })
+    await allTasksButton.click()
+    await page.waitForTimeout(1500)
   })
 
   test.describe('6.1 Quick Filters', () => {
@@ -72,7 +79,7 @@ test.describe('Filters', () => {
       expect(initialCount).toBeGreaterThanOrEqual(2) // We created 2 tasks for today
 
       // Click "На сегодня" quick filter
-      const todayFilterButton = page.getByRole('button', { name: / На сегодня/i }).first()
+      const todayFilterButton = page.getByRole('button', { name: /На сегодня/i }).first()
       await expect(todayFilterButton).toBeVisible({ timeout: 5000 })
       await todayFilterButton.click()
       await page.waitForTimeout(1500)
@@ -93,7 +100,7 @@ test.describe('Filters', () => {
 
     test('TC-FILTER-002: Apply "Срочные" quick filter', async ({ page }) => {
       // Click "Срочные" quick filter
-      const urgentFilterButton = page.getByRole('button', { name: / Срочные/i }).first()
+      const urgentFilterButton = page.getByRole('button', { name: /Срочные/i }).first()
       await expect(urgentFilterButton).toBeVisible({ timeout: 5000 })
       await urgentFilterButton.click()
       await page.waitForTimeout(1500)
@@ -110,7 +117,7 @@ test.describe('Filters', () => {
 
     test('TC-FILTER-003: Apply "Просроченные" quick filter', async ({ page }) => {
       // Click "Просроченные" quick filter
-      const overdueFilterButton = page.getByRole('button', { name: / Просроченные/i }).first()
+      const overdueFilterButton = page.getByRole('button', { name: /Просроченные/i }).first()
       await expect(overdueFilterButton).toBeVisible({ timeout: 5000 })
       await overdueFilterButton.click()
       await page.waitForTimeout(1500)
@@ -127,7 +134,7 @@ test.describe('Filters', () => {
 
     test('TC-FILTER-004: Apply "В процессе" quick filter', async ({ page }) => {
       // Click "В процессе" quick filter
-      const inProgressFilterButton = page.getByRole('button', { name: / В процессе/i }).first()
+      const inProgressFilterButton = page.getByRole('button', { name: /В процессе/i }).first()
       await expect(inProgressFilterButton).toBeVisible({ timeout: 5000 })
       await inProgressFilterButton.click()
       await page.waitForTimeout(1500)
@@ -147,7 +154,7 @@ test.describe('Filters', () => {
       const initialCount = await dashboardPage.getTaskCount()
 
       // Click "На сегодня" filter
-      const todayFilterButton = page.getByRole('button', { name: / На сегодня/i }).first()
+      const todayFilterButton = page.getByRole('button', { name: /На сегодня/i }).first()
       await todayFilterButton.click()
       await page.waitForTimeout(1500)
 
@@ -159,7 +166,7 @@ test.describe('Filters', () => {
       expect(countAfterFirst).toBeGreaterThanOrEqual(1)
 
       // Click "Срочные" filter (this should narrow results further)
-      const urgentFilterButton = page.getByRole('button', { name: / Срочные/i }).first()
+      const urgentFilterButton = page.getByRole('button', { name: /Срочные/i }).first()
       await urgentFilterButton.click()
       await page.waitForTimeout(1500)
 
@@ -174,7 +181,7 @@ test.describe('Filters', () => {
 
     test('TC-FILTER-006: Clear quick filters', async ({ page }) => {
       // Apply a quick filter first
-      const todayFilterButton = page.getByRole('button', { name: / На сегодня/i }).first()
+      const todayFilterButton = page.getByRole('button', { name: /На сегодня/i }).first()
       await todayFilterButton.click()
       await page.waitForTimeout(1500)
 

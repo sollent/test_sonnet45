@@ -3,7 +3,7 @@ import { DashboardPage } from '../../page-objects/DashboardPage'
 import { TaskDialogPage } from '../../page-objects/TaskDialogPage'
 import { LoginPage } from '../../page-objects/LoginPage'
 import { testLoginUsers } from '../../fixtures/auth.fixture'
-import { clearAuth } from '../../utils/helpers'
+import { clearAuth, setLocale, waitForDialogToClose } from '../../utils/helpers'
 
 test.describe('Task Completion', () => {
   let dashboardPage: DashboardPage
@@ -18,6 +18,9 @@ test.describe('Task Completion', () => {
     // Clear cookies and storage
     await context.clearCookies()
     await clearAuth(page)
+
+    // Set Russian locale
+    await setLocale(page, 'ru')
 
     // Login as test user
     await loginPage.goto()
@@ -44,9 +47,7 @@ test.describe('Task Completion', () => {
     await page.waitForTimeout(1000)
 
     // Wait for dialog and mask to disappear completely
-    await page.locator('.p-dialog').waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {})
-    await page.locator('.p-dialog-mask').waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {})
-    await page.waitForTimeout(1500)
+    await waitForDialogToClose(page)
 
     // Navigate to "Today" view to ensure task is visible
     const todayButton = page.getByRole('button', { name: /сегодня|today/i }).first()
@@ -112,9 +113,7 @@ test.describe('Task Completion', () => {
     await page.waitForTimeout(1000)
 
     // Wait for dialog and mask to disappear completely
-    await page.locator('.p-dialog').waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {})
-    await page.locator('.p-dialog-mask').waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {})
-    await page.waitForTimeout(1500)
+    await waitForDialogToClose(page)
 
     // Navigate to "Today" view
     const todayButton = page.getByRole('button', { name: /сегодня|today/i }).first()
@@ -174,9 +173,7 @@ test.describe('Task Completion', () => {
     await page.waitForTimeout(1000)
 
     // Wait for dialog and mask to disappear completely
-    await page.locator('.p-dialog').waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {})
-    await page.locator('.p-dialog-mask').waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {})
-    await page.waitForTimeout(1500)
+    await waitForDialogToClose(page)
 
     // Navigate to "Today" view
     const todayButton = page.getByRole('button', { name: /сегодня|today/i }).first()
@@ -241,9 +238,7 @@ test.describe('Task Completion', () => {
     await page.waitForTimeout(1000)
 
     // Wait for dialog and mask to disappear completely
-    await page.locator('.p-dialog').waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {})
-    await page.locator('.p-dialog-mask').waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {})
-    await page.waitForTimeout(1500)
+    await waitForDialogToClose(page)
 
     // Navigate to "Today" view
     const todayButton = page.getByRole('button', { name: /сегодня|today/i }).first()
@@ -321,9 +316,7 @@ test.describe('Task Completion', () => {
     await page.waitForTimeout(1000)
 
     // Wait for dialog and mask to disappear completely
-    await page.locator('.p-dialog').waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {})
-    await page.locator('.p-dialog-mask').waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {})
-    await page.waitForTimeout(1500)
+    await waitForDialogToClose(page)
 
     // Navigate to "Today" view
     const todayButton = page.getByRole('button', { name: /сегодня|today/i }).first()

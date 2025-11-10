@@ -4,7 +4,7 @@ import { DashboardPage } from '../../page-objects/DashboardPage'
 import { TaskDialogPage } from '../../page-objects/TaskDialogPage'
 import { LoginPage } from '../../page-objects/LoginPage'
 import { testLoginUsers } from '../../fixtures/auth.fixture'
-import { clearAuth } from '../../utils/helpers'
+import { clearAuth, setLocale } from '../../utils/helpers'
 
 test.describe('Calendar View', () => {
   let calendarPage: CalendarPage
@@ -21,6 +21,9 @@ test.describe('Calendar View', () => {
     // Clear cookies and storage
     await context.clearCookies()
     await clearAuth(page)
+
+    // Set Russian locale
+    await setLocale(page, 'ru')
 
     // Login as test user
     await loginPage.goto()

@@ -3,7 +3,7 @@ import { DashboardPage } from '../../page-objects/DashboardPage'
 import { TaskDialogPage } from '../../page-objects/TaskDialogPage'
 import { LoginPage } from '../../page-objects/LoginPage'
 import { testLoginUsers } from '../../fixtures/auth.fixture'
-import { clearAuth } from '../../utils/helpers'
+import { clearAuth, setLocale, waitForDialogToClose } from '../../utils/helpers'
 
 test.describe('Search', () => {
   let dashboardPage: DashboardPage
@@ -18,6 +18,9 @@ test.describe('Search', () => {
     // Clear cookies and storage
     await context.clearCookies()
     await clearAuth(page)
+
+    // Set Russian locale
+    await setLocale(page, 'ru')
 
     // Login as test user
     await loginPage.goto()
@@ -40,11 +43,8 @@ test.describe('Search', () => {
     ]
 
     for (const taskTitle of testTasks) {
-      // Wait for any dialog mask to disappear
-      const mask = page.locator('.p-dialog-mask, [class*="dialog-mask"]')
-      if (await mask.isVisible().catch(() => false)) {
-        await page.waitForTimeout(1000)
-      }
+      // Wait for any dialog mask to disappear from previous iteration
+      await waitForDialogToClose(page)
 
       await dashboardPage.createTaskButton.click()
       await page.waitForTimeout(1500)
@@ -56,8 +56,7 @@ test.describe('Search', () => {
       await page.waitForTimeout(1000)
 
       // Wait for dialog to close completely
-      await page.locator('.p-dialog').waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {})
-      await page.waitForTimeout(1500)
+      await waitForDialogToClose(page)
     }
 
     // Wait for all tasks to be created

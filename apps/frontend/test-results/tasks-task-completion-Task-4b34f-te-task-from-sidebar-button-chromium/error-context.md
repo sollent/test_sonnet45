@@ -28,7 +28,7 @@
           - generic [ref=e28]:
             - generic [ref=e30]:
               - generic [ref=e31]: 
-              - textbox "Search tasks..." [ref=e32]: Task Today 1
+              - textbox "Search tasks..." [ref=e32]: Task to Complete from Sidebar
             - navigation [ref=e33]:
               - heading "Filter by" [level=3] [ref=e34]
               - generic [ref=e35]:
