@@ -693,7 +693,7 @@ class TaskRepository extends ServiceEntityRepository
         $subtasks = $conn->fetchAllAssociative(
             $subtasksSql,
             [$parentIds],
-            [\Doctrine\DBAL\Connection::PARAM_INT_ARRAY]
+            [\Doctrine\DBAL\ArrayParameterType::INTEGER]
         );
 
         // Build subtasks map: parent_id => [subtask, subtask, ...]
@@ -719,7 +719,7 @@ class TaskRepository extends ServiceEntityRepository
         $taskTagsRelations = $conn->fetchAllAssociative(
             $taskTagsSql,
             [$allTaskIds],
-            [\Doctrine\DBAL\Connection::PARAM_INT_ARRAY]
+            [\Doctrine\DBAL\ArrayParameterType::INTEGER]
         );
 
         // Build map: task_id => [tag_id, tag_id, ...]
@@ -748,7 +748,7 @@ class TaskRepository extends ServiceEntityRepository
             $tags = $conn->fetchAllAssociative(
                 $tagsSql,
                 [array_unique($allTagIds)],
-                [\Doctrine\DBAL\Connection::PARAM_INT_ARRAY]
+                [\Doctrine\DBAL\ArrayParameterType::INTEGER]
             );
 
             // Build map: tag_id => tag_data
