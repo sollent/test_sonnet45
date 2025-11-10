@@ -44,13 +44,13 @@ test.describe('Filters', () => {
     ]
 
     for (const taskData of testTasks) {
-      // Wait for any dialog mask to disappear before opening new dialog
-      await page.locator('.p-dialog-mask').waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {})
-      await page.waitForTimeout(2000)
+      // Wait for any dialog mask to be completely detached from DOM
+      await page.locator('.p-dialog-mask').waitFor({ state: 'detached', timeout: 10000 }).catch(() => {})
+      await page.waitForTimeout(1000)
 
-      // Use force: true to bypass any lingering mask
-      await dashboardPage.createTaskButton.click({ force: true })
-      await page.waitForTimeout(2000)
+      // Now click should work normally without force
+      await dashboardPage.createTaskButton.click()
+      await page.waitForTimeout(1500)
 
       await taskDialogPage.fillTitle(taskData.title)
       await page.waitForTimeout(300)
