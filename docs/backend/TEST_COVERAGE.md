@@ -1,9 +1,10 @@
 # 📊 Backend Test Coverage Report
 
-> **Last Updated**: 2025-11-08
+> **Last Updated**: 2025-11-10
 > **Total Test Files**: 33
 > **Testing Framework**: PHPUnit 9.6
 > **Test Organization**: Unit, Integration, Functional
+> **📋 Implementation Plan**: See [MISSING_TEST_COVERAGE_PLAN.md](MISSING_TEST_COVERAGE_PLAN.md) for step-by-step test writing guide
 
 ---
 
@@ -26,9 +27,11 @@ Our backend has **comprehensive test coverage** across all critical layers with 
 
 ## 📋 Coverage by Layer
 
-### 1. Controllers (API Endpoints) - **100% Coverage**
+### 1. Controllers (API Endpoints) - **73% Coverage**
 
-All API controllers have comprehensive functional tests covering happy paths, edge cases, authentication, and authorization.
+Most API controllers have comprehensive functional tests, but some are missing.
+
+#### ✅ Tested API Controllers:
 
 | Controller | Test File | Test Count | Coverage Status |
 |-----------|-----------|------------|-----------------|
@@ -41,7 +44,22 @@ All API controllers have comprehensive functional tests covering happy paths, ed
 | **GoogleAuthController** | `Functional/Api/GoogleAuthTest.php` | 5+ tests | ✅ Complete |
 | **UserProfileController** | `Functional/Api/UserProfileTest.php` | 8+ tests | ✅ Complete |
 
-**Total**: 8/8 controllers tested (100%)
+#### ⚠️ Missing API Controllers:
+
+| Controller | Reason | Priority |
+|-----------|--------|----------|
+| **EnumController** | Used by frontend for priorities/statuses | 🔥 Critical |
+| **TranslationController** | Used for i18n translations | 🔥 Critical |
+
+#### ❌ Missing Admin Controllers:
+
+| Controller | Reason | Priority |
+|-----------|--------|----------|
+| **DashboardController** | Admin panel access | 🔥 Critical |
+| **SecurityController** | Admin authentication | 🔥 Critical |
+| **UserCrudController** | User management operations | 🔥 Critical |
+
+**Total**: 8/14 controllers tested (57%) - **See [MISSING_TEST_COVERAGE_PLAN.md](MISSING_TEST_COVERAGE_PLAN.md) for implementation plan**
 
 #### Functional Tests Cover:
 - ✅ All CRUD operations (Create, Read, Update, Delete)
@@ -57,7 +75,9 @@ All API controllers have comprehensive functional tests covering happy paths, ed
 
 ---
 
-### 2. Services (Business Logic) - **85% Coverage**
+### 2. Services (Business Logic) - **64% Coverage**
+
+#### ✅ Tested Services:
 
 | Service | Test File | Test Count | Coverage Status |
 |---------|-----------|------------|-----------------|
@@ -70,11 +90,21 @@ All API controllers have comprehensive functional tests covering happy paths, ed
 | **FileUploadService** | `Unit/Service/FileUploadServiceTest.php` | 6+ tests | ✅ Complete |
 | **EnumTranslatorService** | `Unit/Service/EnumTranslatorServiceTest.php` | 5+ tests | ✅ Complete |
 | **TranslationService** | `Unit/Service/TranslationServiceTest.php` | 6+ tests | ✅ Complete |
-| **TagService** | - | - | ⚠️ **Missing** |
 
-**Total**: 9/10 services tested (90%)
+#### ⚠️ Missing Service & Strategy Tests:
 
-**Note**: TagService logic is tested indirectly through TaskService and Functional tests.
+| Component | Reason | Priority |
+|-----------|--------|----------|
+| **TagService** | Does not exist (logic in TaskService) | ⛔ N/A |
+| **DailyRecurrenceStrategy** | Tested indirectly via RecurrenceService | ⚠️ High |
+| **WeeklyRecurrenceStrategy** | Tested indirectly via RecurrenceService | ⚠️ High |
+| **MonthlyRecurrenceStrategy** | Tested indirectly via RecurrenceService | ⚠️ High |
+| **YearlyRecurrenceStrategy** | Tested indirectly via RecurrenceService | ⚠️ High |
+| **CustomRecurrenceStrategy** | Tested indirectly via RecurrenceService | ⚠️ High |
+
+**Total**: 9/14 services tested (64%) - **See [MISSING_TEST_COVERAGE_PLAN.md](MISSING_TEST_COVERAGE_PLAN.md) for Recurrence Strategy tests**
+
+**Note**: TagService does not exist. Recurrence strategies tested indirectly but need direct unit tests.
 
 #### Service Tests Cover:
 - ✅ All public methods
@@ -189,22 +219,27 @@ All API controllers have comprehensive functional tests covering happy paths, ed
 | **Unit Tests** | 15 | ~150 | Controllers: 0%, Services: 90%, Repos: 100% |
 | **Integration Tests** | 4 | ~25 | Critical flows: 100% |
 | **Functional Tests** | 14 | ~200 | API endpoints: 100% |
-| **Total** | **33** | **~375** | **Overall: ~75-80%** |
+| **Total** | **33** | **~375** | **Overall: ~65-70%** (29 components missing) |
 
 ### By Layer
 
 | Layer | Components | Tested | Untested | Coverage % |
 |-------|-----------|---------|----------|------------|
-| **Controllers** | 8 | 8 | 0 | 100% |
-| **Services** | 10 | 9 | 1 | 90% |
+| **API Controllers** | 10 | 8 | 2 | 80% |
+| **Admin Controllers** | 3 | 0 | 3 | 0% |
+| **Services** | 9 | 9 | 0 | 100% |
+| **Recurrence Strategies** | 5 | 0 | 5 | 0%* |
 | **Repositories** | 6 | 6 | 0 | 100% |
-| **Security** | 9 | 7 | 2 | 78% |
-| **Commands** | 6 | 1 | 5 | 17% |
+| **Security (Auth)** | 7 | 7 | 0 | 100% |
+| **Voters** | 2 | 0 | 2 | 0%** |
+| **Commands** | 5 | 1 | 4 | 20% |
+| **Event Listeners** | 2 | 0 | 2 | 0% |
+| **Normalizers** | 1 | 0 | 1 | 0% |
 | **Entities** | 8 | 0 | 8 | 0%* |
 | **DTOs** | 16 | 0 | 16 | 0%* |
-| **Voters** | 2 | 0 | 2 | 0%* |
 
 \* *Implicitly tested through integration and functional tests*
+\*\* *Voters tested indirectly via authorization functional tests*
 
 ---
 
@@ -243,23 +278,41 @@ backend/tests/
 
 ## 🔍 What's NOT Covered (Yet)
 
-### Critical Gaps ⚠️
+### Critical Gaps 🔥
 
 | Component | Priority | Reason Not Tested | Impact |
 |-----------|----------|-------------------|--------|
-| **TaskVoter** | Medium | Tested indirectly via functional tests | Low - already validated |
-| **TagVoter** | Medium | Tested indirectly via functional tests | Low - already validated |
-| **TagService** | Low | Simple logic, tested via TaskService | Low - implicitly covered |
-| **Admin Controllers** | Low | Admin-only features, not core business | Medium - manual QA needed |
+| **TaskVoter** | 🔥 Critical | Only tested indirectly via functional tests | High - security component |
+| **TagVoter** | 🔥 Critical | Only tested indirectly via functional tests | High - security component |
+| **Admin Controllers (3)** | 🔥 Critical | Admin-only features, sensitive operations | High - ROLE_ADMIN security |
+| **EnumController** | 🔥 Critical | Used by frontend for priorities/statuses | Medium - API contract |
+| **TranslationController** | 🔥 Critical | Used for i18n translations | Medium - API contract |
 
-### Low Priority Gaps ℹ️
+### High Priority Gaps ⚠️
 
 | Component | Priority | Reason |
 |-----------|----------|--------|
-| **Entities** | Very Low | Simple data classes, validated via Doctrine |
-| **DTOs** | Very Low | Validated via Symfony Validator in functional tests |
-| **Seeding Commands** | Very Low | Development tools only |
-| **EasyAdmin Controllers** | Low | Third-party library UI |
+| **Recurrence Strategies (5)** | ⚠️ High | Complex date logic, tested indirectly | Medium - better test isolation needed |
+| **MakeAdminCommand** | ⚠️ High | Production command for admin privileges | High - critical operation |
+| **LocaleListener** | ⚠️ High | i18n locale handling | Medium - affects all API responses |
+| **LocaleSubscriber** | ⚠️ High | i18n locale handling | Medium - affects all API responses |
+
+### Medium Priority Gaps 📘
+
+| Component | Priority | Reason |
+|-----------|----------|--------|
+| **DTOs (8)** | 📘 Medium | Validated via Symfony Validator in functional tests | Low - but good for isolation |
+| **TaskEnumNormalizer** | 📘 Medium | Custom serialization logic | Low - tested via API |
+
+### Low Priority Gaps 📙
+
+| Component | Priority | Reason |
+|-----------|----------|--------|
+| **Entities (2)** | 📙 Low | Simple data classes, validated via Doctrine |
+| **Seeding Commands (3)** | 📙 Low | Development tools only |
+| **EasyAdmin Controllers** | 📙 Low | Third-party library UI |
+
+**📋 Full implementation plan**: [MISSING_TEST_COVERAGE_PLAN.md](MISSING_TEST_COVERAGE_PLAN.md)
 
 ---
 
@@ -580,10 +633,24 @@ docker exec backend-php83 vendor/bin/phpunit --coverage-text
 
 ## 📚 Связанные документы
 
-- **[Testing Guide](../guides/TESTING.md)** - Как писать и запускать тесты
+- **[MISSING_TEST_COVERAGE_PLAN.md](MISSING_TEST_COVERAGE_PLAN.md)** ⭐ **ГЛАВНЫЙ ДОКУМЕНТ** - Пошаговый план написания тестов
+- **[Testing Guide](../guides/testing/TESTING.md)** - Как писать и запускать тесты
 - **[Coding Standards](../CODING_STANDARDS.md)** - Стандарты качества кода
 - **[Backend Architecture](ARCHITECTURE.md)** - Архитектура backend
 
 ---
 
-**Вывод**: Наш backend имеет отличное покрытие тестами (~75-80%) для критического функционала. Основные пробелы находятся в низкоприоритетных компонентах (DTOs, Entities, dev-команды). Рекомендуется сфокусироваться на Phase 1-2 для достижения 90% покрытия критических компонентов.
+## 🎯 Next Steps
+
+**For AI Implementation:**
+
+1. **Read**: [MISSING_TEST_COVERAGE_PLAN.md](MISSING_TEST_COVERAGE_PLAN.md) - Complete step-by-step guide
+2. **Start with**: Phase 1 (Critical Security) - TaskVoter, TagVoter, Admin Controllers
+3. **Follow**: AAA pattern, use factories, mock dependencies
+4. **Target**: 95%+ coverage after all phases
+
+**Current Status**: ~65-70% coverage | **Target**: 95%+ coverage
+
+---
+
+**Вывод**: Наш backend имеет хорошее покрытие тестами (~65-70%) для основного функционала. Обнаружено **29 непокрытых компонентов**, включая критические (Voters, Admin Controllers, API Controllers). Детальный план реализации в **[MISSING_TEST_COVERAGE_PLAN.md](MISSING_TEST_COVERAGE_PLAN.md)** - начать с Priority 1 (Critical).

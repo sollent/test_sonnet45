@@ -115,15 +115,27 @@ Recurring tasks functionality and implementation
 - Usage examples for each recurrence type
 
 #### [`backend/TEST_COVERAGE.md`](backend/TEST_COVERAGE.md)
-**📊 NEW** - Complete backend test coverage report and analysis
+**📊 Updated 2025-11-10** - Complete backend test coverage report and analysis
 
 **Key Topics:**
 - Coverage statistics by layer (Controllers, Services, Repositories, etc.)
 - Test quality analysis (Unit, Integration, Functional)
 - Detailed tables with all 33 test files
-- What's covered vs. what's missing
-- Priority-based roadmap for missing tests
-- Recommendations for improving coverage to 90%+
+- What's covered vs. what's missing (29 components identified)
+- Updated coverage estimate: ~65-70% (was ~75-80%)
+- Link to implementation plan
+
+#### [`backend/MISSING_TEST_COVERAGE_PLAN.md`](backend/MISSING_TEST_COVERAGE_PLAN.md)
+**🎯 NEW** - Step-by-step implementation plan for writing missing tests
+
+**Key Topics:**
+- **29 components** that need test coverage
+- Complete breakdown by priority (Critical → High → Medium → Low)
+- Detailed test cases for each component (with code examples)
+- 5-phase implementation roadmap (25-30 hours total)
+- Testing guidelines (AAA pattern, mocking, factories)
+- Success criteria and coverage goals
+- **Ready for immediate implementation** ✅
 
 ---
 
@@ -311,7 +323,10 @@ Backend performance optimization plan for 2M+ tasks (Enhanced by Opus 4.1)
 - [`backend/API_REFERENCE.md`](backend/API_REFERENCE.md) - API contracts
 - [`backend/DATABASE.md`](backend/DATABASE.md) - Schema design
 - [`backend/RECURRENCE_TASKS.md`](backend/RECURRENCE_TASKS.md) - Recurring tasks system
-- [`backend/TEST_COVERAGE.md`](backend/TEST_COVERAGE.md) - Test coverage report & roadmap
+
+**Testing:**
+- [`backend/TEST_COVERAGE.md`](backend/TEST_COVERAGE.md) - Current test coverage report
+- [`backend/MISSING_TEST_COVERAGE_PLAN.md`](backend/MISSING_TEST_COVERAGE_PLAN.md) - 🎯 **Implementation plan for writing tests**
 
 ### For Frontend Development
 **Must Read:**
@@ -516,10 +531,10 @@ Every document follows this pattern:
 
 ## 📅 Last Updated
 
-**Version:** 1.1.0
-**Date:** 2025-11-06
+**Version:** 1.2.0
+**Date:** 2025-11-10
 **Maintainer:** Claude Code AI
-**Project Phase:** Production-Ready
+**Project Phase:** Production-Ready + Test Coverage Improvement
 
 ---
 
