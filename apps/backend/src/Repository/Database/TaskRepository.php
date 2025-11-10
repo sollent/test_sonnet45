@@ -81,6 +81,61 @@ class TaskRepository extends ServiceEntityRepository
         $todayStart = new \DateTimeImmutable('today');
         $todayEnd = new \DateTimeImmutable('today 23:59:59');
 
+        // OPTIMIZED: Two-step approach to avoid slow ROW_NUMBER() OVER() queries
+        // Step 1: Get task IDs with simple query (fast, no joins with subtasks)
+        $idsQb = $this->createQueryBuilder('t')
+            ->select('t.id')
+            ->where('t.user = :user')
+            ->andWhere('t.parentTask IS NULL')
+            ->andWhere('t.isArchived = false')
+            ->andWhere('t.status != :cancelledStatus')
+            ->andWhere(
+                '(t.dueDate BETWEEN :todayStart AND :todayEnd) OR (t.startDate BETWEEN :todayStart AND :todayEnd)'
+            )
+            ->setParameter('user', $user)
+            ->setParameter('todayStart', $todayStart)
+            ->setParameter('todayEnd', $todayEnd)
+            ->setParameter('cancelledStatus', TaskStatus::CANCELLED);
+
+        // Filter by tasks with/without subtasks
+        // OPTIMIZATION: Use native SQL to get parent IDs, then filter with IN
+        if ($onlyWithSubtasks) {
+            $conn = $this->getEntityManager()->getConnection();
+            $stmt = $conn->executeQuery(
+                'SELECT DISTINCT parent_task_id FROM task WHERE parent_task_id IS NOT NULL AND user_id = ?',
+                [$user->getId()],
+                [\Doctrine\DBAL\ParameterType::INTEGER]
+            );
+            $parentIds = $stmt->fetchFirstColumn();
+
+            if (!empty($parentIds)) {
+                $idsQb->andWhere('t.id IN (:parentTaskIds)')
+                      ->setParameter('parentTaskIds', $parentIds);
+            } else {
+                return [];
+            }
+        }
+
+        // Apply filters to ID query
+        if ($filters) {
+            $this->applyFilters($idsQb, $filters);
+        }
+
+        // Sort IDs
+        $idsQb->addSelect('CASE WHEN t.status = :completedStatus THEN 1 ELSE 0 END AS HIDDEN completedOrder')
+              ->setParameter('completedStatus', TaskStatus::COMPLETED)
+              ->orderBy('completedOrder', 'ASC')
+              ->addOrderBy('t.priority', 'DESC')
+              ->addOrderBy('t.dueDate', 'ASC')
+              ->addOrderBy('t.id', 'ASC');
+
+        $taskIds = array_column($idsQb->getQuery()->getScalarResult(), 'id');
+
+        if (empty($taskIds)) {
+            return [];
+        }
+
+        // Step 2: Load full data for these IDs with all joins (preserving order)
         $qb = $this->createQueryBuilder('t')
             ->leftJoin('t.tags', 'tag')
             ->leftJoin('t.user', 'u')
@@ -92,55 +147,18 @@ class TaskRepository extends ServiceEntityRepository
             ->addSelect('st')
             ->addSelect('rr')
             ->addSelect('st_rr')
-            ->where('t.user = :user')
-            ->andWhere('t.parentTask IS NULL')
-            ->andWhere('t.isArchived = false')
-            ->andWhere('t.status != :cancelledStatus')  // Exclude cancelled tasks
-            ->andWhere(
-                '(t.dueDate BETWEEN :todayStart AND :todayEnd) OR (t.startDate BETWEEN :todayStart AND :todayEnd)'
-            )
-            ->setParameter('user', $user)
-            ->setParameter('todayStart', $todayStart)
-            ->setParameter('todayEnd', $todayEnd)
-            ->setParameter('cancelledStatus', TaskStatus::CANCELLED);
+            ->where('t.id IN (:ids)')
+            ->setParameter('ids', $taskIds);
 
-        // Filter by tasks with/without subtasks
-        // OPTIMIZATION: Use native SQL + IN instead of DQL EXISTS for better performance
-        // Native SQL query executes ONCE and PostgreSQL caches results + uses partial index
-        // DQL EXISTS would execute for EVERY row (slow on large datasets)
-        if ($onlyWithSubtasks) {
-            $conn = $this->getEntityManager()->getConnection();
-            $stmt = $conn->executeQuery(
-                'SELECT DISTINCT parent_task_id FROM task WHERE parent_task_id IS NOT NULL AND user_id = ?',
-                [$user->getId()],
-                [\Doctrine\DBAL\ParameterType::INTEGER]
-            );
-            $parentIds = $stmt->fetchFirstColumn();
-
-            if (!empty($parentIds)) {
-                $qb->andWhere('t.id IN (:parentTaskIds)')
-                   ->setParameter('parentTaskIds', $parentIds);
-            } else {
-                // No tasks with subtasks found - return empty result
-                $qb->andWhere('1 = 0');
-            }
-        }
-
-        // Apply filters
-        if ($filters) {
-            $this->applyFilters($qb, $filters);
-        }
-
-        // Sort by completion status first (uncompleted first, then completed), then by priority
+        // Preserve original sort order
         $qb->addSelect('CASE WHEN t.status = :completedStatus THEN 1 ELSE 0 END AS HIDDEN completedOrder')
            ->setParameter('completedStatus', TaskStatus::COMPLETED)
-           ->orderBy('completedOrder', 'ASC')  // 0=uncompleted first, 1=completed after
+           ->orderBy('completedOrder', 'ASC')
            ->addOrderBy('t.priority', 'DESC')
            ->addOrderBy('t.dueDate', 'ASC')
            ->addOrderBy('t.id', 'ASC');
 
-        // Use Paginator for correct LEFT JOIN + LIMIT handling
-        $paginator = new Paginator($qb->getQuery(), $fetchJoinCollection = true);
+        $paginator = new Paginator($qb->getQuery(), false);
         return iterator_to_array($paginator);
     }
 
@@ -184,6 +202,61 @@ class TaskRepository extends ServiceEntityRepository
         $tomorrow = new \DateTimeImmutable('tomorrow');
         $endDate = new \DateTimeImmutable("+{$days} days");
 
+        // OPTIMIZED: Two-step approach to avoid slow ROW_NUMBER() OVER() queries
+        // Step 1: Get task IDs with simple query (fast, no joins with subtasks)
+        $idsQb = $this->createQueryBuilder('t')
+            ->select('t.id')
+            ->where('t.user = :user')
+            ->andWhere('t.parentTask IS NULL')
+            ->andWhere('t.isArchived = false')
+            ->andWhere('t.status != :cancelledStatus')
+            ->andWhere('(t.startDate >= :tomorrow AND t.startDate <= :endDate) OR (t.dueDate >= :tomorrow AND t.dueDate <= :endDate)')
+            ->setParameter('user', $user)
+            ->setParameter('tomorrow', $tomorrow)
+            ->setParameter('endDate', $endDate)
+            ->setParameter('cancelledStatus', TaskStatus::CANCELLED);
+
+        // Filter by tasks with/without subtasks
+        // OPTIMIZATION: Use native SQL to get parent IDs, then filter with IN
+        if ($onlyWithSubtasks) {
+            $conn = $this->getEntityManager()->getConnection();
+            $stmt = $conn->executeQuery(
+                'SELECT DISTINCT parent_task_id FROM task WHERE parent_task_id IS NOT NULL AND user_id = ?',
+                [$user->getId()],
+                [\Doctrine\DBAL\ParameterType::INTEGER]
+            );
+            $parentIds = $stmt->fetchFirstColumn();
+
+            if (!empty($parentIds)) {
+                $idsQb->andWhere('t.id IN (:parentTaskIds)')
+                      ->setParameter('parentTaskIds', $parentIds);
+            } else {
+                return [];
+            }
+        }
+
+        // Apply filters to ID query
+        if ($filters) {
+            $this->applyFilters($idsQb, $filters);
+        }
+
+        // Sort and limit IDs
+        $idsQb->addSelect('DATE(COALESCE(t.dueDate, t.startDate)) AS HIDDEN dateOnly')
+              ->addSelect('CASE WHEN t.status = :completedStatus THEN 1 ELSE 0 END AS HIDDEN completedOrder')
+              ->setParameter('completedStatus', TaskStatus::COMPLETED)
+              ->orderBy('dateOnly', 'ASC')
+              ->addOrderBy('completedOrder', 'ASC')
+              ->addOrderBy('t.priority', 'DESC')
+              ->addOrderBy('t.id', 'ASC')
+              ->setMaxResults(200);
+
+        $taskIds = array_column($idsQb->getQuery()->getScalarResult(), 'id');
+
+        if (empty($taskIds)) {
+            return [];
+        }
+
+        // Step 2: Load full data for these IDs with all joins (preserving order)
         $qb = $this->createQueryBuilder('t')
             ->leftJoin('t.tags', 'tag')
             ->leftJoin('t.user', 'u')
@@ -195,56 +268,19 @@ class TaskRepository extends ServiceEntityRepository
             ->addSelect('st')
             ->addSelect('rr')
             ->addSelect('st_rr')
-            ->where('t.user = :user')
-            ->andWhere('t.parentTask IS NULL')
-            ->andWhere('t.isArchived = false')
-            ->andWhere('t.status != :cancelledStatus')  // Exclude cancelled tasks
-            ->andWhere('(t.startDate >= :tomorrow AND t.startDate <= :endDate) OR (t.dueDate >= :tomorrow AND t.dueDate <= :endDate)')
-            ->setParameter('user', $user)
-            ->setParameter('tomorrow', $tomorrow)
-            ->setParameter('endDate', $endDate)
-            ->setParameter('cancelledStatus', TaskStatus::CANCELLED);
+            ->where('t.id IN (:ids)')
+            ->setParameter('ids', $taskIds);
 
-        // Filter by tasks with/without subtasks
-        // OPTIMIZATION: Use native SQL + IN instead of DQL EXISTS for better performance
-        // Native SQL query executes ONCE and PostgreSQL caches results + uses partial index
-        // DQL EXISTS would execute for EVERY row (slow on large datasets)
-        if ($onlyWithSubtasks) {
-            $conn = $this->getEntityManager()->getConnection();
-            $stmt = $conn->executeQuery(
-                'SELECT DISTINCT parent_task_id FROM task WHERE parent_task_id IS NOT NULL AND user_id = ?',
-                [$user->getId()],
-                [\Doctrine\DBAL\ParameterType::INTEGER]
-            );
-            $parentIds = $stmt->fetchFirstColumn();
-
-            if (!empty($parentIds)) {
-                $qb->andWhere('t.id IN (:parentTaskIds)')
-                   ->setParameter('parentTaskIds', $parentIds);
-            } else {
-                // No tasks with subtasks found - return empty result
-                $qb->andWhere('1 = 0');
-            }
-        }
-
-        // Apply filters
-        if ($filters) {
-            $this->applyFilters($qb, $filters);
-        }
-
-        // Sort by date first, then by completion status (uncompleted first, then completed), then by priority
+        // Preserve original sort order
         $qb->addSelect('DATE(COALESCE(t.dueDate, t.startDate)) AS HIDDEN dateOnly')
            ->addSelect('CASE WHEN t.status = :completedStatus THEN 1 ELSE 0 END AS HIDDEN completedOrder')
            ->setParameter('completedStatus', TaskStatus::COMPLETED)
-           ->orderBy('dateOnly', 'ASC')  // Group by day
-           ->addOrderBy('completedOrder', 'ASC')  // 0=uncompleted first, 1=completed after
+           ->orderBy('dateOnly', 'ASC')
+           ->addOrderBy('completedOrder', 'ASC')
            ->addOrderBy('t.priority', 'DESC')
-           ->addOrderBy('t.id', 'ASC')
-           // PERFORMANCE: Limit to 200 tasks to prevent loading thousands of tasks
-           ->setMaxResults(200);
+           ->addOrderBy('t.id', 'ASC');
 
-        // Use Paginator for correct LEFT JOIN + LIMIT handling
-        $paginator = new Paginator($qb->getQuery(), $fetchJoinCollection = true);
+        $paginator = new Paginator($qb->getQuery(), false);
         return iterator_to_array($paginator);
     }
 
@@ -252,13 +288,10 @@ class TaskRepository extends ServiceEntityRepository
     {
         $todayStart = new \DateTimeImmutable('today');
 
-        $qb = $this->createQueryBuilder('t')
-            ->leftJoin('t.recurrenceRule', 'rr')
-            ->addSelect('rr')
-            ->leftJoin('t.subtasks', 'st')
-            ->addSelect('st')
-            ->leftJoin('st.recurrenceRule', 'st_rr')
-            ->addSelect('st_rr')
+        // OPTIMIZED: Two-step approach to avoid slow ROW_NUMBER() OVER() queries
+        // Step 1: Get task IDs with simple query (fast, no joins with subtasks)
+        $idsQb = $this->createQueryBuilder('t')
+            ->select('t.id')
             ->where('t.user = :user')
             ->andWhere('t.parentTask IS NULL')
             ->andWhere('t.isArchived = false')
@@ -272,9 +305,7 @@ class TaskRepository extends ServiceEntityRepository
             ->setParameter('cancelledStatus', TaskStatus::CANCELLED);
 
         // Filter by tasks with/without subtasks
-        // When onlyWithSubtasks=true: Show ONLY tasks that have subtasks (complex tasks)
-        // When onlyWithSubtasks=false (default): Show ALL tasks with their subtasks
-        // OPTIMIZATION: Use native SQL + IN instead of DQL EXISTS for better performance
+        // OPTIMIZATION: Use native SQL to get parent IDs, then filter with IN
         // Native SQL query executes ONCE and PostgreSQL caches results + uses partial index
         if ($onlyWithSubtasks) {
             $conn = $this->getEntityManager()->getConnection();
@@ -286,48 +317,68 @@ class TaskRepository extends ServiceEntityRepository
             $parentIds = $stmt->fetchFirstColumn();
 
             if (!empty($parentIds)) {
-                $qb->andWhere('t.id IN (:parentTaskIds)')
-                   ->setParameter('parentTaskIds', $parentIds);
+                $idsQb->andWhere('t.id IN (:parentTaskIds)')
+                      ->setParameter('parentTaskIds', $parentIds);
             } else {
                 // No tasks with subtasks found - return empty result
-                $qb->andWhere('1 = 0');
+                return [];
             }
         }
 
-        // Apply filters
+        // Apply filters to ID query
         if ($filters) {
-            $this->applyFilters($qb, $filters);
+            $this->applyFilters($idsQb, $filters);
         }
 
-        // Sort by DATE (day only) first, then by completion status within each day
-        // Using custom DATE() DQL function to extract just the date part (ignore time)
-        // COALESCE ensures we use startDate if dueDate is null
-        // This ensures tasks are grouped by day, with uncompleted tasks first within each day
+        // Sort and paginate IDs
+        $idsQb->addSelect('DATE(COALESCE(t.dueDate, t.startDate)) AS HIDDEN dateOnly')
+              ->addSelect('CASE WHEN t.status = :completedStatus THEN 1 ELSE 0 END AS HIDDEN completedOrder')
+              ->setParameter('completedStatus', TaskStatus::COMPLETED)
+              ->orderBy('dateOnly', 'ASC')
+              ->addOrderBy('completedOrder', 'ASC')
+              ->addOrderBy('t.priority', 'DESC')
+              ->addOrderBy('t.id', 'ASC');
+
+        // Apply pagination to ID query
+        if ($limit !== null) {
+            $idsQb->setMaxResults($limit);
+        }
+        if ($offset !== null) {
+            $idsQb->setFirstResult($offset);
+        }
+
+        $taskIds = array_column($idsQb->getQuery()->getScalarResult(), 'id');
+
+        if (empty($taskIds)) {
+            return [];
+        }
+
+        // Step 2: Load full data for these IDs with all joins (preserving order)
+        $qb = $this->createQueryBuilder('t')
+            ->leftJoin('t.tags', 'tag')
+            ->leftJoin('t.user', 'u')
+            ->leftJoin('t.subtasks', 'st')
+            ->leftJoin('t.recurrenceRule', 'rr')
+            ->leftJoin('st.recurrenceRule', 'st_rr')
+            ->addSelect('tag')
+            ->addSelect('u')
+            ->addSelect('st')
+            ->addSelect('rr')
+            ->addSelect('st_rr')
+            ->where('t.id IN (:ids)')
+            ->setParameter('ids', $taskIds);
+
+        // Preserve original sort order
         $qb->addSelect('DATE(COALESCE(t.dueDate, t.startDate)) AS HIDDEN dateOnly')
            ->addSelect('CASE WHEN t.status = :completedStatus THEN 1 ELSE 0 END AS HIDDEN completedOrder')
            ->setParameter('completedStatus', TaskStatus::COMPLETED)
-           // First sort by DATE only (groups tasks into days, ignoring time)
            ->orderBy('dateOnly', 'ASC')
-           // Then sort by completion status (0=uncompleted first, 1=completed after)
            ->addOrderBy('completedOrder', 'ASC')
-           // Then by priority within same completion status
            ->addOrderBy('t.priority', 'DESC')
-           // Finally by ID to ensure stable order for pagination
            ->addOrderBy('t.id', 'ASC');
 
-        // Apply pagination
-        if ($limit !== null) {
-            $qb->setMaxResults($limit);
-        }
-        if ($offset !== null) {
-            $qb->setFirstResult($offset);
-        }
-
-        // Always use Paginator to handle LEFT JOIN + LIMIT correctly
-        // Without Paginator, LIMIT is applied to SQL rows (not Task entities)
-        // which causes duplicates when JOINing collections (subtasks)
-        // fetchJoinCollection=true wraps main query with LIMIT in subquery BEFORE JOIN
-        $paginator = new Paginator($qb->getQuery(), $fetchJoinCollection = true);
+        // Use Paginator with fetchJoinCollection=false since we already have exact IDs
+        $paginator = new Paginator($qb->getQuery(), false);
         return iterator_to_array($paginator);
     }
 
