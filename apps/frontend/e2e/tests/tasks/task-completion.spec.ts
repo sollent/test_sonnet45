@@ -41,7 +41,19 @@ test.describe('Task Completion', () => {
     await taskDialogPage.clickQuickDate('today')
     await page.waitForTimeout(500)
     await taskDialogPage.saveButton.click()
-    await page.waitForTimeout(2000)
+    await page.waitForTimeout(1000)
+
+    // Wait for dialog and mask to disappear completely
+    await page.locator('.p-dialog').waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {})
+    await page.locator('.p-dialog-mask').waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {})
+    await page.waitForTimeout(1500)
+
+    // Navigate to "Today" view to ensure task is visible
+    const todayButton = page.getByRole('button', { name: /сегодня|today/i }).first()
+    if (await todayButton.isVisible().catch(() => false)) {
+      await todayButton.click()
+      await page.waitForTimeout(1500)
+    }
 
     // Find the created task
     const task = await dashboardPage.findTaskByTitle('Test Task for Completion')
@@ -97,7 +109,19 @@ test.describe('Task Completion', () => {
     await taskDialogPage.clickQuickDate('today')
     await page.waitForTimeout(500)
     await taskDialogPage.saveButton.click()
-    await page.waitForTimeout(2000)
+    await page.waitForTimeout(1000)
+
+    // Wait for dialog and mask to disappear completely
+    await page.locator('.p-dialog').waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {})
+    await page.locator('.p-dialog-mask').waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {})
+    await page.waitForTimeout(1500)
+
+    // Navigate to "Today" view
+    const todayButton = page.getByRole('button', { name: /сегодня|today/i }).first()
+    if (await todayButton.isVisible().catch(() => false)) {
+      await todayButton.click()
+      await page.waitForTimeout(1500)
+    }
 
     // Find and complete the task
     const task = await dashboardPage.findTaskByTitle('Task to Uncomplete')
@@ -147,7 +171,19 @@ test.describe('Task Completion', () => {
     await taskDialogPage.clickQuickDate('today')
     await page.waitForTimeout(500)
     await taskDialogPage.saveButton.click()
-    await page.waitForTimeout(2000)
+    await page.waitForTimeout(1000)
+
+    // Wait for dialog and mask to disappear completely
+    await page.locator('.p-dialog').waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {})
+    await page.locator('.p-dialog-mask').waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {})
+    await page.waitForTimeout(1500)
+
+    // Navigate to "Today" view
+    const todayButton = page.getByRole('button', { name: /сегодня|today/i }).first()
+    if (await todayButton.isVisible().catch(() => false)) {
+      await todayButton.click()
+      await page.waitForTimeout(1500)
+    }
 
     // Find the parent task and click to open details
     const parentTask = await dashboardPage.findTaskByTitle('Parent Task with Subtasks')
@@ -202,7 +238,19 @@ test.describe('Task Completion', () => {
     await taskDialogPage.clickQuickDate('today')
     await page.waitForTimeout(500)
     await taskDialogPage.saveButton.click()
-    await page.waitForTimeout(2000)
+    await page.waitForTimeout(1000)
+
+    // Wait for dialog and mask to disappear completely
+    await page.locator('.p-dialog').waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {})
+    await page.locator('.p-dialog-mask').waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {})
+    await page.waitForTimeout(1500)
+
+    // Navigate to "Today" view
+    const todayButton = page.getByRole('button', { name: /сегодня|today/i }).first()
+    if (await todayButton.isVisible().catch(() => false)) {
+      await todayButton.click()
+      await page.waitForTimeout(1500)
+    }
 
     // Find and open the task
     const task = await dashboardPage.findTaskByTitle('Task to Complete from Sidebar')
@@ -270,7 +318,19 @@ test.describe('Task Completion', () => {
     await taskDialogPage.clickQuickDate('today')
     await page.waitForTimeout(500)
     await taskDialogPage.saveButton.click()
-    await page.waitForTimeout(2000)
+    await page.waitForTimeout(1000)
+
+    // Wait for dialog and mask to disappear completely
+    await page.locator('.p-dialog').waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {})
+    await page.locator('.p-dialog-mask').waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {})
+    await page.waitForTimeout(1500)
+
+    // Navigate to "Today" view
+    const todayButton = page.getByRole('button', { name: /сегодня|today/i }).first()
+    if (await todayButton.isVisible().catch(() => false)) {
+      await todayButton.click()
+      await page.waitForTimeout(1500)
+    }
 
     // Complete it first
     const task = await dashboardPage.findTaskByTitle('Task to Uncomplete from Sidebar')
