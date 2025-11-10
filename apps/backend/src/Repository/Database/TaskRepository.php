@@ -458,13 +458,16 @@ class TaskRepository extends ServiceEntityRepository
         $conn = $this->getEntityManager()->getConnection();
 
         // Recursive CTE to load all subtasks in ONE query
+        // OPTIMIZED: Select only 'id' in CTE (not t.*) for better performance
+        // Index idx_task_parent_task_id speeds up the recursive JOIN
         $sql = "
             WITH RECURSIVE subtask_tree AS (
                 -- Base case: get the main task
-                SELECT t.* FROM task t WHERE t.id = :id
+                SELECT t.id FROM task t WHERE t.id = :id
                 UNION ALL
                 -- Recursive case: get all subtasks
-                SELECT t.* FROM task t
+                -- Uses index: idx_task_parent_task_id
+                SELECT t.id FROM task t
                 INNER JOIN subtask_tree st ON t.parent_task_id = st.id
             )
             SELECT id FROM subtask_tree
