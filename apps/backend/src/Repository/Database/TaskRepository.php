@@ -367,7 +367,7 @@ class TaskRepository extends ServiceEntityRepository
      */
     public function findTasksByTag(User $user, int $tagId): array
     {
-        return $this->createQueryBuilder('t')
+        $tasks = $this->createQueryBuilder('t')
             ->join('t.tags', 'tag')
             ->leftJoin('t.user', 'u')
             ->addSelect('tag')
@@ -382,6 +382,18 @@ class TaskRepository extends ServiceEntityRepository
             ->addOrderBy('t.priority', 'DESC')
             ->getQuery()
             ->getResult();
+
+        // FIX N+1: Batch load subtasks
+        if (!empty($tasks)) {
+            $taskIds = array_map(fn(Task $task) => $task->getId(), $tasks);
+            $this->createQueryBuilder('subtask')
+                ->where('subtask.parentTask IN (:parentIds)')
+                ->setParameter('parentIds', $taskIds)
+                ->getQuery()
+                ->getResult();
+        }
+
+        return $tasks;
     }
 
     /**
@@ -560,10 +572,26 @@ class TaskRepository extends ServiceEntityRepository
                ->setParameter('completed', TaskStatus::COMPLETED);
         }
 
-        return $qb->orderBy('t.startDate', 'ASC')
+        $tasks = $qb->orderBy('t.startDate', 'ASC')
             ->addOrderBy('t.dueDate', 'ASC')
             ->getQuery()
             ->getResult();
+
+        // FIX N+1: Batch load ALL subtasks for all tasks in ONE query
+        // This prevents 2500+ individual queries when accessing $task->getSubtasks()
+        if (!empty($tasks)) {
+            $taskIds = array_map(fn(Task $task) => $task->getId(), $tasks);
+
+            // Load ALL subtasks for all parent tasks in ONE query
+            // Doctrine will automatically populate subtasks collections
+            $this->createQueryBuilder('subtask')
+                ->where('subtask.parentTask IN (:parentIds)')
+                ->setParameter('parentIds', $taskIds)
+                ->getQuery()
+                ->getResult();
+        }
+
+        return $tasks;
     }
 
     /**
