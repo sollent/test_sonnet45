@@ -29,6 +29,43 @@ A **full-featured admin panel** with:
 
 ---
 
+## 📑 Table of Contents
+
+### Quick Navigation
+
+#### 🎯 Planning & Design
+- [Goals and Requirements](#-goals-and-requirements)
+- [Architecture Design](#-architecture-design)
+- [Use Cases (Technical Support Scenarios)](#use-cases-technical-support-scenarios)
+
+#### 📊 Implementation Phases
+
+- **[PHASE 1: Critical CRUD Controllers](#phase-1-critical-crud-controllers-6-8-hours)** (6-8 hours)
+  - [Step 1: TaskCrudController](#step-1-taskcrudcontroller-3-hours) - Core feature (3h)
+  - [Step 2: TagCrudController](#step-2-tagcrudcontroller-1-hour) - User categorization (1h)
+  - [Step 3: TaskAttachmentCrudController](#step-3-taskattachmentcrudcontroller-2-hours) - File management (2h)
+  - [Step 4: RecurrenceRuleCrudController](#step-4-recurrencerulecrudcontroller-2-hours) - Recurring tasks (2h)
+
+- **[PHASE 2: Supporting Entities](#phase-2-supporting-entities-3-4-hours)** (3-4 hours)
+  - [Step 5: MediaObjectCrudController](#step-5-mediaobjectcrudcontroller-15-hours) - Media library (1.5h)
+  - [Step 6: RefreshTokenCrudController](#step-6-refreshtokencrudcontroller-05-hours) - Session management (0.5h)
+  - [Step 7: AuditLogCrudController](#step-7-auditlogcrudcontroller-2-hours-new-entity) - Activity tracking (2h)
+
+- **[PHASE 3: Dashboard & Enhancements](#phase-3-dashboard--enhancements-3-4-hours)** (3-4 hours)
+  - [Step 8: Enhanced Dashboard](#step-8-enhanced-dashboard-2-hours) - System overview (2h)
+  - [Step 9: Menu Configuration](#step-9-menu-configuration-05-hours) - Navigation structure (0.5h)
+  - [Step 10: Bulk Actions & Export](#step-10-bulk-actions--export-1-hour) - Batch operations (1h)
+
+#### 🔐 Additional Sections
+- [Permission System (ROLE_ADMIN vs ROLE_SUPER_ADMIN)](#-permission-system-role_admin-vs-role_super_admin)
+- [Implementation Checklist](#-implementation-checklist)
+- [Expected Outcomes](#-expected-outcomes)
+- [Technical Implementation Notes](#-technical-implementation-notes)
+- [Go-Live Checklist](#-go-live-checklist)
+- [Support & Troubleshooting](#-support--troubleshooting)
+
+---
+
 ## 🎯 Goals and Requirements
 
 ### Business Goals
