@@ -111,7 +111,7 @@ class TaskRepository extends ServiceEntityRepository
         if ($onlyWithSubtasks) {
             $conn = $this->getEntityManager()->getConnection();
             $stmt = $conn->executeQuery(
-                'SELECT DISTINCT parent_task_id FROM task WHERE parent_task_id IS NOT NULL AND user_id = ?',
+                'SELECT DISTINCT parent_task_id FROM task WHERE parent_task_id IN (SELECT id FROM task WHERE user_id = ? AND parent_task_id IS NULL)',
                 [$user->getId()],
                 [\Doctrine\DBAL\ParameterType::INTEGER]
             );
@@ -212,7 +212,7 @@ class TaskRepository extends ServiceEntityRepository
         if ($onlyWithSubtasks) {
             $conn = $this->getEntityManager()->getConnection();
             $stmt = $conn->executeQuery(
-                'SELECT DISTINCT parent_task_id FROM task WHERE parent_task_id IS NOT NULL AND user_id = ?',
+                'SELECT DISTINCT parent_task_id FROM task WHERE parent_task_id IN (SELECT id FROM task WHERE user_id = ? AND parent_task_id IS NULL)',
                 [$user->getId()],
                 [\Doctrine\DBAL\ParameterType::INTEGER]
             );
@@ -279,7 +279,7 @@ class TaskRepository extends ServiceEntityRepository
         if ($onlyWithSubtasks) {
             $conn = $this->getEntityManager()->getConnection();
             $stmt = $conn->executeQuery(
-                'SELECT DISTINCT parent_task_id FROM task WHERE parent_task_id IS NOT NULL AND user_id = ?',
+                'SELECT DISTINCT parent_task_id FROM task WHERE parent_task_id IN (SELECT id FROM task WHERE user_id = ? AND parent_task_id IS NULL)',
                 [$user->getId()],
                 [\Doctrine\DBAL\ParameterType::INTEGER]
             );
@@ -624,7 +624,7 @@ class TaskRepository extends ServiceEntityRepository
         if ($onlyWithSubtasks) {
             $conn = $this->getEntityManager()->getConnection();
             $stmt = $conn->executeQuery(
-                'SELECT DISTINCT parent_task_id FROM task WHERE parent_task_id IS NOT NULL AND user_id = ?',
+                'SELECT DISTINCT parent_task_id FROM task WHERE parent_task_id IN (SELECT id FROM task WHERE user_id = ? AND parent_task_id IS NULL)',
                 [$user->getId()],
                 [\Doctrine\DBAL\ParameterType::INTEGER]
             );
@@ -710,7 +710,7 @@ class TaskRepository extends ServiceEntityRepository
         if ($onlyWithSubtasks) {
             $conn = $this->getEntityManager()->getConnection();
             $stmt = $conn->executeQuery(
-                'SELECT DISTINCT parent_task_id FROM task WHERE parent_task_id IS NOT NULL AND user_id = ?',
+                'SELECT DISTINCT parent_task_id FROM task WHERE parent_task_id IN (SELECT id FROM task WHERE user_id = ? AND parent_task_id IS NULL)',
                 [$user->getId()],
                 [\Doctrine\DBAL\ParameterType::INTEGER]
             );
