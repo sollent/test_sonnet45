@@ -25,7 +25,7 @@
 
 ```bash
 #!/bin/bash
-# File: ~/voice-ai-services/scripts/install-ollama.sh
+# File: infrastructure/ai-services/scripts/install-ollama.sh
 
 set -e
 
@@ -71,7 +71,7 @@ echo "Ollama installation completed!"
 
 ```bash
 #!/bin/bash
-# File: ~/voice-ai-services/scripts/configure-llama.sh
+# File: infrastructure/ai-services/scripts/configure-llama.sh
 
 set -e
 
@@ -124,7 +124,7 @@ echo "✅ Llama 3.2 configured for Russian voice commands!"
 
 ```python
 #!/usr/bin/env python3
-# File: ~/voice-ai-services/scripts/test_llama.py
+# File: infrastructure/ai-services/scripts/test_llama.py
 
 import requests
 import json
@@ -187,7 +187,7 @@ if __name__ == "__main__":
 ### Advanced Ollama Configuration
 
 ```yaml
-# File: ~/voice-ai-services/configs/ollama/config.yml
+# File: infrastructure/ai-services/configs/ollama/config.yml
 
 # Ollama configuration for production
 server:
@@ -229,7 +229,7 @@ logging:
 #### Step 1: Build Whisper Service
 
 ```dockerfile
-# File: ~/voice-ai-services/configs/whisper/Dockerfile.complete
+# File: infrastructure/ai-services/configs/whisper/Dockerfile.complete
 
 FROM python:3.11-slim
 
@@ -278,7 +278,7 @@ CMD ["uvicorn", "whisper_api:app", "--host", "0.0.0.0", "--port", "8090", "--wor
 #### Step 2: Whisper API Implementation
 
 ```python
-# File: ~/voice-ai-services/configs/whisper/whisper_api.py
+# File: infrastructure/ai-services/configs/whisper/whisper_api.py
 
 import os
 import time
@@ -697,7 +697,7 @@ if __name__ == "__main__":
 
 ```python
 #!/usr/bin/env python3
-# File: ~/voice-ai-services/scripts/test_whisper.py
+# File: infrastructure/ai-services/scripts/test_whisper.py
 
 import requests
 import time
@@ -794,7 +794,7 @@ if __name__ == "__main__":
 #### Step 1: Configure Centrifugo
 
 ```json
-// File: ~/voice-ai-services/configs/centrifugo/config.production.json
+// File: infrastructure/ai-services/configs/centrifugo/config.production.json
 {
   "token_hmac_secret_key": "your-secret-key-min-32-chars-production",
   "api_key": "your-api-key-min-32-chars-production",
@@ -918,7 +918,7 @@ if __name__ == "__main__":
 
 ```php
 <?php
-// File: ~/voice-ai-services/configs/centrifugo/CentrifugoService.php
+// File: infrastructure/ai-services/configs/centrifugo/CentrifugoService.php
 
 namespace App\Service\WebSocket;
 
@@ -1132,7 +1132,7 @@ class CentrifugoService
 #### Step 3: Frontend WebSocket Client
 
 ```typescript
-// File: ~/voice-ai-services/configs/centrifugo/centrifugo.client.ts
+// File: infrastructure/ai-services/configs/centrifugo/centrifugo.client.ts
 
 import { Centrifuge, State, Subscription } from 'centrifuge';
 
@@ -1352,7 +1352,7 @@ export default VoiceWebSocketClient;
 
 ```python
 #!/usr/bin/env python3
-# File: ~/voice-ai-services/scripts/integration_test.py
+# File: infrastructure/ai-services/scripts/integration_test.py
 
 import asyncio
 import aiohttp
@@ -1549,7 +1549,7 @@ if __name__ == "__main__":
 
 ```bash
 #!/bin/bash
-# File: ~/voice-ai-services/scripts/optimize_performance.sh
+# File: infrastructure/ai-services/scripts/optimize_performance.sh
 
 set -e
 
@@ -1617,7 +1617,7 @@ python3 scripts/benchmark.py
 
 ```bash
 #!/bin/bash
-# File: ~/voice-ai-services/scripts/troubleshoot.sh
+# File: infrastructure/ai-services/scripts/troubleshoot.sh
 
 echo "🔍 Voice AI Services Troubleshooting"
 echo "===================================="

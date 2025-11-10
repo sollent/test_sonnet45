@@ -83,7 +83,7 @@ Mitigation Strategies:
 
 ```bash
 #!/bin/bash
-# File: ~/voice-ai-services/scripts/setup_firewall.sh
+# File: infrastructure/ai-services/scripts/setup_firewall.sh
 
 set -e
 
@@ -126,7 +126,7 @@ echo "✅ Firewall configured successfully"
 ### Network Segmentation
 
 ```yaml
-# File: ~/voice-ai-services/docker-compose.security.yml
+# File: infrastructure/ai-services/docker-compose.security.yml
 
 version: '3.8'
 
@@ -203,7 +203,7 @@ services:
 
 ```bash
 #!/bin/bash
-# File: ~/voice-ai-services/scripts/advanced_iptables.sh
+# File: infrastructure/ai-services/scripts/advanced_iptables.sh
 
 # Rate limiting for API endpoints
 iptables -N RATE_LIMIT
@@ -244,7 +244,7 @@ iptables-save > /etc/iptables/rules.v4
 
 ```php
 <?php
-// File: backend/src/Security/JWTManager.php
+// File: apps/backend/src/Security/JWTManager.php
 
 namespace App\Security;
 
@@ -332,7 +332,7 @@ class JWTManager
 
 ```php
 <?php
-// File: backend/src/Security/ApiKeyAuthenticator.php
+// File: apps/backend/src/Security/ApiKeyAuthenticator.php
 
 namespace App\Security;
 
@@ -426,7 +426,7 @@ class ApiKeyAuthenticator extends AbstractAuthenticator
 
 ```php
 <?php
-// File: backend/src/Security/EncryptionService.php
+// File: apps/backend/src/Security/EncryptionService.php
 
 namespace App\Security;
 
@@ -556,7 +556,7 @@ class EncryptionService
 ### Database Encryption
 
 ```yaml
-# File: backend/config/packages/doctrine.yaml
+# File: apps/backend/config/packages/doctrine.yaml
 
 doctrine:
     dbal:
@@ -585,7 +585,7 @@ doctrine:
 ### Rate Limiting Configuration
 
 ```yaml
-# File: backend/config/packages/rate_limiter.yaml
+# File: apps/backend/config/packages/rate_limiter.yaml
 
 framework:
     rate_limiter:
@@ -618,7 +618,7 @@ framework:
 
 ```php
 <?php
-// File: backend/src/Security/InputSanitizer.php
+// File: apps/backend/src/Security/InputSanitizer.php
 
 namespace App\Security;
 
@@ -803,7 +803,7 @@ class InputSanitizer
 
 ```php
 <?php
-// File: backend/src/EventListener/CorsListener.php
+// File: apps/backend/src/EventListener/CorsListener.php
 
 namespace App\EventListener;
 
@@ -874,7 +874,7 @@ class CorsListener
 ### Dockerfile Security Best Practices
 
 ```dockerfile
-# File: ~/voice-ai-services/configs/secure/Dockerfile.secure
+# File: infrastructure/ai-services/configs/secure/Dockerfile.secure
 
 # Use specific version, not latest
 FROM python:3.11.6-slim-bookworm
@@ -941,7 +941,7 @@ CMD ["python", "-m", "uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8090"
 ### Container Runtime Security
 
 ```yaml
-# File: ~/voice-ai-services/docker-compose.secure.yml
+# File: infrastructure/ai-services/docker-compose.secure.yml
 
 version: '3.8'
 
@@ -1002,7 +1002,7 @@ services:
 
 ```bash
 #!/bin/bash
-# File: ~/voice-ai-services/scripts/security_scan.sh
+# File: infrastructure/ai-services/scripts/security_scan.sh
 
 set -e
 
@@ -1050,7 +1050,7 @@ echo "✅ Security scans completed"
 
 ```php
 <?php
-// File: backend/src/Security/SecurityAuditLogger.php
+// File: apps/backend/src/Security/SecurityAuditLogger.php
 
 namespace App\Security;
 
@@ -1167,7 +1167,7 @@ class SecurityAuditLogger
 ### Monitoring Dashboard Configuration
 
 ```yaml
-# File: ~/voice-ai-services/configs/monitoring/security-dashboard.yml
+# File: infrastructure/ai-services/configs/monitoring/security-dashboard.yml
 
 dashboard:
   title: "Voice AI Security Dashboard"
@@ -1225,7 +1225,7 @@ dashboard:
 ### Incident Response Plan
 
 ```yaml
-# File: ~/voice-ai-services/INCIDENT_RESPONSE.yml
+# File: infrastructure/ai-services/INCIDENT_RESPONSE.yml
 
 incident_response_plan:
 
@@ -1292,7 +1292,7 @@ incident_response_plan:
 
 ```bash
 #!/bin/bash
-# File: ~/voice-ai-services/scripts/incident_response.sh
+# File: infrastructure/ai-services/scripts/incident_response.sh
 
 set -e
 

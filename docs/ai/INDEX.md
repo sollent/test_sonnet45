@@ -278,26 +278,22 @@ graph TB
 git clone [repository-url] task-manager
 cd task-manager
 
-# 2. Deploy AI services
-cd deployment/ai-services
-./deploy.sh --dev
-
-# 3. Initialize models
-./scripts/init-models.sh
-
-# 4. Start main application
-cd ../../docker
+# 2. Start main application (from project root)
 docker-compose up -d
 
-# 5. Run migrations
+# 3. Run migrations
 docker exec backend-php83 php bin/console doctrine:migrations:migrate
 
-# 6. Start frontend
-cd ../frontend
+# 4. Start frontend
+cd apps/frontend
 npm install && npm run dev
 
-# 7. Verify installation
+# 5. Verify installation
 ./scripts/health-check.sh
+
+# 6. (Future) Deploy AI services when implementing Voice AI
+# cd infrastructure/ai-services
+# ./scripts/install.sh
 ```
 
 ---

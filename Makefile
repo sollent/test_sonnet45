@@ -7,28 +7,28 @@ help: ## Show this help message
 init: down build up ## Initialize environment
 
 build: ## Build services.
-	docker compose -f docker/docker-compose.yml build
+	docker compose build
 
 up: ## Create and start services.
-	docker compose -f docker/docker-compose.yml up -d
+	docker compose up -d
 
 stop: ## Stop services.
-	docker compose -f docker/docker-compose.yml stop
+	docker compose stop
 
 down: ## Stop and remove containers
-	docker compose -f docker/docker-compose.yml down
+	docker compose down
 
 remove:
-	docker compose -f docker/docker-compose.yml down --rmi all --remove-orphans
+	docker compose down --rmi all --remove-orphans
 
 logs: ## Display logs.
-	docker compose -f docker/docker-compose.yml logs --tail=100 -f
+	docker compose logs --tail=100 -f
 
 console: ## Login in console.
 	docker exec -it backend-php83 bash
 
 psql:
-	docker exec -it backend-container bash
+	docker exec -it backend-psql16 bash
 
 ## Frontend commands
 kill-frontend: ## Kill frontend dev server on port 3000
@@ -44,10 +44,10 @@ kill-port: ## Kill process on specific port (usage: make kill-port PORT=3000)
 	@lsof -ti:$(PORT) | xargs kill -9 2>/dev/null && echo "✓ Process on port $(PORT) killed" || echo "✗ No process found on port $(PORT)"
 
 frontend-dev: ## Start frontend dev server
-	cd frontend && npm run dev
+	cd apps/frontend && npm run dev
 
 frontend-install: ## Install frontend dependencies
-	cd frontend && npm install
+	cd apps/frontend && npm install
 
 frontend-build: ## Build frontend for production
-	cd frontend && npm run build
+	cd apps/frontend && npm run build

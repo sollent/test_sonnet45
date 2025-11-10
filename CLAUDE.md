@@ -70,11 +70,11 @@
 ### Docker (Backend)
 
 ```bash
-# Start all services (from docker/ directory)
-cd docker && docker-compose up -d
+# Start all services (from project root)
+docker-compose up -d
 
 # Stop services
-cd docker && docker-compose down
+docker-compose down
 
 # View logs
 docker logs -f backend-php83
@@ -86,13 +86,13 @@ docker exec backend-php83 php bin/console <command>
 docker exec backend-php83 php bin/console doctrine:migrations:migrate
 ```
 
-**IMPORTANT**: Docker config is at `docker/docker-compose.yml`
+**IMPORTANT**: Main Docker config is `docker-compose.yml` in root (includes infrastructure/docker/*.yml)
 
 ### Frontend
 
 ```bash
 # Start dev server
-cd frontend && npm run dev
+cd apps/frontend && npm run dev
 
 # Build for production
 npm run build
@@ -143,7 +143,7 @@ npm run test:run
 ❌ **DON'T**: Mix business logic with HTTP layer
 
 ### Docker
-✅ **DO**: Use `docker/docker-compose.yml` (main config)
+✅ **DO**: Use `docker-compose.yml` in root (main config, includes infrastructure/docker/*.yml)
 ✅ **DO**: Run backend commands via `docker exec backend-php83`
 ✅ **DO**: Check logs: `docker logs -f backend-php83`
 ❌ **DON'T**: Run PHP commands directly on host
@@ -155,6 +155,8 @@ npm run test:run
 ```
 test_sonnet45/
 ├── CLAUDE.md                       # ← You are here!
+├── docker-compose.yml              # Main Docker compose (includes)
+├── Makefile                        # Common commands
 ├── docs/                           # ← Complete documentation
 │   ├── INDEX.md                   # ← Start here for full navigation
 │   ├── CODING_STANDARDS.md        # ⚠️ CRITICAL
@@ -173,23 +175,29 @@ test_sonnet45/
 │       ├── DEVELOPMENT_WORKFLOW.md
 │       ├── TESTING.md
 │       └── TROUBLESHOOTING.md
-├── docker/
-│   └── docker-compose.yml          # Main Docker config
-├── backend/                        # Symfony 7.1
-│   ├── src/
-│   │   ├── Controller/
-│   │   ├── Service/
-│   │   ├── Repository/
-│   │   ├── Entity/
-│   │   └── Dto/
-│   └── config/
-└── frontend/                       # Vue.js 3.4
-    ├── src/
-    │   ├── components/
-    │   ├── views/
-    │   ├── stores/
-    │   └── services/
-    └── package.json
+├── apps/
+│   ├── backend/                    # Symfony 7.1
+│   │   ├── src/
+│   │   │   ├── Controller/
+│   │   │   ├── Service/
+│   │   │   ├── Repository/
+│   │   │   ├── Entity/
+│   │   │   └── Dto/
+│   │   └── config/
+│   └── frontend/                   # Vue.js 3.4
+│       ├── src/
+│       │   ├── components/
+│       │   ├── views/
+│       │   ├── stores/
+│       │   └── services/
+│       └── package.json
+├── infrastructure/
+│   ├── docker/
+│   │   ├── docker-compose.app.yml
+│   │   ├── docker-compose.ai.yml   # AI services (placeholder)
+│   │   └── docker-compose.dev.yml
+│   └── ai-services/                # AI infrastructure (placeholder)
+└── scripts/                        # Utility scripts
 ```
 
 ---
@@ -232,7 +240,7 @@ test_sonnet45/
 ## 💡 Pro Tips
 
 1. **Always read CODING_STANDARDS.md** before writing code
-2. **All Docker commands** run from `docker/` directory or use `-f docker/docker-compose.yml`
+2. **All Docker commands** run from project root using `docker-compose.yml`
 3. **Frontend state** managed by Pinia stores (no Vuex!)
 4. **Backend layers**: Controller → Service → Repository → Entity
 5. **TypeScript strict mode** - no `any` types allowed!

@@ -77,7 +77,7 @@ graph LR
 ### Main docker-compose.dev.yml
 
 ```yaml
-# File: ~/voice-ai-services/docker-compose.dev.yml
+# File: infrastructure/ai-services/docker-compose.dev.yml
 # Development configuration with hot-reload and debugging
 
 version: '3.8'
@@ -332,7 +332,7 @@ volumes:
 ### Whisper Development Dockerfile
 
 ```dockerfile
-# File: ~/voice-ai-services/configs/whisper/Dockerfile.dev
+# File: infrastructure/ai-services/configs/whisper/Dockerfile.dev
 
 # Multi-stage build for development
 FROM python:3.11-slim as base
@@ -398,7 +398,7 @@ CMD ["python", "dev_server.py"]
 ### Production docker-compose.prod.yml
 
 ```yaml
-# File: ~/voice-ai-services/docker-compose.prod.yml
+# File: infrastructure/ai-services/docker-compose.prod.yml
 # Production configuration with security and optimization
 
 version: '3.8'
@@ -669,7 +669,7 @@ volumes:
 ### Custom Bridge Network
 
 ```yaml
-# File: ~/voice-ai-services/configs/network/bridge.yml
+# File: infrastructure/ai-services/configs/network/bridge.yml
 
 version: '3.8'
 
@@ -721,7 +721,7 @@ networks:
 
 ```bash
 #!/bin/bash
-# File: ~/voice-ai-services/scripts/setup-network-security.sh
+# File: infrastructure/ai-services/scripts/setup-network-security.sh
 
 # Create custom iptables rules for Docker networks
 
@@ -747,7 +747,7 @@ iptables-save > /etc/iptables/rules.v4
 ### Volume Strategy
 
 ```yaml
-# File: ~/voice-ai-services/configs/volumes/volume-config.yml
+# File: infrastructure/ai-services/configs/volumes/volume-config.yml
 
 volumes:
   # Named volumes with drivers
@@ -785,7 +785,7 @@ volumes:
 
 ```bash
 #!/bin/bash
-# File: ~/voice-ai-services/scripts/backup-volumes.sh
+# File: infrastructure/ai-services/scripts/backup-volumes.sh
 
 set -e
 
@@ -826,7 +826,7 @@ echo "Backup completed: ${BACKUP_DIR}/${DATE}"
 ### Memory Limits Configuration
 
 ```yaml
-# File: ~/voice-ai-services/configs/resources/limits.yml
+# File: infrastructure/ai-services/configs/resources/limits.yml
 
 # Development limits (generous)
 development:
@@ -900,7 +900,7 @@ production:
 
 ```bash
 #!/bin/bash
-# File: ~/voice-ai-services/scripts/apply-limits.sh
+# File: infrastructure/ai-services/scripts/apply-limits.sh
 
 ENVIRONMENT=${1:-development}
 
@@ -946,7 +946,7 @@ echo "Resource limits applied for ${ENVIRONMENT}"
 ### Optimized Whisper Build
 
 ```dockerfile
-# File: ~/voice-ai-services/configs/whisper/Dockerfile.prod
+# File: infrastructure/ai-services/configs/whisper/Dockerfile.prod
 
 # Stage 1: Model downloader
 FROM python:3.11-slim as model-downloader
@@ -1015,7 +1015,7 @@ COPY app.py .
 
 ```bash
 #!/bin/bash
-# File: ~/voice-ai-services/scripts/optimize-build.sh
+# File: infrastructure/ai-services/scripts/optimize-build.sh
 
 # Build with cache mount for pip
 docker buildx build \
@@ -1064,7 +1064,7 @@ services:
 ### Docker Metrics Collection
 
 ```yaml
-# File: ~/voice-ai-services/configs/prometheus/prometheus.yml
+# File: infrastructure/ai-services/configs/prometheus/prometheus.yml
 
 global:
   scrape_interval: 15s
@@ -1092,7 +1092,7 @@ scrape_configs:
 
 ```bash
 #!/bin/bash
-# File: ~/voice-ai-services/scripts/monitor-health.sh
+# File: infrastructure/ai-services/scripts/monitor-health.sh
 
 while true; do
     echo "=== Service Health Check ==="

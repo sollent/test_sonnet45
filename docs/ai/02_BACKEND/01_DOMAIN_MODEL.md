@@ -75,7 +75,7 @@ Ubiquitous Language:
 
 ```php
 <?php
-// File: backend/src/Entity/VoiceCommand.php
+// File: apps/backend/src/Entity/VoiceCommand.php
 
 namespace App\Entity;
 
@@ -378,7 +378,7 @@ class VoiceCommand
 
 ```php
 <?php
-// File: backend/src/ValueObject/CommandType.php
+// File: apps/backend/src/ValueObject/CommandType.php
 
 namespace App\ValueObject;
 
@@ -403,7 +403,7 @@ enum CommandType: string
 
 ```php
 <?php
-// File: backend/src/ValueObject/CommandStatus.php
+// File: apps/backend/src/ValueObject/CommandStatus.php
 
 namespace App\ValueObject;
 
@@ -478,7 +478,7 @@ enum CommandStatus: string
 
 ```php
 <?php
-// File: backend/src/ValueObject/TranscriptionResult.php
+// File: apps/backend/src/ValueObject/TranscriptionResult.php
 
 namespace App\ValueObject;
 
@@ -563,7 +563,7 @@ final class TranscriptionResult
 
 ```php
 <?php
-// File: backend/src/ValueObject/ParsedCommand.php
+// File: apps/backend/src/ValueObject/ParsedCommand.php
 
 namespace App\ValueObject;
 
@@ -681,7 +681,7 @@ final class ParsedCommand
 
 ```php
 <?php
-// File: backend/src/Entity/UserTelegramLink.php
+// File: apps/backend/src/Entity/UserTelegramLink.php
 
 namespace App\Entity;
 
@@ -844,7 +844,7 @@ class UserTelegramLink
 
 ```php
 <?php
-// File: backend/src/Entity/VoiceSession.php
+// File: apps/backend/src/Entity/VoiceSession.php
 
 namespace App\Entity;
 
@@ -1048,7 +1048,7 @@ class VoiceSession
 
 ```php
 <?php
-// File: backend/src/Repository/VoiceCommandRepository.php
+// File: apps/backend/src/Repository/VoiceCommandRepository.php
 
 namespace App\Repository;
 
@@ -1317,7 +1317,7 @@ class VoiceCommandRepository extends ServiceEntityRepository
 
 ```php
 <?php
-// File: backend/src/Domain/Event/VoiceCommandEvent.php
+// File: apps/backend/src/Domain/Event/VoiceCommandEvent.php
 
 namespace App\Domain\Event;
 
@@ -1399,7 +1399,7 @@ class VoiceCommandFailedEvent extends VoiceCommandEvent
 
 ```php
 <?php
-// File: backend/migrations/Version20250108_VoiceCommandTables.php
+// File: apps/backend/migrations/Version20250108_VoiceCommandTables.php
 
 namespace DoctrineMigrations;
 
@@ -1545,7 +1545,7 @@ final class Version20250108VoiceCommandTables extends AbstractMigration
 ### Doctrine Configuration
 
 ```yaml
-# File: backend/config/packages/doctrine.yaml
+# File: apps/backend/config/packages/doctrine.yaml
 
 doctrine:
     dbal:
@@ -1580,7 +1580,7 @@ doctrine:
 
 ```php
 <?php
-// File: backend/src/DBAL/Types/CommandTypeType.php
+// File: apps/backend/src/DBAL/Types/CommandTypeType.php
 
 namespace App\DBAL\Types;
 
@@ -1622,7 +1622,7 @@ class CommandTypeType extends Type
 
 ```php
 <?php
-// File: backend/src/Domain/Rules/VoiceCommandRules.php
+// File: apps/backend/src/Domain/Rules/VoiceCommandRules.php
 
 namespace App\Domain\Rules;
 

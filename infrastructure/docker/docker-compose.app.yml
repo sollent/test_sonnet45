@@ -1,0 +1,88 @@
+version: '2'
+
+services:
+  nginx:
+    container_name: backend-nginx
+    image: nginx:stable-alpine
+    ports:
+      - "8089:80"
+    volumes:
+      - ../../apps/backend:/var/www/backend-app
+      - ./dev/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - php83-fpm
+    networks:
+      - nginx-php83-psql16
+  php83-fpm:
+    container_name: backend-php83
+    build:
+      context: .
+      dockerfile: ./dev/php/Dockerfile
+    ports:
+      - "9009:9000"
+    volumes:
+      - ../../apps/backend:/var/www/backend-app
+      - ./dev/php/php.ini-development:/usr/local/etc/php/php.ini
+      - ./dev/php/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
+    environment:
+      PHP_IDE_CONFIG: "serverName=docker.backend-app"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+      - 1.1.1.1
+    networks:
+      - nginx-php83-psql16
+  psql16:
+    container_name: backend-psql16
+    image: postgres:16.0-alpine
+    environment:
+      POSTGRES_DB: backend-app # SHOULD BE REPLACED TO ENVIRONMENT VARS
+      POSTGRES_PASSWORD: password # SHOULD BE REPLACED TO ENVIRONMENT VARS
+      POSTGRES_USER: user # SHOULD BE REPLACED TO ENVIRONMENT VARS
+    ports:
+      - "15432:5432"
+    networks:
+      - nginx-php83-psql16
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+  rabbitmq:
+    image: rabbitmq:management
+    container_name: backend-rabbitmq
+    ports:
+      - "5672:5672"   # порт для AMQP
+      - "15672:15672" # порт для веб-интерфейса (management plugin)
+    environment:
+      RABBITMQ_DEFAULT_USER: user     # логин
+      RABBITMQ_DEFAULT_PASS: password # пароль
+    networks:
+      - nginx-php83-psql16
+  
+  cron:
+    container_name: backend-cron
+    build:
+      context: .
+      dockerfile: ./dev/php/Dockerfile
+    volumes:
+      - ../../apps/backend:/var/www/backend-app
+      - ./cron/crontab:/etc/cron.d/app-cron
+      - ./dev/php/php.ini-development:/usr/local/etc/php/php.ini
+    command: >
+      sh -c "
+      apt-get update && apt-get install -y cron &&
+      chmod 0644 /etc/cron.d/app-cron &&
+      crontab /etc/cron.d/app-cron &&
+      touch /var/log/cron.log &&
+      cron && tail -f /var/log/cron.log
+      "
+    depends_on:
+      - php83-fpm
+      - psql16
+    networks:
+      - nginx-php83-psql16
+      
+networks:
+  nginx-php83-psql16:
+volumes:
+  pgdata:

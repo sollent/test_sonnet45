@@ -505,7 +505,7 @@ curl -X POST http://localhost:11434/api/generate -d '{
 **Option A - Using Docker (Recommended)**:
 ```bash
 # Build Whisper container
-cd ~/voice-ai-services
+cd infrastructure/ai-services
 docker build -f configs/whisper/Dockerfile -t voice-ai/whisper:latest .
 
 # Run Whisper service
