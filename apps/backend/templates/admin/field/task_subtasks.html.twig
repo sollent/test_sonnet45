@@ -1,0 +1,47 @@
+{# templates/admin/field/task_subtasks.html.twig #}
+{% if field.value is empty %}
+    <span class="badge badge-secondary">No subtasks</span>
+{% else %}
+    <div class="list-group list-group-flush">
+        {% for subtask in field.value %}
+            <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                <div>
+                    {% if subtask.isCompleted %}
+                        <i class="fa fa-check-circle text-success"></i>
+                        <del class="text-muted">{{ subtask.title }}</del>
+                    {% else %}
+                        <i class="fa fa-circle-o text-secondary"></i>
+                        {{ subtask.title }}
+                    {% endif %}
+
+                    {# Show status badge #}
+                    {% set statusClass = subtask.status.value == 'completed' ? 'success' : (subtask.status.value == 'in_progress' ? 'primary' : 'secondary') %}
+                    <span class="badge badge-{{ statusClass }} ml-2">{{ subtask.status.value|title|replace({'_': ' '}) }}</span>
+
+                    {# Show priority #}
+                    {% set priorityClass = subtask.priority.value == 'urgent' ? 'danger' : (subtask.priority.value == 'high' ? 'warning' : 'info') %}
+                    <span class="badge badge-{{ priorityClass }} ml-1">{{ subtask.priority.value|title }}</span>
+
+                    {# Show subtask count if has nested subtasks #}
+                    {% if subtask.subtasks|length > 0 %}
+                        <span class="badge badge-light ml-1">
+                            <i class="fa fa-sitemap"></i> {{ subtask.subtasks|length }}
+                        </span>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <a href="{{ ea_url().setController('App\\Controller\\Admin\\TaskCrudController').setAction('detail').setEntityId(subtask.id) }}"
+                       class="btn btn-sm btn-primary"
+                       title="View subtask">
+                        <i class="fa fa-eye"></i>
+                    </a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <small class="text-muted mt-2 d-block">
+        Total: {{ field.value|length }} subtask(s)
+    </small>
+{% endif %}

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller\Admin;
 
+use App\Entity\Task;
 use App\Entity\User;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Dashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
@@ -49,16 +50,20 @@ class DashboardController extends AbstractDashboardController
     public function configureMenuItems(): iterable
     {
         yield MenuItem::linkToDashboard('Dashboard', 'fa fa-home');
-        
+
         yield MenuItem::section('User Management');
         yield MenuItem::linkToCrud('Users', 'fa fa-users', User::class)
             ->setPermission('ROLE_ADMIN');
-        
+
+        yield MenuItem::section('Task Management');
+        yield MenuItem::linkToCrud('Tasks', 'fa fa-tasks', Task::class)
+            ->setPermission('ROLE_ADMIN');
+
         yield MenuItem::section();
-        
+
         yield MenuItem::linkToUrl('Back to Main Site', 'fa fa-arrow-left', '/')
             ->setLinkTarget('_blank');
-        
+
         yield MenuItem::linkToRoute('Logout', 'fa fa-sign-out-alt', 'admin_logout');
     }
 }

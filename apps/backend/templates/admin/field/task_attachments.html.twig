@@ -1,0 +1,57 @@
+{# templates/admin/field/task_attachments.html.twig #}
+{% if field.value is empty %}
+    <span class="badge badge-secondary">No attachments</span>
+{% else %}
+    <div class="list-group list-group-flush">
+        {% for attachment in field.value %}
+            <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                <div class="d-flex align-items-center">
+                    {# File type icon #}
+                    {% if attachment.fileType == 'image' %}
+                        <i class="fa fa-file-image-o fa-2x text-success mr-3"></i>
+                    {% elseif attachment.fileType == 'document' %}
+                        <i class="fa fa-file-text-o fa-2x text-primary mr-3"></i>
+                    {% elseif attachment.fileType == 'video' %}
+                        <i class="fa fa-file-video-o fa-2x text-warning mr-3"></i>
+                    {% else %}
+                        <i class="fa fa-file-o fa-2x text-secondary mr-3"></i>
+                    {% endif %}
+
+                    <div>
+                        <div>
+                            <strong>{{ attachment.originalName }}</strong>
+                            <span class="badge badge-secondary ml-2">{{ attachment.fileType|upper }}</span>
+                        </div>
+                        <small class="text-muted">
+                            {{ attachment.humanReadableSize }}
+                            • {{ attachment.mimeType }}
+                            • Uploaded {{ attachment.uploadedAt|date('d.m.Y H:i') }}
+                        </small>
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    {% if attachment.fileType == 'image' and attachment.filePath %}
+                        <a href="{{ asset(attachment.filePath) }}"
+                           target="_blank"
+                           class="btn btn-sm btn-info"
+                           title="Preview">
+                            <i class="fa fa-eye"></i>
+                        </a>
+                    {% endif %}
+
+                    <a href="{{ asset(attachment.filePath) }}"
+                       download="{{ attachment.originalName }}"
+                       class="btn btn-sm btn-primary"
+                       title="Download">
+                        <i class="fa fa-download"></i>
+                    </a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <small class="text-muted mt-2 d-block">
+        Total: {{ field.value|length }} attachment(s)
+    </small>
+{% endif %}
