@@ -286,6 +286,18 @@ Backend performance optimization plan for 2M+ tasks (Enhanced by Opus 4.1)
 - Expected 100x performance improvement
 - Memory optimization strategies
 
+#### [`guides/performance/DOCTRINE_CACHING_SETUP.md`](guides/performance/DOCTRINE_CACHING_SETUP.md)
+**📊 NEW** - Detailed guide for setting up Doctrine caching (Dev + Prod)
+
+**Key Topics:**
+- Understanding Doctrine cache types (Query, Metadata, Result)
+- Environment-specific configurations (dev vs prod)
+- APCu setup and optimization for production
+- Step-by-step implementation guide
+- Testing and troubleshooting caching
+- Expected 4-10x performance improvement
+- Cache monitoring and statistics
+
 ---
 
 ## 🔑 Critical Knowledge Areas
