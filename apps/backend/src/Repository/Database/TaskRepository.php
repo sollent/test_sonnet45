@@ -1321,7 +1321,7 @@ class TaskRepository extends ServiceEntityRepository
             ->setParameter('tagId', $tagId)
             ->getQuery()
             ->getSingleScalarResult();
-        
+
         $completed = $this->createQueryBuilder('t')
             ->select('COUNT(t.id)')
             ->join('t.tags', 'tag')
@@ -1334,13 +1334,200 @@ class TaskRepository extends ServiceEntityRepository
             ->setParameter('completedStatus', TaskStatus::COMPLETED)
             ->getQuery()
             ->getSingleScalarResult();
-        
+
         $completionRate = $total > 0 ? (int)round(($completed / $total) * 100) : 0;
-        
+
         return [
             'total' => (int)$total,
             'completed' => (int)$completed,
             'completionRate' => $completionRate
         ];
+    }
+
+    /**
+     * OPTIMIZED: Get all dashboard analytics data in a single query
+     *
+     * This method uses Common Table Expressions (CTE) to aggregate all analytics data
+     * in ONE database query instead of 25-400+ separate queries.
+     *
+     * @return array Aggregated analytics data with all metrics
+     */
+    public function getDashboardAggregatedData(User $user, array $params): array
+    {
+        $conn = $this->getEntityManager()->getConnection();
+
+        // Extract parameters
+        $userId = $user->getId();
+        $year = $params['year'] ?? (int)date('Y');
+
+        // Calculate date ranges
+        $thisWeekStart = (new \DateTimeImmutable('monday this week'))->format('Y-m-d H:i:s');
+        $lastWeekStart = (new \DateTimeImmutable('monday this week'))->modify('-7 days')->format('Y-m-d H:i:s');
+        $today = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
+        $yearStart = "{$year}-01-01 00:00:00";
+        $yearEnd = "{$year}-12-31 23:59:59";
+
+        // Build complex SQL with CTEs
+        $sql = "
+            WITH
+            -- CTE 1: Basic statistics (status counts, overdue)
+            base_stats AS (
+                SELECT
+                    COUNT(*) FILTER (WHERE status = 'pending') as pending_count,
+                    COUNT(*) FILTER (WHERE status = 'in_progress') as in_progress_count,
+                    COUNT(*) FILTER (WHERE status = 'completed') as completed_count,
+                    COUNT(*) FILTER (WHERE status = 'cancelled') as cancelled_count,
+                    COUNT(*) as total_count,
+                    COUNT(*) FILTER (WHERE due_date < NOW() AND status != 'completed') as overdue_count
+                FROM task
+                WHERE user_id = :userId
+                  AND parent_task_id IS NULL
+                  AND is_archived = false
+            ),
+
+            -- CTE 2: Weekly stats (this week vs last week)
+            weekly_stats AS (
+                SELECT
+                    COUNT(*) FILTER (WHERE created_at >= :thisWeekStart AND created_at <= :today) as this_week_created,
+                    COUNT(*) FILTER (WHERE created_at >= :lastWeekStart AND created_at < :thisWeekStart) as last_week_created,
+                    COUNT(*) FILTER (WHERE completed_at >= :thisWeekStart AND completed_at <= :today) as this_week_completed
+                FROM task
+                WHERE user_id = :userId
+                  AND parent_task_id IS NULL
+            ),
+
+            -- CTE 3: Average completion time (in days)
+            avg_completion AS (
+                SELECT
+                    COALESCE(AVG(EXTRACT(EPOCH FROM (completed_at - created_at)) / 86400), 0) as avg_days
+                FROM task
+                WHERE user_id = :userId
+                  AND parent_task_id IS NULL
+                  AND completed_at IS NOT NULL
+                  AND created_at IS NOT NULL
+            ),
+
+            -- CTE 4: On-time completion rate
+            ontime_rate AS (
+                SELECT
+                    CASE
+                        WHEN COUNT(*) FILTER (WHERE due_date IS NOT NULL AND completed_at IS NOT NULL) = 0 THEN 100
+                        ELSE ROUND(
+                            (COUNT(*) FILTER (WHERE due_date IS NOT NULL AND completed_at IS NOT NULL AND completed_at <= due_date)::numeric
+                            / COUNT(*) FILTER (WHERE due_date IS NOT NULL AND completed_at IS NOT NULL)::numeric) * 100
+                        )
+                    END as rate
+                FROM task
+                WHERE user_id = :userId
+                  AND parent_task_id IS NULL
+            ),
+
+            -- CTE 5: Most productive day of week
+            productive_day AS (
+                SELECT
+                    TO_CHAR(completed_at, 'Day') as day_name,
+                    COUNT(*) as task_count
+                FROM task
+                WHERE user_id = :userId
+                  AND parent_task_id IS NULL
+                  AND completed_at IS NOT NULL
+                GROUP BY TO_CHAR(completed_at, 'Day')
+                ORDER BY task_count DESC
+                LIMIT 1
+            ),
+
+            -- CTE 6: Most productive hour
+            productive_hour AS (
+                SELECT
+                    EXTRACT(HOUR FROM completed_at) as hour
+                FROM task
+                WHERE user_id = :userId
+                  AND parent_task_id IS NULL
+                  AND completed_at IS NOT NULL
+                GROUP BY EXTRACT(HOUR FROM completed_at)
+                ORDER BY COUNT(*) DESC
+                LIMIT 1
+            ),
+
+            -- CTE 7: Priority breakdown
+            priority_stats AS (
+                SELECT
+                    priority,
+                    COUNT(*) as total,
+                    COUNT(*) FILTER (WHERE status = 'completed') as completed,
+                    COUNT(*) FILTER (WHERE status = 'in_progress') as in_progress
+                FROM task
+                WHERE user_id = :userId
+                  AND parent_task_id IS NULL
+                  AND is_archived = false
+                GROUP BY priority
+            ),
+
+            -- CTE 8: Productivity heatmap (year)
+            heatmap_data AS (
+                SELECT
+                    DATE(completed_at) as date,
+                    COUNT(*) as count
+                FROM task
+                WHERE user_id = :userId
+                  AND parent_task_id IS NULL
+                  AND completed_at >= :yearStart
+                  AND completed_at <= :yearEnd
+                GROUP BY DATE(completed_at)
+            ),
+
+            -- CTE 9: Weekday productivity
+            weekday_stats AS (
+                SELECT
+                    TO_CHAR(completed_at, 'Day') as day_name,
+                    COUNT(*) as count
+                FROM task
+                WHERE user_id = :userId
+                  AND parent_task_id IS NULL
+                  AND completed_at IS NOT NULL
+                GROUP BY TO_CHAR(completed_at, 'Day')
+            ),
+
+            -- CTE 10: Streak calculation (last 365 days)
+            streak_data AS (
+                SELECT
+                    DATE(completed_at) as completion_date
+                FROM task
+                WHERE user_id = :userId
+                  AND parent_task_id IS NULL
+                  AND completed_at >= NOW() - INTERVAL '365 days'
+                  AND completed_at IS NOT NULL
+                GROUP BY DATE(completed_at)
+                ORDER BY completion_date DESC
+            )
+
+            -- Main query: combine all CTEs
+            SELECT
+                json_build_object(
+                    'base_stats', (SELECT row_to_json(base_stats) FROM base_stats),
+                    'weekly_stats', (SELECT row_to_json(weekly_stats) FROM weekly_stats),
+                    'avg_completion', (SELECT row_to_json(avg_completion) FROM avg_completion),
+                    'ontime_rate', (SELECT row_to_json(ontime_rate) FROM ontime_rate),
+                    'productive_day', (SELECT row_to_json(productive_day) FROM productive_day),
+                    'productive_hour', (SELECT row_to_json(productive_hour) FROM productive_hour),
+                    'priority_stats', (SELECT json_agg(row_to_json(priority_stats)) FROM priority_stats),
+                    'heatmap_data', (SELECT json_agg(row_to_json(heatmap_data)) FROM heatmap_data),
+                    'weekday_stats', (SELECT json_agg(row_to_json(weekday_stats)) FROM weekday_stats),
+                    'streak_dates', (SELECT json_agg(completion_date) FROM streak_data)
+                ) as aggregated_data
+        ";
+
+        $result = $conn->executeQuery($sql, [
+            'userId' => $userId,
+            'thisWeekStart' => $thisWeekStart,
+            'lastWeekStart' => $lastWeekStart,
+            'today' => $today,
+            'yearStart' => $yearStart,
+            'yearEnd' => $yearEnd,
+        ]);
+
+        $data = $result->fetchAssociative();
+
+        return json_decode($data['aggregated_data'], true);
     }
 }
