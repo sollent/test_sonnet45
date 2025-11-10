@@ -1359,6 +1359,9 @@ class TaskRepository extends ServiceEntityRepository
         // Extract parameters
         $userId = $user->getId();
         $year = $params['year'] ?? (int)date('Y');
+        $period = $params['period'] ?? 30;
+        $dateFrom = $params['dateFrom'];
+        $dateTo = $params['dateTo'];
 
         // Calculate date ranges
         $thisWeekStart = (new \DateTimeImmutable('monday this week'))->format('Y-m-d H:i:s');
@@ -1366,6 +1369,19 @@ class TaskRepository extends ServiceEntityRepository
         $today = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
         $yearStart = "{$year}-01-01 00:00:00";
         $yearEnd = "{$year}-12-31 23:59:59";
+
+        // Calculate timeline date range
+        if ($dateFrom && $dateTo) {
+            $timelineStart = (new \DateTimeImmutable($dateFrom))->format('Y-m-d');
+            $timelineEnd = (new \DateTimeImmutable($dateTo))->format('Y-m-d');
+        } else {
+            $timelineEnd = (new \DateTimeImmutable())->format('Y-m-d');
+            if ($period >= 365) {
+                $timelineStart = (new \DateTimeImmutable())->modify('-6 months')->format('Y-m-d');
+            } else {
+                $timelineStart = (new \DateTimeImmutable())->modify("-{$period} days")->format('Y-m-d');
+            }
+        }
 
         // Build complex SQL with CTEs
         $sql = "
@@ -1499,6 +1515,62 @@ class TaskRepository extends ServiceEntityRepository
                   AND completed_at IS NOT NULL
                 GROUP BY DATE(completed_at)
                 ORDER BY completion_date DESC
+            ),
+
+            -- CTE 11: Timeline data - generate date series and aggregate counts
+            date_series AS (
+                SELECT generate_series(
+                    :timelineStart::date,
+                    :timelineEnd::date,
+                    '1 day'::interval
+                )::date as date
+            ),
+            timeline_created AS (
+                SELECT
+                    DATE(created_at) as date,
+                    COUNT(*) as count
+                FROM task
+                WHERE user_id = :userId
+                  AND parent_task_id IS NULL
+                  AND created_at >= :timelineStart::date
+                  AND created_at <= :timelineEnd::date + INTERVAL '1 day'
+                GROUP BY DATE(created_at)
+            ),
+            timeline_completed AS (
+                SELECT
+                    DATE(completed_at) as date,
+                    COUNT(*) as count
+                FROM task
+                WHERE user_id = :userId
+                  AND parent_task_id IS NULL
+                  AND completed_at >= :timelineStart::date
+                  AND completed_at <= :timelineEnd::date + INTERVAL '1 day'
+                GROUP BY DATE(completed_at)
+            ),
+            timeline_combined AS (
+                SELECT
+                    ds.date,
+                    COALESCE(tc.count, 0) as created_count,
+                    COALESCE(tcomp.count, 0) as completed_count,
+                    -- SIMPLIFIED: Return current overdue count (not historical per day)
+                    -- This is much faster than calculating overdue for each date
+                    -- Frontend can use this single value for the whole period
+                    CASE
+                        WHEN ds.date = (SELECT MAX(date) FROM date_series)
+                        THEN (
+                            SELECT COUNT(*)
+                            FROM task t
+                            WHERE t.user_id = :userId
+                              AND t.parent_task_id IS NULL
+                              AND t.due_date < NOW()
+                              AND t.status != 'completed'
+                        )
+                        ELSE 0
+                    END as overdue_count
+                FROM date_series ds
+                LEFT JOIN timeline_created tc ON ds.date = tc.date
+                LEFT JOIN timeline_completed tcomp ON ds.date = tcomp.date
+                ORDER BY ds.date
             )
 
             -- Main query: combine all CTEs
@@ -1513,7 +1585,8 @@ class TaskRepository extends ServiceEntityRepository
                     'priority_stats', (SELECT json_agg(row_to_json(priority_stats)) FROM priority_stats),
                     'heatmap_data', (SELECT json_agg(row_to_json(heatmap_data)) FROM heatmap_data),
                     'weekday_stats', (SELECT json_agg(row_to_json(weekday_stats)) FROM weekday_stats),
-                    'streak_dates', (SELECT json_agg(completion_date) FROM streak_data)
+                    'streak_dates', (SELECT json_agg(completion_date) FROM streak_data),
+                    'timeline_data', (SELECT json_agg(row_to_json(timeline_combined)) FROM timeline_combined)
                 ) as aggregated_data
         ";
 
@@ -1524,6 +1597,8 @@ class TaskRepository extends ServiceEntityRepository
             'today' => $today,
             'yearStart' => $yearStart,
             'yearEnd' => $yearEnd,
+            'timelineStart' => $timelineStart,
+            'timelineEnd' => $timelineEnd,
         ]);
 
         $data = $result->fetchAssociative();

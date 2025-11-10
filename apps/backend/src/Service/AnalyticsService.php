@@ -342,19 +342,8 @@ final class AnalyticsService
             }
         }
 
-        // Get timeline data (still separate query, but optimized)
-        if ($dateFrom && $dateTo) {
-            $timelineStart = new \DateTimeImmutable($dateFrom);
-            $timelineEnd = new \DateTimeImmutable($dateTo);
-        } else {
-            $timelineEnd = new \DateTimeImmutable();
-            if ($period >= 365) {
-                $timelineStart = $timelineEnd->modify('-6 months');
-            } else {
-                $timelineStart = $timelineEnd->modify("-{$period} days");
-            }
-        }
-        $timelineData = $this->taskRepository->getCompletionTimelineData($user, $timelineStart, $timelineEnd);
+        // Format timeline data from CTE (no separate query needed!)
+        $timelineData = $this->formatTimelineData($aggregated['timeline_data'] ?? []);
 
         // Get top tags (still separate, but cached by tag count)
         $topTags = $this->getTopTags($user, 5);
@@ -444,6 +433,45 @@ final class AnalyticsService
         }
 
         return $streak;
+    }
+
+    /**
+     * Format timeline data from CTE result
+     *
+     * Converts array of date records into the expected timeline format
+     *
+     * @param array $timelineData Raw timeline data from CTE
+     * @return array Formatted timeline with dates, created, completed, overdue arrays
+     */
+    private function formatTimelineData(array $timelineData): array
+    {
+        if (empty($timelineData)) {
+            return [
+                'dates' => [],
+                'created' => [],
+                'completed' => [],
+                'overdue' => []
+            ];
+        }
+
+        $dates = [];
+        $created = [];
+        $completed = [];
+        $overdue = [];
+
+        foreach ($timelineData as $item) {
+            $dates[] = $item['date'];
+            $created[] = (int)($item['created_count'] ?? 0);
+            $completed[] = (int)($item['completed_count'] ?? 0);
+            $overdue[] = (int)($item['overdue_count'] ?? 0);
+        }
+
+        return [
+            'dates' => $dates,
+            'created' => $created,
+            'completed' => $completed,
+            'overdue' => $overdue
+        ];
     }
 
     /**
