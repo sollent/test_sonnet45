@@ -1,54 +1,54 @@
-# 🎤 Voice AI Assistant - Implementation Plan
+# 🎤 Voice AI Assistant - План Реализации
 
-> **Quick Start Guide**: Simplified step-by-step plan based on complete MVP documentation analysis
+> **Руководство Быстрого Старта**: Упрощенный пошаговый план на основе полного анализа MVP документации
 
 ---
 
-## 📋 What We're Building
+## 📋 Что Мы Строим
 
-**Voice AI Assistant MVP** for Task Manager:
-- User speaks Russian command → Whisper transcribes → Llama parses → Task created/updated
-- Real-time WebSocket updates (Centrifugo)
-- Web interface with voice recording button
-- Async processing with RabbitMQ queue
+**MVP Voice AI Assistant** для Менеджера Задач:
+- Пользователь говорит команду на русском → Whisper транскрибирует → Llama парсит → Задача создана/обновлена
+- Обновления в реальном времени через WebSocket (Centrifugo)
+- Веб-интерфейс с кнопкой голосовой записи
+- Асинхронная обработка с очередью RabbitMQ
 
-**Tech Stack (Optimized for 4GB RAM VPS):**
-- LLM: Llama 3.2 3B via Ollama (fits in 2-3GB memory)
-- STT: Whisper base model (lightweight, accurate for Russian)
+**Технологический Стек (Оптимизирован для VPS с 4GB RAM):**
+- LLM: Llama 3.2 3B через Ollama (помещается в 2-3GB памяти)
+- STT: Базовая модель Whisper (легковесная, точная для русского)
 - WebSocket: Centrifugo + Redis
-- Queue: RabbitMQ (already in project)
-- Backend: Symfony 7.1 + PHP 8.3
-- Frontend: Vue.js 3 + Composition API
+- Очередь: RabbitMQ (уже в проекте)
+- Бэкенд: Symfony 7.1 + PHP 8.3
+- Фронтенд: Vue.js 3 + Composition API
 
 ---
 
-## 🚀 Implementation Steps (5-Day MVP Plan)
+## 🚀 Шаги Реализации (5-Дневный MVP План)
 
-### Step 0: Read Documentation First! ⭐
+### Шаг 0: Сначала Прочитай Документацию! ⭐
 
-**CRITICAL - Start here (15 min):**
-1. [`docs/ai/START_HERE.md`](START_HERE.md) - Quick overview + checklist
-2. [`docs/ai/REFERENCE/PROMPTS_LIBRARY.md`](REFERENCE/PROMPTS_LIBRARY.md) - **⭐ MOST CRITICAL** - Copy exact prompts for Llama!
-3. [`docs/ai/INDEX.md`](INDEX.md) - Complete navigation map
+**КРИТИЧНО - Начни отсюда (15 мин):**
+1. [`docs/ai/START_HERE.md`](START_HERE.md) - Быстрый обзор + чеклист
+2. [`docs/ai/REFERENCE/PROMPTS_LIBRARY.md`](REFERENCE/PROMPTS_LIBRARY.md) - **⭐ САМОЕ КРИТИЧНОЕ** - Скопируй точные промпты для Llama!
+3. [`docs/ai/INDEX.md`](INDEX.md) - Полная карта навигации
 
-**Why PROMPTS_LIBRARY is critical:**
-- Contains exact system prompts for Llama 3.2 3B
-- Defines JSON response structure (action, parameters, confidence)
-- Includes 7 tested command patterns in Russian
-- Without these prompts, LLM will return garbage!
+**Почему PROMPTS_LIBRARY критично:**
+- Содержит точные системные промпты для Llama 3.2 3B
+- Определяет структуру JSON ответа (action, parameters, confidence)
+- Включает 7 протестированных шаблонов команд на русском
+- Без этих промптов LLM будет возвращать мусор!
 
 ---
 
-### Day 1: Backend Domain Layer (Morning, 2-3h)
+### День 1: Доменный Слой Бэкенда (Утро, 2-3ч)
 
-**Goal:** Create database schema for voice commands
+**Цель:** Создать схему базы данных для голосовых команд
 
-**Read first:**
-- 📖 [`docs/ai/02_BACKEND/01_DOMAIN_MODEL.md`](02_BACKEND/01_DOMAIN_MODEL.md) - Complete entity specs
+**Прочитай сначала:**
+- 📖 [`docs/ai/02_BACKEND/01_DOMAIN_MODEL.md`](02_BACKEND/01_DOMAIN_MODEL.md) - Полные спецификации сущностей
 
-**Implementation order:**
+**Порядок реализации:**
 
-**1. Value Objects (30 min)** - Simple enums and data structures:
+**1. Value Objects (30 мин)** - Простые енумы и структуры данных:
 ```
 backend/src/ValueObject/
 ├── CommandType.php           # Enum: VOICE_AUDIO, VOICE_TEXT
@@ -57,102 +57,102 @@ backend/src/ValueObject/
 └── ParsedCommand.php         # Data: action, parameters, confidence
 ```
 
-**2. Main Entity (1h)** - VoiceCommand with state transitions:
+**2. Основная Сущность (1ч)** - VoiceCommand с переходами состояний:
 ```
 backend/src/Entity/VoiceCommand.php
 ```
 
-**Key points:**
-- Use UUIDs (already in project)
-- ManyToOne relation with User entity
-- Status transitions: `pending → processing → executing → completed|failed`
-- Store: rawText, transcription, parsedCommand, result, error
+**Ключевые моменты:**
+- Используй UUID (уже в проекте)
+- Связь ManyToOne с сущностью User
+- Переходы статусов: `pending → processing → executing → completed|failed`
+- Хранить: rawText, transcription, parsedCommand, result, error
 
-**3. Migration (30 min)**:
+**3. Миграция (30 мин)**:
 ```bash
-# Create migration
+# Создать миграцию
 docker exec backend-php83 php bin/console make:migration
 
-# Review SQL
+# Просмотреть SQL
 docker exec backend-php83 cat backend/migrations/VersionXXX.php
 
-# Apply
+# Применить
 docker exec backend-php83 php bin/console doctrine:migrations:migrate --no-interaction
 ```
 
-**Verification:**
+**Проверка:**
 ```bash
-# Check table created
+# Проверить что таблица создана
 docker exec backend-psql16 psql -U user -d backend-app -c "\d voice_commands"
 ```
 
 ---
 
-### Day 1: Backend Services (Afternoon, 3-4h)
+### День 1: Сервисы Бэкенда (День, 3-4ч)
 
-**Goal:** Implement 5 core services (SOLID architecture)
+**Цель:** Реализовать 5 основных сервисов (SOLID архитектура)
 
-**Read first:**
-- 📖 [`docs/ai/02_BACKEND/02_SERVICES.md`](02_BACKEND/02_SERVICES.md) - Service layer patterns
-- ⭐ [`docs/ai/REFERENCE/PROMPTS_LIBRARY.md`](REFERENCE/PROMPTS_LIBRARY.md) - **Copy exact prompts!**
+**Прочитай сначала:**
+- 📖 [`docs/ai/02_BACKEND/02_SERVICES.md`](02_BACKEND/02_SERVICES.md) - Паттерны сервисного слоя
+- ⭐ [`docs/ai/REFERENCE/PROMPTS_LIBRARY.md`](REFERENCE/PROMPTS_LIBRARY.md) - **Скопируй точные промпты!**
 
-**Implementation order:**
+**Порядок реализации:**
 
-**1. LLMService (1.5h)** - ⚠️ MOST IMPORTANT:
+**1. LLMService (1.5ч)** - ⚠️ САМЫЙ ВАЖНЫЙ:
 ```php
 backend/src/Service/VoiceAssistant/LLMService.php
 
-Critical:
-- Copy system prompt EXACTLY from PROMPTS_LIBRARY.md
-- Use Ollama HTTP client (Symfony\Contracts\HttpClient\HttpClientInterface)
-- Request: {"model": "llama3.2:3b", "prompt": "...", "format": "json", "options": {"temperature": 0.3}}
-- Parse JSON response
-- Validate structure: {action, parameters, confidence}
-- Fallback parsing if JSON invalid
+Критично:
+- Скопируй системный промпт ТОЧНО из PROMPTS_LIBRARY.md
+- Используй Ollama HTTP client (Symfony\Contracts\HttpClient\HttpClientInterface)
+- Запрос: {"model": "llama3.2:3b", "prompt": "...", "format": "json", "options": {"temperature": 0.3}}
+- Парси JSON ответ
+- Валидируй структуру: {action, parameters, confidence}
+- Резервный парсинг если JSON невалиден
 ```
 
-**2. SmartSearchService (45 min)** - Find tasks by fuzzy text:
+**2. SmartSearchService (45 мин)** - Найти задачи по нечеткому тексту:
 ```php
 backend/src/Service/VoiceAssistant/SmartSearchService.php
 
-Uses PostgreSQL trigram similarity:
+Использует триграммное сходство PostgreSQL:
 - SELECT * FROM tasks WHERE similarity(title, ?) > 0.3
 - Order by similarity DESC
-- Requires pg_trgm extension (check if installed!)
+- Требуется расширение pg_trgm (проверь установлено!)
 ```
 
-**3. WebSocketPublisherService (30 min)** - Centrifugo integration:
+**3. WebSocketPublisherService (30 мин)** - Интеграция с Centrifugo:
 ```php
 backend/src/Service/VoiceAssistant/WebSocketPublisherService.php
 
-Publishes events to:
-- Channel: "voice:user#{userId}"
-- Events: command.received, transcribed, parsed, executing, completed, failed
+Публикует события в:
+- Канал: "voice:user#{userId}"
+- События: command.received, transcribed, parsed, executing, completed, failed
 ```
 
-**4. CommandExecutorService (45 min)** - Orchestrates handlers:
+**4. CommandExecutorService (45 мин)** - Оркестрирует обработчики:
 ```php
 backend/src/Service/VoiceAssistant/CommandExecutorService.php
 
-Delegates to CommandHandlers (will create next)
+Делегирует CommandHandlers (создадим следующими)
 ```
 
-**5. VoiceProcessingService (30 min)** - Entry point:
+**5. VoiceProcessingService (30 мин)** - Точка входа:
 ```php
 backend/src/Service/VoiceAssistant/VoiceProcessingService.php
 
-Simple coordinator, dispatches to queue
+Простой координатор, отправляет в очередь
 ```
 
-**Test Ollama first!**
+**Сначала протестируй Ollama!**
 ```bash
-# Verify Ollama running (should be installed separately - see Infrastructure docs)
+# Проверь что Ollama запущена (должна быть установлена отдельно - см. доку Infrastructure)
 curl http://localhost:11434/api/tags
 
-# Test with Russian command
+# Тест с русской командой
 curl -X POST http://localhost:11434/api/generate -d '{
   "model": "llama3.2:3b",
-  "prompt": "You are a task assistant. Convert this Russian command to JSON: Создай задачу купить молоко завтра",
+  "prompt": "Ты - ассистент для задач. Конвертируй эту русскую команду в JSON: Создай задачу купить молоко завтра",
   "format": "json",
   "stream": false
 }'
@@ -160,16 +160,16 @@ curl -X POST http://localhost:11434/api/generate -d '{
 
 ---
 
-### Day 2: Command Handlers (Morning, 2h)
+### День 2: Обработчики Команд (Утро, 2ч)
 
-**Goal:** Implement 3 core command handlers (MVP scope)
+**Цель:** Реализовать 3 основных обработчика команд (границы MVP)
 
-**Read first:**
-- 📖 [`docs/ai/02_BACKEND/03_COMMAND_HANDLERS.md`](02_BACKEND/03_COMMAND_HANDLERS.md) - Handler pattern
+**Прочитай сначала:**
+- 📖 [`docs/ai/02_BACKEND/03_COMMAND_HANDLERS.md`](02_BACKEND/03_COMMAND_HANDLERS.md) - Паттерн обработчика
 
-**Implementation order:**
+**Порядок реализации:**
 
-**1. Interface (15 min)**:
+**1. Интерфейс (15 мин)**:
 ```php
 backend/src/Service/VoiceAssistant/Command/CommandHandlerInterface.php
 
@@ -179,161 +179,161 @@ interface CommandHandlerInterface {
 }
 ```
 
-**2. CreateTaskHandler (1h)** - Most common:
+**2. CreateTaskHandler (1ч)** - Самый распространенный:
 ```php
 backend/src/Service/VoiceAssistant/Command/Handlers/CreateTaskHandler.php
 
-⚠️ CRITICAL: Use existing TaskService!
+⚠️ КРИТИЧНО: Используй существующий TaskService!
 - supports(): return $action === 'create_task';
-- handle(): Extract params, call taskService->createTask()
-- Parameters: title (required), description, dueDate, priority, tags
-- Returns: ['success' => true, 'task_id' => $id, 'message' => '...']
+- handle(): Извлечь параметры, вызвать taskService->createTask()
+- Параметры: title (required), description, dueDate, priority, tags
+- Возвращает: ['success' => true, 'task_id' => $id, 'message' => '...']
 ```
 
-**3. CompleteTaskHandler (30 min)** - With smart search:
+**3. CompleteTaskHandler (30 мин)** - С умным поиском:
 ```php
 backend/src/Service/VoiceAssistant/Command/Handlers/CompleteTaskHandler.php
 
-Uses SmartSearchService to find task by description:
-- Parse: task_id OR task_description
-- If task_id: direct lookup
-- If description: use SmartSearchService->findTask()
-- Call taskService->completeTask($taskId)
+Использует SmartSearchService для поиска задачи по описанию:
+- Парс: task_id ИЛИ task_description
+- Если task_id: прямой поиск
+- Если description: используй SmartSearchService->findTask()
+- Вызвать taskService->completeTask($taskId)
 ```
 
-**4. FilterTasksHandler (30 min)** - Query builder:
+**4. FilterTasksHandler (30 мин)** - Построитель запросов:
 ```php
 backend/src/Service/VoiceAssistant/Command/Handlers/FilterTasksHandler.php
 
-Build filter from parameters:
+Строит фильтр из параметров:
 - status, priority, tags, date_from, date_to
-- Use TaskRepository->findByFilters()
-- Returns list of tasks (max 20)
+- Используй TaskRepository->findByFilters()
+- Возвращает список задач (макс 20)
 ```
 
-**⚠️ DO NOT:**
+**⚠️ НЕ ДЕЛАЙ:**
 ```php
-// ❌ Don't create new repository methods
+// ❌ Не создавай новые методы репозитория
 $this->taskRepository->createTaskFromVoice($data);
 
-// ✅ Use existing TaskService
+// ✅ Используй существующий TaskService
 $this->taskService->createTask($user, $title, $description);
 ```
 
 ---
 
-### Day 2: API Endpoints (Afternoon, 1.5h)
+### День 2: API Endpoints (День, 1.5ч)
 
-**Goal:** Create 3 REST endpoints for voice commands
+**Цель:** Создать 3 REST endpoint для голосовых команд
 
-**Read first:**
-- 📖 [`docs/ai/02_BACKEND/04_API_ENDPOINTS.md`](02_BACKEND/04_API_ENDPOINTS.md) - API specs
+**Прочитай сначала:**
+- 📖 [`docs/ai/02_BACKEND/04_API_ENDPOINTS.md`](02_BACKEND/04_API_ENDPOINTS.md) - Спецификация API
 
-**Implementation:**
+**Реализация:**
 
-**1. Controller (1h)**:
+**1. Контроллер (1ч)**:
 ```php
 backend/src/Controller/VoiceCommandController.php
 
 #[Route('/api/voice', name: 'api_voice_')]
 class VoiceCommandController extends AbstractController
 {
-    // POST /api/voice/command - Submit audio or text
+    // POST /api/voice/command - Отправить аудио или текст
     #[Route('/command', name: 'submit', methods: ['POST'])]
     public function submitCommand(Request $request): JsonResponse
     {
-        // Accept: audio file OR text
-        // Create VoiceCommand entity
-        // Dispatch to queue (returns 202 Accepted)
-        // Return: {command_id, status: 'queued'}
+        // Принять: аудио файл ИЛИ текст
+        // Создать сущность VoiceCommand
+        // Отправить в очередь (возвращает 202 Accepted)
+        // Вернуть: {command_id, status: 'queued'}
     }
 
-    // GET /api/voice/command/{id} - Get status
+    // GET /api/voice/command/{id} - Получить статус
     #[Route('/command/{id}', name: 'status', methods: ['GET'])]
     public function getStatus(string $id): JsonResponse
     {
-        // Fetch VoiceCommand by UUID
-        // Return: {id, status, result, created_at}
+        // Найти VoiceCommand по UUID
+        // Вернуть: {id, status, result, created_at}
     }
 
-    // GET /api/voice/history - Get recent commands
+    // GET /api/voice/history - Получить недавние команды
     #[Route('/history', name: 'history', methods: ['GET'])]
     public function getHistory(Request $request): JsonResponse
     {
         // Query: ?days=7&limit=20
-        // Return user's command history
+        // Вернуть историю команд пользователя
     }
 }
 ```
 
-**2. Route Configuration (auto-discovered by Symfony)**
+**2. Конфигурация маршрутов (авто-обнаруживается Symfony)**
 
-**3. Test with curl (30 min)**:
+**3. Тест с curl (30 мин)**:
 ```bash
-# Get JWT token first
+# Сначала получи JWT токен
 TOKEN=$(curl -X POST http://localhost:8089/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"test@test.com","password":"test123"}' \
   | jq -r '.token')
 
-# Test text command
+# Тест текстовой команды
 curl -X POST http://localhost:8089/api/voice/command \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"text":"Создай задачу купить молоко","source":"web"}' | jq
 
-# Check status
-COMMAND_ID="..." # from previous response
+# Проверь статус
+COMMAND_ID="..." # из предыдущего ответа
 curl -X GET "http://localhost:8089/api/voice/command/$COMMAND_ID" \
   -H "Authorization: Bearer $TOKEN" | jq
 
-# Get history
+# Получи историю
 curl -X GET "http://localhost:8089/api/voice/history?days=7" \
   -H "Authorization: Bearer $TOKEN" | jq
 ```
 
 ---
 
-### Day 3: Queue Processing (Morning, 1.5h)
+### День 3: Обработка Очереди (Утро, 1.5ч)
 
-**Goal:** Async voice command processing with RabbitMQ
+**Цель:** Асинхронная обработка голосовых команд с RabbitMQ
 
-**Read first:**
-- 📖 [`docs/ai/02_BACKEND/05_QUEUE_PROCESSING.md`](02_BACKEND/05_QUEUE_PROCESSING.md) - Queue setup
+**Прочитай сначала:**
+- 📖 [`docs/ai/02_BACKEND/05_QUEUE_PROCESSING.md`](02_BACKEND/05_QUEUE_PROCESSING.md) - Настройка очереди
 
-**Implementation:**
+**Реализация:**
 
-**1. Message class (10 min)**:
+**1. Класс сообщения (10 мин)**:
 ```php
 backend/src/Message/ProcessVoiceCommandMessage.php
 
-Simple DTO:
+Простое DTO:
 class ProcessVoiceCommandMessage {
     public function __construct(private string $commandId) {}
     public function getCommandId(): string { return $this->commandId; }
 }
 ```
 
-**2. Message Handler (1h)** - Main processing logic:
+**2. Обработчик сообщений (1ч)** - Основная логика обработки:
 ```php
 backend/src/MessageHandler/ProcessVoiceCommandHandler.php
 
 #[AsMessageHandler]
 class ProcessVoiceCommandHandler {
     public function __invoke(ProcessVoiceCommandMessage $message): void {
-        // 1. Fetch VoiceCommand by ID
-        // 2. Start processing
-        // 3. Transcribe if audio (call Whisper HTTP API)
-        // 4. Parse with LLM (call LLMService)
-        // 5. Execute command (call CommandExecutorService)
-        // 6. Mark complete
-        // 7. Send WebSocket updates at each step
-        // 8. Handle errors gracefully
+        // 1. Найти VoiceCommand по ID
+        // 2. Начать обработку
+        // 3. Транскрибировать если аудио (вызвать Whisper HTTP API)
+        // 4. Парсить с LLM (вызвать LLMService)
+        // 5. Выполнить команду (вызвать CommandExecutorService)
+        // 6. Отметить завершенным
+        // 7. Отправить обновления WebSocket на каждом шаге
+        // 8. Обработать ошибки gracefully
     }
 }
 ```
 
-**3. Configure Messenger (20 min)**:
+**3. Настроить Messenger (20 мин)**:
 ```yaml
 # backend/config/packages/messenger.yaml
 framework:
@@ -354,42 +354,42 @@ WHISPER_URL=http://localhost:8090
 OLLAMA_URL=http://localhost:11434
 ```
 
-**4. Start worker:**
+**4. Запустить worker:**
 ```bash
-# Start consumer
+# Запустить consumer
 docker exec backend-php83 php bin/console messenger:consume async -vv
 
-# Check queue health
+# Проверить здоровье очереди
 docker exec backend-rabbitmq rabbitmqctl list_queues
 
-# Check logs
+# Проверить логи
 docker logs -f backend-php83 | grep "ProcessVoiceCommandHandler"
 ```
 
 ---
 
-### Day 3-4: Frontend Voice UI (Afternoon + Morning, 3h)
+### День 3-4: Голосовой UI Фронтенда (День + Утро, 3ч)
 
-**Goal:** Voice recording button with real-time updates
+**Цель:** Кнопка голосовой записи с обновлениями в реальном времени
 
-**Read first:**
-- 📖 [`docs/ai/03_FRONTEND/01_VOICE_RECORDING.md`](03_FRONTEND/01_VOICE_RECORDING.md) - Complete implementation
+**Прочитай сначала:**
+- 📖 [`docs/ai/03_FRONTEND/01_VOICE_RECORDING.md`](03_FRONTEND/01_VOICE_RECORDING.md) - Полная реализация
 
-**Implementation order:**
+**Порядок реализации:**
 
-**1. Voice Command Service (30 min)**:
+**1. Сервис Голосовых Команд (30 мин)**:
 ```typescript
 frontend/src/services/voiceCommand.service.ts
 
 class VoiceCommandService {
     async submitAudioCommand(audioBlob: Blob): Promise<string> {
-        // FormData with audio file
+        // FormData с аудио файлом
         // POST /api/voice/command
-        // Returns command_id
+        // Возвращает command_id
     }
 
     async submitTextCommand(text: string): Promise<string> {
-        // JSON with text
+        // JSON с текстом
         // POST /api/voice/command
     }
 
@@ -399,31 +399,31 @@ class VoiceCommandService {
 }
 ```
 
-**2. Voice Recording Composable (45 min)**:
+**2. Composable Голосовой Записи (45 мин)**:
 ```typescript
 frontend/src/composables/useVoiceRecording.ts
 
 export function useVoiceRecording() {
-    // Uses MediaRecorder API
-    // Recording states: idle, recording, processing
+    // Использует MediaRecorder API
+    // Состояния записи: idle, recording, processing
     // startRecording(), stopRecording(), sendTextCommand()
-    // Returns: {isRecording, isProcessing, error, ...}
+    // Возвращает: {isRecording, isProcessing, error, ...}
 }
 ```
 
-**3. WebSocket Composable (45 min)**:
+**3. Composable WebSocket (45 мин)**:
 ```typescript
 frontend/src/composables/useWebSocket.ts
 
 export function useWebSocket() {
-    // Uses Centrifuge client library
-    // Subscribe to: "voice:user#{userId}"
-    // Listen for events: transcribed, parsed, completed, failed
-    // emit() events to component
+    // Использует клиентскую библиотеку Centrifuge
+    // Подписка на: "voice:user#{userId}"
+    // Слушать события: transcribed, parsed, completed, failed
+    // emit() события в компонент
 }
 ```
 
-**4. Voice Button Component (45 min)**:
+**4. Компонент Голосовой Кнопки (45 мин)**:
 ```vue
 frontend/src/components/VoiceAssistant/VoiceButton.vue
 
@@ -445,70 +445,70 @@ const { isRecording, isProcessing, error, startRecording, stopRecording } = useV
 const { onVoiceEvent } = useWebSocket()
 
 onVoiceEvent('completed', (data) => {
-    // Show success message
+    // Показать сообщение успеха
 })
 </script>
 ```
 
-**5. Add to main view (15 min)**:
+**5. Добавить в основной view (15 мин)**:
 ```vue
-<!-- In your tasks view -->
+<!-- В твоем view задач -->
 <VoiceButton />
 ```
 
-**Test in browser (Chrome/Firefox):**
-1. Open dev console (F12)
-2. Click microphone → Allow permission
-3. Say: "Создай задачу купить молоко"
-4. Click stop
-5. Watch console for WebSocket events
-6. Check task list for new task
+**Тест в браузере (Chrome/Firefox):**
+1. Открыть консоль разработчика (F12)
+2. Кликнуть микрофон → Разрешить разрешение
+3. Сказать: "Создай задачу купить молоко"
+4. Кликнуть стоп
+5. Следить в консоли за событиями WebSocket
+6. Проверить список задач на новую задачу
 
 ---
 
-### Day 4-5: Infrastructure Setup (Afternoon + Full Day, 4h)
+### День 4-5: Настройка Инфраструктуры (День + Полный День, 4ч)
 
-**Goal:** Install and configure AI services (Ollama, Whisper, Centrifugo)
+**Цель:** Установить и настроить AI сервисы (Ollama, Whisper, Centrifugo)
 
-**Read first:**
-- 📖 [`docs/ai/01_INFRASTRUCTURE/01_SETUP.md`](01_INFRASTRUCTURE/01_SETUP.md) - System requirements
-- 📖 [`docs/ai/01_INFRASTRUCTURE/03_AI_SERVICES.md`](01_INFRASTRUCTURE/03_AI_SERVICES.md) - ⚠️ CRITICAL - Complete setup guide
+**Прочитай сначала:**
+- 📖 [`docs/ai/01_INFRASTRUCTURE/01_SETUP.md`](01_INFRASTRUCTURE/01_SETUP.md) - Системные требования
+- 📖 [`docs/ai/01_INFRASTRUCTURE/03_AI_SERVICES.md`](01_INFRASTRUCTURE/03_AI_SERVICES.md) - ⚠️ КРИТИЧНО - Полное руководство по настройке
 
-**Setup Order:**
+**Порядок Настройки:**
 
-**1. Ollama + Llama 3.2 (1h)**:
+**1. Ollama + Llama 3.2 (1ч)**:
 ```bash
-# Install Ollama
+# Установить Ollama
 curl -fsSL https://ollama.com/install.sh | sh
 
-# Pull Llama 3.2 3B model (~ 2GB download)
+# Загрузить модель Llama 3.2 3B (~ 2GB скачивание)
 ollama pull llama3.2:3b
 
-# Start Ollama server
+# Запустить Ollama сервер
 ollama serve
 
-# Test
+# Тест
 curl http://localhost:11434/api/tags
-# Should show: {"models": [{"name": "llama3.2:3b", ...}]}
+# Должен показать: {"models": [{"name": "llama3.2:3b", ...}]}
 
-# Test Russian command
+# Тест русской команды
 curl -X POST http://localhost:11434/api/generate -d '{
   "model": "llama3.2:3b",
-  "prompt": "Convert to JSON: Создай задачу купить молоко",
+  "prompt": "Конвертируй в JSON: Создай задачу купить молоко",
   "format": "json",
   "stream": false
 }'
 ```
 
-**2. Whisper STT Service (2h)**:
+**2. Сервис Whisper STT (2ч)**:
 
-**Option A - Using Docker (Recommended)**:
+**Вариант A - Использование Docker (Рекомендуется)**:
 ```bash
-# Build Whisper container
+# Собрать контейнер Whisper
 cd infrastructure/ai-services
 docker build -f configs/whisper/Dockerfile -t voice-ai/whisper:latest .
 
-# Run Whisper service
+# Запустить сервис Whisper
 docker run -d \
   --name voice-ai-whisper \
   -p 8090:8090 \
@@ -516,28 +516,28 @@ docker run -d \
   -e LANGUAGE=ru \
   voice-ai/whisper:latest
 
-# Test
+# Тест
 curl http://localhost:8090/health
 ```
 
-**Option B - Direct Python**:
+**Вариант B - Прямой Python**:
 ```bash
-# Install dependencies
+# Установить зависимости
 pip install openai-whisper fastapi uvicorn python-multipart
 
-# Copy whisper_api.py from docs/ai/01_INFRASTRUCTURE/03_AI_SERVICES.md
+# Скопировать whisper_api.py из docs/ai/01_INFRASTRUCTURE/03_AI_SERVICES.md
 
-# Run
+# Запустить
 uvicorn whisper_api:app --host 0.0.0.0 --port 8090
 ```
 
-**3. Centrifugo WebSocket (1h)**:
+**3. Centrifugo WebSocket (1ч)**:
 ```bash
-# Generate secrets
+# Сгенерировать секреты
 CENTRIFUGO_SECRET=$(openssl rand -hex 32)
 CENTRIFUGO_API_KEY=$(openssl rand -hex 32)
 
-# Create config
+# Создать конфиг
 cat > centrifugo.json <<EOF
 {
   "token_hmac_secret_key": "$CENTRIFUGO_SECRET",
@@ -551,7 +551,7 @@ cat > centrifugo.json <<EOF
 }
 EOF
 
-# Run Centrifugo
+# Запустить Centrifugo
 docker run -d \
   --name voice-ai-centrifugo \
   -p 8000:8000 \
@@ -559,72 +559,72 @@ docker run -d \
   centrifugo/centrifugo:v5 \
   centrifugo -c /centrifugo/config.json
 
-# Test
+# Тест
 curl http://localhost:8000/health
 ```
 
-**4. Integration Test (30 min)**:
+**4. Интеграционный Тест (30 мин)**:
 ```bash
-# Test full flow
+# Тест полного потока
 python3 scripts/integration_test.py
 
-# Should show:
-# ✅ Ollama is running
-# ✅ Whisper is healthy
-# ✅ Centrifugo is healthy
+# Должен показать:
+# ✅ Ollama запущена
+# ✅ Whisper здоров
+# ✅ Centrifugo здоров
 ```
 
-**Add to .env:**
+**Добавить в .env:**
 ```env
 OLLAMA_URL=http://localhost:11434
 WHISPER_URL=http://localhost:8090
 CENTRIFUGO_URL=http://localhost:8000
-CENTRIFUGO_API_KEY=<your-api-key>
-CENTRIFUGO_SECRET=<your-secret>
+CENTRIFUGO_API_KEY=<твой-api-key>
+CENTRIFUGO_SECRET=<твой-секрет>
 ```
 
 ---
 
-## 🎯 MVP Success Criteria
+## 🎯 Критерии Успеха MVP
 
-**Your MVP is DONE when all these work:**
+**Твой MVP ГОТОВ когда все это работает:**
 
-1. ✅ User clicks voice button → recording starts
-2. ✅ User speaks Russian command → stops recording
-3. ✅ Audio sent to backend → queued (202 response)
-4. ✅ Whisper transcribes audio to text
-5. ✅ Llama parses text to JSON (using prompts from library!)
-6. ✅ Command executed (task created/completed/filtered)
-7. ✅ WebSocket sends real-time updates
-8. ✅ User sees result in UI (< 5 seconds total)
-9. ✅ Works reliably for 3 core commands:
+1. ✅ Пользователь кликает кнопку голоса → начинается запись
+2. ✅ Пользователь говорит русскую команду → останавливает запись
+3. ✅ Аудио отправлено на бэкенд → в очереди (ответ 202)
+4. ✅ Whisper транскрибирует аудио в текст
+5. ✅ Llama парсит текст в JSON (используя промпты из библиотеки!)
+6. ✅ Команда выполнена (задача создана/завершена/отфильтрована)
+7. ✅ WebSocket отправляет обновления в реальном времени
+8. ✅ Пользователь видит результат в UI (< 5 секунд всего)
+9. ✅ Работает надежно для 3 основных команд:
    - "Создай задачу купить молоко завтра"
    - "Отметь задачу купить молоко как выполненную"
    - "Покажи все задачи на завтра"
 
 ---
 
-## ⚠️ Critical Things to Remember
+## ⚠️ Критично Помнить
 
-### 1. ⭐ ALWAYS Use Exact Prompts from Library
-**Location:** [`docs/ai/REFERENCE/PROMPTS_LIBRARY.md`](REFERENCE/PROMPTS_LIBRARY.md)
+### 1. ⭐ ВСЕГДА Используй Точные Промпты из Библиотеки
+**Местоположение:** [`docs/ai/REFERENCE/PROMPTS_LIBRARY.md`](REFERENCE/PROMPTS_LIBRARY.md)
 
-**Why critical:** Without exact prompts, Llama will return garbage or incorrect JSON!
+**Почему критично:** Без точных промптов Llama будет возвращать мусор или некорректный JSON!
 
 ```php
-// ❌ DON'T create your own prompts
+// ❌ НЕ создавай свои промпты
 private function buildPrompt(string $text): string {
-    return "Parse this command: " . $text; // WILL NOT WORK!
+    return "Парси эту команду: " . $text; // НЕ БУДЕТ РАБОТАТЬ!
 }
 
-// ✅ DO copy EXACT prompt from PROMPTS_LIBRARY.md
+// ✅ СКОПИРУЙ ТОЧНЫЙ промпт из PROMPTS_LIBRARY.md
 private function buildPrompt(string $text, array $context): string {
     $date = $context['date'] ?? date('Y-m-d');
     $time = $context['time'] ?? date('H:i');
 
     return <<<PROMPT
 Ты - ассистент для управления задачами для русскоязычных пользователей.
-Твоя задача: конвертировать голосовые команды в валидный JSON.
+Твоя задача: Конвертировать голосовые команды в валидный JSON.
 
 ВАЖНЫЕ ПРАВИЛА:
 1. ВСЕГДА возвращай ТОЛЬКО валидный JSON (никакого дополнительного текста!)
@@ -632,30 +632,30 @@ private function buildPrompt(string $text, array $context): string {
 3. Извлекай: действие (action), параметры (parameters), уверенность (confidence)
 4. Текущая дата: {$date}, время: {$time}
 
-[... full prompt from library - 50+ lines ...]
+[... полный промпт из библиотеки - 50+ строк ...]
 PROMPT;
 }
 ```
 
-### 2. Keep It Simple - Use Existing Services
+### 2. Держи Просто - Используй Существующие Сервисы
 ```php
-// ❌ DON'T create new repository methods
-$this->taskRepository->findByVoiceDescription($text); // NO!
-$this->taskRepository->createFromVoiceCommand($data); // NO!
+// ❌ НЕ создавай новые методы репозитория
+$this->taskRepository->findByVoiceDescription($text); // НЕТ!
+$this->taskRepository->createFromVoiceCommand($data); // НЕТ!
 
-// ✅ DO use existing services
+// ✅ Используй существующие сервисы
 $task = $this->smartSearchService->findTask($text, $user);
 $task = $this->taskService->createTask($user, $title, $description);
 ```
 
-### 3. Don't Bypass TaskService
+### 3. Не Обходи TaskService
 ```php
-// ❌ DON'T bypass TaskService
+// ❌ НЕ обходи TaskService
 $task = new Task();
 $task->setTitle($params['title']);
-$this->entityManager->persist($task); // NO!
+$this->entityManager->persist($task); // НЕТ!
 
-// ✅ DO use TaskService (already has all logic!)
+// ✅ Используй TaskService (уже имеет всю логику!)
 $task = $this->taskService->createTask(
     $user,
     $params['title'],
@@ -665,24 +665,24 @@ $task = $this->taskService->createTask(
 );
 ```
 
-### 4. Test Each Phase Before Moving On
+### 4. Тестируй Каждую Фазу Перед Переходом Дальше
 ```bash
-# After Phase 1 (Domain)
+# После Фазы 1 (Домен)
 docker exec backend-psql16 psql -U user -d backend-app -c "\d voice_commands"
 
-# After Phase 2 (Services)
-curl -X POST http://localhost:11434/api/generate -d '{"model":"llama3.2:3b","prompt":"test"}'
+# После Фазы 2 (Сервисы)
+curl -X POST http://localhost:11434/api/generate -d '{"model":"llama3.2:3b","prompt":"тест"}'
 
-# After Phase 3 (API)
-curl -X POST http://localhost:8089/api/voice/command -H "Authorization: Bearer TOKEN" -d '{"text":"test"}'
+# После Фазы 3 (API)
+curl -X POST http://localhost:8089/api/voice/command -H "Authorization: Bearer TOKEN" -d '{"text":"тест"}'
 
-# After Phase 4 (Queue)
+# После Фазы 4 (Очередь)
 docker exec backend-php83 php bin/console messenger:consume async --limit=1
 
-# After Phase 5 (Frontend)
-# Open browser, click button, check console
+# После Фазы 5 (Фронтенд)
+# Открой браузер, кликни кнопку, проверь консоль
 
-# After Phase 6 (Infrastructure)
+# После Фазы 6 (Инфраструктура)
 curl http://localhost:11434/api/tags
 curl http://localhost:8090/health
 curl http://localhost:8000/health
@@ -690,112 +690,112 @@ curl http://localhost:8000/health
 
 ---
 
-## 🚨 Troubleshooting
+## 🚨 Решение Проблем
 
-### Problem: LLM returns invalid JSON
-→ Check [`PROMPTS_LIBRARY.md`](REFERENCE/PROMPTS_LIBRARY.md)
-→ Verify `format: 'json'` in Ollama request
-→ Check `temperature: 0.3` (not too high!)
+### Проблема: LLM возвращает невалидный JSON
+→ Проверь [`PROMPTS_LIBRARY.md`](REFERENCE/PROMPTS_LIBRARY.md)
+→ Убедись что `format: 'json'` в запросе Ollama
+→ Проверь `temperature: 0.3` (не слишком высоко!)
 
-### Problem: Task not found by voice
-→ Check `SmartSearchService` in [`02_SERVICES.md`](02_BACKEND/02_SERVICES.md)
-→ Adjust similarity threshold (default: 0.3)
-→ Check PostgreSQL trigram extension installed
+### Проблема: Задача не найдена по голосу
+→ Проверь `SmartSearchService` в [`02_SERVICES.md`](02_BACKEND/02_SERVICES.md)
+→ Настрой порог сходства (по умолчанию: 0.3)
+→ Проверь что расширение триграмм PostgreSQL установлено
 
-### Problem: WebSocket not updating
-→ Check Centrifugo running: `docker ps | grep centrifugo`
-→ Verify API key in `.env`
-→ Check browser console for WebSocket errors
+### Проблема: WebSocket не обновляется
+→ Проверь что Centrifugo запущен: `docker ps | grep centrifugo`
+→ Убедись в API ключе в `.env`
+→ Проверь консоль браузера на ошибки WebSocket
 
-### Problem: Queue not processing
-→ Check worker running: `docker exec backend-php83 php bin/console messenger:consume async`
-→ Check RabbitMQ: `docker ps | grep rabbitmq`
-→ View logs: `docker logs -f backend-php83`
-
----
-
-## 📊 5-Day Implementation Timeline
-
-```
-Day 1 (6h):
- Morning [3h]  → Domain Layer (Entity + Value Objects + Migration)
- Afternoon [3h] → Services (LLM, SmartSearch, WebSocket, Executor, Processing)
-
-Day 2 (6h):
- Morning [2h]  → Command Handlers (Interface + 3 handlers)
- Afternoon [2h] → API Endpoints (Controller + 3 endpoints + testing)
- Evening [2h]  → Queue (Message + Handler + Config)
-
-Day 3 (6h):
- Morning [2h]  → Queue testing + debugging
- Afternoon [3h] → Frontend (Services + Composables)
- Evening [1h]  → Frontend VoiceButton component
-
-Day 4 (6h):
- Morning [2h]  → Frontend integration + testing
- Afternoon [4h] → Infrastructure (Ollama + Whisper)
-
-Day 5 (4h):
- Morning [2h]  → Infrastructure (Centrifugo + Redis)
- Afternoon [2h] → End-to-end testing + bug fixes
-
-TOTAL: ~28 hours of focused work
-```
-
-**Realistic MVP:** 3-5 days for solo developer with AI assistance
+### Проблема: Очередь не обрабатывается
+→ Проверь что worker запущен: `docker exec backend-php83 php bin/console messenger:consume async`
+→ Проверь RabbitMQ: `docker ps | grep rabbitmq`
+→ Посмотри логи: `docker logs -f backend-php83`
 
 ---
 
-## 📚 Documentation Navigation
+## 📊 График Реализации 5 Дней
 
-### Start Here
-- 📄 [`docs/ai/START_HERE.md`](START_HERE.md) - Quick overview + full checklist
-- 📄 [`docs/ai/INDEX.md`](INDEX.md) - Complete navigation map
+```
+День 1 (6ч):
+ Утро [3ч]  → Доменный Слой (Сущность + Value Objects + Миграция)
+ День [3ч]  → Сервисы (LLM, SmartSearch, WebSocket, Executor, Processing)
 
-### Backend (5 docs)
-1. [`docs/ai/02_BACKEND/01_DOMAIN_MODEL.md`](02_BACKEND/01_DOMAIN_MODEL.md) - VoiceCommand entity
-2. [`docs/ai/02_BACKEND/02_SERVICES.md`](02_BACKEND/02_SERVICES.md) - 5 core services
-3. [`docs/ai/02_BACKEND/03_COMMAND_HANDLERS.md`](02_BACKEND/03_COMMAND_HANDLERS.md) - Command pattern
+День 2 (6ч):
+ Утро [2ч]  → Обработчики Команд (Интерфейс + 3 обработчика)
+ День [2ч]  → API Endpoints (Контроллер + 3 endpoints + тестирование)
+ Вечер [2ч] → Очередь (Message + Handler + Config)
+
+День 3 (6ч):
+ Утро [2ч]  → Тестирование и отладка очереди
+ День [3ч]  → Фронтенд (Сервисы + Composables)
+ Вечер [1ч] → Компонент VoiceButton фронтенда
+
+День 4 (6ч):
+ Утро [2ч]  → Интеграция и тестирование фронтенда
+ День [4ч]  → Инфраструктура (Ollama + Whisper)
+
+День 5 (4ч):
+ Утро [2ч]  → Инфраструктура (Centrifugo + Redis)
+ День [2ч]  → End-to-end тестирование + исправление багов
+
+ВСЕГО: ~28 часов сфокусированной работы
+```
+
+**Реалистичный MVP:** 3-5 дней для solo разработчика с помощью AI
+
+---
+
+## 📚 Навигация по Документации
+
+### Начни Здесь
+- 📄 [`docs/ai/START_HERE.md`](START_HERE.md) - Быстрый обзор + полный чеклист
+- 📄 [`docs/ai/INDEX.md`](INDEX.md) - Полная карта навигации
+
+### Бэкенд (5 документов)
+1. [`docs/ai/02_BACKEND/01_DOMAIN_MODEL.md`](02_BACKEND/01_DOMAIN_MODEL.md) - Сущность VoiceCommand
+2. [`docs/ai/02_BACKEND/02_SERVICES.md`](02_BACKEND/02_SERVICES.md) - 5 основных сервисов
+3. [`docs/ai/02_BACKEND/03_COMMAND_HANDLERS.md`](02_BACKEND/03_COMMAND_HANDLERS.md) - Паттерн Command
 4. [`docs/ai/02_BACKEND/04_API_ENDPOINTS.md`](02_BACKEND/04_API_ENDPOINTS.md) - REST API
-5. [`docs/ai/02_BACKEND/05_QUEUE_PROCESSING.md`](02_BACKEND/05_QUEUE_PROCESSING.md) - Async queue
+5. [`docs/ai/02_BACKEND/05_QUEUE_PROCESSING.md`](02_BACKEND/05_QUEUE_PROCESSING.md) - Асинхронная очередь
 
-### Frontend (1 doc)
-- [`docs/ai/03_FRONTEND/01_VOICE_RECORDING.md`](03_FRONTEND/01_VOICE_RECORDING.md) - Complete UI implementation
+### Фронтенд (1 документ)
+- [`docs/ai/03_FRONTEND/01_VOICE_RECORDING.md`](03_FRONTEND/01_VOICE_RECORDING.md) - Полная реализация UI
 
-### Infrastructure (4 docs)
-1. [`docs/ai/01_INFRASTRUCTURE/01_SETUP.md`](01_INFRASTRUCTURE/01_SETUP.md) - System requirements
-2. [`docs/ai/01_INFRASTRUCTURE/02_DOCKER.md`](01_INFRASTRUCTURE/02_DOCKER.md) - Docker configs (optional)
+### Инфраструктура (4 документа)
+1. [`docs/ai/01_INFRASTRUCTURE/01_SETUP.md`](01_INFRASTRUCTURE/01_SETUP.md) - Системные требования
+2. [`docs/ai/01_INFRASTRUCTURE/02_DOCKER.md`](01_INFRASTRUCTURE/02_DOCKER.md) - Конфиги Docker (опционально)
 3. [`docs/ai/01_INFRASTRUCTURE/03_AI_SERVICES.md`](01_INFRASTRUCTURE/03_AI_SERVICES.md) - ⚠️ Ollama + Whisper + Centrifugo
-4. [`docs/ai/01_INFRASTRUCTURE/04_SECURITY.md`](01_INFRASTRUCTURE/04_SECURITY.md) - Security (optional for MVP)
+4. [`docs/ai/01_INFRASTRUCTURE/04_SECURITY.md`](01_INFRASTRUCTURE/04_SECURITY.md) - Безопасность (опционально для MVP)
 
-### Reference (Critical!)
-- ⭐⭐⭐ [`docs/ai/REFERENCE/PROMPTS_LIBRARY.md`](REFERENCE/PROMPTS_LIBRARY.md) - **MOST CRITICAL - LLM prompts**
-- [`docs/ai/REFERENCE/TESTING_STRATEGY.md`](docs/ai/REFERENCE/TESTING_STRATEGY.md) - Testing guide (optional)
-
----
-
-## ✅ Final Checklist
-
-Before marking as complete:
-
-- [ ] All backend services implemented
-- [ ] All command handlers working
-- [ ] API endpoints tested with curl
-- [ ] Queue worker running
-- [ ] Frontend voice button works
-- [ ] WebSocket updates received
-- [ ] Ollama + Llama 3.2 installed
-- [ ] Whisper transcription works
-- [ ] End-to-end test passes (voice → task created)
-- [ ] Russian language works
-- [ ] Code follows SOLID principles
+### Справочник (Критично!)
+- ⭐⭐⭐ [`docs/ai/REFERENCE/PROMPTS_LIBRARY.md`](REFERENCE/PROMPTS_LIBRARY.md) - **САМОЕ КРИТИЧНОЕ - LLM промпты**
+- [`docs/ai/REFERENCE/TESTING_STRATEGY.md`](docs/ai/REFERENCE/TESTING_STRATEGY.md) - Руководство по тестированию (опционально)
 
 ---
 
-**Good luck! Start with [`docs/ai/START_HERE.md`](START_HERE.md) for detailed instructions.**
+## ✅ Финальный Чеклист
+
+Перед отметкой как завершено:
+
+- [ ] Все сервисы бэкенда реализованы
+- [ ] Все обработчики команд работают
+- [ ] API endpoints протестированы с curl
+- [ ] Queue worker запущен
+- [ ] Кнопка голоса фронтенда работает
+- [ ] Обновления WebSocket получены
+- [ ] Ollama + Llama 3.2 установлены
+- [ ] Транскрипция Whisper работает
+- [ ] End-to-end тест проходит (голос → создана задача)
+- [ ] Русский язык работает
+- [ ] Код следует принципам SOLID
 
 ---
 
-**Created:** 2025-01-08
-**For:** Voice AI Assistant MVP Implementation
-**Tech Stack:** Symfony + Vue.js + Ollama + Whisper + Centrifugo
+**Удачи! Начни с [`docs/ai/START_HERE.md`](START_HERE.md) для детальных инструкций.**
+
+---
+
+**Создано:** 2025-01-08
+**Для:** Реализация MVP Voice AI Assistant
+**Технологический Стек:** Symfony + Vue.js + Ollama + Whisper + Centrifugo

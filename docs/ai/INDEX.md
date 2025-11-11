@@ -1,47 +1,47 @@
-# 🤖 Voice AI Assistant - Enterprise Implementation Guide
+# 🤖 Voice AI Assistant - Корпоративное Руководство по Реализации
 
-> **Version**: 1.0.0
-> **Status**: Production-Ready Documentation
-> **Target Audience**: Development Team, DevOps, QA Engineers, AI Assistants (Claude, GPT)
-> **Estimated Implementation Time**: 19-25 days (full enterprise) | 3-5 days (MVP)
-> **Technology Readiness Level**: TRL 6-7
+> **Версия**: 1.0.0
+> **Статус**: Production-Ready Документация
+> **Целевая Аудитория**: Команда Разработки, DevOps, QA Инженеры, AI Ассистенты (Claude, GPT)
+> **Оценочное Время Реализации**: 19-25 дней (полное корпоративное) | 3-5 дней (MVP)
+> **Уровень Технологической Готовности**: TRL 6-7
 
 ---
 
-## 🎯 Project Context & Business Logic
+## 🎯 Контекст Проекта и Бизнес-Логика
 
-### What is this project?
+### Что это за проект?
 
-This is a **Voice AI Assistant** feature for an existing **Task Management System** (Vue.js 3 + Symfony 7.1 + PostgreSQL). The AI assistant allows users to manage their tasks using natural **Russian language voice commands**, eliminating the need for manual input through UI.
+Это функция **Voice AI Assistant** для существующей **Системы Управления Задачами** (Vue.js 3 + Symfony 7.1 + PostgreSQL). AI ассистент позволяет пользователям управлять задачами с помощью естественных **голосовых команд на русском языке**, устраняя необходимость ручного ввода через UI.
 
-### Core Business Problem
+### Ключевая Бизнес-Проблема
 
-Users waste time navigating complex UIs to create, update, or filter tasks. Our solution: **speak naturally, and the AI does the work**.
+Пользователи тратят время на навигацию по сложным UI для создания, обновления или фильтрации задач. Наше решение: **говори естественно, и AI выполнит работу**.
 
-**Examples of voice commands:**
+**Примеры голосовых команд:**
 
 1. **"Создай задачу на завтра с 15:00 по 16:30 - Сделать домашнее задание за ребенка, прикрепи теги 'Помощь ребенку', 'Срочные'"**
-   → AI creates a task with all specified parameters
+   → AI создает задачу со всеми указанными параметрами
 
 2. **"Покажи мне список задач на завтра и послезавтра с приоритетом 'Срочные'"**
-   → AI applies filters and displays matching tasks
+   → AI применяет фильтры и отображает подходящие задачи
 
 3. **"Для задачи 'Скопировать чужой контент' добавь три подзадачи - 'Скопировать статью', 'Проанализировать ее', 'Опубликовать на всех ресурсах'"**
-   → AI finds the task and creates 3 subtasks
+   → AI находит задачу и создает 3 подзадачи
 
 4. **"Для задачи 'Скопировать чужой контент' - отметь подзадачу 'Проанализировать ее' как завершенную"**
-   → AI finds task, finds subtask by fuzzy match, marks it complete
+   → AI находит задачу, находит подзадачу по нечеткому совпадению, отмечает ее завершенной
 
 5. **"Заверши три задачи на сегодня - 'Задача 1', 'Задача 2' и 'Задача 3'"**
-   → AI completes multiple tasks in bulk
+   → AI завершает несколько задач массово
 
 6. **"Перенеси оставшиеся незавершенные сегодняшние задачи на завтра!"**
-   → AI queries incomplete tasks, updates their due dates
+   → AI запрашивает незавершенные задачи, обновляет их даты выполнения
 
-### How it works (Technical Flow)
+### Как это работает (Технический Поток)
 
 ```
-User Action → Voice Recording → Backend API → Queue (RabbitMQ)
+Действие Пользователя → Голосовая Запись → Backend API → Очередь (RabbitMQ)
                                                     ↓
                                     ← WebSocket ← Processing Worker
                                          ↓              ↓
@@ -56,394 +56,292 @@ User Action → Voice Recording → Backend API → Queue (RabbitMQ)
                                             Update Database
 ```
 
-**Key Technical Requirements:**
+**Ключевые Технические Требования:**
 
-1. **Local LLM** (no external APIs): Llama 3.2 3B via Ollama
-2. **Runs on weak VPS**: 2 CPU cores, 4GB RAM, 40GB disk
-3. **Russian language support**: Both STT (Whisper) and LLM
-4. **Real-time updates**: Centrifugo WebSocket
-5. **Smart search**: Fuzzy matching for task names (tasks may have similar titles)
-6. **Future-ready**: Architecture allows Telegram, WhatsApp, Apple Watch integration
+1. **Локальная LLM** (без внешних API): Llama 3.2 3B через Ollama
+2. **Работает на слабом VPS**: 2 ядра CPU, 4GB RAM, 40GB диск
+3. **Поддержка русского языка**: И STT (Whisper), и LLM
+4. **Обновления в реальном времени**: Centrifugo WebSocket
+5. **Умный поиск**: Нечеткое сопоставление для названий задач (задачи могут иметь похожие названия)
+6. **Готовность к будущему**: Архитектура позволяет интеграцию с Telegram, WhatsApp, Apple Watch
 
-### Architecture Principles
+### Принципы Архитектуры
 
-- **SOLID, GRASP, GoF** design patterns throughout
-- **Performance-first**: Response time < 5 seconds
-- **Scalable**: Easy to add new command types and integrations
-- **Testable**: Code designed for Unit, Integration, Functional, E2E tests
-- **Privacy-first**: All AI processing happens locally on VPS
-
----
-
-## 📋 Executive Summary
-
-This comprehensive documentation provides a complete blueprint for implementing an enterprise-grade Voice AI Assistant integrated into the Task Management System. The solution enables natural language voice commands for task management through web interface and messaging platforms, powered by local LLM and speech recognition technologies.
-
-### 🎯 Business Objectives
-
-1. **Productivity Enhancement**: Reduce task creation time by 70% through voice commands
-2. **Accessibility**: Enable hands-free task management for mobile and IoT scenarios
-3. **Market Differentiation**: First Russian-language voice-powered task manager
-4. **Scalability**: Architecture supporting 10,000+ concurrent users
-5. **Privacy-First**: All processing happens on-premise, no external API dependencies
-
-### 🏗️ System Architecture Overview
-
-```mermaid
-graph TB
-    subgraph "Client Layer"
-        WEB[Web Browser]
-        TG[Telegram Bot]
-        WA[WhatsApp]
-        WATCH[Apple Watch]
-    end
-
-    subgraph "API Gateway"
-        NGINX[Nginx Load Balancer]
-        API[Symfony API]
-        WH[Webhook Controller]
-    end
-
-    subgraph "Processing Layer"
-        QUEUE[RabbitMQ]
-        WORKER[Command Workers]
-    end
-
-    subgraph "AI Services"
-        WHISPER[Whisper STT]
-        OLLAMA[Ollama LLM]
-        LLAMA[Llama 3.2 3B]
-    end
-
-    subgraph "Business Logic"
-        EXEC[Command Executor]
-        TASK[Task Service]
-        SEARCH[Smart Search]
-    end
-
-    subgraph "Real-time Layer"
-        CENTRI[Centrifugo]
-        REDIS[Redis Pub/Sub]
-    end
-
-    subgraph "Storage"
-        PG[PostgreSQL]
-        S3[S3 Storage]
-    end
-
-    WEB --> NGINX
-    TG --> WH
-    WA --> WH
-    WATCH --> TG
-
-    NGINX --> API
-    WH --> API
-    API --> QUEUE
-
-    QUEUE --> WORKER
-    WORKER --> WHISPER
-    WORKER --> OLLAMA
-    OLLAMA --> LLAMA
-
-    WORKER --> EXEC
-    EXEC --> TASK
-    EXEC --> SEARCH
-    TASK --> PG
-
-    EXEC --> CENTRI
-    CENTRI --> REDIS
-    CENTRI --> WEB
-
-    WHISPER --> S3
-    API --> S3
-```
+- **SOLID, GRASP, GoF** паттерны проектирования повсюду
+- **Производительность прежде всего**: Время отклика < 5 секунд
+- **Масштабируемость**: Легко добавлять новые типы команд и интеграции
+- **Тестируемость**: Код разработан для Unit, Integration, Functional, E2E тестов
+- **Приватность прежде всего**: Вся обработка AI происходит локально на VPS
 
 ---
 
-## 📚 Documentation Structure
+## 📚 Структура Документации
 
-### Phase 1: Infrastructure & Foundation
-| Document | Description | Duration | Priority |
-|----------|-------------|----------|----------|
-| [**1.1 Infrastructure Setup**](01_INFRASTRUCTURE/01_SETUP.md) | Complete infrastructure deployment guide | 2 days | CRITICAL |
-| [**1.2 Docker Configuration**](01_INFRASTRUCTURE/02_DOCKER.md) | Docker and docker-compose configurations | 1 day | CRITICAL |
-| [**1.3 AI Services Installation**](01_INFRASTRUCTURE/03_AI_SERVICES.md) | Ollama, Whisper, Centrifugo setup | 2 days | CRITICAL |
-| [**1.4 Security & Networking**](01_INFRASTRUCTURE/04_SECURITY.md) | Network isolation, SSL, firewall rules | 1 day | HIGH |
+### Фаза 1: Инфраструктура и Основа
+| Документ | Описание | Длительность | Приоритет |
+|----------|-----------|--------------|-----------|
+| [**1.1 Настройка Инфраструктуры**](01_INFRASTRUCTURE/01_SETUP.md) | Полное руководство по развертыванию инфраструктуры | 2 дня | КРИТИЧЕСКИЙ |
+| [**1.2 Конфигурация Docker**](01_INFRASTRUCTURE/02_DOCKER.md) | Конфигурации Docker и docker-compose | 1 день | КРИТИЧЕСКИЙ |
+| [**1.3 Установка AI Сервисов**](01_INFRASTRUCTURE/03_AI_SERVICES.md) | Настройка Ollama, Whisper, Centrifugo | 2 дня | КРИТИЧЕСКИЙ |
+| [**1.4 Безопасность и Сеть**](01_INFRASTRUCTURE/04_SECURITY.md) | Изоляция сети, SSL, правила файрвола | 1 день | ВЫСОКИЙ |
 
-### Phase 2: Backend Core Implementation
-| Document | Description | Duration | Priority |
-|----------|-------------|----------|----------|
-| [**2.1 Domain Model**](02_BACKEND/01_DOMAIN_MODEL.md) | Entities, Value Objects, Aggregates | 1 day | CRITICAL |
-| [**2.2 Service Layer**](02_BACKEND/02_SERVICES.md) | Core services implementation | 3 days | CRITICAL |
-| [**2.3 Command Handlers**](02_BACKEND/03_COMMAND_HANDLERS.md) | Command pattern implementation | 2 days | HIGH |
-| [**2.4 API Endpoints**](02_BACKEND/04_API_ENDPOINTS.md) | REST API specification | 1 day | HIGH |
-| [**2.5 Queue Processing**](02_BACKEND/05_QUEUE_PROCESSING.md) | RabbitMQ consumers and producers | 2 days | HIGH |
-| [**2.6 WebSocket Integration**](02_BACKEND/06_WEBSOCKET.md) | Centrifugo real-time updates | 1 day | MEDIUM |
+### Фаза 2: Реализация Ядра Бэкенда
+| Документ | Описание | Длительность | Приоритет |
+|----------|-----------|--------------|-----------|
+| [**2.1 Доменная Модель**](02_BACKEND/01_DOMAIN_MODEL.md) | Сущности, Value Objects, Агрегаты | 1 день | КРИТИЧЕСКИЙ |
+| [**2.2 Слой Сервисов**](02_BACKEND/02_SERVICES.md) | Реализация основных сервисов | 3 дня | КРИТИЧЕСКИЙ |
+| [**2.3 Обработчики Команд**](02_BACKEND/03_COMMAND_HANDLERS.md) | Реализация паттерна Command | 2 дня | ВЫСОКИЙ |
+| [**2.4 API Endpoints**](02_BACKEND/04_API_ENDPOINTS.md) | Спецификация REST API | 1 день | ВЫСОКИЙ |
+| [**2.5 Обработка Очереди**](02_BACKEND/05_QUEUE_PROCESSING.md) | RabbitMQ consumers и producers | 2 дня | ВЫСОКИЙ |
+| [**2.6 Интеграция WebSocket**](02_BACKEND/06_WEBSOCKET.md) | Обновления Centrifugo в реальном времени | 1 день | СРЕДНИЙ |
 
-### Phase 3: Frontend Implementation
-| Document | Description | Duration | Priority |
-|----------|-------------|----------|----------|
-| [**3.1 Voice Recording**](03_FRONTEND/01_VOICE_RECORDING.md) | Audio capture and processing | 2 days | CRITICAL |
-| [**3.2 WebSocket Client**](03_FRONTEND/02_WEBSOCKET_CLIENT.md) | Real-time updates handling | 1 day | HIGH |
-| [**3.3 UI Components**](03_FRONTEND/03_UI_COMPONENTS.md) | Voice assistant UI elements | 2 days | MEDIUM |
-| [**3.4 State Management**](03_FRONTEND/04_STATE_MANAGEMENT.md) | Pinia store for voice commands | 1 day | HIGH |
+### Фаза 3: Реализация Фронтенда
+| Документ | Описание | Длительность | Приоритет |
+|----------|-----------|--------------|-----------|
+| [**3.1 Голосовая Запись**](03_FRONTEND/01_VOICE_RECORDING.md) | Захват и обработка аудио | 2 дня | КРИТИЧЕСКИЙ |
+| [**3.2 WebSocket Клиент**](03_FRONTEND/02_WEBSOCKET_CLIENT.md) | Обработка обновлений в реальном времени | 1 день | ВЫСОКИЙ |
+| [**3.3 UI Компоненты**](03_FRONTEND/03_UI_COMPONENTS.md) | UI элементы голосового ассистента | 2 дня | СРЕДНИЙ |
+| [**3.4 Управление Состоянием**](03_FRONTEND/04_STATE_MANAGEMENT.md) | Pinia store для голосовых команд | 1 день | ВЫСОКИЙ |
 
-### Phase 4: Integration Layer
-| Document | Description | Duration | Priority |
-|----------|-------------|----------|----------|
-| [**4.1 Telegram Bot**](04_INTEGRATIONS/01_TELEGRAM.md) | Telegram bot implementation | 2 days | HIGH |
-| [**4.2 WhatsApp Integration**](04_INTEGRATIONS/02_WHATSAPP.md) | WhatsApp Business API | 2 days | MEDIUM |
-| [**4.3 Apple Watch**](04_INTEGRATIONS/03_APPLE_WATCH.md) | Siri Shortcuts integration | 1 day | LOW |
-| [**4.4 OAuth & Linking**](04_INTEGRATIONS/04_OAUTH_LINKING.md) | User account linking | 1 day | HIGH |
+### Фаза 4: Слой Интеграции
+| Документ | Описание | Длительность | Приоритет |
+|----------|-----------|--------------|-----------|
+| [**4.1 Telegram Bot**](04_INTEGRATIONS/01_TELEGRAM.md) | Реализация Telegram бота | 2 дня | ВЫСОКИЙ |
+| [**4.2 Интеграция WhatsApp**](04_INTEGRATIONS/02_WHATSAPP.md) | WhatsApp Business API | 2 дня | СРЕДНИЙ |
+| [**4.3 Apple Watch**](04_INTEGRATIONS/03_APPLE_WATCH.md) | Интеграция Siri Shortcuts | 1 день | НИЗКИЙ |
+| [**4.4 OAuth и Связывание**](04_INTEGRATIONS/04_OAUTH_LINKING.md) | Связывание аккаунтов пользователей | 1 день | ВЫСОКИЙ |
 
-### Phase 5: Testing & Optimization
-| Document | Description | Duration | Priority |
-|----------|-------------|----------|----------|
-| [**5.1 Testing Strategy**](05_TESTING/01_STRATEGY.md) | Complete testing approach | 1 day | CRITICAL |
-| [**5.2 Unit Tests**](05_TESTING/02_UNIT_TESTS.md) | Unit test implementation | 2 days | HIGH |
-| [**5.3 Integration Tests**](05_TESTING/03_INTEGRATION_TESTS.md) | Integration test suite | 2 days | HIGH |
-| [**5.4 Performance Tests**](05_TESTING/04_PERFORMANCE.md) | Load and stress testing | 1 day | MEDIUM |
-| [**5.5 E2E Tests**](05_TESTING/05_E2E_TESTS.md) | End-to-end test scenarios | 2 days | MEDIUM |
+### Фаза 5: Тестирование и Оптимизация
+| Документ | Описание | Длительность | Приоритет |
+|----------|-----------|--------------|-----------|
+| [**5.1 Стратегия Тестирования**](05_TESTING/01_STRATEGY.md) | Полный подход к тестированию | 1 день | КРИТИЧЕСКИЙ |
+| [**5.2 Unit Тесты**](05_TESTING/02_UNIT_TESTS.md) | Реализация unit тестов | 2 дня | ВЫСОКИЙ |
+| [**5.3 Интеграционные Тесты**](05_TESTING/03_INTEGRATION_TESTS.md) | Набор интеграционных тестов | 2 дня | ВЫСОКИЙ |
+| [**5.4 Тесты Производительности**](05_TESTING/04_PERFORMANCE.md) | Нагрузочное и стресс-тестирование | 1 день | СРЕДНИЙ |
+| [**5.5 E2E Тесты**](05_TESTING/05_E2E_TESTS.md) | End-to-end тестовые сценарии | 2 дня | СРЕДНИЙ |
 
-### Phase 6: Deployment & Operations
-| Document | Description | Duration | Priority |
-|----------|-------------|----------|----------|
-| [**6.1 Production Deployment**](06_DEPLOYMENT/01_PRODUCTION.md) | Production deployment guide | 1 day | CRITICAL |
-| [**6.2 Monitoring**](06_DEPLOYMENT/02_MONITORING.md) | Metrics, logging, alerting | 1 day | HIGH |
-| [**6.3 Scaling Strategy**](06_DEPLOYMENT/03_SCALING.md) | Horizontal and vertical scaling | 1 day | MEDIUM |
-| [**6.4 Disaster Recovery**](06_DEPLOYMENT/04_DISASTER_RECOVERY.md) | Backup and recovery procedures | 1 day | HIGH |
+### Фаза 6: Развертывание и Операции
+| Документ | Описание | Длительность | Приоритет |
+|----------|-----------|--------------|-----------|
+| [**6.1 Production Развертывание**](06_DEPLOYMENT/01_PRODUCTION.md) | Руководство по production развертыванию | 1 день | КРИТИЧЕСКИЙ |
+| [**6.2 Мониторинг**](06_DEPLOYMENT/02_MONITORING.md) | Метрики, логирование, алерты | 1 день | ВЫСОКИЙ |
+| [**6.3 Стратегия Масштабирования**](06_DEPLOYMENT/03_SCALING.md) | Горизонтальное и вертикальное масштабирование | 1 день | СРЕДНИЙ |
+| [**6.4 Аварийное Восстановление**](06_DEPLOYMENT/04_DISASTER_RECOVERY.md) | Процедуры резервного копирования и восстановления | 1 день | ВЫСОКИЙ |
 
-### Reference Documentation
-| Document | Description | Priority |
-|----------|-------------|----------|
-| [**API Reference**](REFERENCE/API_REFERENCE.md) | Complete API documentation | HIGH |
-| [**DTOs & Contracts**](REFERENCE/DTOS_CONTRACTS.md) | Data transfer objects | HIGH |
-| [**Prompts Library**](REFERENCE/PROMPTS_LIBRARY.md) | LLM prompts collection | CRITICAL |
-| [**Error Codes**](REFERENCE/ERROR_CODES.md) | Error handling reference | MEDIUM |
-| [**Configuration**](REFERENCE/CONFIGURATION.md) | All configuration parameters | HIGH |
-
----
-
-## 🤖 FOR AI ASSISTANT: Implementation Order
-
-**Follow this EXACT order for MVP implementation:**
-
-### Phase 1: Backend Foundation (Day 1-2)
-1. [Domain Model](02_BACKEND/01_DOMAIN_MODEL.md) - Create entities & value objects
-2. [Services](02_BACKEND/02_SERVICES.md) - Implement core services
-3. [Prompts Library](REFERENCE/PROMPTS_LIBRARY.md) - ⭐ CRITICAL - Read this!
-
-### Phase 2: Backend Processing (Day 2-3)
-4. [Command Handlers](02_BACKEND/03_COMMAND_HANDLERS.md) - Handle voice commands
-5. [API Endpoints](02_BACKEND/04_API_ENDPOINTS.md) - Create REST API
-6. [Queue Processing](02_BACKEND/05_QUEUE_PROCESSING.md) - Async processing
-
-### Phase 3: Frontend (Day 3-4)
-7. [Voice Recording](03_FRONTEND/01_VOICE_RECORDING.md) - Record & send audio
-8. WebSocket client - Real-time updates (in Voice Recording doc)
-
-### Phase 4: Infrastructure (Day 4-5)
-9. [AI Services Setup](01_INFRASTRUCTURE/03_AI_SERVICES.md) - Ollama + Whisper
-10. [Security](01_INFRASTRUCTURE/04_SECURITY.md) - Basic security
-
-### Optional (Later)
-11. [Telegram Integration](04_INTEGRATIONS/01_TELEGRAM.md) - Telegram bot
-12. Testing implementation
+### Справочная Документация
+| Документ | Описание | Приоритет |
+|----------|-----------|-----------|
+| [**API Reference**](REFERENCE/API_REFERENCE.md) | Полная документация API | ВЫСОКИЙ |
+| [**DTOs & Contracts**](REFERENCE/DTOS_CONTRACTS.md) | Data transfer objects | ВЫСОКИЙ |
+| [**Библиотека Промптов**](REFERENCE/PROMPTS_LIBRARY.md) | Коллекция LLM промптов | КРИТИЧЕСКИЙ |
+| [**Коды Ошибок**](REFERENCE/ERROR_CODES.md) | Справочник обработки ошибок | СРЕДНИЙ |
+| [**Конфигурация**](REFERENCE/CONFIGURATION.md) | Все параметры конфигурации | ВЫСОКИЙ |
 
 ---
 
-## 🚀 Quick Start Guide
+## 🤖 ДЛЯ AI АССИСТЕНТА: Порядок Реализации
 
-### Prerequisites Checklist
+**Следуй ЭТОМУ ТОЧНОМУ порядку для реализации MVP:**
+
+### Фаза 1: Основа Бэкенда (День 1-2)
+1. [Доменная Модель](02_BACKEND/01_DOMAIN_MODEL.md) - Создай сущности и value objects
+2. [Сервисы](02_BACKEND/02_SERVICES.md) - Реализуй основные сервисы
+3. [Библиотека Промптов](REFERENCE/PROMPTS_LIBRARY.md) - ⭐ КРИТИЧЕСКИ ВАЖНО - Прочитай это!
+
+### Фаза 2: Обработка Бэкенда (День 2-3)
+4. [Обработчики Команд](02_BACKEND/03_COMMAND_HANDLERS.md) - Обработка голосовых команд
+5. [API Endpoints](02_BACKEND/04_API_ENDPOINTS.md) - Создай REST API
+6. [Обработка Очереди](02_BACKEND/05_QUEUE_PROCESSING.md) - Асинхронная обработка
+
+### Фаза 3: Фронтенд (День 3-4)
+7. [Голосовая Запись](03_FRONTEND/01_VOICE_RECORDING.md) - Запись и отправка аудио
+8. WebSocket клиент - Обновления в реальном времени (в документации Voice Recording)
+
+### Фаза 4: Инфраструктура (День 4-5)
+9. [Настройка AI Сервисов](01_INFRASTRUCTURE/03_AI_SERVICES.md) - Ollama + Whisper
+10. [Безопасность](01_INFRASTRUCTURE/04_SECURITY.md) - Базовая безопасность
+
+### Опционально (Позже)
+11. [Интеграция Telegram](04_INTEGRATIONS/01_TELEGRAM.md) - Telegram бот
+12. Реализация тестирования
+
+---
+
+## 🚀 Руководство Быстрого Старта
+
+### Чеклист Пререквизитов
 
 ```bash
-# System Requirements
-✅ VPS with 4GB RAM minimum (8GB recommended)
-✅ Ubuntu 22.04 LTS or similar
-✅ Docker 24.0+ and Docker Compose 2.20+
-✅ 40GB+ free disk space
-✅ Ports: 80, 443, 8089, 8000, 8090, 11434
+# Системные Требования
+✅ VPS с 4GB RAM минимум (8GB рекомендуется)
+✅ Ubuntu 22.04 LTS или аналогичная
+✅ Docker 24.0+ и Docker Compose 2.20+
+✅ 40GB+ свободного дискового пространства
+✅ Порты: 80, 443, 8089, 8000, 8090, 11434
 
-# Development Tools
-✅ PHP 8.3+ with Symfony CLI
-✅ Node.js 20+ with npm 10+
+# Инструменты Разработки
+✅ PHP 8.3+ с Symfony CLI
+✅ Node.js 20+ с npm 10+
 ✅ Git 2.34+
-✅ PostgreSQL client tools
+✅ Клиентские инструменты PostgreSQL
 ```
 
-### 🏃 30-Minute Quick Setup
+### 🏃 30-Минутная Быстрая Настройка
 
 ```bash
-# 1. Clone the repository
+# 1. Клонировать репозиторий
 git clone [repository-url] task-manager
 cd task-manager
 
-# 2. Start main application (from project root)
+# 2. Запустить основное приложение (из корня проекта)
 docker-compose up -d
 
-# 3. Run migrations
+# 3. Запустить миграции
 docker exec backend-php83 php bin/console doctrine:migrations:migrate
 
-# 4. Start frontend
+# 4. Запустить фронтенд
 cd apps/frontend
 npm install && npm run dev
 
-# 5. Verify installation
+# 5. Проверить установку
 ./scripts/health-check.sh
 
-# 6. (Future) Deploy AI services when implementing Voice AI
+# 6. (Будущее) Развернуть AI сервисы при реализации Voice AI
 # cd infrastructure/ai-services
 # ./scripts/install.sh
 ```
 
 ---
 
-## 📊 Technology Stack Details
+## 📊 Детали Технологического Стека
 
-### Core Technologies
+### Основные Технологии
 
-| Component | Technology | Version | Justification |
+| Компонент | Технология | Версия | Обоснование |
 |-----------|------------|---------|---------------|
-| **LLM Runtime** | Ollama | Latest | Best CPU performance, easy deployment |
-| **Language Model** | Llama 3.2 3B | Q4_K_M | Optimal for 4GB RAM, Russian support |
-| **Speech-to-Text** | Whisper.cpp | v1.5.4 | Fast CPU inference, good Russian |
-| **WebSocket** | Centrifugo | v5.0 | Scalable, JWT auth, battle-tested |
-| **Queue** | RabbitMQ | 3.12 | Already in stack, reliable |
-| **Cache** | Redis | 7.2 | Pub/sub for Centrifugo |
-| **Backend** | Symfony | 7.1 | Existing framework |
-| **Frontend** | Vue.js | 3.4 | Existing framework |
+| **LLM Runtime** | Ollama | Latest | Лучшая производительность CPU, легкое развертывание |
+| **Языковая Модель** | Llama 3.2 3B | Q4_K_M | Оптимально для 4GB RAM, поддержка русского |
+| **Speech-to-Text** | Whisper.cpp | v1.5.4 | Быстрый CPU inference, хороший русский |
+| **WebSocket** | Centrifugo | v5.0 | Масштабируемый, JWT auth, проверенный |
+| **Очередь** | RabbitMQ | 3.12 | Уже в стеке, надежный |
+| **Кеш** | Redis | 7.2 | Pub/sub для Centrifugo |
+| **Бэкенд** | Symfony | 7.1 | Существующий фреймворк |
+| **Фронтенд** | Vue.js | 3.4 | Существующий фреймворк |
 
-### AI Model Specifications
+### Спецификации AI Модели
 
 ```yaml
 Llama 3.2 3B:
-  Parameters: 3 billion
-  Quantization: 4-bit (Q4_K_M)
-  Memory Usage: ~2.5GB
-  Inference Speed: 200-500ms per request
-  Context Window: 8192 tokens
-  Languages: Russian, English
+  Параметры: 3 миллиарда
+  Квантизация: 4-бит (Q4_K_M)
+  Использование Памяти: ~2.5GB
+  Скорость Inference: 200-500ms на запрос
+  Контекстное Окно: 8192 токена
+  Языки: Русский, Английский
 
 Whisper Base:
-  Parameters: 74M
-  Memory Usage: ~500MB
-  Processing Speed: Real-time factor 0.3
-  Supported Formats: WAV, MP3, M4A, WebM
-  Max Duration: 30 seconds (configurable)
+  Параметры: 74M
+  Использование Памяти: ~500MB
+  Скорость Обработки: Real-time factor 0.3
+  Поддерживаемые Форматы: WAV, MP3, M4A, WebM
+  Макс. Длительность: 30 секунд (настраивается)
 ```
 
 ---
 
-## 🔐 Security Considerations
+## 🔐 Соображения Безопасности
 
-### Critical Security Requirements
+### Критические Требования Безопасности
 
-1. **Authentication & Authorization**
-   - JWT tokens with 15-minute expiry
-   - Refresh token rotation
-   - Rate limiting: 100 requests/minute per user
-   - OAuth 2.0 for messenger integrations
+1. **Аутентификация и Авторизация**
+   - JWT токены с 15-минутным истечением
+   - Ротация refresh токенов
+   - Ограничение частоты: 100 запросов/минуту на пользователя
+   - OAuth 2.0 для интеграций мессенджеров
 
-2. **Data Protection**
-   - All voice files encrypted at rest (AES-256)
-   - SSL/TLS for all communications
-   - Audio files auto-deleted after processing
-   - GDPR compliance for EU users
+2. **Защита Данных**
+   - Все голосовые файлы зашифрованы в покое (AES-256)
+   - SSL/TLS для всех коммуникаций
+   - Аудио файлы автоматически удаляются после обработки
+   - Соответствие GDPR для EU пользователей
 
-3. **API Security**
-   - Input validation on all endpoints
-   - SQL injection prevention via Doctrine ORM
-   - XSS protection via Content Security Policy
-   - CORS properly configured
+3. **Безопасность API**
+   - Валидация ввода на всех endpoints
+   - Предотвращение SQL инъекций через Doctrine ORM
+   - Защита от XSS через Content Security Policy
+   - CORS правильно настроен
 
-4. **Infrastructure Security**
-   - Network isolation for AI services
-   - Firewall rules (iptables/ufw)
-   - Regular security updates
-   - Audit logging for all commands
-
----
-
-## 📈 Performance Targets
-
-### Key Performance Indicators (KPIs)
-
-| Metric | Target | Maximum | Measurement Method |
-|--------|--------|---------|-------------------|
-| **Voice Command E2E** | < 3s | 8s | User action to UI update |
-| **STT Processing** | < 2s | 5s | Audio file to text |
-| **LLM Response** | < 500ms | 2s | Text to JSON command |
-| **Command Execution** | < 100ms | 500ms | Business logic processing |
-| **WebSocket Delivery** | < 50ms | 200ms | Event to client |
-| **Concurrent Users** | 1000 | 10000 | Load testing |
-| **Audio File Size** | 5MB | 10MB | Per request |
-| **Queue Processing** | < 1s | 5s | Message to completion |
-
-### Optimization Strategies
-
-1. **Caching**
-   - Redis for frequent commands
-   - LLM response caching (5 min TTL)
-   - Static prompt compilation
-
-2. **Resource Management**
-   - Connection pooling
-   - Lazy loading of models
-   - Automatic garbage collection
-
-3. **Scaling**
-   - Horizontal scaling for API
-   - Dedicated AI service nodes
-   - CDN for static assets
+4. **Безопасность Инфраструктуры**
+   - Изоляция сети для AI сервисов
+   - Правила файрвола (iptables/ufw)
+   - Регулярные обновления безопасности
+   - Аудит логирования для всех команд
 
 ---
 
-## 🧪 Testing Requirements
+## 📈 Целевые Показатели Производительности
 
-### Test Coverage Goals
+### Ключевые Показатели Эффективности (KPI)
+
+| Метрика | Цель | Максимум | Метод Измерения |
+|--------|------|----------|-------------------|
+| **Голосовая Команда E2E** | < 3s | 8s | Действие пользователя до обновления UI |
+| **Обработка STT** | < 2s | 5s | Аудио файл в текст |
+| **Ответ LLM** | < 500ms | 2s | Текст в JSON команду |
+| **Выполнение Команды** | < 100ms | 500ms | Обработка бизнес-логики |
+| **Доставка WebSocket** | < 50ms | 200ms | Событие клиенту |
+| **Одновременные Пользователи** | 1000 | 10000 | Нагрузочное тестирование |
+| **Размер Аудио Файла** | 5MB | 10MB | На запрос |
+| **Обработка Очереди** | < 1s | 5s | Сообщение до завершения |
+
+---
+
+## 🧪 Требования к Тестированию
+
+### Цели Покрытия Тестами
 
 ```yaml
-Overall Coverage: 80%
+Общее Покрытие: 80%
 
-By Layer:
-  Domain Logic: 95%
-  Service Layer: 90%
+По Слоям:
+  Доменная Логика: 95%
+  Слой Сервисов: 90%
   API Endpoints: 85%
-  Command Handlers: 90%
-  Integration Points: 75%
-  UI Components: 70%
+  Обработчики Команд: 90%
+  Точки Интеграции: 75%
+  UI Компоненты: 70%
 
-By Type:
-  Unit Tests: 60%
-  Integration Tests: 25%
-  E2E Tests: 15%
+По Типу:
+  Unit Тесты: 60%
+  Интеграционные Тесты: 25%
+  E2E Тесты: 15%
 ```
 
-### Critical Test Scenarios
+### Критические Тестовые Сценарии
 
-1. **Happy Path Tests**
-   - Simple task creation
-   - Task completion
-   - Filter application
-   - Bulk operations
+1. **Happy Path Тесты**
+   - Простое создание задачи
+   - Завершение задачи
+   - Применение фильтра
+   - Массовые операции
 
-2. **Edge Cases**
-   - Ambiguous commands
-   - Service timeouts
-   - Concurrent requests
-   - Large audio files
+2. **Граничные Случаи**
+   - Неоднозначные команды
+   - Таймауты сервисов
+   - Одновременные запросы
+   - Большие аудио файлы
 
-3. **Error Scenarios**
-   - LLM unavailable
-   - Invalid audio format
-   - Network failures
-   - Database locks
+3. **Сценарии Ошибок**
+   - LLM недоступна
+   - Невалидный формат аудио
+   - Сетевые сбои
+   - Блокировки БД
 
 ---
 
-## 📝 Development Workflow
+## 📝 Рабочий Процесс Разработки
 
-### Git Branch Strategy
+### Git Стратегия Ветвления
 
 ```
 main (production)
@@ -454,71 +352,71 @@ main (production)
   └── hotfix/critical-bug
 ```
 
-### Code Review Checklist
+### Чеклист Code Review
 
-- [ ] SOLID principles followed
-- [ ] Unit tests written and passing
-- [ ] Documentation updated
-- [ ] Performance impact assessed
-- [ ] Security review completed
-- [ ] Error handling implemented
-- [ ] Logging added
-- [ ] Configuration externalized
-
----
-
-## 🚨 Risk Management
-
-### Identified Risks & Mitigations
-
-| Risk | Impact | Probability | Mitigation |
-|------|--------|-------------|------------|
-| **VPS Resources Insufficient** | HIGH | MEDIUM | Implement resource monitoring, prepare scaling plan |
-| **LLM Hallucinations** | HIGH | LOW | Strict JSON validation, confidence thresholds |
-| **Network Latency** | MEDIUM | MEDIUM | Implement retries, offline mode |
-| **Model Download Failure** | HIGH | LOW | Pre-download models, backup mirrors |
-| **Concurrent Request Overload** | HIGH | MEDIUM | Queue system, rate limiting |
-| **Security Breach** | CRITICAL | LOW | Regular audits, encryption, monitoring |
+- [ ] Следуются принципы SOLID
+- [ ] Unit тесты написаны и проходят
+- [ ] Документация обновлена
+- [ ] Оценено влияние на производительность
+- [ ] Завершен security review
+- [ ] Реализована обработка ошибок
+- [ ] Добавлено логирование
+- [ ] Конфигурация вынесена наружу
 
 ---
 
-## 📞 Support & Troubleshooting
+## 🚨 Управление Рисками
 
-### Common Issues Quick Reference
+### Выявленные Риски и Меры Митигации
 
-1. **Ollama not responding**
+| Риск | Влияние | Вероятность | Митигация |
+|------|--------|-------------|-----------|
+| **Недостаточно Ресурсов VPS** | ВЫСОКОЕ | СРЕДНЯЯ | Реализовать мониторинг ресурсов, подготовить план масштабирования |
+| **Галлюцинации LLM** | ВЫСОКОЕ | НИЗКАЯ | Строгая валидация JSON, пороги уверенности |
+| **Сетевая Задержка** | СРЕДНЕЕ | СРЕДНЯЯ | Реализовать повторы, оффлайн режим |
+| **Сбой Загрузки Модели** | ВЫСОКОЕ | НИЗКАЯ | Пре-загрузка моделей, резервные зеркала |
+| **Перегрузка Одновременными Запросами** | ВЫСОКОЕ | СРЕДНЯЯ | Система очередей, ограничение частоты |
+| **Утечка Безопасности** | КРИТИЧЕСКОЕ | НИЗКАЯ | Регулярные аудиты, шифрование, мониторинг |
+
+---
+
+## 📞 Поддержка и Решение Проблем
+
+### Быстрый Справочник Общих Проблем
+
+1. **Ollama не отвечает**
    ```bash
    docker restart voice-ai-ollama
    docker logs -f voice-ai-ollama --tail 100
    ```
 
-2. **Whisper accuracy issues**
+2. **Проблемы точности Whisper**
    ```bash
-   # Check model size
+   # Проверить размер модели
    docker exec voice-ai-whisper ls -la /models
-   # Upgrade to larger model if needed
+   # Обновить до большей модели если нужно
    ```
 
-3. **WebSocket connection drops**
+3. **Обрывы WebSocket соединения**
    ```bash
-   # Check Centrifugo status
+   # Проверить статус Centrifugo
    curl http://localhost:8000/health
-   # Review JWT token expiry
+   # Проверить истечение JWT токена
    ```
 
-### Monitoring Commands
+### Команды Мониторинга
 
 ```bash
-# System resources
+# Ресурсы системы
 htop
 docker stats
 
-# Service health
-curl http://localhost:11434/api/tags     # Ollama models
-curl http://localhost:8090/health        # Whisper status
-curl http://localhost:8000/stats        # Centrifugo stats
+# Здоровье сервисов
+curl http://localhost:11434/api/tags     # Модели Ollama
+curl http://localhost:8090/health        # Статус Whisper
+curl http://localhost:8000/stats        # Статистика Centrifugo
 
-# Logs
+# Логи
 docker-compose logs -f ollama
 docker-compose logs -f whisper
 docker-compose logs -f centrifugo
@@ -526,91 +424,57 @@ docker-compose logs -f centrifugo
 
 ---
 
-## 🎯 Success Criteria
+## 🎯 Критерии Успеха
 
-### Minimum Viable Product (MVP)
+### Минимально Жизнеспособный Продукт (MVP)
 
-- ✅ Voice command processing in Russian
-- ✅ Basic task operations (create, complete, list)
-- ✅ Real-time UI updates via WebSocket
-- ✅ Response time under 5 seconds
-- ✅ 95% command recognition accuracy
-- ✅ Support for 100 concurrent users
+- ✅ Обработка голосовых команд на русском
+- ✅ Базовые операции с задачами (создать, завершить, список)
+- ✅ Обновления UI в реальном времени через WebSocket
+- ✅ Время отклика менее 5 секунд
+- ✅ 95% точность распознавания команд
+- ✅ Поддержка 100 одновременных пользователей
 
-### Production Release
+### Production Релиз
 
-- ✅ All MVP features
-- ✅ Telegram bot integration
-- ✅ Advanced search capabilities
-- ✅ Bulk operations support
+- ✅ Все функции MVP
+- ✅ Интеграция Telegram бота
+- ✅ Расширенные возможности поиска
+- ✅ Поддержка массовых операций
 - ✅ 99.9% uptime SLA
-- ✅ Complete test coverage
-- ✅ Monitoring and alerting
-- ✅ Disaster recovery plan
+- ✅ Полное покрытие тестами
+- ✅ Мониторинг и алерты
+- ✅ План аварийного восстановления
 
 ---
 
-## 📅 Implementation Timeline
+## 🔗 Следующие Шаги
 
-```mermaid
-gantt
-    title Voice AI Assistant Implementation Plan
-    dateFormat  YYYY-MM-DD
-    section Phase 1
-    Infrastructure Setup    :a1, 2024-01-01, 3d
-    AI Services Install     :a2, after a1, 2d
-    Basic Integration       :a3, after a2, 2d
-
-    section Phase 2
-    Domain Model           :b1, after a3, 1d
-    Service Layer          :b2, after b1, 3d
-    Command Handlers       :b3, after b2, 2d
-    API Endpoints          :b4, after b3, 1d
-
-    section Phase 3
-    Voice Recording        :c1, after b4, 2d
-    WebSocket Client       :c2, after c1, 1d
-    UI Components          :c3, after c2, 2d
-
-    section Phase 4
-    Telegram Bot           :d1, after c3, 2d
-    User Linking           :d2, after d1, 1d
-
-    section Phase 5
-    Testing                :e1, after d2, 3d
-    Optimization           :e2, after e1, 2d
-    Documentation          :e3, after e2, 1d
-```
+1. **Просмотреть эту документацию** со всеми заинтересованными сторонами
+2. **Настроить среду разработки** следуя [Настройке Инфраструктуры](01_INFRASTRUCTURE/01_SETUP.md)
+3. **Начать реализацию Фазы 1** с развертывания инфраструктуры
+4. **Запланировать ежедневные standup встречи** для отслеживания прогресса
+5. **Создать JIRA задачи** для каждой задачи реализации
 
 ---
 
-## 🔗 Next Steps
+## 📖 Ссылки
 
-1. **Review this documentation** with all stakeholders
-2. **Set up development environment** following [Infrastructure Setup](01_INFRASTRUCTURE/01_SETUP.md)
-3. **Begin Phase 1 implementation** with infrastructure deployment
-4. **Schedule daily standup meetings** for progress tracking
-5. **Create JIRA tickets** for each implementation task
+### Внешняя Документация
+- [Документация Ollama](https://github.com/ollama/ollama)
+- [Руководство Whisper.cpp](https://github.com/ggerganov/whisper.cpp)
+- [Документация Centrifugo](https://centrifugal.dev/)
+- [Model Card Llama](https://ai.meta.com/llama/)
 
----
-
-## 📖 References
-
-### External Documentation
-- [Ollama Documentation](https://github.com/ollama/ollama)
-- [Whisper.cpp Guide](https://github.com/ggerganov/whisper.cpp)
-- [Centrifugo Documentation](https://centrifugal.dev/)
-- [Llama Model Card](https://ai.meta.com/llama/)
-
-### Internal Documentation
-- [Project Overview](../PROJECT_OVERVIEW.md)
-- [Backend Architecture](../backend/ARCHITECTURE.md)
-- [API Reference](../backend/API_REFERENCE.md)
-- [Development Workflow](../guides/DEVELOPMENT_WORKFLOW.md)
+### Внутренняя Документация
+- [Обзор Проекта](../PROJECT_OVERVIEW.md)
+- [Архитектура Бэкенда](../backend/ARCHITECTURE.md)
+- [API Справочник](../backend/API_REFERENCE.md)
+- [Рабочий Процесс Разработки](../guides/DEVELOPMENT_WORKFLOW.md)
 
 ---
 
-**Document Version**: 1.0.0
-**Last Updated**: 2025-11-08
-**Author**: AI Architecture Team
-**Review Status**: Ready for Implementation
+**Версия Документа**: 1.0.0
+**Последнее Обновление**: 2025-11-08
+**Автор**: Команда AI Архитектуры
+**Статус Проверки**: Готов к Реализации
