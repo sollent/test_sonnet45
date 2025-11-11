@@ -35,7 +35,8 @@ class UserProfileController extends AbstractController
 
     #[Route('', name: 'update', methods: ['PATCH'])]
     public function updateProfile(
-        #[MapRequestPayload] UpdateProfileDto $dto,
+        #[MapRequestPayload]
+        UpdateProfileDto $dto,
     ): JsonResponse {
         $user = $this->getUser();
         $updatedUser = $this->profileService->updateProfile($user, $dto);
@@ -46,7 +47,8 @@ class UserProfileController extends AbstractController
 
     #[Route('/password', name: 'update_password', methods: ['POST'])]
     public function updatePassword(
-        #[MapRequestPayload] UpdatePasswordDto $dto,
+        #[MapRequestPayload]
+        UpdatePasswordDto $dto,
     ): JsonResponse {
         $user = $this->getUser();
         $this->profileService->updatePassword($user, $dto);
@@ -54,13 +56,14 @@ class UserProfileController extends AbstractController
         return $this->json([
             'message' => $user->hasPassword()
                 ? 'Пароль успешно изменен'
-                : 'Пароль успешно создан'
+                : 'Пароль успешно создан',
         ]);
     }
 
     #[Route('/notifications', name: 'update_notifications', methods: ['PATCH'])]
     public function updateNotifications(
-        #[MapRequestPayload] UpdateNotificationsDto $dto,
+        #[MapRequestPayload]
+        UpdateNotificationsDto $dto,
     ): JsonResponse {
         $user = $this->getUser();
         $updatedUser = $this->profileService->updateNotifications($user, $dto->getNotifications());

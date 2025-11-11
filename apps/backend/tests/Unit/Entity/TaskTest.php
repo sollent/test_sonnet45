@@ -6,8 +6,8 @@ namespace App\Tests\Unit\Entity;
 
 use App\Entity\Task;
 use App\Entity\User;
-use App\Enum\TaskPriority;
 use App\Enum\TaskStatus;
+use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
 
 class TaskTest extends TestCase
@@ -58,7 +58,7 @@ class TaskTest extends TestCase
         $task->setTitle('Overdue Task');
         $task->setUser($this->user);
         $task->setStatus(TaskStatus::IN_PROGRESS);
-        $task->setDueDate(new \DateTimeImmutable('-1 day'));
+        $task->setDueDate(new DateTimeImmutable('-1 day'));
 
         // Act & Assert
         $this->assertTrue($task->isOverdue());
@@ -72,7 +72,7 @@ class TaskTest extends TestCase
         $task->setTitle('Future Task');
         $task->setUser($this->user);
         $task->setStatus(TaskStatus::PENDING);
-        $task->setDueDate(new \DateTimeImmutable('+1 day'));
+        $task->setDueDate(new DateTimeImmutable('+1 day'));
 
         // Act & Assert
         $this->assertFalse($task->isOverdue());
@@ -100,7 +100,7 @@ class TaskTest extends TestCase
         $task->setTitle('Completed Task');
         $task->setUser($this->user);
         $task->setStatus(TaskStatus::COMPLETED);
-        $task->setDueDate(new \DateTimeImmutable('-1 day'));
+        $task->setDueDate(new DateTimeImmutable('-1 day'));
 
         // Act & Assert
         $this->assertFalse($task->isOverdue(), 'Completed tasks should not be overdue');

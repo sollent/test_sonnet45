@@ -17,8 +17,11 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 class UserProfileServiceTest extends TestCase
 {
     private EntityManagerInterface $entityManager;
+
     private UserPasswordHasherInterface $passwordHasher;
+
     private UserProfileService $service;
+
     private User $user;
 
     protected function setUp(): void
@@ -28,7 +31,7 @@ class UserProfileServiceTest extends TestCase
 
         $this->service = new UserProfileService(
             $this->entityManager,
-            $this->passwordHasher
+            $this->passwordHasher,
         );
 
         $this->user = new User();
@@ -228,8 +231,8 @@ class UserProfileServiceTest extends TestCase
         // Arrange
         $notifications = [
             'emailNotifications' => true,
-            'pushNotifications' => false,
-            'dailyDigest' => true,
+            'pushNotifications'  => false,
+            'dailyDigest'        => true,
         ];
 
         $this->entityManager->expects($this->once())->method('flush');

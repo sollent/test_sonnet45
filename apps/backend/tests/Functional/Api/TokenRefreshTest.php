@@ -23,30 +23,13 @@ class TokenRefreshTest extends WebTestCase
         $this->client = static::createClient();
     }
 
-    private function loginAndGetTokens(string $email, string $password): array
-    {
-        $this->client->request(
-            'POST',
-            '/api/auth',
-            [],
-            [],
-            ['CONTENT_TYPE' => 'application/json'],
-            json_encode([
-                'email' => $email,
-                'password' => $password,
-            ])
-        );
-
-        return json_decode($this->client->getResponse()->getContent(), true);
-    }
-
     public function testSuccessfulTokenRefresh(): void
     {
         $email = 'refresh@example.com';
         $password = 'password123';
 
         UserFactory::createOne([
-            'email' => $email,
+            'email'    => $email,
             'password' => $password,
         ]);
 
@@ -63,21 +46,21 @@ class TokenRefreshTest extends WebTestCase
             ['CONTENT_TYPE' => 'application/json'],
             json_encode([
                 'refreshToken' => $refreshToken,
-            ])
+            ]),
         );
 
         $this->assertResponseStatusCodeSame(Response::HTTP_OK);
-        
+
         $responseData = json_decode($this->client->getResponse()->getContent(), true);
-        
+
         $this->assertArrayHasKey('token', $responseData);
         $this->assertArrayHasKey('refreshToken', $responseData);
         $this->assertArrayHasKey('refreshTokenExpiration', $responseData);
-        
+
         $this->assertIsString($responseData['token']);
         $this->assertIsString($responseData['refreshToken']);
         $this->assertIsInt($responseData['refreshTokenExpiration']);
-        
+
         // Проверяем что токен не пустой (может быть идентичен если создан в ту же секунду)
         $this->assertNotEmpty($responseData['token']);
     }
@@ -88,13 +71,13 @@ class TokenRefreshTest extends WebTestCase
         $password = 'password123';
 
         UserFactory::createOne([
-            'email' => $email,
+            'email'    => $email,
             'password' => $password,
         ]);
 
         // Логин
         $loginData = $this->loginAndGetTokens($email, $password);
-        
+
         // Refresh
         $this->client->request(
             'POST',
@@ -104,7 +87,7 @@ class TokenRefreshTest extends WebTestCase
             ['CONTENT_TYPE' => 'application/json'],
             json_encode([
                 'refreshToken' => $loginData['refreshToken'],
-            ])
+            ]),
         );
 
         $refreshData = json_decode($this->client->getResponse()->getContent(), true);
@@ -118,12 +101,12 @@ class TokenRefreshTest extends WebTestCase
             [],
             [
                 'HTTP_AUTHORIZATION' => 'Bearer ' . $newToken,
-                'CONTENT_TYPE' => 'application/json',
-            ]
+                'CONTENT_TYPE'       => 'application/json',
+            ],
         );
 
         $this->assertResponseStatusCodeSame(Response::HTTP_OK);
-        
+
         $profileData = json_decode($this->client->getResponse()->getContent(), true);
         $this->assertEquals($email, $profileData['email']);
     }
@@ -138,7 +121,7 @@ class TokenRefreshTest extends WebTestCase
             ['CONTENT_TYPE' => 'application/json'],
             json_encode([
                 'refreshToken' => 'invalid-refresh-token',
-            ])
+            ]),
         );
 
         $this->assertResponseStatusCodeSame(Response::HTTP_UNAUTHORIZED);
@@ -152,7 +135,7 @@ class TokenRefreshTest extends WebTestCase
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
-            json_encode([])
+            json_encode([]),
         );
 
         $this->assertResponseStatusCodeSame(Response::HTTP_UNAUTHORIZED);
@@ -168,7 +151,7 @@ class TokenRefreshTest extends WebTestCase
             ['CONTENT_TYPE' => 'application/json'],
             json_encode([
                 'refreshToken' => '',
-            ])
+            ]),
         );
 
         $this->assertResponseStatusCodeSame(Response::HTTP_UNAUTHORIZED);
@@ -184,7 +167,7 @@ class TokenRefreshTest extends WebTestCase
             ['CONTENT_TYPE' => 'application/json'],
             json_encode([
                 'refreshToken' => null,
-            ])
+            ]),
         );
 
         $this->assertResponseStatusCodeSame(Response::HTTP_UNAUTHORIZED);
@@ -196,7 +179,7 @@ class TokenRefreshTest extends WebTestCase
         $password = 'password123';
 
         UserFactory::createOne([
-            'email' => $email,
+            'email'    => $email,
             'password' => $password,
         ]);
 
@@ -216,11 +199,11 @@ class TokenRefreshTest extends WebTestCase
                 ['CONTENT_TYPE' => 'application/json'],
                 json_encode([
                     'refreshToken' => $currentRefreshToken,
-                ])
+                ]),
             );
 
             $this->assertResponseStatusCodeSame(Response::HTTP_OK);
-            
+
             $refreshData = json_decode($this->client->getResponse()->getContent(), true);
             $tokens[] = $refreshData['token'];
             $currentRefreshToken = $refreshData['refreshToken'];
@@ -236,7 +219,7 @@ class TokenRefreshTest extends WebTestCase
         $password = 'password123';
 
         UserFactory::createOne([
-            'email' => $email,
+            'email'    => $email,
             'password' => $password,
         ]);
 
@@ -253,7 +236,7 @@ class TokenRefreshTest extends WebTestCase
             ['CONTENT_TYPE' => 'application/json'],
             json_encode([
                 'refreshToken' => $oldRefreshToken,
-            ])
+            ]),
         );
 
         $this->assertResponseStatusCodeSame(Response::HTTP_OK);
@@ -268,15 +251,15 @@ class TokenRefreshTest extends WebTestCase
             ['CONTENT_TYPE' => 'application/json'],
             json_encode([
                 'refreshToken' => $oldRefreshToken,
-            ])
+            ]),
         );
 
         // С настройкой ttl_update=true старый токен может быть еще валидным
         // Проверяем что запрос возвращает успешный результат или ошибку авторизации
         $statusCode = $this->client->getResponse()->getStatusCode();
         $this->assertTrue(
-            in_array($statusCode, [Response::HTTP_OK, Response::HTTP_UNAUTHORIZED]),
-            sprintf('Expected 200 or 401, got %d', $statusCode)
+            in_array($statusCode, [Response::HTTP_OK, Response::HTTP_UNAUTHORIZED], true),
+            sprintf('Expected 200 or 401, got %d', $statusCode),
         );
     }
 
@@ -288,7 +271,7 @@ class TokenRefreshTest extends WebTestCase
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
-            ''
+            '',
         );
 
         $this->assertResponseStatusCodeSame(Response::HTTP_UNAUTHORIZED);
@@ -302,7 +285,7 @@ class TokenRefreshTest extends WebTestCase
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
-            '{invalid json}'
+            '{invalid json}',
         );
 
         $this->assertResponseStatusCodeSame(Response::HTTP_UNAUTHORIZED);
@@ -314,7 +297,7 @@ class TokenRefreshTest extends WebTestCase
         $password = 'password123';
 
         UserFactory::createOne([
-            'email' => $email,
+            'email'    => $email,
             'password' => $password,
         ]);
 
@@ -330,7 +313,7 @@ class TokenRefreshTest extends WebTestCase
             ['CONTENT_TYPE' => 'application/json'],
             json_encode([
                 'refreshToken' => $loginData['refreshToken'],
-            ])
+            ]),
         );
 
         $refreshData = json_decode($this->client->getResponse()->getContent(), true);
@@ -338,9 +321,25 @@ class TokenRefreshTest extends WebTestCase
 
         // Проверяем что expiration в будущем
         $this->assertGreaterThan(time(), $expiration);
-        
+
         // Проверяем что expiration не слишком далеко (например, в пределах 31 дня)
         $this->assertLessThan(time() + (31 * 24 * 60 * 60), $expiration);
     }
-}
 
+    private function loginAndGetTokens(string $email, string $password): array
+    {
+        $this->client->request(
+            'POST',
+            '/api/auth',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode([
+                'email'    => $email,
+                'password' => $password,
+            ]),
+        );
+
+        return json_decode($this->client->getResponse()->getContent(), true);
+    }
+}

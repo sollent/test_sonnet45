@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Integration\Command;
 
 use App\TestsUtilities\Factory\UserFactory;
+use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Console\Command\Command;
@@ -31,9 +32,9 @@ class MakeAdminCommandTest extends KernelTestCase
     {
         // Arrange - Create regular user
         $userProxy = UserFactory::createOne([
-            'email' => 'user@test.com',
+            'email'    => 'user@test.com',
             'password' => 'password123',
-            'roles' => ['ROLE_USER'],
+            'roles'    => ['ROLE_USER'],
         ]);
 
         // Act - Execute command
@@ -68,9 +69,9 @@ class MakeAdminCommandTest extends KernelTestCase
     {
         // Arrange - Create user who is already admin
         UserFactory::createOne([
-            'email' => 'admin@test.com',
+            'email'    => 'admin@test.com',
             'password' => 'password123',
-            'roles' => ['ROLE_USER', 'ROLE_ADMIN'],
+            'roles'    => ['ROLE_USER', 'ROLE_ADMIN'],
         ]);
 
         // Act - Execute command
@@ -87,7 +88,7 @@ class MakeAdminCommandTest extends KernelTestCase
     public function testCommandRequiresEmailArgument(): void
     {
         // Act & Assert - Execute without email argument should throw exception
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Not enough arguments');
 
         $this->commandTester->execute([]);
@@ -98,9 +99,9 @@ class MakeAdminCommandTest extends KernelTestCase
     {
         // Arrange - Create regular user
         $userProxy = UserFactory::createOne([
-            'email' => 'persist@test.com',
+            'email'    => 'persist@test.com',
             'password' => 'password123',
-            'roles' => ['ROLE_USER'],
+            'roles'    => ['ROLE_USER'],
         ]);
         $userId = $userProxy->_real()->getId();
 

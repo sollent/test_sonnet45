@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace App\Controller\Api;
 
+use App\Entity\User;
 use App\Service\AnalyticsService;
-use Nelmio\ApiDocBundle\Annotation\Model;
+use DateTimeImmutable;
 use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
-use App\Entity\User;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/api/analytics', name: 'api_analytics_')]
 #[IsGranted('ROLE_USER')]
@@ -21,238 +21,249 @@ use App\Entity\User;
 final class AnalyticsController extends AbstractController
 {
     public function __construct(
-        private readonly AnalyticsService $analyticsService
+        private readonly AnalyticsService $analyticsService,
     ) {
     }
 
     #[Route('/overview', name: 'overview', methods: ['GET'])]
     #[OA\Get(
         summary: 'Get analytics overview',
-        description: 'Returns key metrics and statistics overview'
+        description: 'Returns key metrics and statistics overview',
     )]
     #[OA\Response(
         response: 200,
-        description: 'Analytics overview data'
+        description: 'Analytics overview data',
     )]
     public function getOverview(#[CurrentUser] User $user): JsonResponse
     {
         $data = $this->analyticsService->getOverview($user);
+
         return $this->json($data);
     }
 
     #[Route('/completion-timeline', name: 'completion_timeline', methods: ['GET'])]
     #[OA\Get(
         summary: 'Get completion timeline',
-        description: 'Returns task completion data over time'
+        description: 'Returns task completion data over time',
     )]
     #[OA\Parameter(
         name: 'period',
         in: 'query',
         required: false,
         description: 'Number of days (default: 30)',
-        schema: new OA\Schema(type: 'integer')
+        schema: new OA\Schema(type: 'integer'),
     )]
     #[OA\Parameter(
         name: 'dateFrom',
         in: 'query',
         required: false,
         description: 'Start date (Y-m-d)',
-        schema: new OA\Schema(type: 'string', format: 'date')
+        schema: new OA\Schema(type: 'string', format: 'date'),
     )]
     #[OA\Parameter(
         name: 'dateTo',
         in: 'query',
         required: false,
         description: 'End date (Y-m-d)',
-        schema: new OA\Schema(type: 'string', format: 'date')
+        schema: new OA\Schema(type: 'string', format: 'date'),
     )]
     #[OA\Response(
         response: 200,
-        description: 'Timeline data with dates and task counts'
+        description: 'Timeline data with dates and task counts',
     )]
     public function getCompletionTimeline(
         Request $request,
-        #[CurrentUser] User $user
+        #[CurrentUser]
+        User $user,
     ): JsonResponse {
         $dateFrom = $request->query->get('dateFrom');
         $dateTo = $request->query->get('dateTo');
-        
+
         if ($dateFrom && $dateTo) {
             // Custom date range
-            $start = new \DateTimeImmutable($dateFrom);
-            $end = new \DateTimeImmutable($dateTo);
+            $start = new DateTimeImmutable($dateFrom);
+            $end = new DateTimeImmutable($dateTo);
             $data = $this->analyticsService->getCompletionTimelineByDateRange($user, $start, $end);
         } else {
             // Period-based
             $period = $request->query->getInt('period', 30);
             $data = $this->analyticsService->getCompletionTimeline($user, $period);
         }
-        
+
         return $this->json($data);
     }
 
     #[Route('/status-distribution', name: 'status_distribution', methods: ['GET'])]
     #[OA\Get(
         summary: 'Get status distribution',
-        description: 'Returns task count by status'
+        description: 'Returns task count by status',
     )]
     #[OA\Response(
         response: 200,
-        description: 'Status distribution data'
+        description: 'Status distribution data',
     )]
     public function getStatusDistribution(#[CurrentUser] User $user): JsonResponse
     {
         $data = $this->analyticsService->getStatusDistribution($user);
+
         return $this->json($data);
     }
 
     #[Route('/priority-breakdown', name: 'priority_breakdown', methods: ['GET'])]
     #[OA\Get(
         summary: 'Get priority breakdown',
-        description: 'Returns task statistics by priority'
+        description: 'Returns task statistics by priority',
     )]
     #[OA\Response(
         response: 200,
-        description: 'Priority breakdown data'
+        description: 'Priority breakdown data',
     )]
     public function getPriorityBreakdown(#[CurrentUser] User $user): JsonResponse
     {
         $data = $this->analyticsService->getPriorityBreakdown($user);
+
         return $this->json($data);
     }
 
     #[Route('/productivity-heatmap', name: 'productivity_heatmap', methods: ['GET'])]
     #[OA\Get(
         summary: 'Get productivity heatmap',
-        description: 'Returns GitHub-style activity heatmap data'
+        description: 'Returns GitHub-style activity heatmap data',
     )]
     #[OA\Parameter(
         name: 'year',
         in: 'query',
         required: false,
         description: 'Year (default: current year)',
-        schema: new OA\Schema(type: 'integer')
+        schema: new OA\Schema(type: 'integer'),
     )]
     #[OA\Response(
         response: 200,
-        description: 'Heatmap data with date => count mapping'
+        description: 'Heatmap data with date => count mapping',
     )]
     public function getProductivityHeatmap(
         Request $request,
-        #[CurrentUser] User $user
+        #[CurrentUser]
+        User $user,
     ): JsonResponse {
-        $year = $request->query->getInt('year', (int)date('Y'));
+        $year = $request->query->getInt('year', (int) date('Y'));
         $data = $this->analyticsService->getProductivityHeatmap($user, $year);
+
         return $this->json($data);
     }
 
     #[Route('/weekday-productivity', name: 'weekday_productivity', methods: ['GET'])]
     #[OA\Get(
         summary: 'Get weekday productivity',
-        description: 'Returns task completion count by day of week'
+        description: 'Returns task completion count by day of week',
     )]
     #[OA\Response(
         response: 200,
-        description: 'Weekday productivity data'
+        description: 'Weekday productivity data',
     )]
     public function getWeekdayProductivity(#[CurrentUser] User $user): JsonResponse
     {
         $data = $this->analyticsService->getWeekdayProductivity($user);
+
         return $this->json($data);
     }
 
     #[Route('/top-tags', name: 'top_tags', methods: ['GET'])]
     #[OA\Get(
         summary: 'Get top tags',
-        description: 'Returns most used tags with completion statistics'
+        description: 'Returns most used tags with completion statistics',
     )]
     #[OA\Parameter(
         name: 'limit',
         in: 'query',
         required: false,
         description: 'Number of tags to return (default: 5)',
-        schema: new OA\Schema(type: 'integer')
+        schema: new OA\Schema(type: 'integer'),
     )]
     #[OA\Response(
         response: 200,
-        description: 'Top tags with statistics'
+        description: 'Top tags with statistics',
     )]
     public function getTopTags(
         Request $request,
-        #[CurrentUser] User $user
+        #[CurrentUser]
+        User $user,
     ): JsonResponse {
         $limit = $request->query->getInt('limit', 5);
         $data = $this->analyticsService->getTopTags($user, $limit);
+
         return $this->json($data);
     }
 
     #[Route('/insights', name: 'insights', methods: ['GET'])]
     #[OA\Get(
         summary: 'Get insights and recommendations',
-        description: 'Returns AI-like insights based on user data'
+        description: 'Returns AI-like insights based on user data',
     )]
     #[OA\Response(
         response: 200,
-        description: 'Array of insights'
+        description: 'Array of insights',
     )]
     public function getInsights(#[CurrentUser] User $user): JsonResponse
     {
         $insights = $this->analyticsService->generateInsights($user);
+
         return $this->json(['insights' => $insights]);
     }
 
     #[Route('/dashboard', name: 'dashboard', methods: ['GET'])]
     #[OA\Get(
         summary: 'Get complete analytics dashboard data',
-        description: 'Returns all analytics data in a single optimized request using CTEs (100x faster)'
+        description: 'Returns all analytics data in a single optimized request using CTEs (100x faster)',
     )]
     #[OA\Parameter(
         name: 'period',
         in: 'query',
         required: false,
         description: 'Timeline period in days (default: 30)',
-        schema: new OA\Schema(type: 'integer')
+        schema: new OA\Schema(type: 'integer'),
     )]
     #[OA\Parameter(
         name: 'dateFrom',
         in: 'query',
         required: false,
         description: 'Timeline start date (Y-m-d)',
-        schema: new OA\Schema(type: 'string', format: 'date')
+        schema: new OA\Schema(type: 'string', format: 'date'),
     )]
     #[OA\Parameter(
         name: 'dateTo',
         in: 'query',
         required: false,
         description: 'Timeline end date (Y-m-d)',
-        schema: new OA\Schema(type: 'string', format: 'date')
+        schema: new OA\Schema(type: 'string', format: 'date'),
     )]
     #[OA\Parameter(
         name: 'year',
         in: 'query',
         required: false,
         description: 'Heatmap year (default: current year)',
-        schema: new OA\Schema(type: 'integer')
+        schema: new OA\Schema(type: 'integer'),
     )]
     #[OA\Response(
         response: 200,
-        description: 'Complete dashboard analytics data'
+        description: 'Complete dashboard analytics data',
     )]
     public function getDashboard(
         Request $request,
-        #[CurrentUser] User $user
+        #[CurrentUser]
+        User $user,
     ): JsonResponse {
         $period = $request->query->getInt('period', 30);
         $dateFrom = $request->query->get('dateFrom');
         $dateTo = $request->query->get('dateTo');
-        $year = $request->query->getInt('year', (int)date('Y'));
+        $year = $request->query->getInt('year', (int) date('Y'));
 
         // OPTIMIZED: Use single CTE query instead of 25-400+ queries
         $data = $this->analyticsService->getDashboardOptimizedData($user, [
-            'period' => $period,
+            'period'   => $period,
             'dateFrom' => $dateFrom,
-            'dateTo' => $dateTo,
-            'year' => $year,
+            'dateTo'   => $dateTo,
+            'year'     => $year,
         ]);
 
         // Fallback to old method if needed (for debugging):
@@ -261,4 +272,3 @@ final class AnalyticsController extends AbstractController
         return $this->json($data);
     }
 }
-

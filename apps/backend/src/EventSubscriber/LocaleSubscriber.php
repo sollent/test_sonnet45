@@ -14,6 +14,7 @@ use Symfony\Component\HttpKernel\KernelEvents;
 final readonly class LocaleSubscriber implements EventSubscriberInterface
 {
     private const SUPPORTED_LOCALES = ['en', 'ru'];
+
     private const DEFAULT_LOCALE = 'en';
 
     public static function getSubscribedEvents(): array
@@ -34,7 +35,7 @@ final readonly class LocaleSubscriber implements EventSubscriberInterface
 
         // Try to get locale from Accept-Language header
         $acceptLanguage = $request->headers->get('Accept-Language');
-        
+
         if ($acceptLanguage) {
             $locale = $this->parseAcceptLanguage($acceptLanguage);
             $request->setLocale($locale);
@@ -50,16 +51,16 @@ final readonly class LocaleSubscriber implements EventSubscriberInterface
     {
         // Parse Accept-Language header (e.g., "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7")
         $languages = [];
-        
+
         foreach (explode(',', $acceptLanguage) as $lang) {
             $parts = explode(';', trim($lang));
             $code = strtolower(explode('-', $parts[0])[0]);
             $quality = 1.0;
-            
+
             if (isset($parts[1]) && str_starts_with($parts[1], 'q=')) {
                 $quality = (float) substr($parts[1], 2);
             }
-            
+
             $languages[$code] = $quality;
         }
 
@@ -76,4 +77,3 @@ final readonly class LocaleSubscriber implements EventSubscriberInterface
         return self::DEFAULT_LOCALE;
     }
 }
-

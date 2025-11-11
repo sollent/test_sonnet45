@@ -11,7 +11,6 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
-use EasyCorp\Bundle\EasyAdminBundle\Field\CodeEditorField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\Field;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
@@ -68,9 +67,9 @@ class AuditLogCrudController extends AbstractCrudController
                     'CREATE' => 'success',
                     'UPDATE' => 'info',
                     'DELETE' => 'danger',
-                    'LOGIN' => 'primary',
+                    'LOGIN'  => 'primary',
                     'LOGOUT' => 'secondary',
-                    default => 'dark',
+                    default  => 'dark',
                 };
 
                 return sprintf('<span class="badge badge-%s">%s</span>', $badgeClass, $value);
@@ -90,6 +89,7 @@ class AuditLogCrudController extends AbstractCrudController
             ->setColumns('col-md-3')
             ->formatValue(function ($value, AuditLog $log) {
                 $user = $log->getUser();
+
                 return $user ? $user->getEmail() : '<span class="text-muted">System</span>';
             });
 
@@ -105,6 +105,7 @@ class AuditLogCrudController extends AbstractCrudController
                     if (empty($value)) {
                         return '<span class="text-muted">N/A</span>';
                     }
+
                     return sprintf('<pre class="bg-light p-2">%s</pre>', json_encode($value, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
                 })
                 ->onlyOnDetail();
@@ -115,6 +116,7 @@ class AuditLogCrudController extends AbstractCrudController
                     if (empty($value)) {
                         return '<span class="text-muted">N/A</span>';
                     }
+
                     return sprintf('<pre class="bg-light p-2">%s</pre>', json_encode($value, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
                 })
                 ->onlyOnDetail();
@@ -145,6 +147,7 @@ class AuditLogCrudController extends AbstractCrudController
                     }
 
                     $html .= '</div>';
+
                     return $html;
                 })
                 ->onlyOnDetail();
@@ -155,14 +158,15 @@ class AuditLogCrudController extends AbstractCrudController
     {
         return $filters
             // Action filter (CREATE, UPDATE, DELETE, etc.)
-            ->add(ChoiceFilter::new('action', 'Action')
-                ->setChoices([
-                    'Create' => 'CREATE',
-                    'Update' => 'UPDATE',
-                    'Delete' => 'DELETE',
-                    'Login' => 'LOGIN',
-                    'Logout' => 'LOGOUT',
-                ])
+            ->add(
+                ChoiceFilter::new('action', 'Action')
+                    ->setChoices([
+                        'Create' => 'CREATE',
+                        'Update' => 'UPDATE',
+                        'Delete' => 'DELETE',
+                        'Login'  => 'LOGIN',
+                        'Logout' => 'LOGOUT',
+                    ]),
             )
 
             // Entity Type filter
@@ -188,9 +192,12 @@ class AuditLogCrudController extends AbstractCrudController
             ->add(Crud::PAGE_INDEX, Action::DETAIL)
 
             // Customize detail action
-            ->update(Crud::PAGE_INDEX, Action::DETAIL, fn (Action $action) => $action
-                ->setIcon('fa fa-eye')
-                ->setLabel('View Details')
+            ->update(
+                Crud::PAGE_INDEX,
+                Action::DETAIL,
+                fn (Action $action) => $action
+                    ->setIcon('fa fa-eye')
+                    ->setLabel('View Details'),
             );
     }
 }

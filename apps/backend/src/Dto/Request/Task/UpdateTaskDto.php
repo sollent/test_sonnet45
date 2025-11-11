@@ -14,13 +14,13 @@ final class UpdateTaskDto
         min: 1,
         max: 255,
         minMessage: 'task.title.min_length',
-        maxMessage: 'task.title.max_length'
+        maxMessage: 'task.title.max_length',
     )]
     public ?string $title = null;
 
     #[Assert\Length(
         max: 5000,
-        maxMessage: 'task.description.max_length'
+        maxMessage: 'task.description.max_length',
     )]
     public ?string $description = null;
 

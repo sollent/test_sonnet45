@@ -6,6 +6,7 @@ namespace App\Tests\Unit\Service\Recurrence\Strategy;
 
 use App\Entity\RecurrenceRule;
 use App\Service\Recurrence\Strategy\MonthlyRecurrenceStrategy;
+use DateTime;
 use PHPUnit\Framework\TestCase;
 
 class MonthlyRecurrenceStrategyTest extends TestCase
@@ -20,7 +21,7 @@ class MonthlyRecurrenceStrategyTest extends TestCase
     /** @test */
     public function testCalculateNextOccurrenceMovesToNextMonth(): void
     {
-        $currentDate = new \DateTime('2025-01-15');
+        $currentDate = new DateTime('2025-01-15');
         $rule = $this->createMock(RecurrenceRule::class);
         $rule->method('getDayOfMonth')->willReturn(15);
         $rule->method('getTimeOfDay')->willReturn(null);
@@ -37,8 +38,8 @@ class MonthlyRecurrenceStrategyTest extends TestCase
     /** @test */
     public function testAppliesTimeOfDayIfSet(): void
     {
-        $currentDate = new \DateTime('2025-01-15');
-        $timeOfDay = new \DateTime('14:30:00');
+        $currentDate = new DateTime('2025-01-15');
+        $timeOfDay = new DateTime('14:30:00');
 
         $rule = $this->createMock(RecurrenceRule::class);
         $rule->method('getDayOfMonth')->willReturn(15);
@@ -55,8 +56,8 @@ class MonthlyRecurrenceStrategyTest extends TestCase
     /** @test */
     public function testRespectsEndDate(): void
     {
-        $currentDate = new \DateTime('2025-01-15');
-        $endDate = new \DateTime('2025-02-01');
+        $currentDate = new DateTime('2025-01-15');
+        $endDate = new DateTime('2025-02-01');
 
         $rule = $this->createMock(RecurrenceRule::class);
         $rule->method('getDayOfMonth')->willReturn(15);
@@ -73,7 +74,7 @@ class MonthlyRecurrenceStrategyTest extends TestCase
     /** @test */
     public function testRespectsMaxOccurrences(): void
     {
-        $currentDate = new \DateTime('2025-01-15');
+        $currentDate = new DateTime('2025-01-15');
 
         $rule = $this->createMock(RecurrenceRule::class);
         $rule->method('getDayOfMonth')->willReturn(15);
@@ -97,7 +98,7 @@ class MonthlyRecurrenceStrategyTest extends TestCase
     /** @test */
     public function testGetPreviewDatesReturnsCorrectCount(): void
     {
-        $startDate = new \DateTime('2025-01-15');
+        $startDate = new DateTime('2025-01-15');
 
         $rule = $this->createMock(RecurrenceRule::class);
         $rule->method('getDayOfMonth')->willReturn(15);
@@ -116,8 +117,8 @@ class MonthlyRecurrenceStrategyTest extends TestCase
     /** @test */
     public function testGetPreviewDatesStopsAtEndDate(): void
     {
-        $startDate = new \DateTime('2025-01-15');
-        $endDate = new \DateTime('2025-03-01');
+        $startDate = new DateTime('2025-01-15');
+        $endDate = new DateTime('2025-03-01');
 
         $rule = $this->createMock(RecurrenceRule::class);
         $rule->method('getDayOfMonth')->willReturn(15);

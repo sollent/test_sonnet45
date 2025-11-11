@@ -4,22 +4,25 @@ declare(strict_types=1);
 
 namespace App\Command;
 
+use App\Entity\Tag;
 use App\Entity\Task;
 use App\Entity\User;
-use App\Entity\Tag;
-use App\Enum\TaskStatus;
 use App\Enum\TaskPriority;
+use App\Enum\TaskStatus;
+use DateTime;
+use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
+use ReflectionClass;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Symfony\Component\Console\Helper\ProgressBar;
 
 #[AsCommand(
     name: 'app:generate-user-journey',
-    description: 'Generate realistic 4-month user journey with tasks'
+    description: 'Generate realistic 4-month user journey with tasks',
 )]
 class GenerateUserJourneyCommand extends Command
 {
@@ -111,55 +114,55 @@ class GenerateUserJourneyCommand extends Command
     ];
 
     private array $placeholders = [
-        '{feature}' => ['аутентификации', 'уведомлений', 'профиля', 'чата', 'поиска', 'фильтров', 'экспорта', 'отчетов'],
-        '{module}' => ['пользователей', 'заказов', 'платежей', 'доставки', 'каталога', 'корзины', 'отзывов'],
-        '{component}' => ['UserService', 'OrderRepository', 'PaymentGateway', 'NotificationManager', 'CacheService'],
-        '{service}' => ['AuthService', 'EmailService', 'StorageService', 'QueueService'],
-        '{functionality}' => ['регистрации', 'авторизации', 'восстановления пароля', 'двухфакторной аутентификации'],
-        '{section}' => ['API', 'базы данных', 'архитектуры', 'деплоя', 'безопасности'],
-        '{tool}' => ['Docker', 'Kubernetes', 'Jenkins', 'GitLab CI', 'Prometheus', 'Grafana'],
-        '{library}' => ['Symfony Mailer', 'Doctrine ORM', 'JWT Bundle', 'Symfony Serializer'],
-        '{table}' => ['users', 'orders', 'products', 'payments', 'notifications'],
-        '{form}' => ['регистрации', 'заказа', 'оплаты', 'обратной связи'],
-        '{pattern}' => ['Repository', 'Factory', 'Strategy', 'Observer', 'Decorator'],
-        '{environment}' => ['staging', 'production', 'development'],
-        '{version}' => ['v1.2.3', 'v2.0.0', 'v1.5.1', 'v3.0.0-beta'],
-        '{server}' => ['production', 'staging', 'test'],
-        '{company}' => ['ООО "Альфа"', 'ИП Иванов', 'Корпорация "Омега"'],
-        '{number}' => [1, 2, 3, 5, 8, 13, 21, 34],
-        '{candidate}' => ['Иван Петров', 'Мария Сидорова', 'Алексей Козлов'],
-        '{item}' => ['молоко', 'хлеб', 'овощи', 'фрукты', 'мясо', 'рыбу', 'бытовую химию', 'одежду'],
-        '{specialist}' => ['терапевту', 'стоматологу', 'окулисту', 'кардиологу', 'дерматологу'],
-        '{service}' => ['интернет', 'электричество', 'воду', 'газ', 'телефон', 'страховку'],
-        '{place}' => ['почты', 'химчистки', 'ремонта', 'склада'],
-        '{clothes}' => ['рубашки', 'джинсы', 'постельное белье', 'полотенца'],
-        '{room}' => ['кухне', 'ванной', 'спальне', 'гостиной', 'балконе'],
-        '{meal}' => ['борщ', 'пасту', 'салат', 'запеканку', 'пиццу', 'суп'],
-        '{person}' => ['маме', 'папе', 'брату', 'сестре', 'другу', 'коллеге'],
-        '{friend}' => ['Анну', 'Сергея', 'Марию', 'Дмитрия', 'Олега'],
-        '{event}' => ['днем рождения', 'свадьбой', 'повышением', 'новосельем'],
-        '{thing}' => ['кран', 'дверь', 'окно', 'стул', 'полку', 'розетку'],
-        '{distance}' => [3, 5, 7, 10, 15],
-        '{muscle_group}' => ['ноги', 'спина', 'грудь', 'руки', 'пресс'],
-        '{duration}' => [20, 30, 45, 60],
-        '{doctor}' => ['терапевта', 'стоматолога', 'кардиолога'],
-        '{type}' => ['общий', 'биохимия', 'гормоны', 'УЗИ'],
-        '{laps}' => [10, 20, 30, 40],
-        '{course}' => ['Vue.js', 'React', 'Node.js', 'Python', 'Go', 'Kubernetes'],
-        '{chapter}' => [1, 2, 3, 4, 5, 7, 10, 12],
-        '{book}' => ['Clean Code', 'Design Patterns', 'Refactoring', 'Domain-Driven Design'],
-        '{topic}' => ['микросервисов', 'GraphQL', 'WebAssembly', 'Machine Learning', 'DevOps'],
-        '{technology}' => ['Docker', 'Kubernetes', 'PostgreSQL', 'Redis', 'RabbitMQ'],
-        '{skill}' => ['TypeScript', 'Vue 3', 'английского языка', 'SQL'],
+        '{feature}'        => ['аутентификации', 'уведомлений', 'профиля', 'чата', 'поиска', 'фильтров', 'экспорта', 'отчетов'],
+        '{module}'         => ['пользователей', 'заказов', 'платежей', 'доставки', 'каталога', 'корзины', 'отзывов'],
+        '{component}'      => ['UserService', 'OrderRepository', 'PaymentGateway', 'NotificationManager', 'CacheService'],
+        '{service}'        => ['AuthService', 'EmailService', 'StorageService', 'QueueService'],
+        '{functionality}'  => ['регистрации', 'авторизации', 'восстановления пароля', 'двухфакторной аутентификации'],
+        '{section}'        => ['API', 'базы данных', 'архитектуры', 'деплоя', 'безопасности'],
+        '{tool}'           => ['Docker', 'Kubernetes', 'Jenkins', 'GitLab CI', 'Prometheus', 'Grafana'],
+        '{library}'        => ['Symfony Mailer', 'Doctrine ORM', 'JWT Bundle', 'Symfony Serializer'],
+        '{table}'          => ['users', 'orders', 'products', 'payments', 'notifications'],
+        '{form}'           => ['регистрации', 'заказа', 'оплаты', 'обратной связи'],
+        '{pattern}'        => ['Repository', 'Factory', 'Strategy', 'Observer', 'Decorator'],
+        '{environment}'    => ['staging', 'production', 'development'],
+        '{version}'        => ['v1.2.3', 'v2.0.0', 'v1.5.1', 'v3.0.0-beta'],
+        '{server}'         => ['production', 'staging', 'test'],
+        '{company}'        => ['ООО "Альфа"', 'ИП Иванов', 'Корпорация "Омега"'],
+        '{number}'         => [1, 2, 3, 5, 8, 13, 21, 34],
+        '{candidate}'      => ['Иван Петров', 'Мария Сидорова', 'Алексей Козлов'],
+        '{item}'           => ['молоко', 'хлеб', 'овощи', 'фрукты', 'мясо', 'рыбу', 'бытовую химию', 'одежду'],
+        '{specialist}'     => ['терапевту', 'стоматологу', 'окулисту', 'кардиологу', 'дерматологу'],
+        '{utility}'        => ['интернет', 'электричество', 'воду', 'газ', 'телефон', 'страховку'],
+        '{place}'          => ['почты', 'химчистки', 'ремонта', 'склада'],
+        '{clothes}'        => ['рубашки', 'джинсы', 'постельное белье', 'полотенца'],
+        '{room}'           => ['кухне', 'ванной', 'спальне', 'гостиной', 'балконе'],
+        '{meal}'           => ['борщ', 'пасту', 'салат', 'запеканку', 'пиццу', 'суп'],
+        '{person}'         => ['маме', 'папе', 'брату', 'сестре', 'другу', 'коллеге'],
+        '{friend}'         => ['Анну', 'Сергея', 'Марию', 'Дмитрия', 'Олега'],
+        '{event}'          => ['днем рождения', 'свадьбой', 'повышением', 'новосельем'],
+        '{thing}'          => ['кран', 'дверь', 'окно', 'стул', 'полку', 'розетку'],
+        '{distance}'       => [3, 5, 7, 10, 15],
+        '{muscle_group}'   => ['ноги', 'спина', 'грудь', 'руки', 'пресс'],
+        '{duration}'       => [20, 30, 45, 60],
+        '{doctor}'         => ['терапевта', 'стоматолога', 'кардиолога'],
+        '{type}'           => ['общий', 'биохимия', 'гормоны', 'УЗИ'],
+        '{laps}'           => [10, 20, 30, 40],
+        '{course}'         => ['Vue.js', 'React', 'Node.js', 'Python', 'Go', 'Kubernetes'],
+        '{chapter}'        => [1, 2, 3, 4, 5, 7, 10, 12],
+        '{book}'           => ['Clean Code', 'Design Patterns', 'Refactoring', 'Domain-Driven Design'],
+        '{topic}'          => ['микросервисов', 'GraphQL', 'WebAssembly', 'Machine Learning', 'DevOps'],
+        '{technology}'     => ['Docker', 'Kubernetes', 'PostgreSQL', 'Redis', 'RabbitMQ'],
+        '{skill}'          => ['TypeScript', 'Vue 3', 'английского языка', 'SQL'],
         '{design_pattern}' => ['Factory', 'Strategy', 'Observer', 'Singleton'],
-        '{conference}' => ['Vue.js Conf', 'React Summit', 'JSNation', 'DevOops'],
-        '{certification}' => ['AWS Certified', 'Kubernetes Admin', 'Scrum Master'],
-        '{payment_type}' => ['ипотеку', 'кредит', 'налоги', 'штрафы'],
-        '{amount}' => [5000, 10000, 15000, 20000, 50000],
-        '{month}' => ['январь', 'февраль', 'март', 'апрель', 'май', 'июнь'],
-        '{account}' => ['депозит', 'кредитную карту', 'накопительный счет'],
-        '{relative}' => ['бабушку', 'дедушку', 'тетю', 'дядю'],
-        '{city}' => ['Москву', 'Питер', 'Казань', 'Екатеринбург'],
+        '{conference}'     => ['Vue.js Conf', 'React Summit', 'JSNation', 'DevOops'],
+        '{certification}'  => ['AWS Certified', 'Kubernetes Admin', 'Scrum Master'],
+        '{payment_type}'   => ['ипотеку', 'кредит', 'налоги', 'штрафы'],
+        '{amount}'         => [5000, 10000, 15000, 20000, 50000],
+        '{month}'          => ['январь', 'февраль', 'март', 'апрель', 'май', 'июнь'],
+        '{account}'        => ['депозит', 'кредитную карту', 'накопительный счет'],
+        '{relative}'       => ['бабушку', 'дедушку', 'тетю', 'дядю'],
+        '{city}'           => ['Москву', 'Питер', 'Казань', 'Екатеринбург'],
     ];
 
     private array $descriptions = [
@@ -181,7 +184,7 @@ class GenerateUserJourneyCommand extends Command
     ];
 
     public function __construct(
-        private readonly EntityManagerInterface $entityManager
+        private readonly EntityManagerInterface $entityManager,
     ) {
         parent::__construct();
     }
@@ -191,13 +194,14 @@ class GenerateUserJourneyCommand extends Command
         $io = new SymfonyStyle($input, $output);
 
         $io->title('🚀 ГЕНЕРАЦИЯ РЕАЛИСТИЧНОГО ПУТИ ПОЛЬЗОВАТЕЛЯ ЗА 4 МЕСЯЦА');
-        
+
         // Find user
         $userRepository = $this->entityManager->getRepository(User::class);
         $user = $userRepository->findOneBy(['email' => 'sophiekhouryna@gmail.com']);
 
         if (!$user) {
             $io->error('❌ Пользователь sophiekhouryna@gmail.com не найден!');
+
             return Command::FAILURE;
         }
 
@@ -212,9 +216,9 @@ class GenerateUserJourneyCommand extends Command
         $tags = $this->createTags($user, $io);
 
         // Период генерации
-        $startDate = new \DateTime('2025-07-01 00:00:00'); // С 1 июля
-        $endDate = new \DateTime('now');
-        $totalDays = (int)$startDate->diff($endDate)->days;
+        $startDate = new DateTime('2025-07-01 00:00:00'); // С 1 июля
+        $endDate = new DateTime('now');
+        $totalDays = (int) $startDate->diff($endDate)->days;
 
         $io->section('📊 Параметры генерации:');
         $io->listing([
@@ -241,24 +245,24 @@ class GenerateUserJourneyCommand extends Command
 
         while ($currentDate <= $endDate) {
             $dayKey = $currentDate->format('Y-m-d');
-            $dayOfWeek = (int)$currentDate->format('N');
-            $isWeekend = in_array($dayOfWeek, [6, 7]);
-            
+            $dayOfWeek = (int) $currentDate->format('N');
+            $isWeekend = in_array($dayOfWeek, [6, 7], true);
+
             // Определяем количество задач на день
             $tasksPerDay = $this->calculateDailyTasks($dayOfWeek, $currentDate);
-            
+
             $dailyCreated = 0;
             $dailyCompleted = 0;
 
             for ($i = 0; $i < $tasksPerDay; $i++) {
                 // Создаем основную задачу
                 $task = $this->createRealisticTask(
-                    $user, 
-                    $tags, 
-                    $currentDate, 
-                    $isWeekend, 
+                    $user,
+                    $tags,
+                    $currentDate,
+                    $isWeekend,
                     $dayOfWeek,
-                    $i
+                    $i,
                 );
 
                 $this->entityManager->persist($task);
@@ -277,7 +281,7 @@ class GenerateUserJourneyCommand extends Command
                         $user,
                         $tags,
                         $currentDate,
-                        $endDate
+                        $endDate,
                     );
                     $totalSubtasks += $subtasksCount;
                 }
@@ -292,7 +296,7 @@ class GenerateUserJourneyCommand extends Command
             }
 
             $userProductivity[$dayKey] = [
-                'created' => $dailyCreated,
+                'created'   => $dailyCreated,
                 'completed' => $dailyCompleted,
             ];
 
@@ -314,7 +318,7 @@ class GenerateUserJourneyCommand extends Command
         return Command::SUCCESS;
     }
 
-    private function calculateDailyTasks(int $dayOfWeek, \DateTime $date): int
+    private function calculateDailyTasks(int $dayOfWeek, DateTime $date): int
     {
         $baseAmount = 60;
 
@@ -329,20 +333,20 @@ class GenerateUserJourneyCommand extends Command
             7 => 0.4,  // Воскресенье - отдых
         ];
 
-        $tasks = (int)($baseAmount * ($weekdayMultiplier[$dayOfWeek] ?? 1.0));
+        $tasks = (int) ($baseAmount * ($weekdayMultiplier[$dayOfWeek] ?? 1.0));
 
         // Случайный разброс ±20%
         $variance = mt_rand(-20, 20);
-        $tasks = $tasks + (int)($tasks * $variance / 100);
+        $tasks = $tasks + (int) ($tasks * $variance / 100);
 
         // Первая неделя месяца - обычно больше планирования
-        if ((int)$date->format('d') <= 7) {
-            $tasks = (int)($tasks * 1.15);
+        if ((int) $date->format('d') <= 7) {
+            $tasks = (int) ($tasks * 1.15);
         }
 
         // Последняя неделя месяца - дедлайны
-        if ((int)$date->format('d') >= 25) {
-            $tasks = (int)($tasks * 1.1);
+        if ((int) $date->format('d') >= 25) {
+            $tasks = (int) ($tasks * 1.1);
         }
 
         return max($tasks, 20); // Минимум 20 задач в день
@@ -351,17 +355,17 @@ class GenerateUserJourneyCommand extends Command
     private function createRealisticTask(
         User $user,
         array $tags,
-        \DateTime $currentDate,
+        DateTime $currentDate,
         bool $isWeekend,
         int $dayOfWeek,
-        int $taskIndex
+        int $taskIndex,
     ): Task {
         $task = new Task();
 
         // Выбираем категорию
         $category = $this->selectCategory($isWeekend, $dayOfWeek);
         $template = $this->taskTemplates[$category][array_rand($this->taskTemplates[$category])];
-        
+
         // Заполняем плейсхолдеры
         $title = $this->fillPlaceholders($template);
         $task->setTitle($title);
@@ -369,7 +373,7 @@ class GenerateUserJourneyCommand extends Command
         // Описание (60% задач)
         if (mt_rand(1, 100) <= 60) {
             $description = $this->descriptions[array_rand($this->descriptions)];
-            
+
             // Добавляем детали
             if (mt_rand(1, 100) <= 40) {
                 $details = [
@@ -380,7 +384,7 @@ class GenerateUserJourneyCommand extends Command
                 ];
                 $description .= "\n\n" . $details[array_rand($details)];
             }
-            
+
             $task->setDescription($description);
         }
 
@@ -394,38 +398,38 @@ class GenerateUserJourneyCommand extends Command
         $createdAt->setTime($hour, mt_rand(0, 59), mt_rand(0, 59));
 
         // Устанавливаем даты
-        $reflection = new \ReflectionClass($task);
+        $reflection = new ReflectionClass($task);
         $createdAtProp = $reflection->getProperty('createdAt');
         $createdAtProp->setAccessible(true);
-        $createdAtProp->setValue($task, \DateTimeImmutable::createFromMutable($createdAt));
-        
+        $createdAtProp->setValue($task, DateTimeImmutable::createFromMutable($createdAt));
+
         $updatedAtProp = $reflection->getProperty('updatedAt');
         $updatedAtProp->setAccessible(true);
-        $updatedAtProp->setValue($task, \DateTimeImmutable::createFromMutable($createdAt));
+        $updatedAtProp->setValue($task, DateTimeImmutable::createFromMutable($createdAt));
 
         // Start Date (70%)
         if (mt_rand(1, 100) <= 70) {
             $startDate = clone $createdAt;
             $startDate->modify('+' . mt_rand(0, 3) . ' days');
-            $task->setStartDate(\DateTimeImmutable::createFromMutable($startDate));
+            $task->setStartDate(DateTimeImmutable::createFromMutable($startDate));
         }
 
         // Due Date (85%)
         if (mt_rand(1, 100) <= 85) {
-            $dueDays = match($priority) {
+            $dueDays = match ($priority) {
                 TaskPriority::URGENT => mt_rand(1, 3),
-                TaskPriority::HIGH => mt_rand(2, 7),
+                TaskPriority::HIGH   => mt_rand(2, 7),
                 TaskPriority::MEDIUM => mt_rand(5, 14),
-                TaskPriority::LOW => mt_rand(7, 21),
+                TaskPriority::LOW    => mt_rand(7, 21),
             };
-            
+
             $dueDate = clone $createdAt;
             $dueDate->modify("+{$dueDays} days");
-            $task->setDueDate(\DateTimeImmutable::createFromMutable($dueDate));
+            $task->setDueDate(DateTimeImmutable::createFromMutable($dueDate));
         }
 
         // Статус и завершение
-        $this->setTaskStatus($task, $createdAt, new \DateTime('now'));
+        $this->setTaskStatus($task, $createdAt, new DateTime('now'));
 
         // Теги
         $this->assignTags($task, $tags, $category, $priority);
@@ -441,8 +445,8 @@ class GenerateUserJourneyCommand extends Command
         Task $parentTask,
         User $user,
         array $tags,
-        \DateTime $baseDate,
-        \DateTime $endDate
+        DateTime $baseDate,
+        DateTime $endDate,
     ): int {
         $numSubtasks = mt_rand(1, 4);
         $completedSubtasks = 0;
@@ -471,13 +475,15 @@ class GenerateUserJourneyCommand extends Command
 
             // Статус подзадачи - часть завершена, часть нет
             $statusRand = mt_rand(1, 100);
+
             if ($statusRand <= 50) {
                 $subtask->setStatus(TaskStatus::COMPLETED);
-                
+
                 $completedAt = clone $baseDate;
                 $completedAt->modify('+' . mt_rand(1, 7) . ' days');
+
                 if ($completedAt <= $endDate) {
-                    $subtask->setCompletedAt(\DateTimeImmutable::createFromMutable($completedAt));
+                    $subtask->setCompletedAt(DateTimeImmutable::createFromMutable($completedAt));
                     $completedSubtasks++;
                 }
             } elseif ($statusRand <= 80) {
@@ -489,15 +495,15 @@ class GenerateUserJourneyCommand extends Command
             // Даты
             $subCreatedAt = clone $baseDate;
             $subCreatedAt->modify('+' . ($i * 30) . ' minutes');
-            
-            $reflection = new \ReflectionClass($subtask);
+
+            $reflection = new ReflectionClass($subtask);
             $createdAtProp = $reflection->getProperty('createdAt');
             $createdAtProp->setAccessible(true);
-            $createdAtProp->setValue($subtask, \DateTimeImmutable::createFromMutable($subCreatedAt));
-            
+            $createdAtProp->setValue($subtask, DateTimeImmutable::createFromMutable($subCreatedAt));
+
             $updatedAtProp = $reflection->getProperty('updatedAt');
             $updatedAtProp->setAccessible(true);
-            $updatedAtProp->setValue($subtask, \DateTimeImmutable::createFromMutable($subCreatedAt));
+            $updatedAtProp->setValue($subtask, DateTimeImmutable::createFromMutable($subCreatedAt));
 
             $this->entityManager->persist($subtask);
         }
@@ -510,20 +516,20 @@ class GenerateUserJourneyCommand extends Command
         if ($isWeekend) {
             $weights = [
                 'development' => 10,
-                'meetings' => 5,
-                'personal' => 50,
-                'health' => 25,
-                'learning' => 5,
-                'finance' => 5,
+                'meetings'    => 5,
+                'personal'    => 50,
+                'health'      => 25,
+                'learning'    => 5,
+                'finance'     => 5,
             ];
         } else {
             $weights = [
                 'development' => 45,
-                'meetings' => 20,
-                'personal' => 15,
-                'health' => 10,
-                'learning' => 5,
-                'finance' => 5,
+                'meetings'    => 20,
+                'personal'    => 15,
+                'health'      => 10,
+                'learning'    => 5,
+                'finance'     => 5,
             ];
         }
 
@@ -535,27 +541,47 @@ class GenerateUserJourneyCommand extends Command
         // Понедельник - больше urgent
         if ($dayOfWeek === 1) {
             $rand = mt_rand(1, 100);
-            if ($rand <= 15) return TaskPriority::URGENT;
-            if ($rand <= 40) return TaskPriority::HIGH;
-            if ($rand <= 75) return TaskPriority::MEDIUM;
+
+            if ($rand <= 15) {
+                return TaskPriority::URGENT;
+            }
+
+            if ($rand <= 40) {
+                return TaskPriority::HIGH;
+            }
+
+            if ($rand <= 75) {
+                return TaskPriority::MEDIUM;
+            }
+
             return TaskPriority::LOW;
         }
 
         // Обычное распределение
         $rand = mt_rand(1, 100);
-        if ($rand <= 8) return TaskPriority::URGENT;
-        if ($rand <= 25) return TaskPriority::HIGH;
-        if ($rand <= 65) return TaskPriority::MEDIUM;
+
+        if ($rand <= 8) {
+            return TaskPriority::URGENT;
+        }
+
+        if ($rand <= 25) {
+            return TaskPriority::HIGH;
+        }
+
+        if ($rand <= 65) {
+            return TaskPriority::MEDIUM;
+        }
+
         return TaskPriority::LOW;
     }
 
-    private function setTaskStatus(Task $task, \DateTime $createdAt, \DateTime $now): void
+    private function setTaskStatus(Task $task, DateTime $createdAt, DateTime $now): void
     {
-        $daysSinceCreation = (int)$createdAt->diff($now)->days;
+        $daysSinceCreation = (int) $createdAt->diff($now)->days;
 
         // Логика завершения реалистичная
         $completionChance = 0;
-        
+
         if ($daysSinceCreation > 30) {
             $completionChance = 75; // Старые задачи обычно завершены
         } elseif ($daysSinceCreation > 14) {
@@ -579,15 +605,15 @@ class GenerateUserJourneyCommand extends Command
 
         if ($rand <= $completionChance) {
             $task->setStatus(TaskStatus::COMPLETED);
-            
+
             // Время завершения (1-10 дней после создания)
             $completedAt = clone $createdAt;
             $daysToComplete = mt_rand(1, min(10, $daysSinceCreation));
             $completedAt->modify("+{$daysToComplete} days");
             $completedAt->setTime(mt_rand(9, 20), mt_rand(0, 59));
-            
+
             if ($completedAt <= $now) {
-                $task->setCompletedAt(\DateTimeImmutable::createFromMutable($completedAt));
+                $task->setCompletedAt(DateTimeImmutable::createFromMutable($completedAt));
             }
         } elseif ($rand <= $completionChance + 25) {
             $task->setStatus(TaskStatus::IN_PROGRESS);
@@ -602,15 +628,15 @@ class GenerateUserJourneyCommand extends Command
     {
         $categoryTagMap = [
             'development' => 'Работа',
-            'meetings' => 'Работа',
-            'personal' => 'Личное',
-            'health' => 'Здоровье',
-            'learning' => 'Обучение',
-            'finance' => 'Финансы',
+            'meetings'    => 'Работа',
+            'personal'    => 'Личное',
+            'health'      => 'Здоровье',
+            'learning'    => 'Обучение',
+            'finance'     => 'Финансы',
         ];
 
         // Основной тег категории
-        if (isset($categoryTagMap[$category]) && isset($tags[$categoryTagMap[$category]])) {
+        if (isset($categoryTagMap[$category], $tags[$categoryTagMap[$category]])) {
             $task->addTag($tags[$categoryTagMap[$category]]);
         }
 
@@ -618,10 +644,14 @@ class GenerateUserJourneyCommand extends Command
         $numAdditional = mt_rand(1, 2);
         $availableTags = array_values($tags);
         shuffle($availableTags);
-        
+
         $added = 0;
+
         foreach ($availableTags as $tag) {
-            if ($added >= $numAdditional) break;
+            if ($added >= $numAdditional) {
+                break;
+            }
+
             if (!$task->getTags()->contains($tag)) {
                 $task->addTag($tag);
                 $added++;
@@ -641,10 +671,10 @@ class GenerateUserJourneyCommand extends Command
         foreach ($this->placeholders as $placeholder => $options) {
             if (strpos($template, $placeholder) !== false) {
                 $value = $options[array_rand($options)];
-                $template = str_replace($placeholder, (string)$value, $template);
+                $template = str_replace($placeholder, (string) $value, $template);
             }
         }
-        
+
         return $template;
     }
 
@@ -666,9 +696,10 @@ class GenerateUserJourneyCommand extends Command
     {
         $rand = mt_rand(1, array_sum($weights));
         $sum = 0;
-        
+
         foreach ($weights as $item => $weight) {
             $sum += $weight;
+
             if ($rand <= $sum) {
                 return $item;
             }
@@ -680,27 +711,28 @@ class GenerateUserJourneyCommand extends Command
     private function createTags(User $user, SymfonyStyle $io): array
     {
         $io->section('Создание тегов...');
-        
+
         $tagRepository = $this->entityManager->getRepository(Tag::class);
         $tagData = [
-            'Работа' => '#6366f1',
-            'Личное' => '#10b981',
-            'Финансы' => '#f59e0b',
-            'Здоровье' => '#ef4444',
-            'Обучение' => '#8b5cf6',
-            'Хобби' => '#ec4899',
-            'Дом' => '#06b6d4',
-            'Срочно' => '#dc2626',
-            'Важно' => '#f97316',
-            'Спорт' => '#22c55e',
-            'Семья' => '#a855f7',
-            'Покупки' => '#eab308',
-            'Проект А' => '#3b82f6',
-            'Проект Б' => '#8b5cf6',
+            'Работа'       => '#6366f1',
+            'Личное'       => '#10b981',
+            'Финансы'      => '#f59e0b',
+            'Здоровье'     => '#ef4444',
+            'Обучение'     => '#8b5cf6',
+            'Хобби'        => '#ec4899',
+            'Дом'          => '#06b6d4',
+            'Срочно'       => '#dc2626',
+            'Важно'        => '#f97316',
+            'Спорт'        => '#22c55e',
+            'Семья'        => '#a855f7',
+            'Покупки'      => '#eab308',
+            'Проект А'     => '#3b82f6',
+            'Проект Б'     => '#8b5cf6',
             'Планирование' => '#14b8a6',
         ];
-        
+
         $tags = [];
+
         foreach ($tagData as $name => $color) {
             $tag = new Tag();
             $tag->setName($name);
@@ -709,27 +741,27 @@ class GenerateUserJourneyCommand extends Command
             $this->entityManager->persist($tag);
             $tags[$name] = $tag;
         }
-        
+
         $this->entityManager->flush();
         $io->success('✅ Создано ' . count($tags) . ' тегов');
-        
+
         return $tags;
     }
 
     private function cleanUserData(User $user): void
     {
         $connection = $this->entityManager->getConnection();
-        
+
         // Удаляем задачи
         $connection->executeStatement(
             'DELETE FROM task WHERE user_id = :userId',
-            ['userId' => $user->getId()]
+            ['userId' => $user->getId()],
         );
-        
+
         // Удаляем теги
         $connection->executeStatement(
             'DELETE FROM tag WHERE user_id = :userId',
-            ['userId' => $user->getId()]
+            ['userId' => $user->getId()],
         );
     }
 
@@ -737,11 +769,11 @@ class GenerateUserJourneyCommand extends Command
     {
         $tagRepository = $this->entityManager->getRepository(Tag::class);
         $reloaded = [];
-        
+
         foreach ($tags as $name => $tag) {
             $reloaded[$name] = $tagRepository->find($tag->getId());
         }
-        
+
         return $reloaded;
     }
 
@@ -751,10 +783,10 @@ class GenerateUserJourneyCommand extends Command
         int $totalSubtasks,
         int $completedCount,
         int $totalDays,
-        array $productivity
+        array $productivity,
     ): void {
         $io->section('📊 Детальная статистика:');
-        
+
         $io->table(
             ['Метрика', 'Значение'],
             [
@@ -764,14 +796,15 @@ class GenerateUserJourneyCommand extends Command
                 ['Процент завершения', round($completedCount / $totalTasks * 100, 1) . '%'],
                 ['Дней в периоде', $totalDays],
                 ['Среднее задач/день', round($totalTasks / $totalDays, 1)],
-            ]
+            ],
         );
 
         // Лучшие и худшие дни
-        uasort($productivity, fn($a, $b) => $b['created'] <=> $a['created']);
+        uasort($productivity, fn ($a, $b) => $b['created'] <=> $a['created']);
         $bestDays = array_slice($productivity, 0, 5, true);
-        
+
         $io->section('🏆 Топ-5 самых продуктивных дней:');
+
         foreach ($bestDays as $date => $stats) {
             $io->text("📅 {$date}: {$stats['created']} создано, {$stats['completed']} завершено");
         }
@@ -779,7 +812,3 @@ class GenerateUserJourneyCommand extends Command
         $io->success('✨ Данные готовы! Теперь графики покажут реальную картину!');
     }
 }
-
-
-
-

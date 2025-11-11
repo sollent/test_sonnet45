@@ -13,7 +13,6 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
-use Symfony\Component\Serializer\SerializerInterface;
 
 #[Route('/api/enums', name: 'enum_')]
 #[IsGranted('ROLE_USER')]
@@ -22,7 +21,6 @@ class EnumController extends AbstractController
 {
     public function __construct(
         private readonly EnumTranslatorService $enumTranslator,
-        private readonly SerializerInterface $serializer,
     ) {
     }
 
@@ -42,11 +40,11 @@ class EnumController extends AbstractController
                             new OA\Property(property: 'label', type: 'string', example: 'High'),
                             new OA\Property(property: 'color', type: 'string', example: '#F59E0B'),
                             new OA\Property(property: 'icon', type: 'string', example: 'pi pi-chevron-up'),
-                        ]
-                    )
-                )
-            )
-        ]
+                        ],
+                    ),
+                ),
+            ),
+        ],
     )]
     public function getPriorities(Request $request): JsonResponse
     {
@@ -58,7 +56,7 @@ class EnumController extends AbstractController
                 'value' => $priority->value,
                 'label' => $this->enumTranslator->translatePriority($priority, $locale),
                 'color' => $priority->getColor(),
-                'icon' => $priority->getIcon(),
+                'icon'  => $priority->getIcon(),
             ];
         }
 
@@ -81,11 +79,11 @@ class EnumController extends AbstractController
                             new OA\Property(property: 'label', type: 'string', example: 'Completed'),
                             new OA\Property(property: 'color', type: 'string', example: '#10B981'),
                             new OA\Property(property: 'icon', type: 'string', example: 'pi pi-check'),
-                        ]
-                    )
-                )
-            )
-        ]
+                        ],
+                    ),
+                ),
+            ),
+        ],
     )]
     public function getStatuses(Request $request): JsonResponse
     {
@@ -97,7 +95,7 @@ class EnumController extends AbstractController
                 'value' => $status->value,
                 'label' => $this->enumTranslator->translateStatus($status, $locale),
                 'color' => $status->getColor(),
-                'icon' => $status->getIcon(),
+                'icon'  => $status->getIcon(),
             ];
         }
 

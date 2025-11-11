@@ -7,19 +7,23 @@ namespace App\Service;
 use App\Entity\MediaObject;
 use App\Entity\User;
 use App\Repository\Database\MediaObjectRepository;
+use RuntimeException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\String\Slugger\SluggerInterface;
 
 class MediaObjectService
 {
     private const UPLOAD_DIR = 'public/uploads/media';
+
     private const WEB_PATH = '/uploads/media';
+
     private const MAX_FILE_SIZE = 10485760; // 10MB
+
     private const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'zip', 'txt'];
 
     public function __construct(
         private readonly MediaObjectRepository $repository,
-        private readonly SluggerInterface $slugger
+        private readonly SluggerInterface $slugger,
     ) {
     }
 
@@ -45,7 +49,7 @@ class MediaObjectService
         // Move file
         $projectDir = dirname(__DIR__, 2);
         $uploadDirectory = $projectDir . '/' . self::UPLOAD_DIR;
-        
+
         // Ensure directory exists with proper permissions
         if (!is_dir($uploadDirectory)) {
             @mkdir($uploadDirectory, 0777, true);
@@ -77,7 +81,7 @@ class MediaObjectService
         // Delete physical file
         $projectDir = dirname(__DIR__, 2);
         $filePath = $projectDir . $mediaObject->getFilePath();
-        
+
         if (file_exists($filePath)) {
             unlink($filePath);
         }
@@ -85,6 +89,7 @@ class MediaObjectService
         // Delete thumbnail if exists
         if ($mediaObject->getThumbnailPath()) {
             $thumbnailPath = $projectDir . $mediaObject->getThumbnailPath();
+
             if (file_exists($thumbnailPath)) {
                 unlink($thumbnailPath);
             }
@@ -101,14 +106,14 @@ class MediaObjectService
     {
         // Check file size
         if ($file->getSize() > self::MAX_FILE_SIZE) {
-            throw new \RuntimeException('File size exceeds 10MB limit');
+            throw new RuntimeException('File size exceeds 10MB limit');
         }
 
         // Check extension
         $extension = $file->guessExtension();
-        if (!in_array($extension, self::ALLOWED_EXTENSIONS)) {
-            throw new \RuntimeException('File type not allowed. Allowed: ' . implode(', ', self::ALLOWED_EXTENSIONS));
+
+        if (!in_array($extension, self::ALLOWED_EXTENSIONS, true)) {
+            throw new RuntimeException('File type not allowed. Allowed: ' . implode(', ', self::ALLOWED_EXTENSIONS));
         }
     }
 }
-

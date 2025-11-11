@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Controller\Admin;
 
 use App\Entity\MediaObject;
-use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
 use EasyCorp\Bundle\EasyAdminBundle\Collection\FieldCollection;
 use EasyCorp\Bundle\EasyAdminBundle\Collection\FilterCollection;
@@ -30,11 +29,6 @@ use EasyCorp\Bundle\EasyAdminBundle\Filter\TextFilter;
 
 class MediaObjectCrudController extends AbstractCrudController
 {
-    public function __construct(
-        private readonly EntityManagerInterface $entityManager
-    ) {
-    }
-
     public static function getEntityFqcn(): string
     {
         return MediaObject::class;
@@ -48,7 +42,7 @@ class MediaObjectCrudController extends AbstractCrudController
             ->setPageTitle('index', 'System Media Library')
             ->setPageTitle('detail', fn (MediaObject $media) => sprintf(
                 'Media: %s',
-                $media->getOriginalName()
+                $media->getOriginalName(),
             ))
 
             // Pagination - optimized for performance
@@ -88,10 +82,10 @@ class MediaObjectCrudController extends AbstractCrudController
             ->formatValue(function ($value, MediaObject $media) {
                 $type = $media->getFileType();
                 $iconMap = [
-                    'image' => ['icon' => 'file-image-o', 'class' => 'success'],
+                    'image'    => ['icon' => 'file-image-o', 'class' => 'success'],
                     'document' => ['icon' => 'file-text-o', 'class' => 'primary'],
-                    'video' => ['icon' => 'file-video-o', 'class' => 'warning'],
-                    'other' => ['icon' => 'file-o', 'class' => 'secondary'],
+                    'video'    => ['icon' => 'file-video-o', 'class' => 'warning'],
+                    'other'    => ['icon' => 'file-o', 'class' => 'secondary'],
                 ];
 
                 $config = $iconMap[$type] ?? $iconMap['other'];
@@ -100,7 +94,7 @@ class MediaObjectCrudController extends AbstractCrudController
                     '<span class="badge badge-%s"><i class="fa fa-%s"></i> %s</span>',
                     $config['class'],
                     $config['icon'],
-                    strtoupper($type)
+                    strtoupper($type),
                 );
             })
             ->setColumns('col-md-2');
@@ -129,7 +123,7 @@ class MediaObjectCrudController extends AbstractCrudController
             ->formatValue(function ($value, MediaObject $media) {
                 return sprintf(
                     '<span class="badge badge-info">%s</span>',
-                    $media->getHumanReadableSize()
+                    $media->getHumanReadableSize(),
                 );
             })
             ->setColumns('col-md-2');
@@ -164,7 +158,7 @@ class MediaObjectCrudController extends AbstractCrudController
                             <i class="fa fa-download"></i> Download
                         </a>',
                         htmlspecialchars($media->getFilePath()),
-                        htmlspecialchars($media->getOriginalName())
+                        htmlspecialchars($media->getOriginalName()),
                     );
 
                     // Preview button (only for images)
@@ -173,7 +167,7 @@ class MediaObjectCrudController extends AbstractCrudController
                             '<a href="%s" target="_blank" class="btn btn-info">
                                 <i class="fa fa-eye"></i> View Full Size
                             </a>',
-                            htmlspecialchars($media->getFilePath())
+                            htmlspecialchars($media->getFilePath()),
                         );
                     }
 
@@ -194,7 +188,7 @@ class MediaObjectCrudController extends AbstractCrudController
                             htmlspecialchars($imageSrc),
                             htmlspecialchars($media->getOriginalName()),
                             $media->getHumanReadableSize(),
-                            $media->getMimeType()
+                            $media->getMimeType(),
                         );
                     } elseif ($media->getFileType() === 'video') {
                         // Video preview
@@ -213,7 +207,7 @@ class MediaObjectCrudController extends AbstractCrudController
                             htmlspecialchars($media->getFilePath()),
                             htmlspecialchars($media->getMimeType()),
                             $media->getHumanReadableSize(),
-                            $media->getMimeType()
+                            $media->getMimeType(),
                         );
                     } else {
                         // For non-images/videos, show file info card
@@ -227,7 +221,7 @@ class MediaObjectCrudController extends AbstractCrudController
                             </div>',
                             strtoupper($media->getFileType()),
                             $media->getHumanReadableSize(),
-                            $media->getMimeType()
+                            $media->getMimeType(),
                         );
                     }
 
@@ -249,10 +243,10 @@ class MediaObjectCrudController extends AbstractCrudController
 
             // File type filter
             ->add(ChoiceFilter::new('fileType', 'File Type')->setChoices([
-                'Images' => 'image',
+                'Images'    => 'image',
                 'Documents' => 'document',
-                'Videos' => 'video',
-                'Other' => 'other',
+                'Videos'    => 'video',
+                'Other'     => 'other',
             ]))
 
             // MIME type filter
@@ -275,20 +269,29 @@ class MediaObjectCrudController extends AbstractCrudController
             ->add(Crud::PAGE_INDEX, Action::DETAIL)
 
             // Customize actions
-            ->update(Crud::PAGE_INDEX, Action::EDIT, fn (Action $action) => $action
-                ->setIcon('fa fa-edit')
-                ->setLabel(false)
-                ->displayIf(fn (MediaObject $media) => false) // Disable edit in index
+            ->update(
+                Crud::PAGE_INDEX,
+                Action::EDIT,
+                fn (Action $action) => $action
+                    ->setIcon('fa fa-edit')
+                    ->setLabel(false)
+                    ->displayIf(fn (MediaObject $media) => false), // Disable edit in index
             )
-            ->update(Crud::PAGE_INDEX, Action::DELETE, fn (Action $action) => $action
-                ->setIcon('fa fa-trash')
-                ->setLabel('Delete')
-                ->displayAsButton()
-                ->addCssClass('btn btn-sm btn-danger')
+            ->update(
+                Crud::PAGE_INDEX,
+                Action::DELETE,
+                fn (Action $action) => $action
+                    ->setIcon('fa fa-trash')
+                    ->setLabel('Delete')
+                    ->displayAsButton()
+                    ->addCssClass('btn btn-sm btn-danger'),
             )
-            ->update(Crud::PAGE_INDEX, Action::DETAIL, fn (Action $action) => $action
-                ->setIcon('fa fa-eye')
-                ->setLabel(false)
+            ->update(
+                Crud::PAGE_INDEX,
+                Action::DETAIL,
+                fn (Action $action) => $action
+                    ->setIcon('fa fa-eye')
+                    ->setLabel(false),
             );
     }
 
@@ -299,19 +302,22 @@ class MediaObjectCrudController extends AbstractCrudController
         SearchDto $searchDto,
         EntityDto $entityDto,
         FieldCollection $fields,
-        FilterCollection $filters
+        FilterCollection $filters,
     ): QueryBuilder {
         $qb = parent::createIndexQueryBuilder($searchDto, $entityDto, $fields, $filters);
 
         // Eager load uploadedBy to avoid N+1 queries
         $qb->leftJoin('entity.uploadedBy', 'u')
-           ->addSelect('u');
+            ->addSelect('u');
 
         return $qb;
     }
 
     /**
      * Show warning when deleting media object
+     *
+     * @param mixed $entityManager
+     * @param mixed $entityInstance
      */
     public function deleteEntity($entityManager, $entityInstance): void
     {
@@ -322,7 +328,7 @@ class MediaObjectCrudController extends AbstractCrudController
 
         $this->addFlash('warning', sprintf(
             'Media object "%s" has been removed from the database. Note: Physical file may still exist on server.',
-            $fileName
+            $fileName,
         ));
 
         parent::deleteEntity($entityManager, $entityInstance);

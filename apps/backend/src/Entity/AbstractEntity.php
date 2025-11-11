@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\HasLifecycleCallbacks]
@@ -15,17 +16,17 @@ abstract class AbstractEntity
     protected ?int $id = null;
 
     #[ORM\Column(type: 'datetime_immutable', nullable: true)]
-    protected ?\DateTimeImmutable $createdAt = null;
+    protected ?DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(type: 'datetime_immutable', nullable: true)]
-    protected ?\DateTimeImmutable $updatedAt = null;
+    protected ?DateTimeImmutable $updatedAt = null;
 
     /**
      * AbstractEntity constructor.
      */
     public function __construct()
     {
-        $this->createdAt = new \DateTimeImmutable();
+        $this->createdAt = new DateTimeImmutable();
         $this->setUpdatedAtValue();
     }
 
@@ -41,12 +42,12 @@ abstract class AbstractEntity
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeImmutable
+    public function getCreatedAt(): ?DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    public function getUpdatedAt(): ?\DateTimeImmutable
+    public function getUpdatedAt(): ?DateTimeImmutable
     {
         return $this->updatedAt;
     }
@@ -54,6 +55,6 @@ abstract class AbstractEntity
     #[ORM\PreUpdate]
     public function setUpdatedAtValue(): void
     {
-        $this->updatedAt = new \DateTimeImmutable();
+        $this->updatedAt = new DateTimeImmutable();
     }
 }

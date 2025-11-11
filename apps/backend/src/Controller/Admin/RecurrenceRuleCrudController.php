@@ -6,7 +6,6 @@ namespace App\Controller\Admin;
 
 use App\Entity\RecurrenceRule;
 use App\Entity\Task;
-use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
 use EasyCorp\Bundle\EasyAdminBundle\Collection\FieldCollection;
@@ -31,14 +30,13 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\TimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\BooleanFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\ChoiceFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\EntityFilter;
-use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
+use RuntimeException;
 use Symfony\Component\HttpFoundation\Response;
 
 class RecurrenceRuleCrudController extends AbstractCrudController
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
-        private readonly AdminUrlGenerator $adminUrlGenerator
     ) {
     }
 
@@ -57,11 +55,11 @@ class RecurrenceRuleCrudController extends AbstractCrudController
             ->setPageTitle('edit', fn (RecurrenceRule $rule) => sprintf(
                 'Edit rule: %s (%s)',
                 $rule->getTemplateTask()->getTitle(),
-                ucfirst($rule->getRecurrenceType())
+                ucfirst($rule->getRecurrenceType()),
             ))
             ->setPageTitle('detail', fn (RecurrenceRule $rule) => sprintf(
                 'Recurrence Rule: %s',
-                $rule->getTemplateTask()->getTitle()
+                $rule->getTemplateTask()->getTitle(),
             ))
 
             // Pagination - reduced for performance
@@ -96,10 +94,11 @@ class RecurrenceRuleCrudController extends AbstractCrudController
             ->setCrudController(TaskCrudController::class)
             ->formatValue(function ($value, RecurrenceRule $rule) {
                 $task = $rule->getTemplateTask();
+
                 return sprintf(
                     '<strong>%s</strong> <small class="text-muted">(#%d)</small>',
                     htmlspecialchars($task->getTitle()),
-                    $task->getId()
+                    $task->getId(),
                 );
             })
             ->setHelp('The task that will be used as template for recurring tasks')
@@ -117,11 +116,11 @@ class RecurrenceRuleCrudController extends AbstractCrudController
 
         // Recurrence Type - choice field with all types
         $recurrenceTypes = [
-            'Daily' => RecurrenceRule::TYPE_DAILY,
-            'Weekly' => RecurrenceRule::TYPE_WEEKLY,
+            'Daily'   => RecurrenceRule::TYPE_DAILY,
+            'Weekly'  => RecurrenceRule::TYPE_WEEKLY,
             'Monthly' => RecurrenceRule::TYPE_MONTHLY,
-            'Yearly' => RecurrenceRule::TYPE_YEARLY,
-            'Custom' => RecurrenceRule::TYPE_CUSTOM,
+            'Yearly'  => RecurrenceRule::TYPE_YEARLY,
+            'Custom'  => RecurrenceRule::TYPE_CUSTOM,
         ];
 
         yield ChoiceField::new('recurrenceType', 'Recurrence Type')
@@ -129,11 +128,11 @@ class RecurrenceRuleCrudController extends AbstractCrudController
             ->setChoices($recurrenceTypes)
             ->formatValue(function ($value, RecurrenceRule $rule) {
                 $typeColors = [
-                    RecurrenceRule::TYPE_DAILY => 'info',
-                    RecurrenceRule::TYPE_WEEKLY => 'success',
+                    RecurrenceRule::TYPE_DAILY   => 'info',
+                    RecurrenceRule::TYPE_WEEKLY  => 'success',
                     RecurrenceRule::TYPE_MONTHLY => 'warning',
-                    RecurrenceRule::TYPE_YEARLY => 'danger',
-                    RecurrenceRule::TYPE_CUSTOM => 'secondary',
+                    RecurrenceRule::TYPE_YEARLY  => 'danger',
+                    RecurrenceRule::TYPE_CUSTOM  => 'secondary',
                 ];
 
                 $color = $typeColors[$rule->getRecurrenceType()] ?? 'secondary';
@@ -141,7 +140,7 @@ class RecurrenceRuleCrudController extends AbstractCrudController
                 return sprintf(
                     '<span class="badge badge-%s">%s</span>',
                     $color,
-                    strtoupper($rule->getRecurrenceType())
+                    strtoupper($rule->getRecurrenceType()),
                 );
             })
             ->setHelp('Type of recurrence pattern')
@@ -159,6 +158,7 @@ class RecurrenceRuleCrudController extends AbstractCrudController
         yield Field::new('daysOfWeekDisplay', 'Days of Week')
             ->formatValue(function ($value, RecurrenceRule $rule) {
                 $days = $rule->getDaysOfWeek();
+
                 if (!$days || empty($days)) {
                     return '<span class="badge badge-secondary">Not set</span>';
                 }
@@ -168,11 +168,11 @@ class RecurrenceRuleCrudController extends AbstractCrudController
                     4 => 'Thu', 5 => 'Fri', 6 => 'Sat', 7 => 'Sun',
                 ];
 
-                $formatted = array_map(fn($d) => $dayNames[$d] ?? $d, $days);
+                $formatted = array_map(fn ($d) => $dayNames[$d] ?? $d, $days);
 
                 return sprintf(
                     '<span class="badge badge-success">%s</span>',
-                    implode(', ', $formatted)
+                    implode(', ', $formatted),
                 );
             })
             ->setHelp('For weekly type: [1,2,3,4,5] = Mon-Fri. Edit via API or directly in database.')
@@ -221,7 +221,7 @@ class RecurrenceRuleCrudController extends AbstractCrudController
                 if (!$max) {
                     return sprintf(
                         '<span class="badge badge-info">%d created</span> <small>(unlimited)</small>',
-                        $current
+                        $current,
                     );
                 }
 
@@ -239,7 +239,7 @@ class RecurrenceRuleCrudController extends AbstractCrudController
                     $progressClass,
                     $percentageRounded,
                     $current,
-                    $max
+                    $max,
                 );
             })
             ->onlyOnDetail();
@@ -258,7 +258,7 @@ class RecurrenceRuleCrudController extends AbstractCrudController
                     '<span class="badge badge-%s">%d / %d</span>',
                     $current >= $max ? 'success' : 'info',
                     $current,
-                    $max
+                    $max,
                 );
             })
             ->hideOnForm()
@@ -305,11 +305,11 @@ class RecurrenceRuleCrudController extends AbstractCrudController
         return $filters
             // Recurrence type filter
             ->add(ChoiceFilter::new('recurrenceType', 'Type')->setChoices([
-                'Daily' => RecurrenceRule::TYPE_DAILY,
-                'Weekly' => RecurrenceRule::TYPE_WEEKLY,
+                'Daily'   => RecurrenceRule::TYPE_DAILY,
+                'Weekly'  => RecurrenceRule::TYPE_WEEKLY,
                 'Monthly' => RecurrenceRule::TYPE_MONTHLY,
-                'Yearly' => RecurrenceRule::TYPE_YEARLY,
-                'Custom' => RecurrenceRule::TYPE_CUSTOM,
+                'Yearly'  => RecurrenceRule::TYPE_YEARLY,
+                'Custom'  => RecurrenceRule::TYPE_CUSTOM,
             ]))
 
             // Active status filter
@@ -347,22 +347,34 @@ class RecurrenceRuleCrudController extends AbstractCrudController
             ->add(Crud::PAGE_INDEX, Action::DETAIL)
 
             // Customize default actions
-            ->update(Crud::PAGE_INDEX, Action::NEW, fn (Action $action) => $action
-                ->setIcon('fa fa-plus')
-                ->setLabel('Create Rule')
-                ->setCssClass('btn btn-primary')
+            ->update(
+                Crud::PAGE_INDEX,
+                Action::NEW,
+                fn (Action $action) => $action
+                    ->setIcon('fa fa-plus')
+                    ->setLabel('Create Rule')
+                    ->setCssClass('btn btn-primary'),
             )
-            ->update(Crud::PAGE_INDEX, Action::EDIT, fn (Action $action) => $action
-                ->setIcon('fa fa-edit')
-                ->setLabel(false)
+            ->update(
+                Crud::PAGE_INDEX,
+                Action::EDIT,
+                fn (Action $action) => $action
+                    ->setIcon('fa fa-edit')
+                    ->setLabel(false),
             )
-            ->update(Crud::PAGE_INDEX, Action::DELETE, fn (Action $action) => $action
-                ->setIcon('fa fa-trash')
-                ->setLabel(false)
+            ->update(
+                Crud::PAGE_INDEX,
+                Action::DELETE,
+                fn (Action $action) => $action
+                    ->setIcon('fa fa-trash')
+                    ->setLabel(false),
             )
-            ->update(Crud::PAGE_INDEX, Action::DETAIL, fn (Action $action) => $action
-                ->setIcon('fa fa-eye')
-                ->setLabel(false)
+            ->update(
+                Crud::PAGE_INDEX,
+                Action::DETAIL,
+                fn (Action $action) => $action
+                    ->setIcon('fa fa-eye')
+                    ->setLabel(false),
             );
     }
 
@@ -382,7 +394,7 @@ class RecurrenceRuleCrudController extends AbstractCrudController
 
             $this->addFlash('success', sprintf(
                 'Recurrence rule for "%s" activated!',
-                $rule->getTemplateTask()->getTitle()
+                $rule->getTemplateTask()->getTitle(),
             ));
         }
 
@@ -402,7 +414,7 @@ class RecurrenceRuleCrudController extends AbstractCrudController
 
         $this->addFlash('warning', sprintf(
             'Recurrence rule for "%s" paused. No new tasks will be created.',
-            $rule->getTemplateTask()->getTitle()
+            $rule->getTemplateTask()->getTitle(),
         ));
 
         return $this->redirect($context->getReferrer());
@@ -415,21 +427,24 @@ class RecurrenceRuleCrudController extends AbstractCrudController
         SearchDto $searchDto,
         EntityDto $entityDto,
         FieldCollection $fields,
-        FilterCollection $filters
+        FilterCollection $filters,
     ): QueryBuilder {
         $qb = parent::createIndexQueryBuilder($searchDto, $entityDto, $fields, $filters);
 
         // Eager load templateTask and createdBy to avoid N+1 queries
         $qb->leftJoin('entity.templateTask', 't')
-           ->addSelect('t')
-           ->leftJoin('entity.createdBy', 'u')
-           ->addSelect('u');
+            ->addSelect('t')
+            ->leftJoin('entity.createdBy', 'u')
+            ->addSelect('u');
 
         return $qb;
     }
 
     /**
      * Validate recurrence rule data before persisting
+     *
+     * @param mixed $entityManager
+     * @param mixed $entityInstance
      */
     public function persistEntity($entityManager, $entityInstance): void
     {
@@ -444,6 +459,9 @@ class RecurrenceRuleCrudController extends AbstractCrudController
 
     /**
      * Validate recurrence rule data before updating
+     *
+     * @param mixed $entityManager
+     * @param mixed $entityInstance
      */
     public function updateEntity($entityManager, $entityInstance): void
     {
@@ -457,58 +475,10 @@ class RecurrenceRuleCrudController extends AbstractCrudController
     }
 
     /**
-     * Validate rule based on recurrence type
-     */
-    private function validateRecurrenceRule(RecurrenceRule $rule): void
-    {
-        $type = $rule->getRecurrenceType();
-
-        switch ($type) {
-            case RecurrenceRule::TYPE_CUSTOM:
-                if (!$rule->getInterval() || $rule->getInterval() < 1) {
-                    $this->addFlash('error', 'Custom type requires interval (number of days) to be set!');
-                    throw new \RuntimeException('Custom recurrence requires interval');
-                }
-                break;
-
-            case RecurrenceRule::TYPE_WEEKLY:
-                if (!$rule->getDaysOfWeek() || empty($rule->getDaysOfWeek())) {
-                    $this->addFlash('error', 'Weekly type requires days of week to be set!');
-                    throw new \RuntimeException('Weekly recurrence requires daysOfWeek');
-                }
-                break;
-
-            case RecurrenceRule::TYPE_MONTHLY:
-                if (!$rule->getDayOfMonth() || $rule->getDayOfMonth() < 1 || $rule->getDayOfMonth() > 31) {
-                    $this->addFlash('error', 'Monthly type requires day of month (1-31) to be set!');
-                    throw new \RuntimeException('Monthly recurrence requires dayOfMonth');
-                }
-                break;
-
-            case RecurrenceRule::TYPE_YEARLY:
-                if (!$rule->getMonthOfYear() || $rule->getMonthOfYear() < 1 || $rule->getMonthOfYear() > 12) {
-                    $this->addFlash('error', 'Yearly type requires month of year (1-12) to be set!');
-                    throw new \RuntimeException('Yearly recurrence requires monthOfYear');
-                }
-                if (!$rule->getDayOfMonth() || $rule->getDayOfMonth() < 1 || $rule->getDayOfMonth() > 31) {
-                    $this->addFlash('error', 'Yearly type requires day of month (1-31) to be set!');
-                    throw new \RuntimeException('Yearly recurrence requires dayOfMonth');
-                }
-                break;
-        }
-
-        // Validate end conditions
-        if ($rule->getEndDate() && $rule->getMaxOccurrences()) {
-            $this->addFlash('warning', 'Both end date and max occurrences are set. Rule will stop at whichever comes first.');
-        }
-
-        if (!$rule->getEndDate() && !$rule->getMaxOccurrences()) {
-            $this->addFlash('info', 'No end date or max occurrences set. Rule will run indefinitely until manually stopped.');
-        }
-    }
-
-    /**
      * Show info when deleting rule
+     *
+     * @param mixed $entityManager
+     * @param mixed $entityInstance
      */
     public function deleteEntity($entityManager, $entityInstance): void
     {
@@ -521,9 +491,66 @@ class RecurrenceRuleCrudController extends AbstractCrudController
         $this->addFlash('success', sprintf(
             'Recurrence rule for "%s" deleted. %d task(s) were created from this rule.',
             $taskTitle,
-            $createdCount
+            $createdCount,
         ));
 
         parent::deleteEntity($entityManager, $entityInstance);
+    }
+
+    /**
+     * Validate rule based on recurrence type
+     */
+    private function validateRecurrenceRule(RecurrenceRule $rule): void
+    {
+        $type = $rule->getRecurrenceType();
+
+        switch ($type) {
+            case RecurrenceRule::TYPE_CUSTOM:
+                if (!$rule->getInterval() || $rule->getInterval() < 1) {
+                    $this->addFlash('error', 'Custom type requires interval (number of days) to be set!');
+
+                    throw new RuntimeException('Custom recurrence requires interval');
+                }
+                break;
+
+            case RecurrenceRule::TYPE_WEEKLY:
+                if (!$rule->getDaysOfWeek() || empty($rule->getDaysOfWeek())) {
+                    $this->addFlash('error', 'Weekly type requires days of week to be set!');
+
+                    throw new RuntimeException('Weekly recurrence requires daysOfWeek');
+                }
+                break;
+
+            case RecurrenceRule::TYPE_MONTHLY:
+                if (!$rule->getDayOfMonth() || $rule->getDayOfMonth() < 1 || $rule->getDayOfMonth() > 31) {
+                    $this->addFlash('error', 'Monthly type requires day of month (1-31) to be set!');
+
+                    throw new RuntimeException('Monthly recurrence requires dayOfMonth');
+                }
+                break;
+
+            case RecurrenceRule::TYPE_YEARLY:
+                if (!$rule->getMonthOfYear() || $rule->getMonthOfYear() < 1 || $rule->getMonthOfYear() > 12) {
+                    $this->addFlash('error', 'Yearly type requires month of year (1-12) to be set!');
+
+                    throw new RuntimeException('Yearly recurrence requires monthOfYear');
+                }
+
+                if (!$rule->getDayOfMonth() || $rule->getDayOfMonth() < 1 || $rule->getDayOfMonth() > 31) {
+                    $this->addFlash('error', 'Yearly type requires day of month (1-31) to be set!');
+
+                    throw new RuntimeException('Yearly recurrence requires dayOfMonth');
+                }
+                break;
+        }
+
+        // Validate end conditions
+        if ($rule->getEndDate() && $rule->getMaxOccurrences()) {
+            $this->addFlash('warning', 'Both end date and max occurrences are set. Rule will stop at whichever comes first.');
+        }
+
+        if (!$rule->getEndDate() && !$rule->getMaxOccurrences()) {
+            $this->addFlash('info', 'No end date or max occurrences set. Rule will run indefinitely until manually stopped.');
+        }
     }
 }

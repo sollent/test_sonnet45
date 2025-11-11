@@ -23,8 +23,11 @@ class ValidationTest extends WebTestCase
     use Factories;
 
     private KernelBrowser $client;
+
     private JWTTokenManagerInterface $jwtManager;
+
     private User $user;
+
     private string $token;
 
     protected function setUp(): void
@@ -34,48 +37,11 @@ class ValidationTest extends WebTestCase
 
         // Create authenticated user for tests
         $userProxy = UserFactory::createOne([
-            'email' => 'test-' . uniqid() . '@example.com',
+            'email'    => 'test-' . uniqid() . '@example.com',
             'password' => 'password123',
         ]);
         $this->user = $userProxy->_real();
         $this->token = $this->jwtManager->create($this->user);
-    }
-
-    /**
-     * Helper: Make authenticated request
-     */
-    private function request(
-        string $method,
-        string $uri,
-        string $content = null,
-        array $headers = []
-    ): void {
-        $defaultHeaders = [
-            'HTTP_AUTHORIZATION' => 'Bearer ' . $this->token,
-            'CONTENT_TYPE' => 'application/json',
-        ];
-
-        $this->client->request(
-            $method,
-            $uri,
-            [],
-            [],
-            array_merge($defaultHeaders, $headers),
-            $content
-        );
-    }
-
-    /**
-     * Helper: Get response data
-     */
-    private function getResponseData(): ?array
-    {
-        $content = $this->client->getResponse()->getContent();
-        if (!$content) {
-            return null;
-        }
-        $decoded = json_decode($content, true);
-        return is_array($decoded) ? $decoded : null;
     }
 
     // ==================== JSON Payload Validation ====================
@@ -110,7 +76,7 @@ class ValidationTest extends WebTestCase
             [],
             [],
             ['HTTP_AUTHORIZATION' => 'Bearer ' . $this->token],
-            json_encode(['title' => 'Test Task'])
+            json_encode(['title' => 'Test Task']),
         );
 
         // Assert: Should still work or return specific error
@@ -118,7 +84,7 @@ class ValidationTest extends WebTestCase
         $this->assertContains($response->getStatusCode(), [
             Response::HTTP_CREATED,
             Response::HTTP_BAD_REQUEST,
-            Response::HTTP_UNSUPPORTED_MEDIA_TYPE
+            Response::HTTP_UNSUPPORTED_MEDIA_TYPE,
         ]);
     }
 
@@ -130,14 +96,14 @@ class ValidationTest extends WebTestCase
             'POST',
             '/api/tasks',
             json_encode(['title' => 'Test Task']),
-            ['CONTENT_TYPE' => 'text/plain']
+            ['CONTENT_TYPE' => 'text/plain'],
         );
 
         // Assert: May accept or reject based on Symfony config
         $response = $this->client->getResponse();
         $this->assertContains($response->getStatusCode(), [
             Response::HTTP_CREATED,
-            Response::HTTP_UNSUPPORTED_MEDIA_TYPE
+            Response::HTTP_UNSUPPORTED_MEDIA_TYPE,
         ]);
     }
 
@@ -151,7 +117,7 @@ class ValidationTest extends WebTestCase
         $response = $this->client->getResponse();
         $this->assertContains($response->getStatusCode(), [
             Response::HTTP_BAD_REQUEST,
-            Response::HTTP_UNPROCESSABLE_ENTITY
+            Response::HTTP_UNPROCESSABLE_ENTITY,
         ]);
     }
 
@@ -160,9 +126,9 @@ class ValidationTest extends WebTestCase
     {
         // Act: Send payload with extra unknown fields
         $this->request('POST', '/api/tasks', json_encode([
-            'title' => 'Valid Task',
-            'description' => 'Valid description',
-            'unknownField' => 'Should be ignored',
+            'title'               => 'Valid Task',
+            'description'         => 'Valid description',
+            'unknownField'        => 'Should be ignored',
             'anotherUnknownField' => 123,
         ]));
 
@@ -177,7 +143,7 @@ class ValidationTest extends WebTestCase
     {
         // Act: Send wrong type for priority (expects enum string, gets integer)
         $this->request('POST', '/api/tasks', json_encode([
-            'title' => 'Test Task',
+            'title'    => 'Test Task',
             'priority' => 123, // Should be 'low', 'medium', 'high', etc.
         ]));
 
@@ -185,7 +151,7 @@ class ValidationTest extends WebTestCase
         $response = $this->client->getResponse();
         $this->assertContains($response->getStatusCode(), [
             Response::HTTP_BAD_REQUEST,
-            Response::HTTP_UNPROCESSABLE_ENTITY
+            Response::HTTP_UNPROCESSABLE_ENTITY,
         ]);
     }
 
@@ -201,6 +167,7 @@ class ValidationTest extends WebTestCase
         // Assert
         $this->assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
         $data = $this->getResponseData();
+
         if ($data !== null) {
             $this->assertArrayHasKey('violations', $data);
         }
@@ -217,6 +184,7 @@ class ValidationTest extends WebTestCase
         // Assert
         $this->assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
         $data = $this->getResponseData();
+
         if ($data !== null) {
             $this->assertArrayHasKey('violations', $data);
         }
@@ -227,7 +195,7 @@ class ValidationTest extends WebTestCase
     {
         // Act: Send invalid status enum value
         $this->request('POST', '/api/tasks', json_encode([
-            'title' => 'Test Task',
+            'title'  => 'Test Task',
             'status' => 'invalid_status', // Not a valid TaskStatus enum
         ]));
 
@@ -235,7 +203,7 @@ class ValidationTest extends WebTestCase
         $response = $this->client->getResponse();
         $this->assertContains($response->getStatusCode(), [
             Response::HTTP_BAD_REQUEST,
-            Response::HTTP_UNPROCESSABLE_ENTITY
+            Response::HTTP_UNPROCESSABLE_ENTITY,
         ]);
     }
 
@@ -246,7 +214,7 @@ class ValidationTest extends WebTestCase
     {
         // Act: Send invalid date format
         $this->request('POST', '/api/tasks', json_encode([
-            'title' => 'Test Task',
+            'title'   => 'Test Task',
             'dueDate' => 'not-a-date',
         ]));
 
@@ -255,12 +223,13 @@ class ValidationTest extends WebTestCase
         $this->assertContains($response->getStatusCode(), [
             Response::HTTP_BAD_REQUEST,
             Response::HTTP_UNPROCESSABLE_ENTITY,
-            Response::HTTP_INTERNAL_SERVER_ERROR // May throw exception during date parsing
+            Response::HTTP_INTERNAL_SERVER_ERROR, // May throw exception during date parsing
         ]);
     }
 
     /**
      * @test
+     *
      * @group skip
      * Note: No separate registration endpoint - users are created via fixtures
      */
@@ -280,7 +249,7 @@ class ValidationTest extends WebTestCase
         // Act: Update task with invalid tag data
         $this->request('PUT', '/api/tasks/' . $task->getId(), json_encode([
             'title' => 'Updated Task',
-            'tags' => [
+            'tags'  => [
                 ['name' => ''], // Empty tag name - invalid
             ],
         ]));
@@ -292,7 +261,7 @@ class ValidationTest extends WebTestCase
             Response::HTTP_UNPROCESSABLE_ENTITY,
             Response::HTTP_OK, // May accept and ignore invalid nested data
             Response::HTTP_CREATED,
-            Response::HTTP_INTERNAL_SERVER_ERROR // May throw exception during tag processing
+            Response::HTTP_INTERNAL_SERVER_ERROR, // May throw exception during tag processing
         ]);
     }
 
@@ -307,6 +276,7 @@ class ValidationTest extends WebTestCase
         // Assert
         $this->assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
         $data = $this->getResponseData();
+
         if ($data !== null) {
             $this->assertArrayHasKey('violations', $data);
         }
@@ -318,13 +288,14 @@ class ValidationTest extends WebTestCase
         // Act: Send description exceeding 5000 characters
         $longDescription = str_repeat('a', 5500);
         $this->request('POST', '/api/tasks', json_encode([
-            'title' => 'Test Task',
+            'title'       => 'Test Task',
             'description' => $longDescription,
         ]));
 
         // Assert
         $this->assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
         $data = $this->getResponseData();
+
         if ($data !== null) {
             $this->assertArrayHasKey('violations', $data);
         }
@@ -335,7 +306,7 @@ class ValidationTest extends WebTestCase
     {
         // Act: Send string instead of boolean
         $this->request('POST', '/api/tasks', json_encode([
-            'title' => 'Test Task',
+            'title'      => 'Test Task',
             'isArchived' => 'true', // Should be boolean, not string
         ]));
 
@@ -344,7 +315,7 @@ class ValidationTest extends WebTestCase
         $this->assertContains($response->getStatusCode(), [
             Response::HTTP_CREATED,
             Response::HTTP_BAD_REQUEST,
-            Response::HTTP_UNPROCESSABLE_ENTITY
+            Response::HTTP_UNPROCESSABLE_ENTITY,
         ]);
     }
 
@@ -354,14 +325,53 @@ class ValidationTest extends WebTestCase
         // Act: Send object instead of array for tags
         $this->request('POST', '/api/tasks', json_encode([
             'title' => 'Test Task',
-            'tags' => 'not-an-array', // Should be array
+            'tags'  => 'not-an-array', // Should be array
         ]));
 
         // Assert
         $response = $this->client->getResponse();
         $this->assertContains($response->getStatusCode(), [
             Response::HTTP_BAD_REQUEST,
-            Response::HTTP_UNPROCESSABLE_ENTITY
+            Response::HTTP_UNPROCESSABLE_ENTITY,
         ]);
+    }
+
+    /**
+     * Helper: Make authenticated request
+     */
+    private function request(
+        string $method,
+        string $uri,
+        ?string $content = null,
+        array $headers = [],
+    ): void {
+        $defaultHeaders = [
+            'HTTP_AUTHORIZATION' => 'Bearer ' . $this->token,
+            'CONTENT_TYPE'       => 'application/json',
+        ];
+
+        $this->client->request(
+            $method,
+            $uri,
+            [],
+            [],
+            array_merge($defaultHeaders, $headers),
+            $content,
+        );
+    }
+
+    /**
+     * Helper: Get response data
+     */
+    private function getResponseData(): ?array
+    {
+        $content = $this->client->getResponse()->getContent();
+
+        if (!$content) {
+            return null;
+        }
+        $decoded = json_decode($content, true);
+
+        return is_array($decoded) ? $decoded : null;
     }
 }

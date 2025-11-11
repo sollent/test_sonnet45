@@ -6,6 +6,7 @@ namespace App\Tests\Unit\Service\Recurrence\Strategy;
 
 use App\Entity\RecurrenceRule;
 use App\Service\Recurrence\Strategy\WeeklyRecurrenceStrategy;
+use DateTime;
 use PHPUnit\Framework\TestCase;
 
 class WeeklyRecurrenceStrategyTest extends TestCase
@@ -21,7 +22,7 @@ class WeeklyRecurrenceStrategyTest extends TestCase
     public function testCalculateNextOccurrenceFindsNextDayOfWeek(): void
     {
         // Arrange - Monday 2025-01-13, next occurrence on Wednesday (day 3)
-        $currentDate = new \DateTime('2025-01-13'); // Monday
+        $currentDate = new DateTime('2025-01-13'); // Monday
         $rule = $this->createMock(RecurrenceRule::class);
         $rule->method('getDaysOfWeek')->willReturn([3]); // Wednesday
         $rule->method('getTimeOfDay')->willReturn(null);
@@ -40,8 +41,8 @@ class WeeklyRecurrenceStrategyTest extends TestCase
     /** @test */
     public function testAppliesTimeOfDayIfSet(): void
     {
-        $currentDate = new \DateTime('2025-01-13 09:00:00');
-        $timeOfDay = new \DateTime('14:30:00');
+        $currentDate = new DateTime('2025-01-13 09:00:00');
+        $timeOfDay = new DateTime('14:30:00');
 
         $rule = $this->createMock(RecurrenceRule::class);
         $rule->method('getDaysOfWeek')->willReturn([1]); // Monday
@@ -58,8 +59,8 @@ class WeeklyRecurrenceStrategyTest extends TestCase
     /** @test */
     public function testRespectsEndDate(): void
     {
-        $currentDate = new \DateTime('2025-01-13');
-        $endDate = new \DateTime('2025-01-14');
+        $currentDate = new DateTime('2025-01-13');
+        $endDate = new DateTime('2025-01-14');
 
         $rule = $this->createMock(RecurrenceRule::class);
         $rule->method('getDaysOfWeek')->willReturn([3]); // Wednesday (2025-01-15)
@@ -76,7 +77,7 @@ class WeeklyRecurrenceStrategyTest extends TestCase
     /** @test */
     public function testRespectsMaxOccurrences(): void
     {
-        $currentDate = new \DateTime('2025-01-13');
+        $currentDate = new DateTime('2025-01-13');
 
         $rule = $this->createMock(RecurrenceRule::class);
         $rule->method('getDaysOfWeek')->willReturn([1]);
@@ -100,7 +101,7 @@ class WeeklyRecurrenceStrategyTest extends TestCase
     /** @test */
     public function testGetPreviewDatesReturnsCorrectCount(): void
     {
-        $startDate = new \DateTime('2025-01-13'); // Monday
+        $startDate = new DateTime('2025-01-13'); // Monday
 
         $rule = $this->createMock(RecurrenceRule::class);
         $rule->method('getDaysOfWeek')->willReturn([1, 3, 5]); // Mon, Wed, Fri
@@ -117,8 +118,8 @@ class WeeklyRecurrenceStrategyTest extends TestCase
     /** @test */
     public function testGetPreviewDatesStopsAtEndDate(): void
     {
-        $startDate = new \DateTime('2025-01-13');
-        $endDate = new \DateTime('2025-01-16');
+        $startDate = new DateTime('2025-01-13');
+        $endDate = new DateTime('2025-01-16');
 
         $rule = $this->createMock(RecurrenceRule::class);
         $rule->method('getDaysOfWeek')->willReturn([1, 3, 5]);

@@ -14,6 +14,8 @@ use App\Enum\TaskStatus;
 use App\Repository\Database\TaskRepository;
 use App\Service\TaskService;
 use App\Service\TranslationService;
+use DateTime;
+use Exception;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -23,11 +25,8 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapQueryString;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Security\Http\Attribute\IsGranted;
-use Symfony\Component\Security\Http\Attribute\CurrentUser;
-use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Security\Core\User\User;
-use App\Repository\Database\UserRepository;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/api/tasks', name: 'task_')]
 #[IsGranted('ROLE_USER')]
@@ -37,40 +36,8 @@ class TaskController extends AbstractController
     public function __construct(
         private readonly TaskService $taskService,
         private readonly TaskRepository $taskRepository,
-        private readonly UserRepository $userRepository,
-        private readonly TranslationService $translationService
+        private readonly TranslationService $translationService,
     ) {
-    }
-    
-    /**
-     * Enrich task DTO with translations (including subtasks)
-     */
-    private function enrichDtoWithTranslations(TaskResponseDto $dto, Request $request): TaskResponseDto
-    {
-        $locale = $request->getLocale();
-
-        $dto->priorityLabel = $this->translationService->translatePriority(TaskPriority::from($dto->priority), $locale);
-        $dto->statusLabel = $this->translationService->translateStatus(TaskStatus::from($dto->status), $locale);
-        
-        // Recursively enrich subtasks
-        if (!empty($dto->subtasks)) {
-            foreach ($dto->subtasks as $subtask) {
-                $this->enrichDtoWithTranslations($subtask, $request);
-            }
-        }
-        
-        return $dto;
-    }
-    
-    /**
-     * Enrich multiple task DTOs with translations
-     */
-    private function enrichDtosWithTranslations(array $dtos, Request $request): array
-    {
-        foreach ($dtos as $dto) {
-            $this->enrichDtoWithTranslations($dto, $request);
-        }
-        return $dtos;
     }
 
     #[Route('', name: 'list', methods: ['GET'])]
@@ -81,50 +48,50 @@ class TaskController extends AbstractController
                 name: 'view',
                 in: 'query',
                 required: false,
-                schema: new OA\Schema(type: 'string', enum: ['today', 'overdue', 'upcoming', 'all', 'unscheduled'])
+                schema: new OA\Schema(type: 'string', enum: ['today', 'overdue', 'upcoming', 'all', 'unscheduled']),
             ),
             new OA\Parameter(
                 name: 'search',
                 in: 'query',
                 required: false,
-                schema: new OA\Schema(type: 'string')
+                schema: new OA\Schema(type: 'string'),
             ),
             new OA\Parameter(
                 name: 'tags',
                 in: 'query',
                 required: false,
-                schema: new OA\Schema(type: 'array', items: new OA\Items(type: 'integer'))
+                schema: new OA\Schema(type: 'array', items: new OA\Items(type: 'integer')),
             ),
             new OA\Parameter(
                 name: 'completed',
                 in: 'query',
                 required: false,
-                schema: new OA\Schema(type: 'boolean')
+                schema: new OA\Schema(type: 'boolean'),
             ),
             new OA\Parameter(
                 name: 'dateFrom',
                 in: 'query',
                 required: false,
-                schema: new OA\Schema(type: 'string', format: 'date')
+                schema: new OA\Schema(type: 'string', format: 'date'),
             ),
             new OA\Parameter(
                 name: 'dateTo',
                 in: 'query',
                 required: false,
-                schema: new OA\Schema(type: 'string', format: 'date')
+                schema: new OA\Schema(type: 'string', format: 'date'),
             ),
             new OA\Parameter(
                 name: 'priorities',
                 in: 'query',
                 required: false,
-                schema: new OA\Schema(type: 'array', items: new OA\Items(type: 'string'))
+                schema: new OA\Schema(type: 'array', items: new OA\Items(type: 'string')),
             ),
             new OA\Parameter(
                 name: 'statuses',
                 in: 'query',
                 required: false,
-                schema: new OA\Schema(type: 'array', items: new OA\Items(type: 'string'))
-            )
+                schema: new OA\Schema(type: 'array', items: new OA\Items(type: 'string')),
+            ),
         ],
         responses: [
             new OA\Response(
@@ -132,21 +99,22 @@ class TaskController extends AbstractController
                 description: 'List of tasks',
                 content: new OA\JsonContent(
                     type: 'array',
-                    items: new OA\Items(ref: new Model(type: TaskResponseDto::class))
-                )
-            )
-        ]
+                    items: new OA\Items(ref: new Model(type: TaskResponseDto::class)),
+                ),
+            ),
+        ],
     )]
     public function list(
         Request $request,
-        #[MapQueryString] TaskFilterDto $filters = new TaskFilterDto()
+        #[MapQueryString]
+        TaskFilterDto $filters = new TaskFilterDto(),
     ): JsonResponse {
         $user = $this->getUser();
 
         // Get pagination parameters with default limit for security
         // Always enforce limit to prevent loading ALL tasks (DoS protection)
-        $limit = $request->query->get('limit') ? (int)$request->query->get('limit') : 150;
-        $offset = $request->query->get('offset') ? (int)$request->query->get('offset') : 0;
+        $limit = $request->query->get('limit') ? (int) $request->query->get('limit') : 150;
+        $offset = $request->query->get('offset') ? (int) $request->query->get('offset') : 0;
 
         // Get onlyWithSubtasks parameter (default: false - show all tasks)
         // When true: show ONLY tasks that have subtasks (complex tasks)
@@ -155,6 +123,7 @@ class TaskController extends AbstractController
 
         // Handle search
         $search = $request->query->get('search');
+
         if ($search) {
             $tasks = $this->taskService->searchTasks($user, $search, $filters);
         }
@@ -163,21 +132,21 @@ class TaskController extends AbstractController
             $view = $request->query->get('view', 'all');
 
             $tasks = match ($view) {
-                'today' => $this->taskService->getTodayTasks($user, $filters, $onlyWithSubtasks),
-                'overdue' => $this->taskService->getOverdueTasksPaginated($user, 1, 50, $filters, $onlyWithSubtasks)['tasks'],
-                'upcoming' => $this->taskService->getUpcomingTasks($user, 30, $filters, $onlyWithSubtasks),
+                'today'       => $this->taskService->getTodayTasks($user, $filters, $onlyWithSubtasks),
+                'overdue'     => $this->taskService->getOverdueTasksPaginated($user, 1, 50, $filters, $onlyWithSubtasks)['tasks'],
+                'upcoming'    => $this->taskService->getUpcomingTasks($user, 30, $filters, $onlyWithSubtasks),
                 'unscheduled' => $this->taskService->getUnscheduledTasksPaginated($user, 1, 50, $filters, $onlyWithSubtasks)['tasks'],
-                default => $this->taskService->getActiveTasks($user, $filters, $limit, $offset, $onlyWithSubtasks)
+                default       => $this->taskService->getActiveTasks($user, $filters, $limit, $offset, $onlyWithSubtasks)
             };
         }
 
         $response = array_map(
-            fn(Task $task) => TaskResponseDto::fromEntity($task, false, false),
-            $tasks
+            fn (Task $task) => TaskResponseDto::fromEntity($task, false, false),
+            $tasks,
         );
-        
+
         $response = $this->enrichDtosWithTranslations($response, $request);
-        
+
         return $this->json($response);
     }
 
@@ -189,15 +158,16 @@ class TaskController extends AbstractController
             type: 'object',
             properties: [
                 new OA\Property(property: 'tasks', type: 'array', items: new OA\Items(ref: '#/components/schemas/TaskList')),
-                new OA\Property(property: 'total', type: 'integer')
-            ]
-        )
+                new OA\Property(property: 'total', type: 'integer'),
+            ],
+        ),
     )]
     #[OA\Parameter(name: 'page', in: 'query', description: 'The page number', schema: new OA\Schema(type: 'integer', default: 1))]
     #[OA\Parameter(name: 'limit', in: 'query', description: 'The number of items per page', schema: new OA\Schema(type: 'integer', default: 20))]
     public function getOverdueTasks(
         Request $request,
-        #[MapQueryString] TaskFilterDto $filters = new TaskFilterDto()
+        #[MapQueryString]
+        TaskFilterDto $filters = new TaskFilterDto(),
     ): JsonResponse {
         /** @var User $user */
         $user = $this->getUser();
@@ -207,8 +177,8 @@ class TaskController extends AbstractController
 
         $data = $this->taskService->getOverdueTasksPaginated($user, $page, $limit, $filters);
         $data['tasks'] = array_map(
-            fn(Task $task) => TaskResponseDto::fromEntity($task, false, false),
-            $data['tasks']
+            fn (Task $task) => TaskResponseDto::fromEntity($task, false, false),
+            $data['tasks'],
         );
         $data['tasks'] = $this->enrichDtosWithTranslations($data['tasks'], $request);
 
@@ -223,15 +193,16 @@ class TaskController extends AbstractController
             type: 'object',
             properties: [
                 new OA\Property(property: 'tasks', type: 'array', items: new OA\Items(ref: '#/components/schemas/TaskList')),
-                new OA\Property(property: 'total', type: 'integer')
-            ]
-        )
+                new OA\Property(property: 'total', type: 'integer'),
+            ],
+        ),
     )]
     #[OA\Parameter(name: 'page', in: 'query', description: 'The page number', schema: new OA\Schema(type: 'integer', default: 1))]
     #[OA\Parameter(name: 'limit', in: 'query', description: 'The number of items per page', schema: new OA\Schema(type: 'integer', default: 20))]
     public function getUnscheduledTasks(
         Request $request,
-        #[MapQueryString] TaskFilterDto $filters = new TaskFilterDto()
+        #[MapQueryString]
+        TaskFilterDto $filters = new TaskFilterDto(),
     ): JsonResponse {
         /** @var User $user */
         $user = $this->getUser();
@@ -241,8 +212,8 @@ class TaskController extends AbstractController
 
         $data = $this->taskService->getUnscheduledTasksPaginated($user, $page, $limit, $filters);
         $data['tasks'] = array_map(
-            fn(Task $task) => TaskResponseDto::fromEntity($task, false, false),
-            $data['tasks']
+            fn (Task $task) => TaskResponseDto::fromEntity($task, false, false),
+            $data['tasks'],
         );
         $data['tasks'] = $this->enrichDtosWithTranslations($data['tasks'], $request);
 
@@ -263,16 +234,16 @@ class TaskController extends AbstractController
                         new OA\Property(property: 'in_progress', type: 'integer'),
                         new OA\Property(property: 'completed', type: 'integer'),
                         new OA\Property(property: 'cancelled', type: 'integer'),
-                        new OA\Property(property: 'overdue', type: 'integer')
-                    ]
-                )
-            )
-        ]
+                        new OA\Property(property: 'overdue', type: 'integer'),
+                    ],
+                ),
+            ),
+        ],
     )]
     public function statistics(): JsonResponse
     {
         $stats = $this->taskService->getTaskStatistics($this->getUser());
-        
+
         return $this->json($stats);
     }
 
@@ -286,14 +257,14 @@ class TaskController extends AbstractController
                     new OA\Property(
                         property: 'taskIds',
                         type: 'array',
-                        items: new OA\Items(type: 'integer')
-                    )
-                ]
-            )
+                        items: new OA\Items(type: 'integer'),
+                    ),
+                ],
+            ),
         ),
         responses: [
-            new OA\Response(response: 204, description: 'Tasks reordered')
-        ]
+            new OA\Response(response: 204, description: 'Tasks reordered'),
+        ],
     )]
     public function reorder(Request $request): Response
     {
@@ -307,8 +278,10 @@ class TaskController extends AbstractController
 
         // Validate that all task IDs exist and belong to the user
         $user = $this->getUser();
+
         foreach ($taskIds as $taskId) {
             $task = $this->taskRepository->find($taskId);
+
             if (!$task || $task->getUser() !== $user) {
                 return $this->json(['error' => 'Invalid task ID: ' . $taskId], Response::HTTP_BAD_REQUEST);
             }
@@ -326,24 +299,24 @@ class TaskController extends AbstractController
             new OA\Response(
                 response: 200,
                 description: 'Task details',
-                content: new OA\JsonContent(ref: new Model(type: TaskResponseDto::class))
+                content: new OA\JsonContent(ref: new Model(type: TaskResponseDto::class)),
             ),
-            new OA\Response(response: 404, description: 'Task not found')
-        ]
+            new OA\Response(response: 404, description: 'Task not found'),
+        ],
     )]
     public function show(int $id, Request $request): JsonResponse
     {
         $task = $this->taskRepository->findWithSubtasks($id);
-        
+
         if (!$task) {
             throw $this->createNotFoundException('Task not found');
         }
-        
+
         $this->denyAccessUnlessGranted('view', $task);
-        
+
         $dto = TaskResponseDto::fromEntity($task, true);
         $this->enrichDtoWithTranslations($dto, $request);
-        
+
         return $this->json($dto);
     }
 
@@ -352,24 +325,24 @@ class TaskController extends AbstractController
         summary: 'Create new task',
         requestBody: new OA\RequestBody(
             required: true,
-            content: new OA\JsonContent(ref: new Model(type: CreateTaskDto::class))
+            content: new OA\JsonContent(ref: new Model(type: CreateTaskDto::class)),
         ),
         responses: [
             new OA\Response(
                 response: 201,
                 description: 'Task created',
-                content: new OA\JsonContent(ref: new Model(type: TaskResponseDto::class))
+                content: new OA\JsonContent(ref: new Model(type: TaskResponseDto::class)),
             ),
-            new OA\Response(response: 400, description: 'Invalid input')
-        ]
+            new OA\Response(response: 400, description: 'Invalid input'),
+        ],
     )]
     public function create(#[MapRequestPayload] CreateTaskDto $dto, Request $request): JsonResponse
     {
         $task = $this->taskService->createTask($dto, $this->getUser());
-        
+
         $responseDto = TaskResponseDto::fromEntity($task, true);
         $this->enrichDtoWithTranslations($responseDto, $request);
-        
+
         return $this->json($responseDto, Response::HTTP_CREATED);
     }
 
@@ -378,27 +351,27 @@ class TaskController extends AbstractController
         summary: 'Update task',
         requestBody: new OA\RequestBody(
             required: true,
-            content: new OA\JsonContent(ref: new Model(type: UpdateTaskDto::class))
+            content: new OA\JsonContent(ref: new Model(type: UpdateTaskDto::class)),
         ),
         responses: [
             new OA\Response(
                 response: 200,
                 description: 'Task updated',
-                content: new OA\JsonContent(ref: new Model(type: TaskResponseDto::class))
+                content: new OA\JsonContent(ref: new Model(type: TaskResponseDto::class)),
             ),
             new OA\Response(response: 404, description: 'Task not found'),
-            new OA\Response(response: 403, description: 'Access denied')
-        ]
+            new OA\Response(response: 403, description: 'Access denied'),
+        ],
     )]
     public function update(Task $task, #[MapRequestPayload] UpdateTaskDto $dto, Request $request): JsonResponse
     {
         $this->denyAccessUnlessGranted('edit', $task);
-        
+
         $updatedTask = $this->taskService->updateTask($task, $dto, $this->getUser());
-        
+
         $responseDto = TaskResponseDto::fromEntity($updatedTask, true);
         $this->enrichDtoWithTranslations($responseDto, $request);
-        
+
         return $this->json($responseDto);
     }
 
@@ -408,15 +381,15 @@ class TaskController extends AbstractController
         responses: [
             new OA\Response(response: 204, description: 'Task deleted'),
             new OA\Response(response: 404, description: 'Task not found'),
-            new OA\Response(response: 403, description: 'Access denied')
-        ]
+            new OA\Response(response: 403, description: 'Access denied'),
+        ],
     )]
     public function delete(Task $task): Response
     {
         $this->denyAccessUnlessGranted('delete', $task);
-        
+
         $this->taskService->deleteTask($task, $this->getUser());
-        
+
         return new Response(null, Response::HTTP_NO_CONTENT);
     }
 
@@ -427,21 +400,21 @@ class TaskController extends AbstractController
             new OA\Response(
                 response: 200,
                 description: 'Task completed',
-                content: new OA\JsonContent(ref: new Model(type: TaskResponseDto::class))
+                content: new OA\JsonContent(ref: new Model(type: TaskResponseDto::class)),
             ),
             new OA\Response(response: 404, description: 'Task not found'),
-            new OA\Response(response: 403, description: 'Access denied')
-        ]
+            new OA\Response(response: 403, description: 'Access denied'),
+        ],
     )]
     public function complete(Task $task, Request $request): JsonResponse
     {
         $this->denyAccessUnlessGranted('edit', $task);
-        
+
         $completedTask = $this->taskService->completeTask($task, $this->getUser());
-        
+
         $dto = TaskResponseDto::fromEntity($completedTask, true);
         $this->enrichDtoWithTranslations($dto, $request);
-        
+
         return $this->json($dto);
     }
 
@@ -452,21 +425,21 @@ class TaskController extends AbstractController
             new OA\Response(
                 response: 200,
                 description: 'Task status toggled',
-                content: new OA\JsonContent(ref: new Model(type: TaskResponseDto::class))
+                content: new OA\JsonContent(ref: new Model(type: TaskResponseDto::class)),
             ),
             new OA\Response(response: 404, description: 'Task not found'),
-            new OA\Response(response: 403, description: 'Access denied')
-        ]
+            new OA\Response(response: 403, description: 'Access denied'),
+        ],
     )]
     public function toggle(Task $task, Request $request): JsonResponse
     {
         $this->denyAccessUnlessGranted('edit', $task);
-        
+
         $toggledTask = $this->taskService->toggleTaskCompletion($task, $this->getUser());
-        
+
         $dto = TaskResponseDto::fromEntity($toggledTask, true);
         $this->enrichDtoWithTranslations($dto, $request);
-        
+
         return $this->json($dto);
     }
 
@@ -477,21 +450,21 @@ class TaskController extends AbstractController
             new OA\Response(
                 response: 200,
                 description: 'Task archived',
-                content: new OA\JsonContent(ref: new Model(type: TaskResponseDto::class))
+                content: new OA\JsonContent(ref: new Model(type: TaskResponseDto::class)),
             ),
             new OA\Response(response: 404, description: 'Task not found'),
-            new OA\Response(response: 403, description: 'Access denied')
-        ]
+            new OA\Response(response: 403, description: 'Access denied'),
+        ],
     )]
     public function archive(Task $task, Request $request): JsonResponse
     {
         $this->denyAccessUnlessGranted('edit', $task);
-        
+
         $archivedTask = $this->taskService->archiveTask($task, $this->getUser());
-        
+
         $dto = TaskResponseDto::fromEntity($archivedTask, true);
         $this->enrichDtoWithTranslations($dto, $request);
-        
+
         return $this->json($dto);
     }
 
@@ -502,21 +475,21 @@ class TaskController extends AbstractController
             new OA\Response(
                 response: 200,
                 description: 'Task unarchived',
-                content: new OA\JsonContent(ref: new Model(type: TaskResponseDto::class))
+                content: new OA\JsonContent(ref: new Model(type: TaskResponseDto::class)),
             ),
             new OA\Response(response: 404, description: 'Task not found'),
-            new OA\Response(response: 403, description: 'Access denied')
-        ]
+            new OA\Response(response: 403, description: 'Access denied'),
+        ],
     )]
     public function unarchive(Task $task, Request $request): JsonResponse
     {
         $this->denyAccessUnlessGranted('edit', $task);
-        
+
         $unarchivedTask = $this->taskService->unarchiveTask($task, $this->getUser());
-        
+
         $dto = TaskResponseDto::fromEntity($unarchivedTask, true);
         $this->enrichDtoWithTranslations($dto, $request);
-        
+
         return $this->json($dto);
     }
 
@@ -526,7 +499,7 @@ class TaskController extends AbstractController
         parameters: [
             new OA\Parameter(name: 'year', in: 'query', required: true, schema: new OA\Schema(type: 'integer')),
             new OA\Parameter(name: 'month', in: 'query', required: true, schema: new OA\Schema(type: 'integer')),
-            new OA\Parameter(name: 'includeCompleted', in: 'query', required: false, schema: new OA\Schema(type: 'boolean'))
+            new OA\Parameter(name: 'includeCompleted', in: 'query', required: false, schema: new OA\Schema(type: 'boolean')),
         ],
         responses: [
             new OA\Response(
@@ -534,15 +507,15 @@ class TaskController extends AbstractController
                 description: 'Tasks for month',
                 content: new OA\JsonContent(
                     type: 'array',
-                    items: new OA\Items(ref: new Model(type: TaskResponseDto::class))
-                )
-            )
-        ]
+                    items: new OA\Items(ref: new Model(type: TaskResponseDto::class)),
+                ),
+            ),
+        ],
     )]
     public function calendarMonth(Request $request): JsonResponse
     {
-        $year = $request->query->getInt('year', (int)date('Y'));
-        $month = $request->query->getInt('month', (int)date('m'));
+        $year = $request->query->getInt('year', (int) date('Y'));
+        $month = $request->query->getInt('month', (int) date('m'));
         $includeCompleted = $request->query->getBoolean('includeCompleted', true);
 
         // OPTIMIZED: Use raw SQL queries (4 queries instead of 2500+)
@@ -550,7 +523,7 @@ class TaskController extends AbstractController
         $tasksRawData = $this->taskRepository->findTasksForMonthRaw($this->getUser(), $year, $month, $includeCompleted);
 
         // Create DTOs directly from raw data (bypasses all Doctrine lazy loading)
-        $dtos = array_map(fn($taskData) => TaskResponseDto::fromRawData($taskData), $tasksRawData);
+        $dtos = array_map(fn ($taskData) => TaskResponseDto::fromRawData($taskData), $tasksRawData);
         $dtos = $this->enrichDtosWithTranslations($dtos, $request);
 
         return $this->json($dtos);
@@ -561,7 +534,7 @@ class TaskController extends AbstractController
         summary: 'Get tasks for calendar week view',
         parameters: [
             new OA\Parameter(name: 'weekStart', in: 'query', required: true, schema: new OA\Schema(type: 'string', format: 'date')),
-            new OA\Parameter(name: 'includeCompleted', in: 'query', required: false, schema: new OA\Schema(type: 'boolean'))
+            new OA\Parameter(name: 'includeCompleted', in: 'query', required: false, schema: new OA\Schema(type: 'boolean')),
         ],
         responses: [
             new OA\Response(
@@ -569,21 +542,21 @@ class TaskController extends AbstractController
                 description: 'Tasks for week',
                 content: new OA\JsonContent(
                     type: 'array',
-                    items: new OA\Items(ref: new Model(type: TaskResponseDto::class))
-                )
-            )
-        ]
+                    items: new OA\Items(ref: new Model(type: TaskResponseDto::class)),
+                ),
+            ),
+        ],
     )]
     public function calendarWeek(Request $request): JsonResponse
     {
-        $weekStartStr = $request->query->get('weekStart', (new \DateTime('monday this week'))->format('Y-m-d'));
-        $weekStart = new \DateTime($weekStartStr);
+        $weekStartStr = $request->query->get('weekStart', (new DateTime('monday this week'))->format('Y-m-d'));
+        $weekStart = new DateTime($weekStartStr);
         $includeCompleted = $request->query->getBoolean('includeCompleted', true);
 
         // OPTIMIZED: Use raw SQL queries (4 queries instead of 2500+)
         $tasksRawData = $this->taskRepository->findTasksForWeekRaw($this->getUser(), $weekStart, $includeCompleted);
 
-        $dtos = array_map(fn($taskData) => TaskResponseDto::fromRawData($taskData), $tasksRawData);
+        $dtos = array_map(fn ($taskData) => TaskResponseDto::fromRawData($taskData), $tasksRawData);
         $dtos = $this->enrichDtosWithTranslations($dtos, $request);
 
         return $this->json($dtos);
@@ -594,7 +567,7 @@ class TaskController extends AbstractController
         summary: 'Get tasks for specific day',
         parameters: [
             new OA\Parameter(name: 'date', in: 'query', required: true, schema: new OA\Schema(type: 'string', format: 'date')),
-            new OA\Parameter(name: 'includeCompleted', in: 'query', required: false, schema: new OA\Schema(type: 'boolean'))
+            new OA\Parameter(name: 'includeCompleted', in: 'query', required: false, schema: new OA\Schema(type: 'boolean')),
         ],
         responses: [
             new OA\Response(
@@ -602,18 +575,18 @@ class TaskController extends AbstractController
                 description: 'Tasks for day',
                 content: new OA\JsonContent(
                     type: 'array',
-                    items: new OA\Items(ref: new Model(type: TaskResponseDto::class))
-                )
-            )
-        ]
+                    items: new OA\Items(ref: new Model(type: TaskResponseDto::class)),
+                ),
+            ),
+        ],
     )]
     public function calendarDay(Request $request): JsonResponse
     {
         $dateStr = $request->query->get('date', date('Y-m-d'));
 
         try {
-            $date = new \DateTime($dateStr);
-        } catch (\Exception $e) {
+            $date = new DateTime($dateStr);
+        } catch (Exception $e) {
             return $this->json(['error' => 'Invalid date format. Expected Y-m-d format.'], Response::HTTP_BAD_REQUEST);
         }
 
@@ -622,9 +595,41 @@ class TaskController extends AbstractController
         // OPTIMIZED: Use raw SQL queries (4 queries instead of 2500+)
         $tasksRawData = $this->taskRepository->findTasksByDayRaw($this->getUser(), $date, $includeCompleted);
 
-        $dtos = array_map(fn($taskData) => TaskResponseDto::fromRawData($taskData), $tasksRawData);
+        $dtos = array_map(fn ($taskData) => TaskResponseDto::fromRawData($taskData), $tasksRawData);
         $dtos = $this->enrichDtosWithTranslations($dtos, $request);
 
         return $this->json($dtos);
+    }
+
+    /**
+     * Enrich task DTO with translations (including subtasks)
+     */
+    private function enrichDtoWithTranslations(TaskResponseDto $dto, Request $request): TaskResponseDto
+    {
+        $locale = $request->getLocale();
+
+        $dto->priorityLabel = $this->translationService->translatePriority(TaskPriority::from($dto->priority), $locale);
+        $dto->statusLabel = $this->translationService->translateStatus(TaskStatus::from($dto->status), $locale);
+
+        // Recursively enrich subtasks
+        if (!empty($dto->subtasks)) {
+            foreach ($dto->subtasks as $subtask) {
+                $this->enrichDtoWithTranslations($subtask, $request);
+            }
+        }
+
+        return $dto;
+    }
+
+    /**
+     * Enrich multiple task DTOs with translations
+     */
+    private function enrichDtosWithTranslations(array $dtos, Request $request): array
+    {
+        foreach ($dtos as $dto) {
+            $this->enrichDtoWithTranslations($dto, $request);
+        }
+
+        return $dtos;
     }
 }

@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace App\Controller\Admin;
 
-use App\Entity\TaskAttachment;
 use App\Entity\Task;
+use App\Entity\TaskAttachment;
 use App\Entity\User;
-use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
 use EasyCorp\Bundle\EasyAdminBundle\Collection\FieldCollection;
 use EasyCorp\Bundle\EasyAdminBundle\Collection\FilterCollection;
@@ -20,21 +19,16 @@ use EasyCorp\Bundle\EasyAdminBundle\Dto\EntityDto;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\SearchDto;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\Field;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
-use EasyCorp\Bundle\EasyAdminBundle\Field\Field;
-use EasyCorp\Bundle\EasyAdminBundle\Filter\EntityFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\ChoiceFilter;
+use EasyCorp\Bundle\EasyAdminBundle\Filter\EntityFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\NumericFilter;
 
 class TaskAttachmentCrudController extends AbstractCrudController
 {
-    public function __construct(
-        private readonly EntityManagerInterface $entityManager
-    ) {
-    }
-
     public static function getEntityFqcn(): string
     {
         return TaskAttachment::class;
@@ -48,7 +42,7 @@ class TaskAttachmentCrudController extends AbstractCrudController
             ->setPageTitle('index', 'Attachment Management')
             ->setPageTitle('detail', fn (TaskAttachment $attachment) => sprintf(
                 'Attachment: %s',
-                $attachment->getOriginalName()
+                $attachment->getOriginalName(),
             ))
 
             // Pagination - reduced for performance
@@ -80,6 +74,7 @@ class TaskAttachmentCrudController extends AbstractCrudController
             ->setCrudController(TaskCrudController::class)
             ->formatValue(function ($value, TaskAttachment $attachment) {
                 $task = $attachment->getTask();
+
                 if (!$task) {
                     return '<span class="badge badge-secondary">No task</span>';
                 }
@@ -92,7 +87,7 @@ class TaskAttachmentCrudController extends AbstractCrudController
                     $statusIcon,
                     $statusClass,
                     htmlspecialchars($task->getTitle()),
-                    $task->getId()
+                    $task->getId(),
                 );
             })
             ->setColumns('col-md-6')
@@ -102,6 +97,7 @@ class TaskAttachmentCrudController extends AbstractCrudController
         yield AssociationField::new('task', 'Task')
             ->formatValue(function ($value, TaskAttachment $attachment) {
                 $task = $attachment->getTask();
+
                 return $task ? sprintf('#%d: %s', $task->getId(), $task->getTitle()) : '-';
             })
             ->hideOnDetail()
@@ -120,10 +116,10 @@ class TaskAttachmentCrudController extends AbstractCrudController
             ->formatValue(function ($value, TaskAttachment $attachment) {
                 $type = $attachment->getFileType();
                 $iconMap = [
-                    'image' => ['icon' => 'file-image-o', 'class' => 'success'],
+                    'image'    => ['icon' => 'file-image-o', 'class' => 'success'],
                     'document' => ['icon' => 'file-text-o', 'class' => 'primary'],
-                    'video' => ['icon' => 'file-video-o', 'class' => 'warning'],
-                    'other' => ['icon' => 'file-o', 'class' => 'secondary'],
+                    'video'    => ['icon' => 'file-video-o', 'class' => 'warning'],
+                    'other'    => ['icon' => 'file-o', 'class' => 'secondary'],
                 ];
 
                 $config = $iconMap[$type] ?? $iconMap['other'];
@@ -132,7 +128,7 @@ class TaskAttachmentCrudController extends AbstractCrudController
                     '<span class="badge badge-%s"><i class="fa fa-%s"></i> %s</span>',
                     $config['class'],
                     $config['icon'],
-                    strtoupper($type)
+                    strtoupper($type),
                 );
             })
             ->setColumns('col-md-2');
@@ -161,7 +157,7 @@ class TaskAttachmentCrudController extends AbstractCrudController
             ->formatValue(function ($value, TaskAttachment $attachment) {
                 return sprintf(
                     '<span class="badge badge-info">%s</span>',
-                    $attachment->getHumanReadableSize()
+                    $attachment->getHumanReadableSize(),
                 );
             })
             ->setColumns('col-md-2');
@@ -190,7 +186,7 @@ class TaskAttachmentCrudController extends AbstractCrudController
                             <i class="fa fa-download"></i> Download
                         </a>',
                         htmlspecialchars($attachment->getFilePath()),
-                        htmlspecialchars($attachment->getOriginalName())
+                        htmlspecialchars($attachment->getOriginalName()),
                     );
 
                     // Preview button (only for images)
@@ -199,7 +195,7 @@ class TaskAttachmentCrudController extends AbstractCrudController
                             '<a href="%s" target="_blank" class="btn btn-info">
                                 <i class="fa fa-eye"></i> View Full Size
                             </a>',
-                            htmlspecialchars($attachment->getFilePath())
+                            htmlspecialchars($attachment->getFilePath()),
                         );
                     }
 
@@ -219,7 +215,7 @@ class TaskAttachmentCrudController extends AbstractCrudController
                             htmlspecialchars($attachment->getFilePath()),
                             htmlspecialchars($attachment->getOriginalName()),
                             $attachment->getHumanReadableSize(),
-                            $attachment->getMimeType()
+                            $attachment->getMimeType(),
                         );
                     } else {
                         // For non-images, show file info card
@@ -233,7 +229,7 @@ class TaskAttachmentCrudController extends AbstractCrudController
                             </div>',
                             strtoupper($attachment->getFileType()),
                             $attachment->getHumanReadableSize(),
-                            $attachment->getMimeType()
+                            $attachment->getMimeType(),
                         );
                     }
 
@@ -256,10 +252,10 @@ class TaskAttachmentCrudController extends AbstractCrudController
 
             // File type filter
             ->add(ChoiceFilter::new('fileType', 'File Type')->setChoices([
-                'Images' => 'image',
+                'Images'    => 'image',
                 'Documents' => 'document',
-                'Videos' => 'video',
-                'Other' => 'other',
+                'Videos'    => 'video',
+                'Other'     => 'other',
             ]))
 
             // File size filter (in bytes)
@@ -276,18 +272,27 @@ class TaskAttachmentCrudController extends AbstractCrudController
             ->add(Crud::PAGE_INDEX, Action::DETAIL)
 
             // Customize actions
-            ->update(Crud::PAGE_INDEX, Action::EDIT, fn (Action $action) => $action
-                ->setIcon('fa fa-edit')
-                ->setLabel(false)
-                ->displayIf(fn (TaskAttachment $attachment) => false) // Disable edit in index
+            ->update(
+                Crud::PAGE_INDEX,
+                Action::EDIT,
+                fn (Action $action) => $action
+                    ->setIcon('fa fa-edit')
+                    ->setLabel(false)
+                    ->displayIf(fn (TaskAttachment $attachment) => false), // Disable edit in index
             )
-            ->update(Crud::PAGE_INDEX, Action::DELETE, fn (Action $action) => $action
-                ->setIcon('fa fa-trash')
-                ->setLabel(false)
+            ->update(
+                Crud::PAGE_INDEX,
+                Action::DELETE,
+                fn (Action $action) => $action
+                    ->setIcon('fa fa-trash')
+                    ->setLabel(false),
             )
-            ->update(Crud::PAGE_INDEX, Action::DETAIL, fn (Action $action) => $action
-                ->setIcon('fa fa-eye')
-                ->setLabel(false)
+            ->update(
+                Crud::PAGE_INDEX,
+                Action::DETAIL,
+                fn (Action $action) => $action
+                    ->setIcon('fa fa-eye')
+                    ->setLabel(false),
             );
     }
 
@@ -298,21 +303,24 @@ class TaskAttachmentCrudController extends AbstractCrudController
         SearchDto $searchDto,
         EntityDto $entityDto,
         FieldCollection $fields,
-        FilterCollection $filters
+        FilterCollection $filters,
     ): QueryBuilder {
         $qb = parent::createIndexQueryBuilder($searchDto, $entityDto, $fields, $filters);
 
         // Eager load task and uploadedBy to avoid N+1 queries
         $qb->leftJoin('entity.task', 't')
-           ->addSelect('t')
-           ->leftJoin('entity.uploadedBy', 'u')
-           ->addSelect('u');
+            ->addSelect('t')
+            ->leftJoin('entity.uploadedBy', 'u')
+            ->addSelect('u');
 
         return $qb;
     }
 
     /**
      * Show warning when deleting attachment
+     *
+     * @param mixed $entityManager
+     * @param mixed $entityInstance
      */
     public function deleteEntity($entityManager, $entityInstance): void
     {
@@ -325,7 +333,7 @@ class TaskAttachmentCrudController extends AbstractCrudController
         $this->addFlash('warning', sprintf(
             'Attachment "%s" removed from task "%s". Note: Physical file may still exist on server.',
             $fileName,
-            $taskTitle
+            $taskTitle,
         ));
 
         parent::deleteEntity($entityManager, $entityInstance);

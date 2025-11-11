@@ -27,6 +27,7 @@ class UserRegistrationService
     public function register(UserRegistrationRequestDto $userRegistrationDto): UserInterface
     {
         $userExists = $this->userRepository->findOneBy(['email' => $userRegistrationDto->email]);
+
         if ($userExists) {
             throw new UserRegistrationException($this->translator->trans('user_registration.messages.exists_with_such_email'));
         }
@@ -36,7 +37,7 @@ class UserRegistrationService
 
         $hashedPassword = $this->passwordHasher->hashPassword(
             $user,
-            $userRegistrationDto->password
+            $userRegistrationDto->password,
         );
 
         $user->setPassword($hashedPassword);

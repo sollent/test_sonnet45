@@ -10,6 +10,7 @@ use App\Entity\User;
 use App\TestsUtilities\Factory\RecurrenceRuleFactory;
 use App\TestsUtilities\Factory\TaskFactory;
 use App\TestsUtilities\Factory\UserFactory;
+use DateTimeImmutable;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -23,8 +24,11 @@ class RecurrenceControllerTest extends WebTestCase
     use Factories;
 
     private KernelBrowser $client;
+
     private JWTTokenManagerInterface $jwtManager;
+
     private User $user;
+
     private string $token;
 
     protected function setUp(): void
@@ -34,41 +38,11 @@ class RecurrenceControllerTest extends WebTestCase
 
         // Create authenticated user for tests
         $userProxy = UserFactory::createOne([
-            'email' => 'test-' . uniqid() . '@example.com',
+            'email'    => 'test-' . uniqid() . '@example.com',
             'password' => 'password123',
         ]);
         $this->user = $userProxy->_real();
         $this->token = $this->jwtManager->create($this->user);
-    }
-
-    /**
-     * Helper: Make authenticated request
-     */
-    private function request(
-        string $method,
-        string $uri,
-        array $parameters = [],
-        string $content = null
-    ): void {
-        $this->client->request(
-            $method,
-            $uri,
-            $parameters,
-            [],
-            [
-                'HTTP_AUTHORIZATION' => 'Bearer ' . $this->token,
-                'CONTENT_TYPE' => 'application/json',
-            ],
-            $content
-        );
-    }
-
-    /**
-     * Helper: Get response data
-     */
-    private function getResponseData(): array
-    {
-        return json_decode($this->client->getResponse()->getContent(), true);
     }
 
     // ==================== GET /api/recurrence (List Rules) ====================
@@ -81,9 +55,9 @@ class RecurrenceControllerTest extends WebTestCase
         for ($i = 0; $i < 3; $i++) {
             $task = TaskFactory::createOne(['user' => $this->user]);
             RecurrenceRuleFactory::createOne([
-                'createdBy' => $this->user,
+                'createdBy'    => $this->user,
                 'templateTask' => $task->_real(),
-                'isActive' => true,
+                'isActive'     => true,
             ]);
         }
 
@@ -135,7 +109,7 @@ class RecurrenceControllerTest extends WebTestCase
         for ($i = 0; $i < 2; $i++) {
             $task = TaskFactory::createOne(['user' => $this->user]);
             RecurrenceRuleFactory::createOne([
-                'createdBy' => $this->user,
+                'createdBy'    => $this->user,
                 'templateTask' => $task->_real(),
             ]);
         }
@@ -144,7 +118,7 @@ class RecurrenceControllerTest extends WebTestCase
         for ($i = 0; $i < 3; $i++) {
             $task = TaskFactory::createOne(['user' => $otherUser]);
             RecurrenceRuleFactory::createOne([
-                'createdBy' => $otherUser,
+                'createdBy'    => $otherUser,
                 'templateTask' => $task->_real(),
             ]);
         }
@@ -165,8 +139,8 @@ class RecurrenceControllerTest extends WebTestCase
         // Arrange
         $task = TaskFactory::createOne(['user' => $this->user]);
         $rule = RecurrenceRuleFactory::createOne([
-            'createdBy' => $this->user,
-            'templateTask' => $task->_real(),
+            'createdBy'      => $this->user,
+            'templateTask'   => $task->_real(),
             'recurrenceType' => RecurrenceRule::TYPE_DAILY,
         ]);
 
@@ -189,7 +163,7 @@ class RecurrenceControllerTest extends WebTestCase
         // Arrange
         $task = TaskFactory::createOne(['user' => $this->user]);
         $rule = RecurrenceRuleFactory::new()->daily()->create([
-            'createdBy' => $this->user,
+            'createdBy'    => $this->user,
             'templateTask' => $task->_real(),
         ]);
 
@@ -219,7 +193,7 @@ class RecurrenceControllerTest extends WebTestCase
         $otherUser = UserFactory::createOne()->_real();
         $task = TaskFactory::createOne(['user' => $otherUser]);
         $rule = RecurrenceRuleFactory::createOne([
-            'createdBy' => $otherUser,
+            'createdBy'    => $otherUser,
             'templateTask' => $task->_real(),
         ]);
 
@@ -240,7 +214,7 @@ class RecurrenceControllerTest extends WebTestCase
 
         $payload = [
             'recurrenceType' => 'daily',
-            'interval' => 1,
+            'interval'       => 1,
         ];
 
         // Act
@@ -248,7 +222,7 @@ class RecurrenceControllerTest extends WebTestCase
             'POST',
             '/api/recurrence/task/' . $task->getId(),
             [],
-            json_encode($payload)
+            json_encode($payload),
         );
 
         // Assert
@@ -267,7 +241,7 @@ class RecurrenceControllerTest extends WebTestCase
 
         $payload = [
             'recurrenceType' => 'weekly',
-            'daysOfWeek' => [1, 3, 5], // Mon, Wed, Fri
+            'daysOfWeek'     => [1, 3, 5], // Mon, Wed, Fri
         ];
 
         // Act
@@ -275,7 +249,7 @@ class RecurrenceControllerTest extends WebTestCase
             'POST',
             '/api/recurrence/task/' . $task->getId(),
             [],
-            json_encode($payload)
+            json_encode($payload),
         );
 
         // Assert
@@ -294,7 +268,7 @@ class RecurrenceControllerTest extends WebTestCase
 
         $payload = [
             'recurrenceType' => 'monthly',
-            'dayOfMonth' => 15,
+            'dayOfMonth'     => 15,
         ];
 
         // Act
@@ -302,7 +276,7 @@ class RecurrenceControllerTest extends WebTestCase
             'POST',
             '/api/recurrence/task/' . $task->getId(),
             [],
-            json_encode($payload)
+            json_encode($payload),
         );
 
         // Assert
@@ -325,8 +299,8 @@ class RecurrenceControllerTest extends WebTestCase
 
         $payload = [
             'recurrenceType' => 'yearly',
-            'monthOfYear' => 12,
-            'dayOfMonth' => 25,
+            'monthOfYear'    => 12,
+            'dayOfMonth'     => 25,
         ];
 
         // Act
@@ -334,7 +308,7 @@ class RecurrenceControllerTest extends WebTestCase
             'POST',
             '/api/recurrence/task/' . $task->getId(),
             [],
-            json_encode($payload)
+            json_encode($payload),
         );
 
         // Assert
@@ -354,7 +328,7 @@ class RecurrenceControllerTest extends WebTestCase
 
         $payload = [
             'recurrenceType' => 'custom',
-            'interval' => 10,
+            'interval'       => 10,
         ];
 
         // Act
@@ -362,7 +336,7 @@ class RecurrenceControllerTest extends WebTestCase
             'POST',
             '/api/recurrence/task/' . $task->getId(),
             [],
-            json_encode($payload)
+            json_encode($payload),
         );
 
         // Assert
@@ -378,12 +352,12 @@ class RecurrenceControllerTest extends WebTestCase
     {
         // Arrange
         $task = TaskFactory::createOne(['user' => $this->user]);
-        $endDate = (new \DateTimeImmutable('+60 days'))->format('Y-m-d');
+        $endDate = (new DateTimeImmutable('+60 days'))->format('Y-m-d');
 
         $payload = [
             'recurrenceType' => 'daily',
-            'interval' => 1,
-            'endDate' => $endDate,
+            'interval'       => 1,
+            'endDate'        => $endDate,
         ];
 
         // Act
@@ -391,7 +365,7 @@ class RecurrenceControllerTest extends WebTestCase
             'POST',
             '/api/recurrence/task/' . $task->getId(),
             [],
-            json_encode($payload)
+            json_encode($payload),
         );
 
         // Assert
@@ -409,7 +383,7 @@ class RecurrenceControllerTest extends WebTestCase
 
         $payload = [
             'recurrenceType' => 'daily',
-            'interval' => 1,
+            'interval'       => 1,
             'maxOccurrences' => 10,
         ];
 
@@ -418,7 +392,7 @@ class RecurrenceControllerTest extends WebTestCase
             'POST',
             '/api/recurrence/task/' . $task->getId(),
             [],
-            json_encode($payload)
+            json_encode($payload),
         );
 
         // Assert
@@ -436,8 +410,8 @@ class RecurrenceControllerTest extends WebTestCase
 
         $payload = [
             'recurrenceType' => 'daily',
-            'interval' => 1,
-            'timeOfDay' => '14:30:00',
+            'interval'       => 1,
+            'timeOfDay'      => '14:30:00',
         ];
 
         // Act
@@ -445,7 +419,7 @@ class RecurrenceControllerTest extends WebTestCase
             'POST',
             '/api/recurrence/task/' . $task->getId(),
             [],
-            json_encode($payload)
+            json_encode($payload),
         );
 
         // Assert
@@ -461,7 +435,7 @@ class RecurrenceControllerTest extends WebTestCase
         // Arrange
         $payload = [
             'recurrenceType' => 'daily',
-            'interval' => 1,
+            'interval'       => 1,
         ];
 
         // Act
@@ -469,7 +443,7 @@ class RecurrenceControllerTest extends WebTestCase
             'POST',
             '/api/recurrence/task/99999',
             [],
-            json_encode($payload)
+            json_encode($payload),
         );
 
         // Assert
@@ -484,7 +458,7 @@ class RecurrenceControllerTest extends WebTestCase
 
         $payload = [
             'recurrenceType' => 'invalid_type',
-            'interval' => 1,
+            'interval'       => 1,
         ];
 
         // Act
@@ -492,7 +466,7 @@ class RecurrenceControllerTest extends WebTestCase
             'POST',
             '/api/recurrence/task/' . $task->getId(),
             [],
-            json_encode($payload)
+            json_encode($payload),
         );
 
         // Assert: DTO validation returns 422 Unprocessable Entity
@@ -508,7 +482,7 @@ class RecurrenceControllerTest extends WebTestCase
 
         $payload = [
             'recurrenceType' => 'daily',
-            'interval' => 1,
+            'interval'       => 1,
         ];
 
         // Act
@@ -516,7 +490,7 @@ class RecurrenceControllerTest extends WebTestCase
             'POST',
             '/api/recurrence/task/' . $task->getId(),
             [],
-            json_encode($payload)
+            json_encode($payload),
         );
 
         // Assert
@@ -530,12 +504,12 @@ class RecurrenceControllerTest extends WebTestCase
         $task = TaskFactory::createOne(['user' => $this->user]);
         RecurrenceRuleFactory::createOne([
             'templateTask' => $task->_real(),
-            'createdBy' => $this->user,
+            'createdBy'    => $this->user,
         ]);
 
         $payload = [
             'recurrenceType' => 'daily',
-            'interval' => 1,
+            'interval'       => 1,
         ];
 
         // Act
@@ -543,7 +517,7 @@ class RecurrenceControllerTest extends WebTestCase
             'POST',
             '/api/recurrence/task/' . $task->getId(),
             [],
-            json_encode($payload)
+            json_encode($payload),
         );
 
         // Assert
@@ -560,13 +534,13 @@ class RecurrenceControllerTest extends WebTestCase
         // Arrange
         $task = TaskFactory::createOne(['user' => $this->user]);
         $rule = RecurrenceRuleFactory::new()->daily()->create([
-            'createdBy' => $this->user,
+            'createdBy'    => $this->user,
             'templateTask' => $task->_real(),
         ]);
 
         $payload = [
             'recurrenceType' => 'weekly',
-            'daysOfWeek' => [1, 2, 3],
+            'daysOfWeek'     => [1, 2, 3],
         ];
 
         // Act
@@ -574,7 +548,7 @@ class RecurrenceControllerTest extends WebTestCase
             'PUT',
             '/api/recurrence/' . $rule->getId(),
             [],
-            json_encode($payload)
+            json_encode($payload),
         );
 
         // Assert
@@ -591,13 +565,13 @@ class RecurrenceControllerTest extends WebTestCase
         // Arrange
         $task = TaskFactory::createOne(['user' => $this->user]);
         $rule = RecurrenceRuleFactory::new()->daily()->create([
-            'createdBy' => $this->user,
+            'createdBy'    => $this->user,
             'templateTask' => $task->_real(),
         ]);
 
         $payload = [
             'recurrenceType' => 'monthly',
-            'dayOfMonth' => 1,
+            'dayOfMonth'     => 1,
         ];
 
         // Act
@@ -605,7 +579,7 @@ class RecurrenceControllerTest extends WebTestCase
             'PUT',
             '/api/recurrence/' . $rule->getId(),
             [],
-            json_encode($payload)
+            json_encode($payload),
         );
 
         // Assert
@@ -620,13 +594,13 @@ class RecurrenceControllerTest extends WebTestCase
         // Arrange
         $task = TaskFactory::createOne(['user' => $this->user]);
         $rule = RecurrenceRuleFactory::new()->daily()->create([
-            'createdBy' => $this->user,
+            'createdBy'    => $this->user,
             'templateTask' => $task->_real(),
         ]);
 
         $payload = [
             'recurrenceType' => 'daily',
-            'interval' => 3,
+            'interval'       => 3,
             'maxOccurrences' => 20,
         ];
 
@@ -635,7 +609,7 @@ class RecurrenceControllerTest extends WebTestCase
             'PUT',
             '/api/recurrence/' . $rule->getId(),
             [],
-            json_encode($payload)
+            json_encode($payload),
         );
 
         // Assert
@@ -650,7 +624,7 @@ class RecurrenceControllerTest extends WebTestCase
         // Arrange
         $payload = [
             'recurrenceType' => 'daily',
-            'interval' => 1,
+            'interval'       => 1,
         ];
 
         // Act
@@ -658,7 +632,7 @@ class RecurrenceControllerTest extends WebTestCase
             'PUT',
             '/api/recurrence/99999',
             [],
-            json_encode($payload)
+            json_encode($payload),
         );
 
         // Assert
@@ -673,7 +647,7 @@ class RecurrenceControllerTest extends WebTestCase
         // Arrange
         $task = TaskFactory::createOne(['user' => $this->user]);
         $rule = RecurrenceRuleFactory::createOne([
-            'createdBy' => $this->user,
+            'createdBy'    => $this->user,
             'templateTask' => $task->_real(),
         ]);
 
@@ -702,7 +676,7 @@ class RecurrenceControllerTest extends WebTestCase
         // Arrange
         $task = TaskFactory::createOne(['user' => $this->user]);
         $rule = RecurrenceRuleFactory::new()->daily()->create([
-            'createdBy' => $this->user,
+            'createdBy'    => $this->user,
             'templateTask' => $task->_real(),
         ]);
 
@@ -724,7 +698,7 @@ class RecurrenceControllerTest extends WebTestCase
         // Arrange
         $task = TaskFactory::createOne(['user' => $this->user]);
         $rule = RecurrenceRuleFactory::new()->daily()->create([
-            'createdBy' => $this->user,
+            'createdBy'    => $this->user,
             'templateTask' => $task->_real(),
         ]);
 
@@ -743,7 +717,7 @@ class RecurrenceControllerTest extends WebTestCase
         // Arrange
         $task = TaskFactory::createOne(['user' => $this->user]);
         $rule = RecurrenceRuleFactory::new()->daily()->create([
-            'createdBy' => $this->user,
+            'createdBy'    => $this->user,
             'templateTask' => $task->_real(),
         ]);
 
@@ -774,9 +748,9 @@ class RecurrenceControllerTest extends WebTestCase
         // Arrange
         $task = TaskFactory::createOne(['user' => $this->user]);
         $rule = RecurrenceRuleFactory::createOne([
-            'createdBy' => $this->user,
+            'createdBy'    => $this->user,
             'templateTask' => $task->_real(),
-            'isActive' => true,
+            'isActive'     => true,
         ]);
 
         // Act
@@ -794,7 +768,7 @@ class RecurrenceControllerTest extends WebTestCase
         // Arrange
         $task = TaskFactory::createOne(['user' => $this->user]);
         $rule = RecurrenceRuleFactory::new()->inactive()->create([
-            'createdBy' => $this->user,
+            'createdBy'    => $this->user,
             'templateTask' => $task->_real(),
         ]);
 
@@ -813,7 +787,7 @@ class RecurrenceControllerTest extends WebTestCase
         // Arrange
         $task = TaskFactory::createOne(['user' => $this->user]);
         $rule = RecurrenceRuleFactory::new()->inactive()->create([
-            'createdBy' => $this->user,
+            'createdBy'    => $this->user,
             'templateTask' => $task->_real(),
         ]);
 
@@ -832,9 +806,9 @@ class RecurrenceControllerTest extends WebTestCase
         // Arrange
         $task = TaskFactory::createOne(['user' => $this->user]);
         $rule = RecurrenceRuleFactory::createOne([
-            'createdBy' => $this->user,
+            'createdBy'    => $this->user,
             'templateTask' => $task->_real(),
-            'isActive' => true,
+            'isActive'     => true,
         ]);
 
         // Act
@@ -842,5 +816,35 @@ class RecurrenceControllerTest extends WebTestCase
 
         // Assert: Should still return success
         $this->assertResponseIsSuccessful();
+    }
+
+    /**
+     * Helper: Make authenticated request
+     */
+    private function request(
+        string $method,
+        string $uri,
+        array $parameters = [],
+        ?string $content = null,
+    ): void {
+        $this->client->request(
+            $method,
+            $uri,
+            $parameters,
+            [],
+            [
+                'HTTP_AUTHORIZATION' => 'Bearer ' . $this->token,
+                'CONTENT_TYPE'       => 'application/json',
+            ],
+            $content,
+        );
+    }
+
+    /**
+     * Helper: Get response data
+     */
+    private function getResponseData(): array
+    {
+        return json_decode($this->client->getResponse()->getContent(), true);
     }
 }

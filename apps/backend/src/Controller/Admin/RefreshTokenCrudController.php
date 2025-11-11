@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller\Admin;
 
 use App\Entity\RefreshToken;
+use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
@@ -20,6 +21,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Filter\BooleanFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\DateTimeFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\TextFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
+use Exception;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -80,6 +82,7 @@ class RefreshTokenCrudController extends AbstractCrudController
                 }
                 // Show only last 8 characters for security
                 $masked = str_repeat('*', max(0, strlen($value) - 8)) . substr($value, -8);
+
                 return sprintf('<code class="text-muted">%s</code>', htmlspecialchars($masked));
             })
             ->setColumns('col-md-4')
@@ -120,11 +123,12 @@ class RefreshTokenCrudController extends AbstractCrudController
             ->add(DateTimeFilter::new('valid', 'Valid Until'))
 
             // Custom filter for expired tokens
-            ->add(BooleanFilter::new('isExpired', 'Show Only Expired')
-                ->setFormTypeOption('choices', [
-                    'Yes' => true,
-                    'No' => false,
-                ])
+            ->add(
+                BooleanFilter::new('isExpired', 'Show Only Expired')
+                    ->setFormTypeOption('choices', [
+                        'Yes' => true,
+                        'No'  => false,
+                    ]),
             );
     }
 
@@ -148,14 +152,20 @@ class RefreshTokenCrudController extends AbstractCrudController
             ->add(Crud::PAGE_INDEX, $cleanupExpiredAction)
 
             // Customize action labels
-            ->update(Crud::PAGE_INDEX, Action::DELETE, fn (Action $action) => $action
-                ->setIcon('fa fa-trash')
-                ->setLabel('Revoke')
-                ->displayIf(fn (RefreshToken $token) => true) // Allow deleting any token
+            ->update(
+                Crud::PAGE_INDEX,
+                Action::DELETE,
+                fn (Action $action) => $action
+                    ->setIcon('fa fa-trash')
+                    ->setLabel('Revoke')
+                    ->displayIf(fn (RefreshToken $token) => true), // Allow deleting any token
             )
-            ->update(Crud::PAGE_INDEX, Action::DETAIL, fn (Action $action) => $action
-                ->setIcon('fa fa-eye')
-                ->setLabel(false)
+            ->update(
+                Crud::PAGE_INDEX,
+                Action::DETAIL,
+                fn (Action $action) => $action
+                    ->setIcon('fa fa-eye')
+                    ->setLabel(false),
             );
     }
 
@@ -168,12 +178,12 @@ class RefreshTokenCrudController extends AbstractCrudController
             $qb = $this->entityManager->createQueryBuilder();
             $count = $qb->delete(RefreshToken::class, 'rt')
                 ->where('rt.valid < :now')
-                ->setParameter('now', new \DateTime())
+                ->setParameter('now', new DateTime())
                 ->getQuery()
                 ->execute();
 
             $this->addFlash('success', sprintf('Successfully deleted %d expired token(s)!', $count));
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->addFlash('danger', sprintf('Error cleaning up tokens: %s', $e->getMessage()));
         }
 

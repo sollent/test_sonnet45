@@ -1,8 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Entity;
 
 use App\Repository\Database\RecurrenceRuleRepository;
+use DateTime;
+use DateTimeImmutable;
+use DateTimeInterface;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -12,9 +17,13 @@ use Doctrine\ORM\Mapping as ORM;
 class RecurrenceRule
 {
     public const TYPE_DAILY = 'daily';
+
     public const TYPE_WEEKLY = 'weekly';
+
     public const TYPE_MONTHLY = 'monthly';
+
     public const TYPE_YEARLY = 'yearly';
+
     public const TYPE_CUSTOM = 'custom';
 
     #[ORM\Id]
@@ -38,7 +47,7 @@ class RecurrenceRule
     private ?int $monthOfYear = null; // For yearly
 
     #[ORM\Column(type: Types::DATE_IMMUTABLE, nullable: true)]
-    private ?\DateTimeInterface $endDate = null;
+    private ?DateTimeInterface $endDate = null;
 
     #[ORM\Column(type: Types::INTEGER, nullable: true)]
     private ?int $maxOccurrences = null;
@@ -47,7 +56,7 @@ class RecurrenceRule
     private int $currentOccurrences = 0;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
-    private \DateTimeInterface $nextOccurrenceDate;
+    private DateTimeInterface $nextOccurrenceDate;
 
     #[ORM\Column(type: Types::BOOLEAN, options: ['default' => true])]
     private bool $isActive = true;
@@ -61,25 +70,25 @@ class RecurrenceRule
     private Task $templateTask;
 
     #[ORM\Column(type: Types::TIME_IMMUTABLE, nullable: true)]
-    private ?\DateTimeInterface $timeOfDay = null; // Time when task should be created
+    private ?DateTimeInterface $timeOfDay = null; // Time when task should be created
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
-    private \DateTimeImmutable $createdAt;
+    private DateTimeImmutable $createdAt;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
-    private \DateTimeImmutable $updatedAt;
+    private DateTimeImmutable $updatedAt;
 
     #[ORM\PrePersist]
     public function onPrePersist(): void
     {
-        $this->createdAt = new \DateTimeImmutable();
-        $this->updatedAt = new \DateTimeImmutable();
+        $this->createdAt = new DateTimeImmutable();
+        $this->updatedAt = new DateTimeImmutable();
     }
 
     #[ORM\PreUpdate]
     public function onPreUpdate(): void
     {
-        $this->updatedAt = new \DateTimeImmutable();
+        $this->updatedAt = new DateTimeImmutable();
     }
 
     // Getters and Setters
@@ -96,6 +105,7 @@ class RecurrenceRule
     public function setRecurrenceType(string $recurrenceType): self
     {
         $this->recurrenceType = $recurrenceType;
+
         return $this;
     }
 
@@ -107,6 +117,7 @@ class RecurrenceRule
     public function setInterval(?int $interval): self
     {
         $this->interval = $interval;
+
         return $this;
     }
 
@@ -118,6 +129,7 @@ class RecurrenceRule
     public function setDaysOfWeek(?array $daysOfWeek): self
     {
         $this->daysOfWeek = $daysOfWeek;
+
         return $this;
     }
 
@@ -129,6 +141,7 @@ class RecurrenceRule
     public function setDayOfMonth(?int $dayOfMonth): self
     {
         $this->dayOfMonth = $dayOfMonth;
+
         return $this;
     }
 
@@ -140,17 +153,19 @@ class RecurrenceRule
     public function setMonthOfYear(?int $monthOfYear): self
     {
         $this->monthOfYear = $monthOfYear;
+
         return $this;
     }
 
-    public function getEndDate(): ?\DateTimeInterface
+    public function getEndDate(): ?DateTimeInterface
     {
         return $this->endDate;
     }
 
-    public function setEndDate(?\DateTimeInterface $endDate): self
+    public function setEndDate(?DateTimeInterface $endDate): self
     {
         $this->endDate = $endDate;
+
         return $this;
     }
 
@@ -162,6 +177,7 @@ class RecurrenceRule
     public function setMaxOccurrences(?int $maxOccurrences): self
     {
         $this->maxOccurrences = $maxOccurrences;
+
         return $this;
     }
 
@@ -173,23 +189,26 @@ class RecurrenceRule
     public function setCurrentOccurrences(int $currentOccurrences): self
     {
         $this->currentOccurrences = $currentOccurrences;
+
         return $this;
     }
 
     public function incrementOccurrences(): self
     {
         $this->currentOccurrences++;
+
         return $this;
     }
 
-    public function getNextOccurrenceDate(): \DateTimeInterface
+    public function getNextOccurrenceDate(): DateTimeInterface
     {
         return $this->nextOccurrenceDate;
     }
 
-    public function setNextOccurrenceDate(\DateTimeInterface $nextOccurrenceDate): self
+    public function setNextOccurrenceDate(DateTimeInterface $nextOccurrenceDate): self
     {
         $this->nextOccurrenceDate = $nextOccurrenceDate;
+
         return $this;
     }
 
@@ -201,6 +220,7 @@ class RecurrenceRule
     public function setIsActive(bool $isActive): self
     {
         $this->isActive = $isActive;
+
         return $this;
     }
 
@@ -212,6 +232,7 @@ class RecurrenceRule
     public function setCreatedBy(User $createdBy): self
     {
         $this->createdBy = $createdBy;
+
         return $this;
     }
 
@@ -223,26 +244,28 @@ class RecurrenceRule
     public function setTemplateTask(Task $templateTask): self
     {
         $this->templateTask = $templateTask;
+
         return $this;
     }
 
-    public function getTimeOfDay(): ?\DateTimeInterface
+    public function getTimeOfDay(): ?DateTimeInterface
     {
         return $this->timeOfDay;
     }
 
-    public function setTimeOfDay(?\DateTimeInterface $timeOfDay): self
+    public function setTimeOfDay(?DateTimeInterface $timeOfDay): self
     {
         $this->timeOfDay = $timeOfDay;
+
         return $this;
     }
 
-    public function getCreatedAt(): \DateTimeImmutable
+    public function getCreatedAt(): DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    public function getUpdatedAt(): \DateTimeImmutable
+    public function getUpdatedAt(): DateTimeImmutable
     {
         return $this->updatedAt;
     }
@@ -250,16 +273,12 @@ class RecurrenceRule
     public function shouldStopRecurrence(): bool
     {
         // Check if we've reached the end date
-        if ($this->endDate && new \DateTime() > $this->endDate) {
+        if ($this->endDate && new DateTime() > $this->endDate) {
             return true;
         }
 
         // Check if we've reached max occurrences
-        if ($this->maxOccurrences && $this->currentOccurrences >= $this->maxOccurrences) {
-            return true;
-        }
-
-        return false;
+        return (bool) ($this->maxOccurrences && $this->currentOccurrences >= $this->maxOccurrences);
     }
 
     public static function getAvailableTypes(): array

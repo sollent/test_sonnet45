@@ -21,13 +21,13 @@ class SecurityController extends AbstractController
 
         // Получить ошибку логина если есть
         $error = $authenticationUtils->getLastAuthenticationError();
-        
+
         // Последний введенный email
         $lastUsername = $authenticationUtils->getLastUsername();
 
         return $this->render('admin/login.html.twig', [
             'last_username' => $lastUsername,
-            'error' => $error,
+            'error'         => $error,
         ]);
     }
 
@@ -37,4 +37,3 @@ class SecurityController extends AbstractController
         // This method can be blank - it will be intercepted by the logout key in security.yaml
     }
 }
-

@@ -38,7 +38,7 @@ class TaskRepositoryTest extends TestCase
         $this->markTestSkipped(
             'Doctrine repositories require integration testing with real database. ' .
             'ServiceEntityRepository cannot be mocked properly due to ClassMetadata dependencies. ' .
-            'See tests/Integration/Repository/ for integration tests.'
+            'See tests/Integration/Repository/ for integration tests.',
         );
     }
 }

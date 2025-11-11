@@ -28,11 +28,12 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\EntityFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\NumericFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\TextFilter;
+use RuntimeException;
 
 class TagCrudController extends AbstractCrudController
 {
     public function __construct(
-        private readonly EntityManagerInterface $entityManager
+        private readonly EntityManagerInterface $entityManager,
     ) {
     }
 
@@ -116,7 +117,7 @@ class TagCrudController extends AbstractCrudController
                             ">%s</code>
                         </div>',
                         $tag->getColor(),
-                        strtoupper($tag->getColor())
+                        strtoupper($tag->getColor()),
                     );
                 })
                 ->setColumns('col-md-4');
@@ -152,7 +153,7 @@ class TagCrudController extends AbstractCrudController
                     </span>',
                     $badgeClass,
                     $count,
-                    $count !== 1 ? 's' : ''
+                    $count !== 1 ? 's' : '',
                 );
             })
             ->setHelp('Number of tasks using this tag')
@@ -180,7 +181,7 @@ class TagCrudController extends AbstractCrudController
                             $html .= sprintf(
                                 '<li class="list-group-item"><em>... and %d more task%s</em></li>',
                                 $remaining,
-                                $remaining !== 1 ? 's' : ''
+                                $remaining !== 1 ? 's' : '',
                             );
                             break;
                         }
@@ -196,7 +197,7 @@ class TagCrudController extends AbstractCrudController
                             $statusIcon,
                             $statusBadge,
                             htmlspecialchars($task->getTitle()),
-                            $task->getId()
+                            $task->getId(),
                         );
 
                         $count++;
@@ -241,22 +242,34 @@ class TagCrudController extends AbstractCrudController
             ->add(Crud::PAGE_INDEX, Action::DETAIL)
 
             // Customize default actions
-            ->update(Crud::PAGE_INDEX, Action::NEW, fn (Action $action) => $action
-                ->setIcon('fa fa-plus')
-                ->setLabel('Create Tag')
-                ->setCssClass('btn btn-primary')
+            ->update(
+                Crud::PAGE_INDEX,
+                Action::NEW,
+                fn (Action $action) => $action
+                    ->setIcon('fa fa-plus')
+                    ->setLabel('Create Tag')
+                    ->setCssClass('btn btn-primary'),
             )
-            ->update(Crud::PAGE_INDEX, Action::EDIT, fn (Action $action) => $action
-                ->setIcon('fa fa-edit')
-                ->setLabel(false)
+            ->update(
+                Crud::PAGE_INDEX,
+                Action::EDIT,
+                fn (Action $action) => $action
+                    ->setIcon('fa fa-edit')
+                    ->setLabel(false),
             )
-            ->update(Crud::PAGE_INDEX, Action::DELETE, fn (Action $action) => $action
-                ->setIcon('fa fa-trash')
-                ->setLabel(false)
+            ->update(
+                Crud::PAGE_INDEX,
+                Action::DELETE,
+                fn (Action $action) => $action
+                    ->setIcon('fa fa-trash')
+                    ->setLabel(false),
             )
-            ->update(Crud::PAGE_INDEX, Action::DETAIL, fn (Action $action) => $action
-                ->setIcon('fa fa-eye')
-                ->setLabel(false)
+            ->update(
+                Crud::PAGE_INDEX,
+                Action::DETAIL,
+                fn (Action $action) => $action
+                    ->setIcon('fa fa-eye')
+                    ->setLabel(false),
             );
     }
 
@@ -267,19 +280,22 @@ class TagCrudController extends AbstractCrudController
         SearchDto $searchDto,
         EntityDto $entityDto,
         FieldCollection $fields,
-        FilterCollection $filters
+        FilterCollection $filters,
     ): QueryBuilder {
         $qb = parent::createIndexQueryBuilder($searchDto, $entityDto, $fields, $filters);
 
         // Eager load user to avoid N+1 queries
         $qb->leftJoin('entity.user', 'u')
-           ->addSelect('u');
+            ->addSelect('u');
 
         return $qb;
     }
 
     /**
      * Validate tag data before persisting
+     *
+     * @param mixed $entityManager
+     * @param mixed $entityInstance
      */
     public function persistEntity($entityManager, $entityInstance): void
     {
@@ -296,15 +312,17 @@ class TagCrudController extends AbstractCrudController
             $this->addFlash('error', sprintf(
                 'Tag "%s" already exists for user %s!',
                 $tag->getName(),
-                $tag->getUser()->getEmail()
+                $tag->getUser()->getEmail(),
             ));
-            throw new \RuntimeException('Duplicate tag name for user');
+
+            throw new RuntimeException('Duplicate tag name for user');
         }
 
         // Validation: color format
         if (!preg_match('/^#[0-9A-Fa-f]{6}$/', $tag->getColor())) {
             $this->addFlash('error', 'Invalid color format! Use hex format (#RRGGBB)');
-            throw new \RuntimeException('Invalid color format');
+
+            throw new RuntimeException('Invalid color format');
         }
 
         parent::persistEntity($entityManager, $entityInstance);
@@ -312,6 +330,9 @@ class TagCrudController extends AbstractCrudController
 
     /**
      * Validate tag data before updating
+     *
+     * @param mixed $entityManager
+     * @param mixed $entityInstance
      */
     public function updateEntity($entityManager, $entityInstance): void
     {
@@ -328,14 +349,16 @@ class TagCrudController extends AbstractCrudController
             $this->addFlash('error', sprintf(
                 'Tag "%s" already exists for user %s!',
                 $tag->getName(),
-                $tag->getUser()->getEmail()
+                $tag->getUser()->getEmail(),
             ));
-            throw new \RuntimeException('Duplicate tag name for user');
+
+            throw new RuntimeException('Duplicate tag name for user');
         }
 
         if (!preg_match('/^#[0-9A-Fa-f]{6}$/', $tag->getColor())) {
             $this->addFlash('error', 'Invalid color format! Use hex format (#RRGGBB)');
-            throw new \RuntimeException('Invalid color format');
+
+            throw new RuntimeException('Invalid color format');
         }
 
         // Update usage count before saving
@@ -346,6 +369,9 @@ class TagCrudController extends AbstractCrudController
 
     /**
      * Show warning before deleting tag with tasks
+     *
+     * @param mixed $entityManager
+     * @param mixed $entityInstance
      */
     public function deleteEntity($entityManager, $entityInstance): void
     {
@@ -359,7 +385,7 @@ class TagCrudController extends AbstractCrudController
                 'Tag "%s" removed from %d task%s.',
                 $tag->getName(),
                 $taskCount,
-                $taskCount !== 1 ? 's' : ''
+                $taskCount !== 1 ? 's' : '',
             ));
         } else {
             $this->addFlash('success', sprintf('Tag "%s" deleted.', $tag->getName()));

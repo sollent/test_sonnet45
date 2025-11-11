@@ -4,32 +4,30 @@ declare(strict_types=1);
 
 namespace App\Controller\Admin;
 
-use App\Entity\User;
-use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
-use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
-use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
-use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
-use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use App\Entity\Task;
+use App\Entity\User;
 use App\Enum\TaskStatus;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
 use EasyCorp\Bundle\EasyAdminBundle\Collection\FieldCollection;
 use EasyCorp\Bundle\EasyAdminBundle\Collection\FilterCollection;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
+use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\EntityDto;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\SearchDto;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ArrayField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\BooleanField;
-use EasyCorp\Bundle\EasyAdminBundle\Field\CollectionField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\EmailField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\Field;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
-use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
-use EasyCorp\Bundle\EasyAdminBundle\Filter\BooleanFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\DateTimeFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\TextFilter;
+use Exception;
 use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
@@ -37,7 +35,7 @@ class UserCrudController extends AbstractCrudController
 {
     public function __construct(
         private readonly UserPasswordHasherInterface $passwordHasher,
-        private readonly EntityManagerInterface $entityManager
+        private readonly EntityManagerInterface $entityManager,
     ) {
     }
 
@@ -55,21 +53,21 @@ class UserCrudController extends AbstractCrudController
             ->setPageTitle('new', 'Create new User')
             ->setPageTitle('edit', fn (User $user) => sprintf('Edit user: %s', $user->getEmail()))
             ->setPageTitle('detail', fn (User $user) => sprintf('User: %s', $user->getEmail()))
-            
+
             // Pagination - optimized for performance
             ->setPaginatorPageSize(20)
             ->setPaginatorRangeSize(3)
 
             // Search - only by email
             ->setSearchFields(['email'])
-            
+
             // Default sort
             ->setDefaultSort(['createdAt' => 'DESC'])
-            
+
             // Date format
             ->setDateTimeFormat('dd.MM.yyyy HH:mm')
             ->setDateFormat('dd.MM.yyyy')
-            
+
             // Other settings
             ->showEntityActionsInlined()
             ->setEntityPermission('ROLE_ADMIN');
@@ -95,7 +93,7 @@ class UserCrudController extends AbstractCrudController
                 ->setHelp(
                     Crud::PAGE_NEW === $pageName
                         ? 'Minimum 8 characters'
-                        : 'Leave blank if you don\'t want to change the password'
+                        : 'Leave blank if you don\'t want to change the password',
                 )
                 ->setColumns('col-md-6')
                 ->onlyOnForms();
@@ -116,11 +114,12 @@ class UserCrudController extends AbstractCrudController
                         ->getQuery()
                         ->getSingleScalarResult();
 
-                    if ($count == 0) {
+                    if ($count === 0) {
                         return '<span class="text-muted">-</span>';
                     }
+
                     return sprintf('<span class="badge badge-primary">%d</span>', $count);
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     return '<span class="text-danger">Error</span>';
                 }
             })
@@ -141,11 +140,12 @@ class UserCrudController extends AbstractCrudController
                         ->getQuery()
                         ->getSingleScalarResult();
 
-                    if ($count == 0) {
+                    if ($count === 0) {
                         return '<span class="text-muted">-</span>';
                     }
+
                     return sprintf('<span class="badge badge-success">%d</span>', $count);
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     return '<span class="text-danger">Error</span>';
                 }
             })
@@ -166,13 +166,14 @@ class UserCrudController extends AbstractCrudController
                         ->getQuery()
                         ->getSingleScalarResult();
 
-                    if ($count == 0) {
+                    if ($count === 0) {
                         return '<span class="text-muted">-</span>';
                     }
 
                     $badgeClass = $count > 10 ? 'warning' : 'info';
+
                     return sprintf('<span class="badge badge-%s">%d</span>', $badgeClass, $count);
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     return '<span class="text-danger">Error</span>';
                 }
             })
@@ -191,12 +192,12 @@ class UserCrudController extends AbstractCrudController
                         ->getQuery()
                         ->getSingleScalarResult();
 
-                    if ($count == 0) {
+                    if ($count === 0) {
                         return '<span class="text-muted">-</span>';
                     }
 
                     return sprintf('<span class="badge badge-info">%d</span>', $count);
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     return '<span class="text-danger">Error</span>';
                 }
             })
@@ -249,11 +250,11 @@ class UserCrudController extends AbstractCrudController
 
                     foreach ($tasks as $task) {
                         match ($task->getStatus()) {
-                            TaskStatus::COMPLETED => $completed++,
+                            TaskStatus::COMPLETED   => $completed++,
                             TaskStatus::IN_PROGRESS => $inProgress++,
-                            TaskStatus::PENDING => $pending++,
-                            TaskStatus::CANCELLED => $cancelled++,
-                            default => null,
+                            TaskStatus::PENDING     => $pending++,
+                            TaskStatus::CANCELLED   => $cancelled++,
+                            default                 => null,
                         };
 
                         if ($task->isArchived()) {
@@ -305,12 +306,12 @@ class UserCrudController extends AbstractCrudController
                     $html = '<ul class="list-group list-group-flush">';
 
                     foreach ($recentTasks as $task) {
-                        $statusBadge = match($task->getStatus()) {
-                            TaskStatus::COMPLETED => 'success',
+                        $statusBadge = match ($task->getStatus()) {
+                            TaskStatus::COMPLETED   => 'success',
                             TaskStatus::IN_PROGRESS => 'primary',
-                            TaskStatus::PENDING => 'secondary',
-                            TaskStatus::CANCELLED => 'danger',
-                            default => 'secondary',
+                            TaskStatus::PENDING     => 'secondary',
+                            TaskStatus::CANCELLED   => 'danger',
+                            default                 => 'secondary',
                         };
 
                         $html .= sprintf(
@@ -324,11 +325,12 @@ class UserCrudController extends AbstractCrudController
                             htmlspecialchars($task->getTitle()),
                             $statusBadge,
                             $task->getStatus()->value,
-                            $task->getCreatedAt()->format('d.m.Y H:i')
+                            $task->getCreatedAt()->format('d.m.Y H:i'),
                         );
                     }
 
                     $html .= '</ul>';
+
                     return $html;
                 })
                 ->onlyOnDetail();
@@ -359,11 +361,12 @@ class UserCrudController extends AbstractCrudController
                             </span>',
                             htmlspecialchars($tag->getColor()),
                             htmlspecialchars($tag->getName()),
-                            $tag->getUsageCount()
+                            $tag->getUsageCount(),
                         );
                     }
 
                     $html .= '</div>';
+
                     return $html;
                 })
                 ->onlyOnDetail();
@@ -398,22 +401,34 @@ class UserCrudController extends AbstractCrudController
             ->add(Crud::PAGE_INDEX, Action::DETAIL)
 
             // Customize labels and icons for better UX
-            ->update(Crud::PAGE_INDEX, Action::NEW, fn (Action $action) => $action
-                ->setIcon('fa fa-plus')
-                ->setLabel('Create User')
-                ->setCssClass('btn btn-primary')
+            ->update(
+                Crud::PAGE_INDEX,
+                Action::NEW,
+                fn (Action $action) => $action
+                    ->setIcon('fa fa-plus')
+                    ->setLabel('Create User')
+                    ->setCssClass('btn btn-primary'),
             )
-            ->update(Crud::PAGE_INDEX, Action::EDIT, fn (Action $action) => $action
-                ->setIcon('fa fa-edit')
-                ->setLabel(false)
+            ->update(
+                Crud::PAGE_INDEX,
+                Action::EDIT,
+                fn (Action $action) => $action
+                    ->setIcon('fa fa-edit')
+                    ->setLabel(false),
             )
-            ->update(Crud::PAGE_INDEX, Action::DELETE, fn (Action $action) => $action
-                ->setIcon('fa fa-trash')
-                ->setLabel(false)
+            ->update(
+                Crud::PAGE_INDEX,
+                Action::DELETE,
+                fn (Action $action) => $action
+                    ->setIcon('fa fa-trash')
+                    ->setLabel(false),
             )
-            ->update(Crud::PAGE_INDEX, Action::DETAIL, fn (Action $action) => $action
-                ->setIcon('fa fa-eye')
-                ->setLabel(false)
+            ->update(
+                Crud::PAGE_INDEX,
+                Action::DETAIL,
+                fn (Action $action) => $action
+                    ->setIcon('fa fa-eye')
+                    ->setLabel(false),
             );
     }
 
@@ -424,7 +439,7 @@ class UserCrudController extends AbstractCrudController
         SearchDto $searchDto,
         EntityDto $entityDto,
         FieldCollection $fields,
-        FilterCollection $filters
+        FilterCollection $filters,
     ): QueryBuilder {
         // No eager loading needed - all statistics use direct queries
         return parent::createIndexQueryBuilder($searchDto, $entityDto, $fields, $filters);
@@ -432,6 +447,9 @@ class UserCrudController extends AbstractCrudController
 
     /**
      * Hash password before persisting user
+     *
+     * @param mixed $entityManager
+     * @param mixed $entityInstance
      */
     public function persistEntity($entityManager, $entityInstance): void
     {
@@ -439,7 +457,7 @@ class UserCrudController extends AbstractCrudController
         if ($entityInstance instanceof User && $entityInstance->getPlainPassword()) {
             $hashedPassword = $this->passwordHasher->hashPassword(
                 $entityInstance,
-                $entityInstance->getPlainPassword()
+                $entityInstance->getPlainPassword(),
             );
             $entityInstance->setPassword($hashedPassword);
             $entityInstance->eraseCredentials();
@@ -450,6 +468,9 @@ class UserCrudController extends AbstractCrudController
 
     /**
      * Hash password before updating user
+     *
+     * @param mixed $entityManager
+     * @param mixed $entityInstance
      */
     public function updateEntity($entityManager, $entityInstance): void
     {
@@ -457,7 +478,7 @@ class UserCrudController extends AbstractCrudController
         if ($entityInstance instanceof User && $entityInstance->getPlainPassword()) {
             $hashedPassword = $this->passwordHasher->hashPassword(
                 $entityInstance,
-                $entityInstance->getPlainPassword()
+                $entityInstance->getPlainPassword(),
             );
             $entityInstance->setPassword($hashedPassword);
             $entityInstance->eraseCredentials();
@@ -466,4 +487,3 @@ class UserCrudController extends AbstractCrudController
         parent::updateEntity($entityManager, $entityInstance);
     }
 }
-

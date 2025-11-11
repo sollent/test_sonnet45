@@ -19,8 +19,11 @@ class TranslationControllerTest extends WebTestCase
     use Factories;
 
     private KernelBrowser $client;
+
     private JWTTokenManagerInterface $jwtManager;
+
     private User $user;
+
     private string $token;
 
     protected function setUp(): void
@@ -30,35 +33,11 @@ class TranslationControllerTest extends WebTestCase
 
         // Create authenticated user
         $userProxy = UserFactory::createOne([
-            'email' => 'test-' . uniqid() . '@example.com',
+            'email'    => 'test-' . uniqid() . '@example.com',
             'password' => 'password123',
         ]);
         $this->user = $userProxy->_real();
         $this->token = $this->jwtManager->create($this->user);
-    }
-
-    private function request(
-        string $method,
-        string $uri,
-        array $headers = []
-    ): void {
-        $defaultHeaders = [
-            'HTTP_AUTHORIZATION' => 'Bearer ' . $this->token,
-            'CONTENT_TYPE' => 'application/json',
-        ];
-
-        $this->client->request(
-            $method,
-            $uri,
-            [],
-            [],
-            array_merge($defaultHeaders, $headers)
-        );
-    }
-
-    private function getResponseData(): array
-    {
-        return json_decode($this->client->getResponse()->getContent(), true);
     }
 
     /** @test */
@@ -214,7 +193,31 @@ class TranslationControllerTest extends WebTestCase
         $response = $this->client->getResponse();
         $this->assertTrue(
             $response->isSuccessful() || $response->getStatusCode() === Response::HTTP_UNAUTHORIZED,
-            'Expected either 200 or 401 response'
+            'Expected either 200 or 401 response',
         );
+    }
+
+    private function request(
+        string $method,
+        string $uri,
+        array $headers = [],
+    ): void {
+        $defaultHeaders = [
+            'HTTP_AUTHORIZATION' => 'Bearer ' . $this->token,
+            'CONTENT_TYPE'       => 'application/json',
+        ];
+
+        $this->client->request(
+            $method,
+            $uri,
+            [],
+            [],
+            array_merge($defaultHeaders, $headers),
+        );
+    }
+
+    private function getResponseData(): array
+    {
+        return json_decode($this->client->getResponse()->getContent(), true);
     }
 }

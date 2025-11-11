@@ -49,6 +49,7 @@ class UpdatePasswordDtoTest extends KernelTestCase
         // Assert
         $this->assertGreaterThan(0, $violations->count());
         $foundNewPasswordError = false;
+
         foreach ($violations as $violation) {
             if ($violation->getPropertyPath() === 'newPassword') {
                 $foundNewPasswordError = true;
@@ -72,6 +73,7 @@ class UpdatePasswordDtoTest extends KernelTestCase
         // Assert
         $this->assertGreaterThan(0, $violations->count(), 'Password less than 8 chars should have violations');
         $foundNewPasswordError = false;
+
         foreach ($violations as $violation) {
             if ($violation->getPropertyPath() === 'newPassword') {
                 $foundNewPasswordError = true;
@@ -95,6 +97,7 @@ class UpdatePasswordDtoTest extends KernelTestCase
         // Assert
         $this->assertGreaterThan(0, $violations->count());
         $foundConfirmPasswordError = false;
+
         foreach ($violations as $violation) {
             if ($violation->getPropertyPath() === 'confirmPassword') {
                 $foundConfirmPasswordError = true;
@@ -118,6 +121,7 @@ class UpdatePasswordDtoTest extends KernelTestCase
         // Assert
         $this->assertGreaterThan(0, $violations->count());
         $foundMismatchError = false;
+
         foreach ($violations as $violation) {
             if ($violation->getPropertyPath() === 'confirmPassword') {
                 $foundMismatchError = true;
@@ -158,6 +162,7 @@ class UpdatePasswordDtoTest extends KernelTestCase
         // Assert
         $this->assertGreaterThan(0, $violations->count(), 'Current password less than 8 chars should have violations');
         $foundCurrentPasswordError = false;
+
         foreach ($violations as $violation) {
             if ($violation->getPropertyPath() === 'currentPassword') {
                 $foundCurrentPasswordError = true;
@@ -182,6 +187,7 @@ class UpdatePasswordDtoTest extends KernelTestCase
         // Assert
         $this->assertGreaterThan(0, $violations->count(), 'Password exceeding 255 chars should have violations');
         $foundNewPasswordError = false;
+
         foreach ($violations as $violation) {
             if ($violation->getPropertyPath() === 'newPassword') {
                 $foundNewPasswordError = true;

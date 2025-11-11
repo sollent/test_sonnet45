@@ -45,6 +45,7 @@ class CreateRecurrenceDtoTest extends KernelTestCase
         // Assert
         $this->assertGreaterThan(0, $violations->count());
         $foundError = false;
+
         foreach ($violations as $violation) {
             if ($violation->getPropertyPath() === 'recurrenceType') {
                 $foundError = true;
@@ -67,6 +68,7 @@ class CreateRecurrenceDtoTest extends KernelTestCase
         // Assert
         $this->assertGreaterThan(0, $violations->count());
         $foundChoiceError = false;
+
         foreach ($violations as $violation) {
             if ($violation->getPropertyPath() === 'recurrenceType') {
                 $foundChoiceError = true;
@@ -106,6 +108,7 @@ class CreateRecurrenceDtoTest extends KernelTestCase
         // Assert
         $this->assertGreaterThan(0, $violations->count());
         $foundError = false;
+
         foreach ($violations as $violation) {
             if ($violation->getPropertyPath() === 'interval') {
                 $foundError = true;
@@ -129,6 +132,7 @@ class CreateRecurrenceDtoTest extends KernelTestCase
         // Assert
         $this->assertGreaterThan(0, $violations->count());
         $foundRangeError = false;
+
         foreach ($violations as $violation) {
             if (str_contains($violation->getPropertyPath(), 'daysOfWeek')) {
                 $foundRangeError = true;
@@ -152,6 +156,7 @@ class CreateRecurrenceDtoTest extends KernelTestCase
         // Assert
         $this->assertGreaterThan(0, $violations->count());
         $foundRangeError = false;
+
         foreach ($violations as $violation) {
             if ($violation->getPropertyPath() === 'dayOfMonth') {
                 $foundRangeError = true;
@@ -175,6 +180,7 @@ class CreateRecurrenceDtoTest extends KernelTestCase
         // Assert
         $this->assertGreaterThan(0, $violations->count());
         $foundRangeError = false;
+
         foreach ($violations as $violation) {
             if ($violation->getPropertyPath() === 'monthOfYear') {
                 $foundRangeError = true;
@@ -198,6 +204,7 @@ class CreateRecurrenceDtoTest extends KernelTestCase
         // Assert
         $this->assertGreaterThan(0, $violations->count());
         $foundError = false;
+
         foreach ($violations as $violation) {
             if ($violation->getPropertyPath() === 'maxOccurrences') {
                 $foundError = true;

@@ -8,6 +8,7 @@ use App\Entity\Task;
 use App\Entity\User;
 use App\Security\Voter\TaskVoter;
 use PHPUnit\Framework\TestCase;
+use stdClass;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\VoterInterface;
 
@@ -172,7 +173,7 @@ class TaskVoterTest extends TestCase
         $resultTask = $this->voter->vote($token, $task, [TaskVoter::VIEW]);
 
         // Act - does not support other objects
-        $resultOther = $this->voter->vote($token, new \stdClass(), [TaskVoter::VIEW]);
+        $resultOther = $this->voter->vote($token, new stdClass(), [TaskVoter::VIEW]);
 
         // Assert
         $this->assertNotSame(VoterInterface::ACCESS_ABSTAIN, $resultTask);

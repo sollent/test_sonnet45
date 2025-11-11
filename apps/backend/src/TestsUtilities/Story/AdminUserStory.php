@@ -13,26 +13,25 @@ final class AdminUserStory extends Story
     {
         // Create admin user
         UserFactory::createOne([
-            'email' => 'admin@example.com',
+            'email'    => 'admin@example.com',
             'password' => 'admin123',
-            'roles' => ['ROLE_ADMIN'],
+            'roles'    => ['ROLE_ADMIN'],
         ]);
 
         // Create regular user
         UserFactory::createOne([
-            'email' => 'user@example.com',
+            'email'    => 'user@example.com',
             'password' => 'user123',
-            'roles' => ['ROLE_USER'],
+            'roles'    => ['ROLE_USER'],
         ]);
 
         // Create Google user with admin rights
         UserFactory::createOne([
-            'email' => 'google-admin@example.com',
-            'password' => null,
-            'googleId' => 'google-admin-id-123',
+            'email'          => 'google-admin@example.com',
+            'password'       => null,
+            'googleId'       => 'google-admin-id-123',
             'googleUserName' => 'Google Admin User',
-            'roles' => ['ROLE_ADMIN'],
+            'roles'          => ['ROLE_ADMIN'],
         ]);
     }
 }
-

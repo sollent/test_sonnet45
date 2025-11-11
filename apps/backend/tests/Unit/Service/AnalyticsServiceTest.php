@@ -4,19 +4,24 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Service;
 
-use App\Entity\User;
 use App\Entity\Tag;
 use App\Entity\Task;
-use App\Repository\Database\TaskRepository;
+use App\Entity\User;
 use App\Repository\Database\TagRepository;
+use App\Repository\Database\TaskRepository;
 use App\Service\AnalyticsService;
+use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 
 class AnalyticsServiceTest extends TestCase
 {
     private TaskRepository $taskRepository;
+
     private TagRepository $tagRepository;
+
     private AnalyticsService $analyticsService;
+
     private User $user;
 
     protected function setUp(): void
@@ -27,7 +32,7 @@ class AnalyticsServiceTest extends TestCase
         // AnalyticsService is final - instantiate directly
         $this->analyticsService = new AnalyticsService(
             $this->taskRepository,
-            $this->tagRepository
+            $this->tagRepository,
         );
 
         $this->user = new User();
@@ -40,11 +45,11 @@ class AnalyticsServiceTest extends TestCase
     {
         // Arrange
         $stats = [
-            'total' => 100,
-            'pending' => 30,
+            'total'       => 100,
+            'pending'     => 30,
             'in_progress' => 20,
-            'completed' => 45,
-            'overdue' => 5
+            'completed'   => 45,
+            'overdue'     => 5,
         ];
 
         $thisWeekTasks = [new Task(), new Task(), new Task()];
@@ -178,8 +183,8 @@ class AnalyticsServiceTest extends TestCase
     public function testGetCompletionTimelineByDateRange(): void
     {
         // Arrange
-        $start = new \DateTimeImmutable('2024-01-01');
-        $end = new \DateTimeImmutable('2024-01-31');
+        $start = new DateTimeImmutable('2024-01-01');
+        $end = new DateTimeImmutable('2024-01-31');
         $timelineData = [
             ['date' => '2024-01-15', 'completed' => 8],
         ];
@@ -203,11 +208,11 @@ class AnalyticsServiceTest extends TestCase
     {
         // Arrange
         $stats = [
-            'total' => 100,
-            'pending' => 25,
+            'total'       => 100,
+            'pending'     => 25,
             'in_progress' => 30,
-            'completed' => 40,
-            'cancelled' => 5
+            'completed'   => 40,
+            'cancelled'   => 5,
         ];
 
         $this->taskRepository
@@ -231,10 +236,10 @@ class AnalyticsServiceTest extends TestCase
     {
         // Arrange
         $breakdown = [
-            'low' => 10,
+            'low'    => 10,
             'medium' => 30,
-            'high' => 15,
-            'urgent' => 5
+            'high'   => 15,
+            'urgent' => 5,
         ];
 
         $this->taskRepository
@@ -309,7 +314,7 @@ class AnalyticsServiceTest extends TestCase
         $tag1->setColor('#FF0000');
 
         // Use reflection to set ID
-        $reflectionTag1 = new \ReflectionClass($tag1);
+        $reflectionTag1 = new ReflectionClass($tag1);
         $idProperty1 = $reflectionTag1->getProperty('id');
         $idProperty1->setAccessible(true);
         $idProperty1->setValue($tag1, 1);
@@ -318,7 +323,7 @@ class AnalyticsServiceTest extends TestCase
         $tag2->setName('work');
         $tag2->setColor('#0000FF');
 
-        $reflectionTag2 = new \ReflectionClass($tag2);
+        $reflectionTag2 = new ReflectionClass($tag2);
         $idProperty2 = $reflectionTag2->getProperty('id');
         $idProperty2->setAccessible(true);
         $idProperty2->setValue($tag2, 2);
@@ -334,7 +339,7 @@ class AnalyticsServiceTest extends TestCase
             ->method('getTagCompletionStats')
             ->willReturnOnConsecutiveCalls(
                 ['total' => 20, 'completed' => 18, 'completionRate' => 90.0],
-                ['total' => 15, 'completed' => 12, 'completionRate' => 80.0]
+                ['total' => 15, 'completed' => 12, 'completionRate' => 80.0],
             );
 
         // Act
@@ -376,7 +381,7 @@ class AnalyticsServiceTest extends TestCase
             ->willReturnOnConsecutiveCalls(
                 $thisWeekCompleted, // This week
                 $lastWeekCompleted, // Last week
-                [] // For streak calculation
+                [], // For streak calculation
             );
 
         $this->taskRepository
@@ -398,7 +403,7 @@ class AnalyticsServiceTest extends TestCase
         $this->assertGreaterThan(0, count($result));
 
         // Check for positive trend insight
-        $trendInsight = array_filter($result, fn($i) => $i['type'] === 'trend');
+        $trendInsight = array_filter($result, fn ($i) => $i['type'] === 'trend');
         $this->assertNotEmpty($trendInsight);
         $firstTrendInsight = array_values($trendInsight)[0];
         $this->assertEquals('positive', $firstTrendInsight['sentiment']);
@@ -416,7 +421,7 @@ class AnalyticsServiceTest extends TestCase
             ->willReturnOnConsecutiveCalls(
                 $thisWeekCompleted,
                 $lastWeekCompleted,
-                []
+                [],
             );
 
         $this->taskRepository->method('getMostProductiveHour')->willReturn(null);
@@ -427,7 +432,7 @@ class AnalyticsServiceTest extends TestCase
         $result = $this->analyticsService->generateInsights($this->user);
 
         // Assert
-        $trendInsight = array_filter($result, fn($i) => $i['type'] === 'trend');
+        $trendInsight = array_filter($result, fn ($i) => $i['type'] === 'trend');
         $this->assertNotEmpty($trendInsight);
         $firstTrendInsight = array_values($trendInsight)[0];
         $this->assertEquals('warning', $firstTrendInsight['sentiment']);
@@ -450,7 +455,7 @@ class AnalyticsServiceTest extends TestCase
                 $completedTasks, // Day 2
                 $completedTasks, // Day 3
                 $completedTasks, // Day 4
-                [] // Day 5 - break streak
+                [], // Day 5 - break streak
             );
 
         $this->taskRepository->method('getMostProductiveHour')->willReturn(null);
@@ -461,7 +466,7 @@ class AnalyticsServiceTest extends TestCase
         $result = $this->analyticsService->generateInsights($this->user);
 
         // Assert
-        $streakInsight = array_filter($result, fn($i) => $i['type'] === 'streak');
+        $streakInsight = array_filter($result, fn ($i) => $i['type'] === 'streak');
         $this->assertNotEmpty($streakInsight);
         $firstStreakInsight = array_values($streakInsight)[0];
         $this->assertEquals('positive', $firstStreakInsight['sentiment']);
@@ -473,10 +478,10 @@ class AnalyticsServiceTest extends TestCase
     {
         // Arrange
         $params = [
-            'period' => 30,
+            'period'   => 30,
             'dateFrom' => null,
-            'dateTo' => null,
-            'year' => 2024
+            'dateTo'   => null,
+            'year'     => 2024,
         ];
 
         $stats = ['total' => 50, 'pending' => 10, 'completed' => 30];
@@ -517,10 +522,10 @@ class AnalyticsServiceTest extends TestCase
     {
         // Arrange
         $params = [
-            'period' => 30,
+            'period'   => 30,
             'dateFrom' => '2024-01-01',
-            'dateTo' => '2024-01-31',
-            'year' => 2024
+            'dateTo'   => '2024-01-31',
+            'year'     => 2024,
         ];
 
         $this->taskRepository->method('getUserTaskStatistics')->willReturn(['total' => 20]);

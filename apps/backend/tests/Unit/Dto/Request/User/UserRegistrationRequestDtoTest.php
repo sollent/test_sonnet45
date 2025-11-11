@@ -24,7 +24,7 @@ class UserRegistrationRequestDtoTest extends KernelTestCase
         // Arrange
         $dto = new UserRegistrationRequestDto(
             email: 'user@example.com',
-            password: 'ValidPassword123'
+            password: 'ValidPassword123',
         );
 
         // Act
@@ -40,7 +40,7 @@ class UserRegistrationRequestDtoTest extends KernelTestCase
         // Arrange
         $dto = new UserRegistrationRequestDto(
             email: '',
-            password: 'ValidPassword123'
+            password: 'ValidPassword123',
         );
 
         // Act
@@ -49,6 +49,7 @@ class UserRegistrationRequestDtoTest extends KernelTestCase
         // Assert
         $this->assertGreaterThan(0, $violations->count());
         $foundEmailError = false;
+
         foreach ($violations as $violation) {
             if ($violation->getPropertyPath() === 'email') {
                 $foundEmailError = true;
@@ -64,7 +65,7 @@ class UserRegistrationRequestDtoTest extends KernelTestCase
         // Arrange
         $dto = new UserRegistrationRequestDto(
             email: 'invalid-email',
-            password: 'ValidPassword123'
+            password: 'ValidPassword123',
         );
 
         // Act
@@ -73,6 +74,7 @@ class UserRegistrationRequestDtoTest extends KernelTestCase
         // Assert
         $this->assertGreaterThan(0, $violations->count());
         $foundEmailError = false;
+
         foreach ($violations as $violation) {
             if ($violation->getPropertyPath() === 'email') {
                 $foundEmailError = true;
@@ -88,7 +90,7 @@ class UserRegistrationRequestDtoTest extends KernelTestCase
         // Arrange
         $dto = new UserRegistrationRequestDto(
             email: 'user@example.com',
-            password: ''
+            password: '',
         );
 
         // Act
@@ -97,6 +99,7 @@ class UserRegistrationRequestDtoTest extends KernelTestCase
         // Assert
         $this->assertGreaterThan(0, $violations->count());
         $foundPasswordError = false;
+
         foreach ($violations as $violation) {
             if ($violation->getPropertyPath() === 'password') {
                 $foundPasswordError = true;
@@ -112,7 +115,7 @@ class UserRegistrationRequestDtoTest extends KernelTestCase
         // Arrange - Password with 5 characters (min is 6)
         $dto = new UserRegistrationRequestDto(
             email: 'user@example.com',
-            password: '12345'
+            password: '12345',
         );
 
         // Act
@@ -121,9 +124,10 @@ class UserRegistrationRequestDtoTest extends KernelTestCase
         // Assert
         $this->assertGreaterThan(0, $violations->count());
         $foundMinLengthError = false;
+
         foreach ($violations as $violation) {
-            if ($violation->getPropertyPath() === 'password' &&
-                str_contains((string)$violation->getMessage(), 'min')) {
+            if ($violation->getPropertyPath() === 'password'
+                && str_contains((string) $violation->getMessage(), 'min')) {
                 $foundMinLengthError = true;
                 break;
             }
@@ -137,7 +141,7 @@ class UserRegistrationRequestDtoTest extends KernelTestCase
         // Arrange - Password with 41 characters (max is 40)
         $dto = new UserRegistrationRequestDto(
             email: 'user@example.com',
-            password: str_repeat('a', 41)
+            password: str_repeat('a', 41),
         );
 
         // Act
@@ -146,6 +150,7 @@ class UserRegistrationRequestDtoTest extends KernelTestCase
         // Assert
         $this->assertGreaterThan(0, $violations->count(), 'Password exceeding 40 chars should have violations');
         $foundPasswordError = false;
+
         foreach ($violations as $violation) {
             if ($violation->getPropertyPath() === 'password') {
                 $foundPasswordError = true;
@@ -161,7 +166,7 @@ class UserRegistrationRequestDtoTest extends KernelTestCase
         // Arrange - Password with exactly 6 characters (minimum)
         $dto = new UserRegistrationRequestDto(
             email: 'user@example.com',
-            password: '123456'
+            password: '123456',
         );
 
         // Act
@@ -177,7 +182,7 @@ class UserRegistrationRequestDtoTest extends KernelTestCase
         // Arrange - Password with exactly 40 characters (maximum)
         $dto = new UserRegistrationRequestDto(
             email: 'user@example.com',
-            password: str_repeat('a', 40)
+            password: str_repeat('a', 40),
         );
 
         // Act

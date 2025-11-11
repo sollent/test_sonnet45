@@ -13,6 +13,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 class EnumTranslatorServiceTest extends TestCase
 {
     private TranslatorInterface $translator;
+
     private EnumTranslatorService $service;
 
     protected function setUp(): void
@@ -182,11 +183,11 @@ class EnumTranslatorServiceTest extends TestCase
             ->method('trans')
             ->willReturnCallback(function ($key) {
                 return match ($key) {
-                    'task.priority.low' => 'Low',
+                    'task.priority.low'    => 'Low',
                     'task.priority.medium' => 'Medium',
-                    'task.priority.high' => 'High',
+                    'task.priority.high'   => 'High',
                     'task.priority.urgent' => 'Urgent',
-                    default => $key,
+                    default                => $key,
                 };
             });
 
@@ -213,11 +214,11 @@ class EnumTranslatorServiceTest extends TestCase
             ->method('trans')
             ->willReturnCallback(function ($key) {
                 return match ($key) {
-                    'task.status.pending' => 'Pending',
+                    'task.status.pending'     => 'Pending',
                     'task.status.in_progress' => 'In Progress',
-                    'task.status.completed' => 'Completed',
-                    'task.status.cancelled' => 'Cancelled',
-                    default => $key,
+                    'task.status.completed'   => 'Completed',
+                    'task.status.cancelled'   => 'Cancelled',
+                    default                   => $key,
                 };
             });
 
@@ -245,13 +246,14 @@ class EnumTranslatorServiceTest extends TestCase
             ->willReturnCallback(function ($key, $params, $domain, $locale) {
                 if ($locale === 'ru') {
                     return match ($key) {
-                        'task.priority.low' => 'Низкий',
+                        'task.priority.low'    => 'Низкий',
                         'task.priority.medium' => 'Средний',
-                        'task.priority.high' => 'Высокий',
+                        'task.priority.high'   => 'Высокий',
                         'task.priority.urgent' => 'Срочно',
-                        default => $key,
+                        default                => $key,
                     };
                 }
+
                 return $key;
             });
 

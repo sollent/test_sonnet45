@@ -20,7 +20,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[UniqueEntity(
     fields: ['name', 'user'],
     message: 'tag.name.already_exists',
-    errorPath: 'name'
+    errorPath: 'name',
 )]
 #[ORM\HasLifecycleCallbacks]
 class Tag extends AbstractEntity
@@ -37,11 +37,11 @@ class Tag extends AbstractEntity
         min: 1,
         max: 50,
         minMessage: 'tag.name.min_length',
-        maxMessage: 'tag.name.max_length'
+        maxMessage: 'tag.name.max_length',
     )]
     #[Assert\Regex(
         pattern: '/^[\w\s\-]+$/u',
-        message: 'tag.name.invalid_format'
+        message: 'tag.name.invalid_format',
     )]
     #[Groups(['tag:read', 'tag:write', 'tag:list', 'task:read', 'task:list'])]
     private ?string $name = null;
@@ -50,7 +50,7 @@ class Tag extends AbstractEntity
     #[Assert\NotBlank(message: 'tag.color.not_blank')]
     #[Assert\Regex(
         pattern: '/^#[0-9A-Fa-f]{6}$/',
-        message: 'tag.color.invalid_format'
+        message: 'tag.color.invalid_format',
     )]
     #[Groups(['tag:read', 'tag:write', 'tag:list', 'task:read', 'task:list'])]
     private string $color = '#3B82F6'; // Default blue color
@@ -89,6 +89,7 @@ class Tag extends AbstractEntity
     public function setName(string $name): static
     {
         $this->name = $name;
+
         return $this;
     }
 
@@ -100,6 +101,7 @@ class Tag extends AbstractEntity
     public function setColor(string $color): static
     {
         $this->color = $color;
+
         return $this;
     }
 
@@ -111,6 +113,7 @@ class Tag extends AbstractEntity
     public function setIcon(?string $icon): static
     {
         $this->icon = $icon;
+
         return $this;
     }
 
@@ -122,6 +125,7 @@ class Tag extends AbstractEntity
     public function setUser(?User $user): static
     {
         $this->user = $user;
+
         return $this;
     }
 
@@ -162,12 +166,14 @@ class Tag extends AbstractEntity
     public function updateUsageCount(): static
     {
         $this->usageCount = $this->tasks->count();
+
         return $this;
     }
 
     public function setUsageCount(int $usageCount): static
     {
         $this->usageCount = $usageCount;
+
         return $this;
     }
 }

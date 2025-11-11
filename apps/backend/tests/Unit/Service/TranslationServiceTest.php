@@ -13,6 +13,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 class TranslationServiceTest extends TestCase
 {
     private TranslatorInterface $translator;
+
     private TranslationService $service;
 
     protected function setUp(): void
@@ -97,11 +98,11 @@ class TranslationServiceTest extends TestCase
             ->method('trans')
             ->willReturnCallback(function ($key) {
                 return match ($key) {
-                    'task.priority.low' => 'Low',
+                    'task.priority.low'    => 'Low',
                     'task.priority.medium' => 'Medium',
-                    'task.priority.high' => 'High',
+                    'task.priority.high'   => 'High',
                     'task.priority.urgent' => 'Urgent',
-                    default => $key,
+                    default                => $key,
                 };
             });
 
@@ -133,12 +134,12 @@ class TranslationServiceTest extends TestCase
             ->method('trans')
             ->willReturnCallback(function ($key) {
                 return match ($key) {
-                    'task.status.pending' => 'Pending',
+                    'task.status.pending'     => 'Pending',
                     'task.status.in_progress' => 'In Progress',
-                    'task.status.completed' => 'Completed',
-                    'task.status.cancelled' => 'Cancelled',
-                    'task.status.archived' => 'Archived',
-                    default => $key,
+                    'task.status.completed'   => 'Completed',
+                    'task.status.cancelled'   => 'Cancelled',
+                    'task.status.archived'    => 'Archived',
+                    default                   => $key,
                 };
             });
 

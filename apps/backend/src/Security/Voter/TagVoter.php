@@ -12,12 +12,14 @@ use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 final class TagVoter extends Voter
 {
     public const VIEW = 'view';
+
     public const EDIT = 'edit';
+
     public const DELETE = 'delete';
 
     protected function supports(string $attribute, mixed $subject): bool
     {
-        return in_array($attribute, [self::VIEW, self::EDIT, self::DELETE])
+        return in_array($attribute, [self::VIEW, self::EDIT, self::DELETE], true)
             && $subject instanceof Tag;
     }
 

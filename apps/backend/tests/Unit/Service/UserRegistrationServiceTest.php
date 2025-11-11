@@ -16,8 +16,11 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 class UserRegistrationServiceTest extends TestCase
 {
     private UserRepository $userRepository;
+
     private UserPasswordHasherInterface $passwordHasher;
+
     private TranslatorInterface $translator;
+
     private UserRegistrationService $userRegistrationService;
 
     protected function setUp(): void
@@ -29,7 +32,7 @@ class UserRegistrationServiceTest extends TestCase
         $this->userRegistrationService = new UserRegistrationService(
             $this->userRepository,
             $this->passwordHasher,
-            $this->translator
+            $this->translator,
         );
     }
 
@@ -38,7 +41,7 @@ class UserRegistrationServiceTest extends TestCase
         // Arrange
         $dto = new UserRegistrationRequestDto(
             email: 'newuser@example.com',
-            password: 'SecurePassword123'
+            password: 'SecurePassword123',
         );
 
         $this->userRepository
@@ -52,8 +55,8 @@ class UserRegistrationServiceTest extends TestCase
             ->expects($this->once())
             ->method('hashPassword')
             ->with(
-                $this->callback(fn($user) => $user instanceof User && $user->getEmail() === 'newuser@example.com'),
-                'SecurePassword123'
+                $this->callback(fn ($user) => $user instanceof User && $user->getEmail() === 'newuser@example.com'),
+                'SecurePassword123',
             )
             ->willReturn($hashedPassword);
 
@@ -65,7 +68,7 @@ class UserRegistrationServiceTest extends TestCase
                     return $user->getEmail() === 'newuser@example.com'
                         && $user->getPassword() === $hashedPassword;
                 }),
-                true
+                true,
             );
 
         // Act
@@ -82,7 +85,7 @@ class UserRegistrationServiceTest extends TestCase
         // Arrange
         $dto = new UserRegistrationRequestDto(
             email: 'existing@example.com',
-            password: 'password123'
+            password: 'password123',
         );
 
         $existingUser = new User();
@@ -123,7 +126,7 @@ class UserRegistrationServiceTest extends TestCase
         $plainPassword = 'MyPlainPassword123!';
         $dto = new UserRegistrationRequestDto(
             email: 'hashtest@example.com',
-            password: $plainPassword
+            password: $plainPassword,
         );
 
         $this->userRepository
@@ -136,7 +139,7 @@ class UserRegistrationServiceTest extends TestCase
             ->method('hashPassword')
             ->with(
                 $this->isInstanceOf(User::class),
-                $plainPassword
+                $plainPassword,
             )
             ->willReturn($expectedHashedPassword);
 
@@ -161,7 +164,7 @@ class UserRegistrationServiceTest extends TestCase
         // Arrange
         $dto = new UserRegistrationRequestDto(
             email: 'credentials@example.com',
-            password: 'testpass'
+            password: 'testpass',
         );
 
         $this->userRepository
@@ -193,7 +196,7 @@ class UserRegistrationServiceTest extends TestCase
         // Arrange
         $dto = new UserRegistrationRequestDto(
             email: 'flush@example.com',
-            password: 'password'
+            password: 'password',
         );
 
         $this->userRepository
@@ -210,11 +213,10 @@ class UserRegistrationServiceTest extends TestCase
             ->method('save')
             ->with(
                 $this->isInstanceOf(User::class),
-                true // Проверяем что flush = true
+                true, // Проверяем что flush = true
             );
 
         // Act
         $this->userRegistrationService->register($dto);
     }
 }
-

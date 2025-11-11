@@ -22,8 +22,11 @@ class TagControllerTest extends WebTestCase
     use Factories;
 
     private KernelBrowser $client;
+
     private JWTTokenManagerInterface $jwtManager;
+
     private User $user;
+
     private string $token;
 
     protected function setUp(): void
@@ -33,35 +36,11 @@ class TagControllerTest extends WebTestCase
 
         // Create authenticated user
         $userProxy = UserFactory::createOne([
-            'email' => 'test-' . uniqid() . '@example.com',
+            'email'    => 'test-' . uniqid() . '@example.com',
             'password' => 'password123',
         ]);
         $this->user = $userProxy->_real();
         $this->token = $this->jwtManager->create($this->user);
-    }
-
-    private function request(
-        string $method,
-        string $uri,
-        array $parameters = [],
-        string $content = null
-    ): void {
-        $this->client->request(
-            $method,
-            $uri,
-            $parameters,
-            [],
-            [
-                'HTTP_AUTHORIZATION' => 'Bearer ' . $this->token,
-                'CONTENT_TYPE' => 'application/json',
-            ],
-            $content
-        );
-    }
-
-    private function getResponseData(): array
-    {
-        return json_decode($this->client->getResponse()->getContent(), true);
     }
 
     // ==================== GET /api/tags ====================
@@ -148,13 +127,13 @@ class TagControllerTest extends WebTestCase
     {
         // Arrange
         TagFactory::createOne([
-            'user' => $this->user,
-            'name' => 'frequently-used',
+            'user'       => $this->user,
+            'name'       => 'frequently-used',
             'usageCount' => 100,
         ]);
         TagFactory::createOne([
-            'user' => $this->user,
-            'name' => 'rarely-used',
+            'user'       => $this->user,
+            'name'       => 'rarely-used',
             'usageCount' => 5,
         ]);
 
@@ -211,8 +190,8 @@ class TagControllerTest extends WebTestCase
     {
         // Arrange
         $tag = TagFactory::createOne([
-            'user' => $this->user,
-            'name' => 'test-tag',
+            'user'  => $this->user,
+            'name'  => 'test-tag',
             'color' => '#FF0000',
         ]);
         $tagId = $tag->_real()->getId();
@@ -261,7 +240,7 @@ class TagControllerTest extends WebTestCase
     {
         // Arrange
         $payload = json_encode([
-            'name' => 'New Tag',
+            'name'  => 'New Tag',
             'color' => '#00FF00',
         ]);
 
@@ -300,7 +279,7 @@ class TagControllerTest extends WebTestCase
     {
         // Arrange
         $payload = json_encode([
-            'name' => 'Complete Tag',
+            'name'  => 'Complete Tag',
             'color' => '#0000FF',
         ]);
 
@@ -320,7 +299,7 @@ class TagControllerTest extends WebTestCase
     {
         // Arrange: Invalid hex color
         $payload = json_encode([
-            'name' => 'Invalid Tag',
+            'name'  => 'Invalid Tag',
             'color' => 'not-a-color',
         ]);
 
@@ -391,14 +370,14 @@ class TagControllerTest extends WebTestCase
     {
         // Arrange
         $tag = TagFactory::createOne([
-            'user' => $this->user,
-            'name' => 'Old Name',
+            'user'  => $this->user,
+            'name'  => 'Old Name',
             'color' => '#FF0000',
         ]);
         $tagId = $tag->_real()->getId();
 
         $payload = json_encode([
-            'name' => 'Updated Name',
+            'name'  => 'Updated Name',
             'color' => '#00FF00',
         ]);
 
@@ -418,8 +397,8 @@ class TagControllerTest extends WebTestCase
     {
         // Arrange
         $tag = TagFactory::createOne([
-            'user' => $this->user,
-            'name' => 'Tag',
+            'user'  => $this->user,
+            'name'  => 'Tag',
             'color' => '#FF0000',
         ]);
         $tagId = $tag->_real()->getId();
@@ -524,5 +503,29 @@ class TagControllerTest extends WebTestCase
 
         // Assert
         $this->assertResponseStatusCodeSame(Response::HTTP_FORBIDDEN);
+    }
+
+    private function request(
+        string $method,
+        string $uri,
+        array $parameters = [],
+        ?string $content = null,
+    ): void {
+        $this->client->request(
+            $method,
+            $uri,
+            $parameters,
+            [],
+            [
+                'HTTP_AUTHORIZATION' => 'Bearer ' . $this->token,
+                'CONTENT_TYPE'       => 'application/json',
+            ],
+            $content,
+        );
+    }
+
+    private function getResponseData(): array
+    {
+        return json_decode($this->client->getResponse()->getContent(), true);
     }
 }

@@ -7,6 +7,8 @@ namespace App\TestsUtilities\Factory;
 use App\Entity\RecurrenceRule;
 use App\Entity\Task;
 use App\Entity\User;
+use DateTimeImmutable;
+use DateTimeInterface;
 use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
 
 /**
@@ -19,26 +21,6 @@ final class RecurrenceRuleFactory extends PersistentProxyObjectFactory
         return RecurrenceRule::class;
     }
 
-    protected function defaults(): array|callable
-    {
-        return [
-            'recurrenceType' => RecurrenceRule::TYPE_DAILY,
-            'interval' => 1,
-            'nextOccurrenceDate' => \DateTimeImmutable::createFromMutable(
-                self::faker()->dateTimeBetween('now', '+30 days')
-            ),
-            'isActive' => true,
-            'currentOccurrences' => 0,
-            'createdBy' => UserFactory::new(),
-            'templateTask' => TaskFactory::new(),
-        ];
-    }
-
-    protected function initialize(): static
-    {
-        return $this;
-    }
-
     /**
      * Create a daily recurrence rule
      */
@@ -46,7 +28,7 @@ final class RecurrenceRuleFactory extends PersistentProxyObjectFactory
     {
         return $this->with([
             'recurrenceType' => RecurrenceRule::TYPE_DAILY,
-            'interval' => $interval,
+            'interval'       => $interval,
         ]);
     }
 
@@ -57,7 +39,7 @@ final class RecurrenceRuleFactory extends PersistentProxyObjectFactory
     {
         return $this->with([
             'recurrenceType' => RecurrenceRule::TYPE_WEEKLY,
-            'daysOfWeek' => $daysOfWeek,
+            'daysOfWeek'     => $daysOfWeek,
         ]);
     }
 
@@ -68,7 +50,7 @@ final class RecurrenceRuleFactory extends PersistentProxyObjectFactory
     {
         return $this->with([
             'recurrenceType' => RecurrenceRule::TYPE_MONTHLY,
-            'dayOfMonth' => $dayOfMonth,
+            'dayOfMonth'     => $dayOfMonth,
         ]);
     }
 
@@ -79,8 +61,8 @@ final class RecurrenceRuleFactory extends PersistentProxyObjectFactory
     {
         return $this->with([
             'recurrenceType' => RecurrenceRule::TYPE_YEARLY,
-            'monthOfYear' => $monthOfYear,
-            'dayOfMonth' => $dayOfMonth,
+            'monthOfYear'    => $monthOfYear,
+            'dayOfMonth'     => $dayOfMonth,
         ]);
     }
 
@@ -91,14 +73,14 @@ final class RecurrenceRuleFactory extends PersistentProxyObjectFactory
     {
         return $this->with([
             'recurrenceType' => RecurrenceRule::TYPE_CUSTOM,
-            'interval' => $interval,
+            'interval'       => $interval,
         ]);
     }
 
     /**
      * Set end date for the recurrence
      */
-    public function withEndDate(\DateTimeInterface $endDate): self
+    public function withEndDate(DateTimeInterface $endDate): self
     {
         return $this->with([
             'endDate' => $endDate,
@@ -121,7 +103,7 @@ final class RecurrenceRuleFactory extends PersistentProxyObjectFactory
     public function withTimeOfDay(string $time = '09:00:00'): self
     {
         return $this->with([
-            'timeOfDay' => \DateTimeImmutable::createFromFormat('H:i:s', $time),
+            'timeOfDay' => DateTimeImmutable::createFromFormat('H:i:s', $time),
         ]);
     }
 
@@ -152,7 +134,7 @@ final class RecurrenceRuleFactory extends PersistentProxyObjectFactory
     {
         return $this->with([
             'templateTask' => $task,
-            'createdBy' => $task->getUser(),
+            'createdBy'    => $task->getUser(),
         ]);
     }
 
@@ -162,7 +144,7 @@ final class RecurrenceRuleFactory extends PersistentProxyObjectFactory
     public function shouldStop(): self
     {
         return $this->with([
-            'maxOccurrences' => 5,
+            'maxOccurrences'     => 5,
             'currentOccurrences' => 5,
         ]);
     }
@@ -173,9 +155,29 @@ final class RecurrenceRuleFactory extends PersistentProxyObjectFactory
     public function expired(): self
     {
         return $this->with([
-            'endDate' => \DateTimeImmutable::createFromMutable(
-                self::faker()->dateTimeBetween('-30 days', '-1 day')
+            'endDate' => DateTimeImmutable::createFromMutable(
+                self::faker()->dateTimeBetween('-30 days', '-1 day'),
             ),
         ]);
+    }
+
+    protected function defaults(): array|callable
+    {
+        return [
+            'recurrenceType'     => RecurrenceRule::TYPE_DAILY,
+            'interval'           => 1,
+            'nextOccurrenceDate' => DateTimeImmutable::createFromMutable(
+                self::faker()->dateTimeBetween('now', '+30 days'),
+            ),
+            'isActive'           => true,
+            'currentOccurrences' => 0,
+            'createdBy'          => UserFactory::new(),
+            'templateTask'       => TaskFactory::new(),
+        ];
+    }
+
+    protected function initialize(): static
+    {
+        return $this;
     }
 }

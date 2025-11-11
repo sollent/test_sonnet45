@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Tests\Functional\Api;
 
 use App\Entity\User;
+use App\TestsUtilities\Factory\MediaObjectFactory;
 use App\TestsUtilities\Factory\TaskFactory;
 use App\TestsUtilities\Factory\UserFactory;
-use App\TestsUtilities\Factory\RecurrenceRuleFactory;
-use App\TestsUtilities\Factory\MediaObjectFactory;
+use DateTimeImmutable;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -25,8 +25,11 @@ class AuthorizationTest extends WebTestCase
     use Factories;
 
     private KernelBrowser $client;
+
     private JWTTokenManagerInterface $jwtManager;
+
     private User $user;
+
     private string $token;
 
     protected function setUp(): void
@@ -36,7 +39,7 @@ class AuthorizationTest extends WebTestCase
 
         // Create authenticated user for tests
         $userProxy = UserFactory::createOne([
-            'email' => 'test-' . uniqid() . '@example.com',
+            'email'    => 'test-' . uniqid() . '@example.com',
             'password' => 'password123',
         ]);
         $this->user = $userProxy->_real();
@@ -64,7 +67,7 @@ class AuthorizationTest extends WebTestCase
             '/api/tasks',
             [],
             [],
-            ['HTTP_AUTHORIZATION' => 'Bearer invalid-token-12345']
+            ['HTTP_AUTHORIZATION' => 'Bearer invalid-token-12345'],
         );
 
         // Assert
@@ -80,7 +83,7 @@ class AuthorizationTest extends WebTestCase
             '/api/tasks',
             [],
             [],
-            ['HTTP_AUTHORIZATION' => 'InvalidFormat']
+            ['HTTP_AUTHORIZATION' => 'InvalidFormat'],
         );
 
         // Assert
@@ -103,7 +106,7 @@ class AuthorizationTest extends WebTestCase
             '/api/tasks',
             [],
             [],
-            ['HTTP_AUTHORIZATION' => 'Bearer ' . $fakeExpiredToken]
+            ['HTTP_AUTHORIZATION' => 'Bearer ' . $fakeExpiredToken],
         );
 
         // Assert: Should be unauthorized (token invalid/expired)
@@ -119,7 +122,7 @@ class AuthorizationTest extends WebTestCase
             '/api/tasks',
             [],
             [],
-            ['HTTP_AUTHORIZATION' => 'Bearer ']
+            ['HTTP_AUTHORIZATION' => 'Bearer '],
         );
 
         // Assert
@@ -141,7 +144,7 @@ class AuthorizationTest extends WebTestCase
             '/api/tasks/' . $task->getId(),
             [],
             [],
-            ['HTTP_AUTHORIZATION' => 'Bearer ' . $this->token]
+            ['HTTP_AUTHORIZATION' => 'Bearer ' . $this->token],
         );
 
         // Assert: Should be forbidden
@@ -163,9 +166,9 @@ class AuthorizationTest extends WebTestCase
             [],
             [
                 'HTTP_AUTHORIZATION' => 'Bearer ' . $this->token,
-                'CONTENT_TYPE' => 'application/json',
+                'CONTENT_TYPE'       => 'application/json',
             ],
-            json_encode(['title' => 'Hacked Title'])
+            json_encode(['title' => 'Hacked Title']),
         );
 
         // Assert: Should be forbidden
@@ -185,7 +188,7 @@ class AuthorizationTest extends WebTestCase
             '/api/tasks/' . $task->getId(),
             [],
             [],
-            ['HTTP_AUTHORIZATION' => 'Bearer ' . $this->token]
+            ['HTTP_AUTHORIZATION' => 'Bearer ' . $this->token],
         );
 
         // Assert: Should be forbidden
@@ -194,6 +197,7 @@ class AuthorizationTest extends WebTestCase
 
     /**
      * @test
+     *
      * @group skip
      * Note: No GET endpoint for single recurrence rule
      */
@@ -217,7 +221,7 @@ class AuthorizationTest extends WebTestCase
             '/api/media/' . $media->getId(),
             [],
             [],
-            ['HTTP_AUTHORIZATION' => 'Bearer ' . $this->token]
+            ['HTTP_AUTHORIZATION' => 'Bearer ' . $this->token],
         );
 
         // Assert: Should be forbidden
@@ -246,7 +250,7 @@ class AuthorizationTest extends WebTestCase
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
-            json_encode(['title' => 'Unauthorized Task'])
+            json_encode(['title' => 'Unauthorized Task']),
         );
 
         // Assert
@@ -255,6 +259,7 @@ class AuthorizationTest extends WebTestCase
 
     /**
      * @test
+     *
      * @group skip
      * Note: No GET /api/recurrence-rules list endpoint
      */
@@ -283,16 +288,16 @@ class AuthorizationTest extends WebTestCase
         $otherUser2 = UserFactory::createOne()->_real();
 
         TaskFactory::createMany(3, [
-            'user' => $this->user,
-            'dueDate' => new \DateTimeImmutable('+1 day')
+            'user'    => $this->user,
+            'dueDate' => new DateTimeImmutable('+1 day'),
         ]);
         TaskFactory::createMany(2, [
-            'user' => $otherUser1,
-            'dueDate' => new \DateTimeImmutable('+2 days')
+            'user'    => $otherUser1,
+            'dueDate' => new DateTimeImmutable('+2 days'),
         ]);
         TaskFactory::createMany(2, [
-            'user' => $otherUser2,
-            'dueDate' => new \DateTimeImmutable('+3 days')
+            'user'    => $otherUser2,
+            'dueDate' => new DateTimeImmutable('+3 days'),
         ]);
 
         // Act: List tasks
@@ -301,7 +306,7 @@ class AuthorizationTest extends WebTestCase
             '/api/tasks',
             [],
             [],
-            ['HTTP_AUTHORIZATION' => 'Bearer ' . $this->token]
+            ['HTTP_AUTHORIZATION' => 'Bearer ' . $this->token],
         );
 
         // Assert: Should only see own tasks
@@ -320,6 +325,7 @@ class AuthorizationTest extends WebTestCase
 
     /**
      * @test
+     *
      * @group skip
      * Note: No profile endpoint in current API
      */
@@ -340,7 +346,7 @@ class AuthorizationTest extends WebTestCase
             '/api/tasks/' . $task->getId(),
             [],
             [],
-            ['HTTP_AUTHORIZATION' => 'Bearer ' . $this->token]
+            ['HTTP_AUTHORIZATION' => 'Bearer ' . $this->token],
         );
 
         // Assert: Should be successful
@@ -361,7 +367,7 @@ class AuthorizationTest extends WebTestCase
             '/api/tasks',
             [],
             [],
-            ['HTTP_AUTHORIZATION' => 'bearer ' . $this->token]
+            ['HTTP_AUTHORIZATION' => 'bearer ' . $this->token],
         );
 
         // Assert: Should be successful (HTTP headers are case-insensitive)
@@ -377,14 +383,14 @@ class AuthorizationTest extends WebTestCase
             '/api/tasks',
             [],
             [],
-            ['HTTP_AUTHORIZATION' => 'Bearer  ' . $this->token]
+            ['HTTP_AUTHORIZATION' => 'Bearer  ' . $this->token],
         );
 
         // Assert: May fail due to extra space
         $response = $this->client->getResponse();
         $this->assertContains($response->getStatusCode(), [
             Response::HTTP_OK,
-            Response::HTTP_UNAUTHORIZED
+            Response::HTTP_UNAUTHORIZED,
         ]);
     }
 }

@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\Functional\Api;
 
 use App\Entity\User;
-use App\Enum\TaskPriority;
-use App\Enum\TaskStatus;
 use App\TestsUtilities\Factory\UserFactory;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -21,8 +19,11 @@ class EnumControllerTest extends WebTestCase
     use Factories;
 
     private KernelBrowser $client;
+
     private JWTTokenManagerInterface $jwtManager;
+
     private User $user;
+
     private string $token;
 
     protected function setUp(): void
@@ -32,35 +33,11 @@ class EnumControllerTest extends WebTestCase
 
         // Create authenticated user
         $userProxy = UserFactory::createOne([
-            'email' => 'test-' . uniqid() . '@example.com',
+            'email'    => 'test-' . uniqid() . '@example.com',
             'password' => 'password123',
         ]);
         $this->user = $userProxy->_real();
         $this->token = $this->jwtManager->create($this->user);
-    }
-
-    private function request(
-        string $method,
-        string $uri,
-        array $headers = []
-    ): void {
-        $defaultHeaders = [
-            'HTTP_AUTHORIZATION' => 'Bearer ' . $this->token,
-            'CONTENT_TYPE' => 'application/json',
-        ];
-
-        $this->client->request(
-            $method,
-            $uri,
-            [],
-            [],
-            array_merge($defaultHeaders, $headers)
-        );
-    }
-
-    private function getResponseData(): array
-    {
-        return json_decode($this->client->getResponse()->getContent(), true);
     }
 
     /** @test */
@@ -124,7 +101,7 @@ class EnumControllerTest extends WebTestCase
         $data = $this->getResponseData();
 
         // Find "high" priority and check label is in Russian
-        $highPriority = array_values(array_filter($data, fn($p) => $p['value'] === 'high'))[0] ?? null;
+        $highPriority = array_values(array_filter($data, fn ($p) => $p['value'] === 'high'))[0] ?? null;
         $this->assertNotNull($highPriority);
 
         // Russian label should be different from English "High"
@@ -193,7 +170,7 @@ class EnumControllerTest extends WebTestCase
         $data = $this->getResponseData();
 
         // Find "completed" status and check label exists
-        $completedStatus = array_values(array_filter($data, fn($s) => $s['value'] === 'completed'))[0] ?? null;
+        $completedStatus = array_values(array_filter($data, fn ($s) => $s['value'] === 'completed'))[0] ?? null;
         $this->assertNotNull($completedStatus);
 
         // Russian label should be a string
@@ -208,5 +185,29 @@ class EnumControllerTest extends WebTestCase
 
         // Assert
         $this->assertResponseStatusCodeSame(Response::HTTP_UNAUTHORIZED);
+    }
+
+    private function request(
+        string $method,
+        string $uri,
+        array $headers = [],
+    ): void {
+        $defaultHeaders = [
+            'HTTP_AUTHORIZATION' => 'Bearer ' . $this->token,
+            'CONTENT_TYPE'       => 'application/json',
+        ];
+
+        $this->client->request(
+            $method,
+            $uri,
+            [],
+            [],
+            array_merge($defaultHeaders, $headers),
+        );
+    }
+
+    private function getResponseData(): array
+    {
+        return json_decode($this->client->getResponse()->getContent(), true);
     }
 }

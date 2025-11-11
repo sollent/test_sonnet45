@@ -6,7 +6,9 @@ namespace App\Command;
 
 use App\Enum\TaskPriority;
 use App\Enum\TaskStatus;
+use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
+use Exception;
 use Faker\Factory as FakerFactory;
 use Faker\Generator;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -16,24 +18,25 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 #[AsCommand(
     name: 'app:generate-test-data-fast',
-    description: 'FAST generation using native SQL - 1M tasks in ~1 hour'
+    description: 'FAST generation using native SQL - 1M tasks in ~1 hour',
 )]
 class GenerateTestDataFastCommand extends Command
 {
     private const BATCH_SIZE = 5000; // Increased from 1000
+
     private const DEFAULT_USERS = 50;
+
     private const DEFAULT_TASKS_PER_USER = 40000;
 
     private Generator $faker;
+
     private int $totalTasksGenerated = 0;
 
     public function __construct(
         private readonly Connection $connection,
-        private readonly UserPasswordHasherInterface $passwordHasher
     ) {
         parent::__construct();
         $this->faker = FakerFactory::create();
@@ -44,16 +47,15 @@ class GenerateTestDataFastCommand extends Command
         $this
             ->addOption('users', 'u', InputOption::VALUE_OPTIONAL, 'Number of users to generate', self::DEFAULT_USERS)
             ->addOption('tasks-per-user', 't', InputOption::VALUE_OPTIONAL, 'Number of tasks per user', self::DEFAULT_TASKS_PER_USER)
-            ->addOption('clear-existing', 'c', InputOption::VALUE_NONE, 'Clear existing data before generating')
-        ;
+            ->addOption('clear-existing', 'c', InputOption::VALUE_NONE, 'Clear existing data before generating');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-        $numUsers = (int)$input->getOption('users');
-        $tasksPerUser = (int)$input->getOption('tasks-per-user');
-        $clearExisting = (bool)$input->getOption('clear-existing');
+        $numUsers = (int) $input->getOption('users');
+        $tasksPerUser = (int) $input->getOption('tasks-per-user');
+        $clearExisting = (bool) $input->getOption('clear-existing');
 
         $totalTasks = $numUsers * $tasksPerUser;
 
@@ -64,7 +66,7 @@ class GenerateTestDataFastCommand extends Command
             sprintf('Total tasks: <info>%s</info>', number_format($totalTasks)),
             sprintf('Batch size: <info>%d</info>', self::BATCH_SIZE),
             '',
-            '<comment>Using native SQL for maximum performance!</comment>'
+            '<comment>Using native SQL for maximum performance!</comment>',
         ]);
 
         if ($clearExisting) {
@@ -112,11 +114,12 @@ class GenerateTestDataFastCommand extends Command
                 '',
                 'You can now run performance tests!',
                 '',
-                sprintf('Speedup: ~%.0fx faster than ORM!', 12 * 3600 / max($duration, 1))
+                sprintf('Speedup: ~%.0fx faster than ORM!', 12 * 3600 / max($duration, 1)),
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $io->error('Generation failed: ' . $e->getMessage());
+
             return Command::FAILURE;
         }
 
@@ -143,21 +146,22 @@ class GenerateTestDataFastCommand extends Command
 
         // Sync all sequences to avoid "duplicate key" errors when inserting new records
         $sequences = [
-            'users_id_seq' => 'users',
-            'tag_id_seq' => 'tag',
-            'task_id_seq' => 'task',
+            'users_id_seq'            => 'users',
+            'tag_id_seq'              => 'tag',
+            'task_id_seq'             => 'task',
             'recurrence_rules_id_seq' => 'recurrence_rules',
         ];
 
         $synced = 0;
+
         foreach ($sequences as $sequenceName => $tableName) {
             try {
                 $this->connection->executeStatement(
-                    "SELECT setval('$sequenceName', (SELECT COALESCE(MAX(id), 1) FROM $tableName), true)"
+                    "SELECT setval('{$sequenceName}', (SELECT COALESCE(MAX(id), 1) FROM {$tableName}), true)",
                 );
                 $synced++;
-            } catch (\Exception $e) {
-                $io->warning("Failed to sync sequence $sequenceName: " . $e->getMessage());
+            } catch (Exception $e) {
+                $io->warning("Failed to sync sequence {$sequenceName}: " . $e->getMessage());
             }
         }
 
@@ -180,7 +184,7 @@ class GenerateTestDataFastCommand extends Command
             $uniqueHash = substr(md5(uniqid('', true)), 0, 8);
             $email = sprintf('testuser%d_%s@example.com', $i + 1, $uniqueHash);
             $name = $this->connection->quote($this->faker->name());
-            $createdAt = $updatedAt = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
+            $createdAt = $updatedAt = (new DateTimeImmutable())->format('Y-m-d H:i:s');
 
             $values[] = sprintf(
                 "('%s', %s, '%s', '[]', 'light', 'ru', 'Europe/Moscow', '{}', '%s', '%s')",
@@ -188,12 +192,12 @@ class GenerateTestDataFastCommand extends Command
                 $name,
                 $hashedPassword,
                 $createdAt,
-                $updatedAt
+                $updatedAt,
             );
 
             if (count($values) >= 100 || $i === $count - 1) {
-                $sql = "INSERT INTO users (email, name, password, roles, theme, language, timezone, notification_settings, created_at, updated_at) VALUES "
-                    . implode(', ', $values) . " RETURNING id";
+                $sql = 'INSERT INTO users (email, name, password, roles, theme, language, timezone, notification_settings, created_at, updated_at) VALUES '
+                    . implode(', ', $values) . ' RETURNING id';
 
                 $result = $this->connection->executeQuery($sql);
                 $userIds = array_merge($userIds, $result->fetchFirstColumn());
@@ -215,12 +219,12 @@ class GenerateTestDataFastCommand extends Command
         $tagNames = [
             'Work', 'Personal', 'Urgent', 'Important', 'Meeting',
             'Project', 'Research', 'Development', 'Design', 'Bug',
-            'Feature', 'Documentation', 'Testing', 'Review', 'Planning'
+            'Feature', 'Documentation', 'Testing', 'Review', 'Planning',
         ];
 
         $colors = [
             '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6',
-            '#EC4899', '#14B8A6', '#F97316', '#6366F1', '#06B6D4'
+            '#EC4899', '#14B8A6', '#F97316', '#6366F1', '#06B6D4',
         ];
 
         $progressBar = new ProgressBar($io, count($userIds));
@@ -231,11 +235,11 @@ class GenerateTestDataFastCommand extends Command
 
         foreach ($userIds as $userId) {
             $numTags = min(rand(12, 15), count($tagNames)); // 12-15 tags per user (or all available)
-            $selectedNames = (array)array_rand(array_flip($tagNames), $numTags);
+            $selectedNames = (array) array_rand(array_flip($tagNames), $numTags);
 
             foreach ($selectedNames as $tagName) {
                 $color = $colors[array_rand($colors)];
-                $createdAt = $updatedAt = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
+                $createdAt = $updatedAt = (new DateTimeImmutable())->format('Y-m-d H:i:s');
 
                 $values[] = sprintf(
                     "('%s', '%s', 0, %d, '%s', '%s')",
@@ -243,7 +247,7 @@ class GenerateTestDataFastCommand extends Command
                     $color,
                     $userId,
                     $createdAt,
-                    $updatedAt
+                    $updatedAt,
                 );
             }
 
@@ -252,8 +256,8 @@ class GenerateTestDataFastCommand extends Command
 
         // Insert all tags at once
         if (!empty($values)) {
-            $sql = "INSERT INTO tag (name, color, usage_count, user_id, created_at, updated_at) VALUES "
-                . implode(', ', $values) . " RETURNING id, user_id";
+            $sql = 'INSERT INTO tag (name, color, usage_count, user_id, created_at, updated_at) VALUES '
+                . implode(', ', $values) . ' RETURNING id, user_id';
 
             $result = $this->connection->executeQuery($sql);
 
@@ -274,13 +278,13 @@ class GenerateTestDataFastCommand extends Command
 
         // Get all indexes except PRIMARY and UNIQUE
         $indexes = $this->connection->executeQuery(
-            "SELECT indexname FROM pg_indexes WHERE tablename = 'task' AND indexname NOT LIKE '%pkey%'"
+            "SELECT indexname FROM pg_indexes WHERE tablename = 'task' AND indexname NOT LIKE '%pkey%'",
         )->fetchFirstColumn();
 
         foreach ($indexes as $indexName) {
             try {
-                $this->connection->executeStatement("DROP INDEX IF EXISTS $indexName");
-            } catch (\Exception $e) {
+                $this->connection->executeStatement("DROP INDEX IF EXISTS {$indexName}");
+            } catch (Exception $e) {
                 // Ignore errors
             }
         }
@@ -294,18 +298,18 @@ class GenerateTestDataFastCommand extends Command
 
         // Recreate essential indexes
         $indexes = [
-            "CREATE INDEX idx_task_user_id ON task(user_id)",
-            "CREATE INDEX idx_task_parent_task_id ON task(parent_task_id)",
-            "CREATE INDEX idx_task_status ON task(status)",
-            "CREATE INDEX idx_task_priority ON task(priority)",
-            "CREATE INDEX idx_task_due_date ON task(due_date)",
-            "CREATE INDEX idx_task_is_archived ON task(is_archived)",
+            'CREATE INDEX idx_task_user_id ON task(user_id)',
+            'CREATE INDEX idx_task_parent_task_id ON task(parent_task_id)',
+            'CREATE INDEX idx_task_status ON task(status)',
+            'CREATE INDEX idx_task_priority ON task(priority)',
+            'CREATE INDEX idx_task_due_date ON task(due_date)',
+            'CREATE INDEX idx_task_is_archived ON task(is_archived)',
         ];
 
         foreach ($indexes as $sql) {
             try {
                 $this->connection->executeStatement($sql);
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $io->warning('Failed to create index: ' . $e->getMessage());
             }
         }
@@ -326,16 +330,16 @@ class GenerateTestDataFastCommand extends Command
         $gcCounter = 0; // Counter for garbage collection
 
         $statuses = [
-            TaskStatus::PENDING->value => 40,
+            TaskStatus::PENDING->value     => 40,
             TaskStatus::IN_PROGRESS->value => 25,
-            TaskStatus::COMPLETED->value => 30,
-            TaskStatus::CANCELLED->value => 5,
+            TaskStatus::COMPLETED->value   => 30,
+            TaskStatus::CANCELLED->value   => 5,
         ];
 
         $priorities = [
-            TaskPriority::LOW->value => 20,
+            TaskPriority::LOW->value    => 20,
             TaskPriority::MEDIUM->value => 50,
-            TaskPriority::HIGH->value => 25,
+            TaskPriority::HIGH->value   => 25,
             TaskPriority::URGENT->value => 5,
         ];
 
@@ -353,18 +357,21 @@ class GenerateTestDataFastCommand extends Command
                 $createdAt = $updatedAt = $baseDate->format('Y-m-d H:i:s');
 
                 $dueDate = 'NULL';
+
                 if (rand(1, 100) <= 70) {
                     $dueDateObj = $this->faker->dateTimeBetween($baseDate, (clone $baseDate)->modify('+6 months'));
                     $dueDate = "'" . $dueDateObj->format('Y-m-d H:i:s') . "'";
                 }
 
                 $startDate = 'NULL';
+
                 if (rand(1, 100) <= 30 && $dueDate !== 'NULL') {
-                    $startDateObj = $this->faker->dateTimeBetween($baseDate, str_replace("'", "", $dueDate));
+                    $startDateObj = $this->faker->dateTimeBetween($baseDate, str_replace("'", '', $dueDate));
                     $startDate = "'" . $startDateObj->format('Y-m-d H:i:s') . "'";
                 }
 
                 $completedAt = 'NULL';
+
                 if ($status === TaskStatus::COMPLETED->value) {
                     $completedAtObj = $this->faker->dateTimeBetween($baseDate, 'now');
                     $completedAt = "'" . $completedAtObj->format('Y-m-d H:i:s') . "'";
@@ -391,7 +398,7 @@ class GenerateTestDataFastCommand extends Command
                     $isArchived,
                     $isRecurringTemplate,
                     $createdAt,
-                    $updatedAt
+                    $updatedAt,
                 );
 
                 $this->totalTasksGenerated++;
@@ -421,8 +428,9 @@ class GenerateTestDataFastCommand extends Command
             }
         }
 
-        // Insert remaining
-        if (!empty($taskValues)) {
+        // Insert remaining (only if we actually processed some users)
+        if (!empty($taskValues) && !empty($userIds)) {
+            // $userId and $userTags are defined because foreach loop executed at least once
             $insertedTaskIds = $this->insertTaskBatch($taskValues, $taskTagValues, $recurrenceValues, $userTags, $userId);
             $this->generateSubtasks($insertedTaskIds, $userId);
         }
@@ -436,15 +444,15 @@ class GenerateTestDataFastCommand extends Command
         array &$taskTagValues,
         array &$recurrenceValues,
         array $userTags,
-        int $userId
+        int $userId,
     ): array {
         if (empty($taskValues)) {
             return [];
         }
 
         // Insert tasks and get their IDs
-        $sql = "INSERT INTO task (title, description, status, priority, start_date, due_date, completed_at, user_id, parent_task_id, sort_order, is_archived, is_recurring_template, created_at, updated_at) VALUES "
-            . implode(', ', $taskValues) . " RETURNING id, is_recurring_template";
+        $sql = 'INSERT INTO task (title, description, status, priority, start_date, due_date, completed_at, user_id, parent_task_id, sort_order, is_archived, is_recurring_template, created_at, updated_at) VALUES '
+            . implode(', ', $taskValues) . ' RETURNING id, is_recurring_template';
 
         $result = $this->connection->executeQuery($sql);
         $insertedTasks = $result->fetchAllAssociative();
@@ -454,6 +462,7 @@ class GenerateTestDataFastCommand extends Command
 
         foreach ($insertedTasks as $task) {
             $taskIds[] = $task['id'];
+
             if ($task['is_recurring_template']) {
                 $recurringTaskIds[] = $task['id'];
             }
@@ -469,6 +478,7 @@ class GenerateTestDataFastCommand extends Command
                     $numTags = min($numTags, count($userTags)); // Don't exceed available tags
 
                     $selectedTagIndices = array_rand($userTags, $numTags);
+
                     if (!is_array($selectedTagIndices)) {
                         $selectedTagIndices = [$selectedTagIndices];
                     }
@@ -481,7 +491,7 @@ class GenerateTestDataFastCommand extends Command
 
             // Batch insert task_tags
             if (!empty($taskTagInserts)) {
-                $taskTagsSql = "INSERT INTO task_tags (task_id, tag_id) VALUES " . implode(', ', $taskTagInserts) . " ON CONFLICT DO NOTHING";
+                $taskTagsSql = 'INSERT INTO task_tags (task_id, tag_id) VALUES ' . implode(', ', $taskTagInserts) . ' ON CONFLICT DO NOTHING';
                 $this->connection->executeStatement($taskTagsSql);
             }
         }
@@ -493,7 +503,7 @@ class GenerateTestDataFastCommand extends Command
 
             foreach ($recurringTaskIds as $templateTaskId) {
                 $recurrenceType = $recurrenceTypes[array_rand($recurrenceTypes)];
-                $now = new \DateTimeImmutable();
+                $now = new DateTimeImmutable();
                 $nextOccurrence = $now->modify('+1 day')->format('Y-m-d H:i:s');
                 $timeOfDay = $now->format('H:i:s');
                 $createdAt = $updatedAt = $now->format('Y-m-d H:i:s');
@@ -540,13 +550,13 @@ class GenerateTestDataFastCommand extends Command
                     $nextOccurrence,
                     $timeOfDay,
                     $createdAt,
-                    $updatedAt
+                    $updatedAt,
                 );
             }
 
             // Batch insert recurrence_rules
             if (!empty($recurrenceInserts)) {
-                $recurrenceSql = "INSERT INTO recurrence_rules (template_task_id, created_by_id, recurrence_type, interval, days_of_week, day_of_month, month_of_year, end_date, max_occurrences, current_occurrences, next_occurrence_date, time_of_day, is_active, created_at, updated_at) VALUES "
+                $recurrenceSql = 'INSERT INTO recurrence_rules (template_task_id, created_by_id, recurrence_type, interval, days_of_week, day_of_month, month_of_year, end_date, max_occurrences, current_occurrences, next_occurrence_date, time_of_day, is_active, created_at, updated_at) VALUES '
                     . implode(', ', $recurrenceInserts);
                 $this->connection->executeStatement($recurrenceSql);
             }
@@ -566,7 +576,7 @@ class GenerateTestDataFastCommand extends Command
 
         // Select 10-15% of tasks to have subtasks
         $percentWithSubtasks = rand(10, 15);
-        $numParents = (int)(count($parentTaskIds) * ($percentWithSubtasks / 100));
+        $numParents = (int) (count($parentTaskIds) * ($percentWithSubtasks / 100));
 
         if ($numParents === 0) {
             return;
@@ -574,10 +584,12 @@ class GenerateTestDataFastCommand extends Command
 
         // Randomly select which tasks will have subtasks
         $selectedParents = [];
+
         if ($numParents >= count($parentTaskIds)) {
             $selectedParents = $parentTaskIds;
         } else {
             $parentCandidates = array_rand(array_flip($parentTaskIds), $numParents);
+
             if (!is_array($parentCandidates)) {
                 $parentCandidates = [$parentCandidates];
             }
@@ -585,15 +597,15 @@ class GenerateTestDataFastCommand extends Command
         }
 
         $statuses = [
-            TaskStatus::PENDING->value => 50,
+            TaskStatus::PENDING->value     => 50,
             TaskStatus::IN_PROGRESS->value => 30,
-            TaskStatus::COMPLETED->value => 20,
+            TaskStatus::COMPLETED->value   => 20,
         ];
 
         $priorities = [
-            TaskPriority::LOW->value => 40,
+            TaskPriority::LOW->value    => 40,
             TaskPriority::MEDIUM->value => 40,
-            TaskPriority::HIGH->value => 15,
+            TaskPriority::HIGH->value   => 15,
             TaskPriority::URGENT->value => 5,
         ];
 
@@ -602,15 +614,16 @@ class GenerateTestDataFastCommand extends Command
             $subtaskValues = [];
 
             for ($s = 0; $s < $numSubtasks; $s++) {
-                $title = $this->connection->quote("Subtask " . ($s + 1) . ": " . $this->faker->sentence(rand(2, 5)));
+                $title = $this->connection->quote('Subtask ' . ($s + 1) . ': ' . $this->faker->sentence(rand(2, 5)));
                 $description = rand(1, 100) <= 50 ? $this->connection->quote($this->faker->sentence()) : 'NULL';
                 $status = $this->weightedRandom($statuses);
                 $priority = $this->weightedRandom($priorities);
 
-                $now = new \DateTimeImmutable();
+                $now = new DateTimeImmutable();
                 $createdAt = $updatedAt = $now->format('Y-m-d H:i:s');
 
                 $completedAt = 'NULL';
+
                 if ($status === TaskStatus::COMPLETED->value) {
                     $completedAt = "'" . $now->format('Y-m-d H:i:s') . "'";
                 }
@@ -625,13 +638,13 @@ class GenerateTestDataFastCommand extends Command
                     $userId,
                     $parentId,
                     $createdAt,
-                    $updatedAt
+                    $updatedAt,
                 );
             }
 
             // Insert subtasks in one batch per parent
             if (!empty($subtaskValues)) {
-                $sql = "INSERT INTO task (title, description, status, priority, start_date, due_date, completed_at, user_id, parent_task_id, sort_order, is_archived, is_recurring_template, created_at, updated_at) VALUES "
+                $sql = 'INSERT INTO task (title, description, status, priority, start_date, due_date, completed_at, user_id, parent_task_id, sort_order, is_archived, is_recurring_template, created_at, updated_at) VALUES '
                     . implode(', ', $subtaskValues);
                 $this->connection->executeStatement($sql);
                 $this->totalTasksGenerated += count($subtaskValues);
@@ -645,13 +658,15 @@ class GenerateTestDataFastCommand extends Command
         $random = rand(1, $totalWeight);
 
         $currentWeight = 0;
+
         foreach ($weights as $value => $weight) {
             $currentWeight += $weight;
+
             if ($random <= $currentWeight) {
-                return (string)$value;
+                return (string) $value;
             }
         }
 
-        return (string)array_key_first($weights);
+        return (string) array_key_first($weights);
     }
 }

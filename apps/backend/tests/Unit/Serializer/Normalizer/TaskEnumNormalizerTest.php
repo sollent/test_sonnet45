@@ -9,6 +9,7 @@ use App\Enum\TaskStatus;
 use App\Serializer\Normalizer\TaskEnumNormalizer;
 use App\Service\EnumTranslatorService;
 use PHPUnit\Framework\TestCase;
+use stdClass;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -16,8 +17,11 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 class TaskEnumNormalizerTest extends TestCase
 {
     private TaskEnumNormalizer $normalizer;
+
     private EnumTranslatorService $enumTranslator;
+
     private RequestStack $requestStack;
+
     private TranslatorInterface $translator;
 
     protected function setUp(): void
@@ -107,7 +111,7 @@ class TaskEnumNormalizerTest extends TestCase
     public function testDoesNotSupportOtherTypes(): void
     {
         // Arrange
-        $notEnum = new \stdClass();
+        $notEnum = new stdClass();
         $string = 'test';
         $array = ['test'];
 

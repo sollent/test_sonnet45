@@ -8,9 +8,10 @@ use App\Entity\Task;
 use App\Entity\User;
 use App\Enum\TaskPriority;
 use App\Enum\TaskStatus;
-use App\TestsUtilities\Factory\TaskFactory;
 use App\TestsUtilities\Factory\TagFactory;
+use App\TestsUtilities\Factory\TaskFactory;
 use App\TestsUtilities\Factory\UserFactory;
+use DateTimeImmutable;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -24,8 +25,11 @@ class TaskControllerTest extends WebTestCase
     use Factories;
 
     private KernelBrowser $client;
+
     private JWTTokenManagerInterface $jwtManager;
+
     private User $user;
+
     private string $token;
 
     protected function setUp(): void
@@ -35,41 +39,11 @@ class TaskControllerTest extends WebTestCase
 
         // Create authenticated user for tests with unique email
         $userProxy = UserFactory::createOne([
-            'email' => 'test-' . uniqid() . '@example.com',
+            'email'    => 'test-' . uniqid() . '@example.com',
             'password' => 'password123',
         ]);
         $this->user = $userProxy->_real();
         $this->token = $this->jwtManager->create($this->user);
-    }
-
-    /**
-     * Helper: Make authenticated request
-     */
-    private function request(
-        string $method,
-        string $uri,
-        array $parameters = [],
-        string $content = null
-    ): void {
-        $this->client->request(
-            $method,
-            $uri,
-            $parameters,
-            [],
-            [
-                'HTTP_AUTHORIZATION' => 'Bearer ' . $this->token,
-                'CONTENT_TYPE' => 'application/json',
-            ],
-            $content
-        );
-    }
-
-    /**
-     * Helper: Get response data
-     */
-    private function getResponseData(): array
-    {
-        return json_decode($this->client->getResponse()->getContent(), true);
     }
 
     // ==================== GET /api/tasks (List Tasks) ====================
@@ -80,10 +54,10 @@ class TaskControllerTest extends WebTestCase
         // Arrange: Create active (pending) tasks for authenticated user
         // Active tasks must have dueDate or startDate >= today
         TaskFactory::createMany(5, [
-            'user' => $this->user,
-            'status' => TaskStatus::PENDING,
+            'user'       => $this->user,
+            'status'     => TaskStatus::PENDING,
             'isArchived' => false,
-            'dueDate' => new \DateTimeImmutable('+1 day'), // Ensure tasks are "active"
+            'dueDate'    => new DateTimeImmutable('+1 day'), // Ensure tasks are "active"
         ]);
 
         // Act
@@ -112,14 +86,14 @@ class TaskControllerTest extends WebTestCase
     {
         // Arrange: Create different tasks
         TaskFactory::createMany(3, [
-            'user' => $this->user,
-            'status' => TaskStatus::PENDING,
-            'dueDate' => new \DateTimeImmutable('+1 day'), // Ensure tasks are "active"
+            'user'    => $this->user,
+            'status'  => TaskStatus::PENDING,
+            'dueDate' => new DateTimeImmutable('+1 day'), // Ensure tasks are "active"
         ]);
         TaskFactory::createMany(2, [
-            'user' => $this->user,
-            'status' => TaskStatus::COMPLETED,
-            'dueDate' => new \DateTimeImmutable('+1 day'),
+            'user'    => $this->user,
+            'status'  => TaskStatus::COMPLETED,
+            'dueDate' => new DateTimeImmutable('+1 day'),
         ]);
 
         // Act: Filter by completed
@@ -136,9 +110,9 @@ class TaskControllerTest extends WebTestCase
     {
         // Arrange: Create overdue task
         TaskFactory::createOne([
-            'user' => $this->user,
-            'dueDate' => new \DateTimeImmutable('-2 days'),
-            'status' => TaskStatus::PENDING,
+            'user'    => $this->user,
+            'dueDate' => new DateTimeImmutable('-2 days'),
+            'status'  => TaskStatus::PENDING,
         ]);
 
         // Act
@@ -155,14 +129,14 @@ class TaskControllerTest extends WebTestCase
     {
         // Arrange
         TaskFactory::createOne([
-            'user' => $this->user,
-            'title' => 'Important Meeting',
-            'dueDate' => new \DateTimeImmutable('+1 day'),
+            'user'    => $this->user,
+            'title'   => 'Important Meeting',
+            'dueDate' => new DateTimeImmutable('+1 day'),
         ]);
         TaskFactory::createOne([
-            'user' => $this->user,
-            'title' => 'Buy groceries',
-            'dueDate' => new \DateTimeImmutable('+1 day'),
+            'user'    => $this->user,
+            'title'   => 'Buy groceries',
+            'dueDate' => new DateTimeImmutable('+1 day'),
         ]);
 
         // Act
@@ -183,17 +157,17 @@ class TaskControllerTest extends WebTestCase
         $tag2 = TagFactory::createOne(['user' => $this->user, 'name' => 'personal']);
 
         $task1 = TaskFactory::createOne([
-            'user' => $this->user,
-            'status' => TaskStatus::PENDING, // Prevent random CANCELLED status
-            'dueDate' => new \DateTimeImmutable('+1 day'),
+            'user'    => $this->user,
+            'status'  => TaskStatus::PENDING, // Prevent random CANCELLED status
+            'dueDate' => new DateTimeImmutable('+1 day'),
         ]);
         $task1->_real()->addTag($tag1->_real());
         $task1->_save();
 
         $task2 = TaskFactory::createOne([
-            'user' => $this->user,
-            'status' => TaskStatus::PENDING, // Prevent random CANCELLED status
-            'dueDate' => new \DateTimeImmutable('+1 day'),
+            'user'    => $this->user,
+            'status'  => TaskStatus::PENDING, // Prevent random CANCELLED status
+            'dueDate' => new DateTimeImmutable('+1 day'),
         ]);
         $task2->_real()->addTag($tag2->_real());
         $task2->_save();
@@ -213,16 +187,16 @@ class TaskControllerTest extends WebTestCase
     {
         // Arrange
         TaskFactory::createMany(2, [
-            'user' => $this->user,
+            'user'     => $this->user,
             'priority' => TaskPriority::HIGH,
-            'status' => TaskStatus::PENDING, // Prevent random CANCELLED status
-            'dueDate' => new \DateTimeImmutable('+1 day'),
+            'status'   => TaskStatus::PENDING, // Prevent random CANCELLED status
+            'dueDate'  => new DateTimeImmutable('+1 day'),
         ]);
         TaskFactory::createOne([
-            'user' => $this->user,
+            'user'     => $this->user,
             'priority' => TaskPriority::LOW,
-            'status' => TaskStatus::PENDING,
-            'dueDate' => new \DateTimeImmutable('+1 day'),
+            'status'   => TaskStatus::PENDING,
+            'dueDate'  => new DateTimeImmutable('+1 day'),
         ]);
 
         // Act
@@ -239,14 +213,14 @@ class TaskControllerTest extends WebTestCase
     {
         // Arrange
         TaskFactory::createMany(2, [
-            'user' => $this->user,
-            'status' => TaskStatus::PENDING,
-            'dueDate' => new \DateTimeImmutable('+1 day'),
+            'user'    => $this->user,
+            'status'  => TaskStatus::PENDING,
+            'dueDate' => new DateTimeImmutable('+1 day'),
         ]);
         TaskFactory::createOne([
-            'user' => $this->user,
-            'status' => TaskStatus::IN_PROGRESS,
-            'dueDate' => new \DateTimeImmutable('+1 day'),
+            'user'    => $this->user,
+            'status'  => TaskStatus::IN_PROGRESS,
+            'dueDate' => new DateTimeImmutable('+1 day'),
         ]);
 
         // Act
@@ -263,8 +237,8 @@ class TaskControllerTest extends WebTestCase
     {
         // Arrange
         TaskFactory::createMany(10, [
-            'user' => $this->user,
-            'dueDate' => new \DateTimeImmutable('+1 day'),
+            'user'    => $this->user,
+            'dueDate' => new DateTimeImmutable('+1 day'),
         ]);
 
         // Act
@@ -340,7 +314,7 @@ class TaskControllerTest extends WebTestCase
         // Arrange
         $parentTask = TaskFactory::createOne(['user' => $this->user]);
         TaskFactory::createMany(2, [
-            'user' => $this->user,
+            'user'       => $this->user,
             'parentTask' => $parentTask->_real(),
         ]);
 
@@ -386,10 +360,10 @@ class TaskControllerTest extends WebTestCase
     {
         // Arrange
         $payload = json_encode([
-            'title' => 'New Task',
+            'title'       => 'New Task',
             'description' => 'Task description',
-            'priority' => 'medium',
-            'status' => 'pending',
+            'priority'    => 'medium',
+            'status'      => 'pending',
         ]);
 
         // Act
@@ -430,12 +404,12 @@ class TaskControllerTest extends WebTestCase
         $tag = TagFactory::createOne(['user' => $this->user]);
 
         $payload = json_encode([
-            'title' => 'Complete Task',
+            'title'       => 'Complete Task',
             'description' => 'Full description',
-            'priority' => 'high',
-            'status' => 'pending',
-            'dueDate' => '2025-12-31T23:59:59+00:00',
-            'tagIds' => [$tag->_real()->getId()],
+            'priority'    => 'high',
+            'status'      => 'pending',
+            'dueDate'     => '2025-12-31T23:59:59+00:00',
+            'tagIds'      => [$tag->_real()->getId()],
         ]);
 
         // Act
@@ -459,7 +433,7 @@ class TaskControllerTest extends WebTestCase
 
         $payload = json_encode([
             'title' => 'Tagged Task',
-            'tags' => ['work', 'urgent'], // Use tag names, not IDs
+            'tags'  => ['work', 'urgent'], // Use tag names, not IDs
         ]);
 
         // Act
@@ -480,7 +454,7 @@ class TaskControllerTest extends WebTestCase
         $parentTask = TaskFactory::createOne(['user' => $this->user]);
 
         $payload = json_encode([
-            'title' => 'Subtask',
+            'title'        => 'Subtask',
             'parentTaskId' => $parentTask->_real()->getId(),
         ]);
 
@@ -500,7 +474,7 @@ class TaskControllerTest extends WebTestCase
     {
         // Arrange: Invalid priority
         $payload = json_encode([
-            'title' => 'Invalid Task',
+            'title'    => 'Invalid Task',
             'priority' => 'invalid_priority',
         ]);
 
@@ -584,7 +558,7 @@ class TaskControllerTest extends WebTestCase
     {
         // Arrange
         $task = TaskFactory::createOne([
-            'user' => $this->user,
+            'user'   => $this->user,
             'status' => TaskStatus::PENDING,
         ]);
         $taskId = $task->_real()->getId();
@@ -606,7 +580,7 @@ class TaskControllerTest extends WebTestCase
     {
         // Arrange
         $task = TaskFactory::createOne([
-            'user' => $this->user,
+            'user'     => $this->user,
             'priority' => TaskPriority::MEDIUM,
         ]);
         $taskId = $task->_real()->getId();
@@ -631,7 +605,7 @@ class TaskControllerTest extends WebTestCase
         $taskId = $task->_real()->getId();
 
         $payload = json_encode([
-            'dueDate' => '2025-12-31T23:59:59+00:00',
+            'dueDate'   => '2025-12-31T23:59:59+00:00',
             'startDate' => '2025-12-01T00:00:00+00:00',
         ]);
 
@@ -735,7 +709,7 @@ class TaskControllerTest extends WebTestCase
         // Arrange
         $parentTask = TaskFactory::createOne(['user' => $this->user]);
         TaskFactory::createMany(2, [
-            'user' => $this->user,
+            'user'       => $this->user,
             'parentTask' => $parentTask->_real(),
         ]);
 
@@ -780,7 +754,7 @@ class TaskControllerTest extends WebTestCase
     {
         // Arrange
         $task = TaskFactory::createOne([
-            'user' => $this->user,
+            'user'   => $this->user,
             'status' => TaskStatus::PENDING,
         ]);
         $taskId = $task->_real()->getId();
@@ -801,9 +775,9 @@ class TaskControllerTest extends WebTestCase
     {
         // Arrange
         $task = TaskFactory::createOne([
-            'user' => $this->user,
-            'status' => TaskStatus::COMPLETED,
-            'completedAt' => new \DateTimeImmutable(),
+            'user'        => $this->user,
+            'status'      => TaskStatus::COMPLETED,
+            'completedAt' => new DateTimeImmutable(),
         ]);
         $taskId = $task->_real()->getId();
 
@@ -846,7 +820,7 @@ class TaskControllerTest extends WebTestCase
     {
         // Arrange
         $task = TaskFactory::createOne([
-            'user' => $this->user,
+            'user'   => $this->user,
             'status' => TaskStatus::PENDING,
         ]);
         $taskId = $task->_real()->getId();
@@ -865,7 +839,7 @@ class TaskControllerTest extends WebTestCase
     {
         // Arrange
         $task = TaskFactory::createOne([
-            'user' => $this->user,
+            'user'   => $this->user,
             'status' => TaskStatus::PENDING,
         ]);
         $taskId = $task->_real()->getId();
@@ -886,9 +860,9 @@ class TaskControllerTest extends WebTestCase
     {
         // Arrange
         $task = TaskFactory::createOne([
-            'user' => $this->user,
-            'status' => TaskStatus::COMPLETED,
-            'completedAt' => new \DateTimeImmutable(),
+            'user'        => $this->user,
+            'status'      => TaskStatus::COMPLETED,
+            'completedAt' => new DateTimeImmutable(),
         ]);
         $taskId = $task->_real()->getId();
 
@@ -910,7 +884,7 @@ class TaskControllerTest extends WebTestCase
     {
         // Arrange
         $task = TaskFactory::createOne([
-            'user' => $this->user,
+            'user'       => $this->user,
             'isArchived' => false,
         ]);
         $taskId = $task->_real()->getId();
@@ -930,7 +904,7 @@ class TaskControllerTest extends WebTestCase
     {
         // Arrange
         $task = TaskFactory::createOne([
-            'user' => $this->user,
+            'user'       => $this->user,
             'isArchived' => true,
         ]);
         $taskId = $task->_real()->getId();
@@ -949,7 +923,7 @@ class TaskControllerTest extends WebTestCase
     {
         // Arrange
         $task = TaskFactory::createOne([
-            'user' => $this->user,
+            'user'       => $this->user,
             'isArchived' => true,
         ]);
         $taskId = $task->_real()->getId();
@@ -969,7 +943,7 @@ class TaskControllerTest extends WebTestCase
     {
         // Arrange
         $task = TaskFactory::createOne([
-            'user' => $this->user,
+            'user'       => $this->user,
             'isArchived' => false,
         ]);
         $taskId = $task->_real()->getId();
@@ -988,14 +962,14 @@ class TaskControllerTest extends WebTestCase
     {
         // Arrange
         TaskFactory::createMany(2, [
-            'user' => $this->user,
-            'dueDate' => new \DateTimeImmutable('-3 days'),
-            'status' => TaskStatus::PENDING,
+            'user'    => $this->user,
+            'dueDate' => new DateTimeImmutable('-3 days'),
+            'status'  => TaskStatus::PENDING,
         ]);
         TaskFactory::createOne([
-            'user' => $this->user,
-            'dueDate' => new \DateTimeImmutable('+3 days'),
-            'status' => TaskStatus::PENDING,
+            'user'    => $this->user,
+            'dueDate' => new DateTimeImmutable('+3 days'),
+            'status'  => TaskStatus::PENDING,
         ]);
 
         // Act
@@ -1026,9 +1000,9 @@ class TaskControllerTest extends WebTestCase
     {
         // Arrange
         TaskFactory::createMany(10, [
-            'user' => $this->user,
-            'dueDate' => new \DateTimeImmutable('-1 day'),
-            'status' => TaskStatus::PENDING,
+            'user'    => $this->user,
+            'dueDate' => new DateTimeImmutable('-1 day'),
+            'status'  => TaskStatus::PENDING,
         ]);
 
         // Act
@@ -1048,17 +1022,17 @@ class TaskControllerTest extends WebTestCase
     {
         // Arrange
         TaskFactory::createMany(3, [
-            'user' => $this->user,
-            'dueDate' => null,
-            'startDate' => null,
-            'status' => TaskStatus::PENDING, // Prevent random CANCELLED status
+            'user'       => $this->user,
+            'dueDate'    => null,
+            'startDate'  => null,
+            'status'     => TaskStatus::PENDING, // Prevent random CANCELLED status
             'isArchived' => false, // Explicitly set to prevent any issues
             'parentTask' => null, // Ensure these are top-level tasks
         ]);
         TaskFactory::createOne([
-            'user' => $this->user,
-            'dueDate' => new \DateTimeImmutable('+1 day'),
-            'status' => TaskStatus::PENDING,
+            'user'       => $this->user,
+            'dueDate'    => new DateTimeImmutable('+1 day'),
+            'status'     => TaskStatus::PENDING,
             'isArchived' => false,
         ]);
 
@@ -1164,9 +1138,9 @@ class TaskControllerTest extends WebTestCase
     public function testGetCalendarMonth(): void
     {
         // Arrange
-        $date = new \DateTimeImmutable('2025-12-15');
+        $date = new DateTimeImmutable('2025-12-15');
         TaskFactory::createMany(5, [
-            'user' => $this->user,
+            'user'    => $this->user,
             'dueDate' => $date,
         ]);
 
@@ -1194,9 +1168,9 @@ class TaskControllerTest extends WebTestCase
     public function testGetCalendarDay(): void
     {
         // Arrange
-        $date = new \DateTimeImmutable('2025-12-15');
+        $date = new DateTimeImmutable('2025-12-15');
         TaskFactory::createMany(3, [
-            'user' => $this->user,
+            'user'    => $this->user,
             'dueDate' => $date,
         ]);
 
@@ -1214,11 +1188,11 @@ class TaskControllerTest extends WebTestCase
     public function testCalendarWithIncludeCompleted(): void
     {
         // Arrange
-        $date = new \DateTimeImmutable('2025-12-15');
+        $date = new DateTimeImmutable('2025-12-15');
         TaskFactory::createOne([
-            'user' => $this->user,
+            'user'    => $this->user,
             'dueDate' => $date,
-            'status' => TaskStatus::COMPLETED,
+            'status'  => TaskStatus::COMPLETED,
         ]);
 
         // Act
@@ -1239,5 +1213,35 @@ class TaskControllerTest extends WebTestCase
 
         // Assert
         $this->assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
+    }
+
+    /**
+     * Helper: Make authenticated request
+     */
+    private function request(
+        string $method,
+        string $uri,
+        array $parameters = [],
+        ?string $content = null,
+    ): void {
+        $this->client->request(
+            $method,
+            $uri,
+            $parameters,
+            [],
+            [
+                'HTTP_AUTHORIZATION' => 'Bearer ' . $this->token,
+                'CONTENT_TYPE'       => 'application/json',
+            ],
+            $content,
+        );
+    }
+
+    /**
+     * Helper: Get response data
+     */
+    private function getResponseData(): array
+    {
+        return json_decode($this->client->getResponse()->getContent(), true);
     }
 }

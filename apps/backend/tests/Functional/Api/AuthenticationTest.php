@@ -30,7 +30,7 @@ class AuthenticationTest extends WebTestCase
 
         // Создаем пользователя с известным паролем
         UserFactory::createOne([
-            'email' => $email,
+            'email'    => $email,
             'password' => $password,
         ]);
 
@@ -41,23 +41,23 @@ class AuthenticationTest extends WebTestCase
             [],
             ['CONTENT_TYPE' => 'application/json'],
             json_encode([
-                'email' => $email,
+                'email'    => $email,
                 'password' => $password,
-            ])
+            ]),
         );
 
         $this->assertResponseStatusCodeSame(Response::HTTP_OK);
-        
+
         $responseData = json_decode($this->client->getResponse()->getContent(), true);
-        
+
         $this->assertArrayHasKey('token', $responseData);
         $this->assertArrayHasKey('refreshToken', $responseData);
         $this->assertArrayHasKey('refreshTokenExpiration', $responseData);
-        
+
         $this->assertIsString($responseData['token']);
         $this->assertIsString($responseData['refreshToken']);
         $this->assertIsInt($responseData['refreshTokenExpiration']);
-        
+
         // Проверяем что токен не пустой
         $this->assertNotEmpty($responseData['token']);
         $this->assertNotEmpty($responseData['refreshToken']);
@@ -66,9 +66,9 @@ class AuthenticationTest extends WebTestCase
     public function testLoginWithWrongPassword(): void
     {
         $email = 'valid-password@example.com';
-        
+
         UserFactory::createOne([
-            'email' => $email,
+            'email'    => $email,
             'password' => 'validpassword123',
         ]);
 
@@ -79,9 +79,9 @@ class AuthenticationTest extends WebTestCase
             [],
             ['CONTENT_TYPE' => 'application/json'],
             json_encode([
-                'email' => $email,
+                'email'    => $email,
                 'password' => 'wrongpassword',
-            ])
+            ]),
         );
 
         $this->assertResponseStatusCodeSame(Response::HTTP_UNAUTHORIZED);
@@ -90,7 +90,7 @@ class AuthenticationTest extends WebTestCase
     public function testLoginWithWrongEmail(): void
     {
         UserFactory::createOne([
-            'email' => 'valid-email@example.com',
+            'email'    => 'valid-email@example.com',
             'password' => 'validpassword123',
         ]);
 
@@ -101,9 +101,9 @@ class AuthenticationTest extends WebTestCase
             [],
             ['CONTENT_TYPE' => 'application/json'],
             json_encode([
-                'email' => 'wrong@example.com',
+                'email'    => 'wrong@example.com',
                 'password' => 'validpassword123',
-            ])
+            ]),
         );
 
         $this->assertResponseStatusCodeSame(Response::HTTP_UNAUTHORIZED);
@@ -118,9 +118,9 @@ class AuthenticationTest extends WebTestCase
             [],
             ['CONTENT_TYPE' => 'application/json'],
             json_encode([
-                'email' => 'nonexistent@example.com',
+                'email'    => 'nonexistent@example.com',
                 'password' => 'anypassword',
-            ])
+            ]),
         );
 
         $this->assertResponseStatusCodeSame(Response::HTTP_UNAUTHORIZED);
@@ -135,9 +135,9 @@ class AuthenticationTest extends WebTestCase
             [],
             ['CONTENT_TYPE' => 'application/json'],
             json_encode([
-                'email' => '',
+                'email'    => '',
                 'password' => '',
-            ])
+            ]),
         );
 
         $this->assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
@@ -153,7 +153,7 @@ class AuthenticationTest extends WebTestCase
             ['CONTENT_TYPE' => 'application/json'],
             json_encode([
                 'password' => 'password123',
-            ])
+            ]),
         );
 
         $this->assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
@@ -169,7 +169,7 @@ class AuthenticationTest extends WebTestCase
             ['CONTENT_TYPE' => 'application/json'],
             json_encode([
                 'email' => 'test@example.com',
-            ])
+            ]),
         );
 
         $this->assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
@@ -183,7 +183,7 @@ class AuthenticationTest extends WebTestCase
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
-            ''
+            '',
         );
 
         $this->assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
@@ -197,7 +197,7 @@ class AuthenticationTest extends WebTestCase
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
-            '{invalid json}'
+            '{invalid json}',
         );
 
         $this->assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
@@ -209,7 +209,7 @@ class AuthenticationTest extends WebTestCase
         $password = 'password123';
 
         UserFactory::createOne([
-            'email' => $email,
+            'email'    => $email,
             'password' => $password,
         ]);
 
@@ -220,14 +220,14 @@ class AuthenticationTest extends WebTestCase
             [],
             ['CONTENT_TYPE' => 'application/json'],
             json_encode([
-                'email' => $email,
+                'email'    => $email,
                 'password' => $password,
-            ])
+            ]),
         );
 
         $responseData = json_decode($this->client->getResponse()->getContent(), true);
         $token = $responseData['token'];
-        
+
         // JWT токен должен состоять из 3 частей, разделенных точками
         $this->assertCount(3, explode('.', $token));
     }
@@ -238,7 +238,7 @@ class AuthenticationTest extends WebTestCase
         $password = 'password123';
 
         UserFactory::createOne([
-            'email' => $email,
+            'email'    => $email,
             'password' => $password,
         ]);
 
@@ -250,9 +250,9 @@ class AuthenticationTest extends WebTestCase
             [],
             ['CONTENT_TYPE' => 'application/json'],
             json_encode([
-                'email' => $email,
+                'email'    => $email,
                 'password' => $password,
-            ])
+            ]),
         );
 
         $responseData = json_decode($this->client->getResponse()->getContent(), true);
@@ -266,12 +266,12 @@ class AuthenticationTest extends WebTestCase
             [],
             [
                 'HTTP_AUTHORIZATION' => 'Bearer ' . $token,
-                'CONTENT_TYPE' => 'application/json',
-            ]
+                'CONTENT_TYPE'       => 'application/json',
+            ],
         );
 
         $this->assertResponseStatusCodeSame(Response::HTTP_OK);
-        
+
         $profileData = json_decode($this->client->getResponse()->getContent(), true);
         $this->assertEquals($email, $profileData['email']);
     }
@@ -282,7 +282,7 @@ class AuthenticationTest extends WebTestCase
         $password = 'password123';
 
         UserFactory::createOne([
-            'email' => $email,
+            'email'    => $email,
             'password' => $password,
         ]);
 
@@ -297,13 +297,13 @@ class AuthenticationTest extends WebTestCase
                 [],
                 ['CONTENT_TYPE' => 'application/json'],
                 json_encode([
-                    'email' => $email,
+                    'email'    => $email,
                     'password' => $password,
-                ])
+                ]),
             );
 
             $this->assertResponseStatusCodeSame(Response::HTTP_OK);
-            
+
             $responseData = json_decode($this->client->getResponse()->getContent(), true);
             $tokens[] = $responseData['token'];
         }
@@ -312,4 +312,3 @@ class AuthenticationTest extends WebTestCase
         $this->assertCount(3, $tokens);
     }
 }
-

@@ -46,9 +46,9 @@ class AdminAccessTest extends WebTestCase
     {
         // Arrange - Create regular user (without ROLE_ADMIN)
         $userProxy = UserFactory::createOne([
-            'email' => 'regular-' . uniqid() . '@test.com',
+            'email'    => 'regular-' . uniqid() . '@test.com',
             'password' => 'password123',
-            'roles' => ['ROLE_USER'], // Only ROLE_USER
+            'roles'    => ['ROLE_USER'], // Only ROLE_USER
         ]);
         $user = $userProxy->_real();
 
@@ -62,7 +62,7 @@ class AdminAccessTest extends WebTestCase
         $response = $this->client->getResponse();
         $this->assertTrue(
             $response->getStatusCode() === Response::HTTP_FORBIDDEN || $response->isRedirect(),
-            'Regular user should be denied access to admin'
+            'Regular user should be denied access to admin',
         );
     }
 
@@ -71,9 +71,9 @@ class AdminAccessTest extends WebTestCase
     {
         // Arrange - Create admin user
         $userProxy = UserFactory::createOne([
-            'email' => 'admin-' . uniqid() . '@test.com',
+            'email'    => 'admin-' . uniqid() . '@test.com',
             'password' => 'password123',
-            'roles' => ['ROLE_USER', 'ROLE_ADMIN'],
+            'roles'    => ['ROLE_USER', 'ROLE_ADMIN'],
         ]);
         $adminUser = $userProxy->_real();
 
@@ -87,7 +87,7 @@ class AdminAccessTest extends WebTestCase
         $response = $this->client->getResponse();
         $this->assertTrue(
             $response->isSuccessful() || ($response->isRedirect() && str_contains($response->headers->get('Location') ?? '', '/admin')),
-            'Admin user should be able to access admin dashboard'
+            'Admin user should be able to access admin dashboard',
         );
     }
 
@@ -109,9 +109,9 @@ class AdminAccessTest extends WebTestCase
     {
         // Arrange - Create admin user
         $userProxy = UserFactory::createOne([
-            'email' => 'admin-' . uniqid() . '@test.com',
+            'email'    => 'admin-' . uniqid() . '@test.com',
             'password' => 'password123',
-            'roles' => ['ROLE_USER', 'ROLE_ADMIN'],
+            'roles'    => ['ROLE_USER', 'ROLE_ADMIN'],
         ]);
         $adminUser = $userProxy->_real();
 
@@ -125,7 +125,7 @@ class AdminAccessTest extends WebTestCase
         $response = $this->client->getResponse();
         $this->assertTrue(
             $response->isSuccessful() || $response->isRedirect(),
-            'Logged in admin should be able to access /admin/login'
+            'Logged in admin should be able to access /admin/login',
         );
     }
 
@@ -134,9 +134,9 @@ class AdminAccessTest extends WebTestCase
     {
         // Arrange
         $userProxy = UserFactory::createOne([
-            'email' => 'admin-' . uniqid() . '@test.com',
+            'email'    => 'admin-' . uniqid() . '@test.com',
             'password' => 'password123',
-            'roles' => ['ROLE_USER', 'ROLE_ADMIN'],
+            'roles'    => ['ROLE_USER', 'ROLE_ADMIN'],
         ]);
         $adminUser = $userProxy->_real();
 
@@ -154,7 +154,7 @@ class AdminAccessTest extends WebTestCase
         $response = $this->client->getResponse();
         $this->assertTrue(
             $response->isSuccessful() || $response->isRedirect(),
-            'Admin should be able to access users list'
+            'Admin should be able to access users list',
         );
     }
 
@@ -163,9 +163,9 @@ class AdminAccessTest extends WebTestCase
     {
         // Arrange - Create regular user
         $userProxy = UserFactory::createOne([
-            'email' => 'regular-' . uniqid() . '@test.com',
+            'email'    => 'regular-' . uniqid() . '@test.com',
             'password' => 'password123',
-            'roles' => ['ROLE_USER'],
+            'roles'    => ['ROLE_USER'],
         ]);
         $user = $userProxy->_real();
 
@@ -179,7 +179,7 @@ class AdminAccessTest extends WebTestCase
         $response = $this->client->getResponse();
         $this->assertTrue(
             $response->getStatusCode() === Response::HTTP_FORBIDDEN || $response->isRedirect(),
-            'Regular user should be denied access to admin'
+            'Regular user should be denied access to admin',
         );
     }
 
@@ -188,9 +188,9 @@ class AdminAccessTest extends WebTestCase
     {
         // Arrange
         $userProxy = UserFactory::createOne([
-            'email' => 'admin-' . uniqid() . '@test.com',
+            'email'    => 'admin-' . uniqid() . '@test.com',
             'password' => 'password123',
-            'roles' => ['ROLE_USER', 'ROLE_ADMIN'],
+            'roles'    => ['ROLE_USER', 'ROLE_ADMIN'],
         ]);
         $adminUser = $userProxy->_real();
 
@@ -201,7 +201,7 @@ class AdminAccessTest extends WebTestCase
         $this->client->request('GET', '/admin');
         $response = $this->client->getResponse();
         $this->assertTrue(
-            $response->isSuccessful() || ($response->isRedirect() && str_contains($response->headers->get('Location') ?? '', '/admin'))
+            $response->isSuccessful() || ($response->isRedirect() && str_contains($response->headers->get('Location') ?? '', '/admin')),
         );
 
         // Act - Logout
@@ -216,9 +216,9 @@ class AdminAccessTest extends WebTestCase
     {
         // Arrange - Create admin user
         $userProxy = UserFactory::createOne([
-            'email' => 'admin-' . uniqid() . '@test.com',
+            'email'    => 'admin-' . uniqid() . '@test.com',
             'password' => 'password123',
-            'roles' => ['ROLE_USER', 'ROLE_ADMIN'],
+            'roles'    => ['ROLE_USER', 'ROLE_ADMIN'],
         ]);
         $adminUser = $userProxy->_real();
 
@@ -237,7 +237,7 @@ class AdminAccessTest extends WebTestCase
         $response = $this->client->getResponse();
         $this->assertTrue(
             $response->isSuccessful() || $response->isRedirect(),
-            'Admin should be able to access admin panel'
+            'Admin should be able to access admin panel',
         );
     }
 }

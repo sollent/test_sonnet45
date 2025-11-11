@@ -6,27 +6,32 @@ namespace App\Tests\Unit\Service;
 
 use App\Dto\Request\Task\CreateTaskDto;
 use App\Dto\Request\Task\UpdateTaskDto;
+use App\Entity\Tag;
 use App\Entity\Task;
 use App\Entity\User;
-use App\Entity\Tag;
-use App\Entity\MediaObject;
-use App\Enum\TaskStatus;
 use App\Enum\TaskPriority;
+use App\Enum\TaskStatus;
 use App\Exception\Task\TaskAccessDeniedException;
-use App\Repository\Database\TaskRepository;
-use App\Repository\Database\TagRepository;
 use App\Repository\Database\MediaObjectRepository;
+use App\Repository\Database\TagRepository;
+use App\Repository\Database\TaskRepository;
 use App\Service\TaskService;
+use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 
 class TaskServiceTest extends TestCase
 {
     private TaskRepository $taskRepository;
+
     private TagRepository $tagRepository;
+
     private MediaObjectRepository $mediaObjectRepository;
+
     private EntityManagerInterface $entityManager;
+
     private TaskService $taskService;
+
     private User $user;
 
     protected function setUp(): void
@@ -44,7 +49,7 @@ class TaskServiceTest extends TestCase
             $this->mediaObjectRepository,
             null, // RecurrenceService
             null, // TranslationService
-            null  // RequestStack
+            null,  // RequestStack
         );
 
         $this->user = new User();
@@ -224,7 +229,7 @@ class TaskServiceTest extends TestCase
         // Arrange
         $task = new Task();
         $task->setStatus(TaskStatus::COMPLETED);
-        $task->setCompletedAt(new \DateTimeImmutable());
+        $task->setCompletedAt(new DateTimeImmutable());
         $task->setUser($this->user);
 
         $this->entityManager->expects($this->once())->method('flush');
@@ -296,9 +301,9 @@ class TaskServiceTest extends TestCase
     {
         // Arrange
         $expectedStats = [
-            'total' => 10,
-            'pending' => 5,
-            'completed' => 3
+            'total'     => 10,
+            'pending'   => 5,
+            'completed' => 3,
         ];
 
         $this->taskRepository
@@ -552,6 +557,6 @@ class TaskServiceTest extends TestCase
         // Assert
         $this->assertEquals(TaskStatus::COMPLETED, $completedTask->getStatus());
         $this->assertNotNull($completedTask->getCompletedAt());
-        $this->assertInstanceOf(\DateTimeImmutable::class, $completedTask->getCompletedAt());
+        $this->assertInstanceOf(DateTimeImmutable::class, $completedTask->getCompletedAt());
     }
 }

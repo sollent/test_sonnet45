@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Repository\Database\MediaObjectRepository;
+use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: MediaObjectRepository::class)]
@@ -39,7 +40,7 @@ class MediaObject
     private ?string $thumbnailPath = null;
 
     #[ORM\Column]
-    private ?\DateTimeImmutable $createdAt = null;
+    private ?DateTimeImmutable $createdAt = null;
 
     #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(nullable: false)]
@@ -47,7 +48,7 @@ class MediaObject
 
     public function __construct()
     {
-        $this->createdAt = new \DateTimeImmutable();
+        $this->createdAt = new DateTimeImmutable();
     }
 
     public function getId(): ?int
@@ -63,6 +64,7 @@ class MediaObject
     public function setFileName(string $fileName): static
     {
         $this->fileName = $fileName;
+
         return $this;
     }
 
@@ -74,6 +76,7 @@ class MediaObject
     public function setOriginalName(string $originalName): static
     {
         $this->originalName = $originalName;
+
         return $this;
     }
 
@@ -85,6 +88,7 @@ class MediaObject
     public function setMimeType(string $mimeType): static
     {
         $this->mimeType = $mimeType;
+
         return $this;
     }
 
@@ -96,6 +100,7 @@ class MediaObject
     public function setFileSize(int $fileSize): static
     {
         $this->fileSize = $fileSize;
+
         return $this;
     }
 
@@ -107,6 +112,7 @@ class MediaObject
     public function setFileType(string $fileType): static
     {
         $this->fileType = $fileType;
+
         return $this;
     }
 
@@ -118,6 +124,7 @@ class MediaObject
     public function setFilePath(string $filePath): static
     {
         $this->filePath = $filePath;
+
         return $this;
     }
 
@@ -129,17 +136,19 @@ class MediaObject
     public function setThumbnailPath(?string $thumbnailPath): static
     {
         $this->thumbnailPath = $thumbnailPath;
+
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeImmutable
+    public function getCreatedAt(): ?DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    public function setCreatedAt(\DateTimeImmutable $createdAt): static
+    public function setCreatedAt(DateTimeImmutable $createdAt): static
     {
         $this->createdAt = $createdAt;
+
         return $this;
     }
 
@@ -151,6 +160,7 @@ class MediaObject
     public function setUploadedBy(?User $uploadedBy): static
     {
         $this->uploadedBy = $uploadedBy;
+
         return $this;
     }
 
@@ -159,21 +169,21 @@ class MediaObject
         if (str_starts_with($this->mimeType ?? '', 'image/')) {
             return 'image';
         }
-        
+
         if (str_starts_with($this->mimeType ?? '', 'video/')) {
             return 'video';
         }
-        
+
         if (in_array($this->mimeType, [
             'application/pdf',
             'application/msword',
             'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
             'application/vnd.ms-excel',
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        ])) {
+        ], true)) {
             return 'document';
         }
-        
+
         return 'other';
     }
 
@@ -182,13 +192,12 @@ class MediaObject
         $size = $this->fileSize;
         $units = ['B', 'KB', 'MB', 'GB'];
         $i = 0;
-        
+
         while ($size >= 1024 && $i < count($units) - 1) {
             $size /= 1024;
             $i++;
         }
-        
+
         return round($size, 2) . ' ' . $units[$i];
     }
 }
-

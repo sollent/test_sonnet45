@@ -15,11 +15,9 @@ use EasyCorp\Bundle\EasyAdminBundle\Collection\FilterCollection;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
-use EasyCorp\Bundle\EasyAdminBundle\Orm\EntityRepository;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
 use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
-use EasyCorp\Bundle\EasyAdminBundle\Dto\BatchActionDto;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\EntityDto;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\SearchDto;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
@@ -36,12 +34,13 @@ use EasyCorp\Bundle\EasyAdminBundle\Filter\BooleanFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\ChoiceFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\DateTimeFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\EntityFilter;
+use RuntimeException;
 use Symfony\Component\HttpFoundation\Response;
 
 class TaskCrudController extends AbstractCrudController
 {
     public function __construct(
-        private readonly EntityManagerInterface $entityManager
+        private readonly EntityManagerInterface $entityManager,
     ) {
     }
 
@@ -114,31 +113,31 @@ class TaskCrudController extends AbstractCrudController
         // Status - enum with badges
         yield ChoiceField::new('status', 'Status')
             ->setChoices([
-                'Pending' => TaskStatus::PENDING,
+                'Pending'     => TaskStatus::PENDING,
                 'In Progress' => TaskStatus::IN_PROGRESS,
-                'Completed' => TaskStatus::COMPLETED,
-                'Cancelled' => TaskStatus::CANCELLED,
+                'Completed'   => TaskStatus::COMPLETED,
+                'Cancelled'   => TaskStatus::CANCELLED,
             ])
             ->renderAsBadges([
-                TaskStatus::PENDING->value => 'secondary',
+                TaskStatus::PENDING->value     => 'secondary',
                 TaskStatus::IN_PROGRESS->value => 'primary',
-                TaskStatus::COMPLETED->value => 'success',
-                TaskStatus::CANCELLED->value => 'danger',
+                TaskStatus::COMPLETED->value   => 'success',
+                TaskStatus::CANCELLED->value   => 'danger',
             ])
             ->setColumns('col-md-3');
 
         // Priority - enum with badges
         yield ChoiceField::new('priority', 'Priority')
             ->setChoices([
-                'Low' => TaskPriority::LOW,
+                'Low'    => TaskPriority::LOW,
                 'Medium' => TaskPriority::MEDIUM,
-                'High' => TaskPriority::HIGH,
+                'High'   => TaskPriority::HIGH,
                 'Urgent' => TaskPriority::URGENT,
             ])
             ->renderAsBadges([
-                TaskPriority::LOW->value => 'secondary',
+                TaskPriority::LOW->value    => 'secondary',
                 TaskPriority::MEDIUM->value => 'info',
-                TaskPriority::HIGH->value => 'warning',
+                TaskPriority::HIGH->value   => 'warning',
                 TaskPriority::URGENT->value => 'danger',
             ])
             ->setColumns('col-md-3');
@@ -160,9 +159,11 @@ class TaskCrudController extends AbstractCrudController
             yield IntegerField::new('tagsCount', 'Tags')
                 ->formatValue(function ($value, Task $task) {
                     $count = $task->getTags()->count();
+
                     if ($count === 0) {
                         return '<span class="text-muted">-</span>';
                     }
+
                     return sprintf('<span class="badge badge-info">%d tag%s</span>', $count, $count > 1 ? 's' : '');
                 })
                 ->onlyOnIndex();
@@ -172,16 +173,18 @@ class TaskCrudController extends AbstractCrudController
                 ->autocomplete()
                 ->formatValue(function ($value, Task $task) {
                     $tags = $task->getTags();
+
                     if ($tags->isEmpty()) {
                         return '<span class="text-muted">No tags</span>';
                     }
 
                     $tagNames = [];
+
                     foreach ($tags as $tag) {
                         $tagNames[] = sprintf(
                             '<span class="badge" style="background-color: %s; color: white;">%s</span>',
                             htmlspecialchars($tag->getColor()),
-                            htmlspecialchars($tag->getName())
+                            htmlspecialchars($tag->getName()),
                         );
                     }
 
@@ -243,6 +246,7 @@ class TaskCrudController extends AbstractCrudController
                     if ($task->isOverdue()) {
                         return '<span class="badge badge-danger"><i class="fa fa-exclamation-triangle"></i> Overdue</span>';
                     }
+
                     return '-';
                 })
                 ->onlyOnIndex();
@@ -291,17 +295,17 @@ class TaskCrudController extends AbstractCrudController
             // Choice filters for enums
             ->add(ChoiceFilter::new('status', 'Status')
                 ->setChoices([
-                    'Pending' => TaskStatus::PENDING->value,
+                    'Pending'     => TaskStatus::PENDING->value,
                     'In Progress' => TaskStatus::IN_PROGRESS->value,
-                    'Completed' => TaskStatus::COMPLETED->value,
-                    'Cancelled' => TaskStatus::CANCELLED->value,
+                    'Completed'   => TaskStatus::COMPLETED->value,
+                    'Cancelled'   => TaskStatus::CANCELLED->value,
                 ]))
 
             ->add(ChoiceFilter::new('priority', 'Priority')
                 ->setChoices([
-                    'Low' => TaskPriority::LOW->value,
+                    'Low'    => TaskPriority::LOW->value,
                     'Medium' => TaskPriority::MEDIUM->value,
-                    'High' => TaskPriority::HIGH->value,
+                    'High'   => TaskPriority::HIGH->value,
                     'Urgent' => TaskPriority::URGENT->value,
                 ]))
 
@@ -362,22 +366,34 @@ class TaskCrudController extends AbstractCrudController
             ->add(Crud::PAGE_DETAIL, $unarchiveAction)
 
             // Customize default actions
-            ->update(Crud::PAGE_INDEX, Action::NEW, fn (Action $action) => $action
-                ->setIcon('fa fa-plus')
-                ->setLabel('Create Task')
-                ->setCssClass('btn btn-primary')
+            ->update(
+                Crud::PAGE_INDEX,
+                Action::NEW,
+                fn (Action $action) => $action
+                    ->setIcon('fa fa-plus')
+                    ->setLabel('Create Task')
+                    ->setCssClass('btn btn-primary'),
             )
-            ->update(Crud::PAGE_INDEX, Action::EDIT, fn (Action $action) => $action
-                ->setIcon('fa fa-edit')
-                ->setLabel(false)
+            ->update(
+                Crud::PAGE_INDEX,
+                Action::EDIT,
+                fn (Action $action) => $action
+                    ->setIcon('fa fa-edit')
+                    ->setLabel(false),
             )
-            ->update(Crud::PAGE_INDEX, Action::DELETE, fn (Action $action) => $action
-                ->setIcon('fa fa-trash')
-                ->setLabel(false)
+            ->update(
+                Crud::PAGE_INDEX,
+                Action::DELETE,
+                fn (Action $action) => $action
+                    ->setIcon('fa fa-trash')
+                    ->setLabel(false),
             )
-            ->update(Crud::PAGE_INDEX, Action::DETAIL, fn (Action $action) => $action
-                ->setIcon('fa fa-eye')
-                ->setLabel(false)
+            ->update(
+                Crud::PAGE_INDEX,
+                Action::DETAIL,
+                fn (Action $action) => $action
+                    ->setIcon('fa fa-eye')
+                    ->setLabel(false),
             );
     }
 
@@ -441,20 +457,23 @@ class TaskCrudController extends AbstractCrudController
         SearchDto $searchDto,
         EntityDto $entityDto,
         FieldCollection $fields,
-        FilterCollection $filters
+        FilterCollection $filters,
     ): QueryBuilder {
         $qb = parent::createIndexQueryBuilder($searchDto, $entityDto, $fields, $filters);
 
         // ONLY eager load user (displayed on INDEX)
         // Tags and subtasks are now shown as COUNT only, so no eager loading needed!
         $qb->leftJoin('entity.user', 'u')
-           ->addSelect('u');
+            ->addSelect('u');
 
         return $qb;
     }
 
     /**
      * Validate task data before persisting
+     *
+     * @param mixed $entityManager
+     * @param mixed $entityInstance
      */
     public function persistEntity($entityManager, $entityInstance): void
     {
@@ -465,14 +484,16 @@ class TaskCrudController extends AbstractCrudController
         if ($task->getStartDate() && $task->getDueDate()) {
             if ($task->getStartDate() > $task->getDueDate()) {
                 $this->addFlash('error', 'Start date cannot be after due date!');
-                throw new \RuntimeException('Invalid dates: startDate > dueDate');
+
+                throw new RuntimeException('Invalid dates: startDate > dueDate');
             }
         }
 
         // Validation: Task cannot be its own parent
         if ($task->getParentTask() && $task->getParentTask()->getId() === $task->getId()) {
             $this->addFlash('error', 'Task cannot be its own parent!');
-            throw new \RuntimeException('Invalid parent: circular reference');
+
+            throw new RuntimeException('Invalid parent: circular reference');
         }
 
         parent::persistEntity($entityManager, $entityInstance);
@@ -480,6 +501,9 @@ class TaskCrudController extends AbstractCrudController
 
     /**
      * Validate task data before updating
+     *
+     * @param mixed $entityManager
+     * @param mixed $entityInstance
      */
     public function updateEntity($entityManager, $entityInstance): void
     {
@@ -490,13 +514,15 @@ class TaskCrudController extends AbstractCrudController
         if ($task->getStartDate() && $task->getDueDate()) {
             if ($task->getStartDate() > $task->getDueDate()) {
                 $this->addFlash('error', 'Start date cannot be after due date!');
-                throw new \RuntimeException('Invalid dates: startDate > dueDate');
+
+                throw new RuntimeException('Invalid dates: startDate > dueDate');
             }
         }
 
         if ($task->getParentTask() && $task->getParentTask()->getId() === $task->getId()) {
             $this->addFlash('error', 'Task cannot be its own parent!');
-            throw new \RuntimeException('Invalid parent: circular reference');
+
+            throw new RuntimeException('Invalid parent: circular reference');
         }
 
         parent::updateEntity($entityManager, $entityInstance);
@@ -550,6 +576,7 @@ class TaskCrudController extends AbstractCrudController
 
         // Generate CSV string
         $output = fopen('php://temp', 'w');
+
         foreach ($csv as $row) {
             fputcsv($output, $row);
         }

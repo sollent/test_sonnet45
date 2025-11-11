@@ -62,11 +62,13 @@ class TagRepository extends ServiceEntityRepository
      * Find or create tags by names for a user
      *
      * @param string[] $names
+     *
      * @return Tag[]
      */
     public function findOrCreateByNames(array $names, User $user): array
     {
         $names = array_unique(array_filter(array_map('trim', $names)));
+
         if (empty($names)) {
             return [];
         }
@@ -80,30 +82,30 @@ class TagRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
 
-        $existingTagNames = array_map(fn(Tag $tag) => $tag->getName(), $existingTags);
+        $existingTagNames = array_map(fn (Tag $tag) => $tag->getName(), $existingTags);
 
         $tagsToCreateNames = array_diff($names, $existingTagNames);
         $newTags = [];
 
         if (!empty($tagsToCreateNames)) {
-        $colors = [
+            $colors = [
                 '#3B82F6', '#10B981', '#F59E0B', '#EF4444',
                 '#8B5CF6', '#EC4899', '#14B8A6', '#F97316',
-        ];
-        $colorIndex = 0;
+            ];
+            $colorIndex = 0;
 
             foreach ($tagsToCreateNames as $name) {
                 $tag = new Tag();
                 $tag->setName($name)
                     ->setUser($user)
                     ->setColor($colors[$colorIndex % count($colors)]);
-                
+
                 // Persist, but don't flush yet
                 $this->getEntityManager()->persist($tag);
                 $newTags[] = $tag;
                 $colorIndex++;
             }
-            
+
             // Flush newly created tags so subsequent calls can find them
             $this->getEntityManager()->flush();
         }
@@ -152,7 +154,7 @@ class TagRepository extends ServiceEntityRepository
     public function updateUsageCounts(User $user): void
     {
         $conn = $this->getEntityManager()->getConnection();
-        
+
         $sql = '
             UPDATE tag t
             SET usage_count = (
@@ -164,7 +166,7 @@ class TagRepository extends ServiceEntityRepository
             )
             WHERE t.user_id = :userId
         ';
-        
+
         $conn->executeStatement($sql, ['userId' => $user->getId()]);
     }
 

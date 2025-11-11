@@ -12,28 +12,33 @@ use Symfony\Component\HttpKernel\KernelEvents;
 final class LocaleListener
 {
     private const SUPPORTED_LOCALES = ['en', 'ru'];
+
     private const DEFAULT_LOCALE = 'en';
 
     public function __invoke(RequestEvent $event): void
     {
         $request = $event->getRequest();
-        
+
         // Priority 1: Query parameter (highest priority)
         if ($request->query->has('locale')) {
             $locale = $request->query->get('locale');
-            if (in_array($locale, self::SUPPORTED_LOCALES)) {
+
+            if (in_array($locale, self::SUPPORTED_LOCALES, true)) {
                 $request->setLocale($locale);
                 $request->attributes->set('_locale', $locale);
+
                 return;
             }
         }
 
         // Priority 2: Accept-Language header
         $acceptLanguage = $request->headers->get('Accept-Language');
+
         if ($acceptLanguage) {
             $locale = $this->parseAcceptLanguage($acceptLanguage);
             $request->setLocale($locale);
             $request->attributes->set('_locale', $locale);
+
             return;
         }
 
@@ -49,16 +54,16 @@ final class LocaleListener
     {
         // Simple parsing - just get the first supported locale
         $languages = explode(',', $acceptLanguage);
-        
+
         foreach ($languages as $lang) {
             // Extract language code (e.g., "en-US" -> "en")
             $langCode = substr(trim($lang), 0, 2);
-            
-            if (in_array($langCode, self::SUPPORTED_LOCALES)) {
+
+            if (in_array($langCode, self::SUPPORTED_LOCALES, true)) {
                 return $langCode;
             }
         }
-        
+
         return self::DEFAULT_LOCALE;
     }
 }

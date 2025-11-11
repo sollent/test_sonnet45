@@ -1,9 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Repository\Database;
 
 use App\Entity\RecurrenceRule;
 use App\Entity\User;
+use DateTime;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -40,9 +43,9 @@ class RecurrenceRuleRepository extends ServiceEntityRepository
      *
      * @return RecurrenceRule[]
      */
-    public function findActiveRulesToProcess(\DateTime $now = null): array
+    public function findActiveRulesToProcess(?DateTime $now = null): array
     {
-        $now = $now ?? new \DateTime();
+        $now = $now ?? new DateTime();
 
         return $this->createQueryBuilder('r')
             ->where('r.isActive = :active')
@@ -90,9 +93,9 @@ class RecurrenceRuleRepository extends ServiceEntityRepository
     /**
      * Deactivate expired rules
      */
-    public function deactivateExpiredRules(\DateTime $now = null): int
+    public function deactivateExpiredRules(?DateTime $now = null): int
     {
-        $now = $now ?? new \DateTime();
+        $now = $now ?? new DateTime();
 
         $qb = $this->createQueryBuilder('r')
             ->update()

@@ -63,6 +63,7 @@ class UpdateTaskDtoTest extends KernelTestCase
         // Assert
         $this->assertGreaterThan(0, $violations->count());
         $foundError = false;
+
         foreach ($violations as $violation) {
             if ($violation->getPropertyPath() === 'title') {
                 $foundError = true;
@@ -85,6 +86,7 @@ class UpdateTaskDtoTest extends KernelTestCase
         // Assert
         $this->assertGreaterThan(0, $violations->count());
         $foundMaxLengthError = false;
+
         foreach ($violations as $violation) {
             if ($violation->getPropertyPath() === 'title') {
                 $foundMaxLengthError = true;
@@ -107,6 +109,7 @@ class UpdateTaskDtoTest extends KernelTestCase
         // Assert
         $this->assertGreaterThan(0, $violations->count());
         $foundMaxLengthError = false;
+
         foreach ($violations as $violation) {
             if ($violation->getPropertyPath() === 'description') {
                 $foundMaxLengthError = true;

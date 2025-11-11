@@ -13,31 +13,31 @@ enum TaskStatus: string
 
     public function getLabel(): string
     {
-        return match($this) {
-            self::PENDING => 'Pending',
+        return match ($this) {
+            self::PENDING     => 'Pending',
             self::IN_PROGRESS => 'In Progress',
-            self::COMPLETED => 'Completed',
-            self::CANCELLED => 'Cancelled',
+            self::COMPLETED   => 'Completed',
+            self::CANCELLED   => 'Cancelled',
         };
     }
 
     public function getColor(): string
     {
-        return match($this) {
-            self::PENDING => '#6B7280',     // Gray
+        return match ($this) {
+            self::PENDING     => '#6B7280',     // Gray
             self::IN_PROGRESS => '#3B82F6',  // Blue
-            self::COMPLETED => '#10B981',    // Green
-            self::CANCELLED => '#EF4444',    // Red
+            self::COMPLETED   => '#10B981',    // Green
+            self::CANCELLED   => '#EF4444',    // Red
         };
     }
 
     public function getIcon(): string
     {
-        return match($this) {
-            self::PENDING => 'pi pi-clock',
+        return match ($this) {
+            self::PENDING     => 'pi pi-clock',
             self::IN_PROGRESS => 'pi pi-play',
-            self::COMPLETED => 'pi pi-check',
-            self::CANCELLED => 'pi pi-times',
+            self::COMPLETED   => 'pi pi-check',
+            self::CANCELLED   => 'pi pi-times',
         };
     }
 

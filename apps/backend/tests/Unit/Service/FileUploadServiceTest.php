@@ -4,18 +4,20 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Service;
 
-use App\Entity\Task;
 use App\Entity\TaskAttachment;
-use App\Entity\User;
 use App\Repository\Database\TaskAttachmentRepository;
 use App\Service\FileUploadService;
+use Exception;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 use Symfony\Component\String\Slugger\SluggerInterface;
 
 class FileUploadServiceTest extends TestCase
 {
     private TaskAttachmentRepository $repository;
+
     private SluggerInterface $slugger;
+
     private FileUploadService $service;
 
     protected function setUp(): void
@@ -25,7 +27,7 @@ class FileUploadServiceTest extends TestCase
 
         $this->service = new FileUploadService(
             $this->repository,
-            $this->slugger
+            $this->slugger,
         );
     }
 
@@ -66,7 +68,7 @@ class FileUploadServiceTest extends TestCase
         // Act - will fail on file operations but we test repository call
         try {
             $this->service->deleteFile($attachment);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Expected - file doesn't exist
         }
 
@@ -106,7 +108,7 @@ class FileUploadServiceTest extends TestCase
     public function testServiceConstantsAreCorrect(): void
     {
         // Arrange
-        $reflection = new \ReflectionClass(FileUploadService::class);
+        $reflection = new ReflectionClass(FileUploadService::class);
 
         // Act
         $uploadDir = $reflection->getConstant('UPLOAD_DIR');
@@ -123,7 +125,7 @@ class FileUploadServiceTest extends TestCase
     public function testMaxFileSizeIs10MB(): void
     {
         // Arrange
-        $reflection = new \ReflectionClass(FileUploadService::class);
+        $reflection = new ReflectionClass(FileUploadService::class);
         $maxFileSize = $reflection->getConstant('MAX_FILE_SIZE');
 
         // Assert
@@ -135,13 +137,14 @@ class FileUploadServiceTest extends TestCase
     public function testAllowedExtensionsIncludesCommonFormats(): void
     {
         // Arrange
-        $reflection = new \ReflectionClass(FileUploadService::class);
+        $reflection = new ReflectionClass(FileUploadService::class);
         $allowedExtensions = $reflection->getConstant('ALLOWED_EXTENSIONS');
 
         // Assert
         $expectedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'zip'];
+
         foreach ($expectedExtensions as $ext) {
-            $this->assertContains($ext, $allowedExtensions, "Extension $ext should be allowed");
+            $this->assertContains($ext, $allowedExtensions, "Extension {$ext} should be allowed");
         }
     }
 
@@ -149,7 +152,7 @@ class FileUploadServiceTest extends TestCase
     public function testServiceUsesRepositoryAndSlugger(): void
     {
         // Arrange & Act
-        $reflection = new \ReflectionClass($this->service);
+        $reflection = new ReflectionClass($this->service);
         $repositoryProperty = $reflection->getProperty('repository');
         $repositoryProperty->setAccessible(true);
         $sluggerProperty = $reflection->getProperty('slugger');
@@ -164,7 +167,7 @@ class FileUploadServiceTest extends TestCase
     public function testUploadDirIsAbsolute(): void
     {
         // Arrange
-        $reflection = new \ReflectionClass(FileUploadService::class);
+        $reflection = new ReflectionClass(FileUploadService::class);
         $uploadDir = $reflection->getConstant('UPLOAD_DIR');
 
         // Assert
@@ -175,7 +178,7 @@ class FileUploadServiceTest extends TestCase
     public function testAllowedExtensionsCount(): void
     {
         // Arrange
-        $reflection = new \ReflectionClass(FileUploadService::class);
+        $reflection = new ReflectionClass(FileUploadService::class);
         $allowedExtensions = $reflection->getConstant('ALLOWED_EXTENSIONS');
 
         // Assert

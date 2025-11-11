@@ -8,6 +8,7 @@ use App\Entity\Task;
 use App\Entity\User;
 use App\Enum\TaskPriority;
 use App\Enum\TaskStatus;
+use DateTimeImmutable;
 use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
 
 /**
@@ -20,37 +21,13 @@ final class TaskFactory extends PersistentProxyObjectFactory
         return Task::class;
     }
 
-    protected function defaults(): array|callable
-    {
-        return [
-            'title' => self::faker()->sentence(3),
-            'description' => self::faker()->optional()->paragraph(),
-            'status' => self::faker()->randomElement(TaskStatus::cases()),
-            'priority' => self::faker()->randomElement(TaskPriority::cases()),
-            'user' => UserFactory::new(),
-            'startDate' => self::faker()->optional()->dateTimeBetween('-30 days', '+30 days')
-                ? \DateTimeImmutable::createFromMutable(self::faker()->dateTimeBetween('-30 days', '+30 days'))
-                : null,
-            'dueDate' => self::faker()->optional()->dateTimeBetween('now', '+60 days')
-                ? \DateTimeImmutable::createFromMutable(self::faker()->dateTimeBetween('now', '+60 days'))
-                : null,
-            'sortOrder' => self::faker()->numberBetween(0, 1000),
-            'isArchived' => false,
-        ];
-    }
-
-    protected function initialize(): static
-    {
-        return $this;
-    }
-
     /**
      * Create a pending task
      */
     public function pending(): self
     {
         return $this->with([
-            'status' => TaskStatus::PENDING,
+            'status'      => TaskStatus::PENDING,
             'completedAt' => null,
         ]);
     }
@@ -61,9 +38,9 @@ final class TaskFactory extends PersistentProxyObjectFactory
     public function completed(): self
     {
         return $this->with([
-            'status' => TaskStatus::COMPLETED,
-            'completedAt' => \DateTimeImmutable::createFromMutable(
-                self::faker()->dateTimeBetween('-30 days', 'now')
+            'status'      => TaskStatus::COMPLETED,
+            'completedAt' => DateTimeImmutable::createFromMutable(
+                self::faker()->dateTimeBetween('-30 days', 'now'),
             ),
         ]);
     }
@@ -104,8 +81,8 @@ final class TaskFactory extends PersistentProxyObjectFactory
     public function overdue(): self
     {
         return $this->with([
-            'dueDate' => \DateTimeImmutable::createFromMutable(
-                self::faker()->dateTimeBetween('-30 days', '-1 day')
+            'dueDate' => DateTimeImmutable::createFromMutable(
+                self::faker()->dateTimeBetween('-30 days', '-1 day'),
             ),
             'status' => TaskStatus::PENDING,
         ]);
@@ -117,7 +94,7 @@ final class TaskFactory extends PersistentProxyObjectFactory
     public function unscheduled(): self
     {
         return $this->with([
-            'dueDate' => null,
+            'dueDate'   => null,
             'startDate' => null,
         ]);
     }
@@ -139,7 +116,31 @@ final class TaskFactory extends PersistentProxyObjectFactory
     {
         return $this->with([
             'parentTask' => $parentTask,
-            'user' => $parentTask->getUser(),
+            'user'       => $parentTask->getUser(),
         ]);
+    }
+
+    protected function defaults(): array|callable
+    {
+        return [
+            'title'       => self::faker()->sentence(3),
+            'description' => self::faker()->optional()->paragraph(),
+            'status'      => self::faker()->randomElement(TaskStatus::cases()),
+            'priority'    => self::faker()->randomElement(TaskPriority::cases()),
+            'user'        => UserFactory::new(),
+            'startDate'   => self::faker()->optional()->dateTimeBetween('-30 days', '+30 days')
+                ? DateTimeImmutable::createFromMutable(self::faker()->dateTimeBetween('-30 days', '+30 days'))
+                : null,
+            'dueDate' => self::faker()->optional()->dateTimeBetween('now', '+60 days')
+                ? DateTimeImmutable::createFromMutable(self::faker()->dateTimeBetween('now', '+60 days'))
+                : null,
+            'sortOrder'  => self::faker()->numberBetween(0, 1000),
+            'isArchived' => false,
+        ];
+    }
+
+    protected function initialize(): static
+    {
+        return $this;
     }
 }

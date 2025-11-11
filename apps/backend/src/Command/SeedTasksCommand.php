@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Command;
 
 use App\Entity\Tag;
@@ -7,6 +9,7 @@ use App\Entity\Task;
 use App\Entity\User;
 use App\Enum\TaskPriority;
 use App\Enum\TaskStatus;
+use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Faker\Factory;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -22,8 +25,11 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 class SeedTasksCommand extends Command
 {
     private const USER_EMAIL = 'vladislikedev@gmail.com';
+
     private const DAYS_AGO = 90; // 3 months
+
     private const TASKS_PER_DAY = 20;
+
     private const MAX_SUBTASK_DEPTH = 3;
 
     private \Faker\Generator $faker;
@@ -44,8 +50,10 @@ class SeedTasksCommand extends Command
         $io = new SymfonyStyle($input, $output);
 
         $user = $this->em->getRepository(User::class)->findOneBy(['email' => self::USER_EMAIL]);
+
         if (!$user) {
             $io->error(sprintf('User with email "%s" not found.', self::USER_EMAIL));
+
             return Command::FAILURE;
         }
 
@@ -54,7 +62,8 @@ class SeedTasksCommand extends Command
         $tags = $this->getOrCreateTags(['Work', 'Personal', 'Study', 'Health', 'Finance', 'Urgent'], $user);
 
         for ($i = self::DAYS_AGO; $i >= 0; $i--) {
-            $date = new \DateTimeImmutable("-{$i} days");
+            $date = new DateTimeImmutable("-{$i} days");
+
             for ($j = 0; $j < self::TASKS_PER_DAY; $j++) {
                 $task = $this->createTask($user, $date, $tags);
                 $this->em->persist($task);
@@ -74,7 +83,7 @@ class SeedTasksCommand extends Command
         return Command::SUCCESS;
     }
 
-    private function createTask(User $user, \DateTimeImmutable $date, array $tags): Task
+    private function createTask(User $user, DateTimeImmutable $date, array $tags): Task
     {
         $task = new Task();
         $task->setUser($user);
@@ -91,6 +100,7 @@ class SeedTasksCommand extends Command
         if ($this->faker->boolean(60)) {
             $task->setDueDate($createdAt->modify('+' . $this->faker->numberBetween(1, 14) . ' days'));
         }
+
         if ($this->faker->boolean(30)) {
             $task->setStartDate($createdAt->modify('-' . $this->faker->numberBetween(1, 5) . ' days'));
         }
@@ -98,6 +108,7 @@ class SeedTasksCommand extends Command
         // Add tags
         if ($this->faker->boolean(50)) {
             $taskTags = $this->faker->randomElements($tags, $this->faker->numberBetween(1, 3));
+
             foreach ($taskTags as $tag) {
                 $task->addTag($tag);
             }
@@ -106,13 +117,14 @@ class SeedTasksCommand extends Command
         return $task;
     }
 
-    private function createSubtasks(Task $parentTask, User $user, \DateTimeImmutable $date, array $tags, int $depth): void
+    private function createSubtasks(Task $parentTask, User $user, DateTimeImmutable $date, array $tags, int $depth): void
     {
         if ($depth > self::MAX_SUBTASK_DEPTH) {
             return;
         }
 
         $subtaskCount = $this->faker->numberBetween(1, 5);
+
         for ($i = 0; $i < $subtaskCount; $i++) {
             $subtask = $this->createTask($user, $date, $tags);
             $subtask->setParentTask($parentTask);
@@ -131,6 +143,7 @@ class SeedTasksCommand extends Command
 
         foreach ($tagNames as $tagName) {
             $tag = $tagRepository->findOneBy(['name' => $tagName, 'user' => $user]);
+
             if (!$tag) {
                 $tag = new Tag();
                 $tag->setName($tagName);

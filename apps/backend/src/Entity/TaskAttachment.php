@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Repository\Database\TaskAttachmentRepository;
+use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\HttpFoundation\File\File;
 
@@ -41,7 +42,7 @@ class TaskAttachment
     private ?string $filePath = null;
 
     #[ORM\Column]
-    private ?\DateTimeImmutable $uploadedAt = null;
+    private ?DateTimeImmutable $uploadedAt = null;
 
     #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(nullable: false)]
@@ -49,7 +50,7 @@ class TaskAttachment
 
     public function __construct()
     {
-        $this->uploadedAt = new \DateTimeImmutable();
+        $this->uploadedAt = new DateTimeImmutable();
     }
 
     public function getId(): ?int
@@ -141,12 +142,12 @@ class TaskAttachment
         return $this;
     }
 
-    public function getUploadedAt(): ?\DateTimeImmutable
+    public function getUploadedAt(): ?DateTimeImmutable
     {
         return $this->uploadedAt;
     }
 
-    public function setUploadedAt(\DateTimeImmutable $uploadedAt): static
+    public function setUploadedAt(DateTimeImmutable $uploadedAt): static
     {
         $this->uploadedAt = $uploadedAt;
 
@@ -173,21 +174,21 @@ class TaskAttachment
         if (str_starts_with($this->mimeType ?? '', 'image/')) {
             return 'image';
         }
-        
+
         if (str_starts_with($this->mimeType ?? '', 'video/')) {
             return 'video';
         }
-        
+
         if (in_array($this->mimeType, [
             'application/pdf',
             'application/msword',
             'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
             'application/vnd.ms-excel',
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        ])) {
+        ], true)) {
             return 'document';
         }
-        
+
         return 'other';
     }
 
@@ -199,13 +200,12 @@ class TaskAttachment
         $size = $this->fileSize;
         $units = ['B', 'KB', 'MB', 'GB'];
         $i = 0;
-        
+
         while ($size >= 1024 && $i < count($units) - 1) {
             $size /= 1024;
             $i++;
         }
-        
+
         return round($size, 2) . ' ' . $units[$i];
     }
 }
-

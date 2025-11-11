@@ -9,12 +9,15 @@ use App\Repository\Database\UserRepository;
 use App\Security\GoogleAuthenticator;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use stdClass;
 
 class GoogleAuthenticatorTest extends TestCase
 {
     private EntityManagerInterface $entityManager;
+
     private UserRepository $userRepository;
+
     private GoogleAuthenticator $googleAuthenticator;
 
     protected function setUp(): void
@@ -139,7 +142,7 @@ class GoogleAuthenticatorTest extends TestCase
         // Намеренно не устанавливаем $jwt->email
 
         // Assert
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Email not found in Google token');
 
         // Act
@@ -177,4 +180,3 @@ class GoogleAuthenticatorTest extends TestCase
         $this->assertNull($result->getGoogleId());
     }
 }
-

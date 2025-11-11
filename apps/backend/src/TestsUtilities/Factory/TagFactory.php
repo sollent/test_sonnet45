@@ -18,21 +18,6 @@ final class TagFactory extends PersistentProxyObjectFactory
         return Tag::class;
     }
 
-    protected function defaults(): array|callable
-    {
-        return [
-            'name' => self::faker()->unique()->word(),
-            'color' => self::faker()->hexColor(),
-            'user' => UserFactory::new(),
-            'usageCount' => self::faker()->numberBetween(0, 50),
-        ];
-    }
-
-    protected function initialize(): static
-    {
-        return $this;
-    }
-
     /**
      * Create a tag for specific user
      */
@@ -71,5 +56,20 @@ final class TagFactory extends PersistentProxyObjectFactory
         return $this->with([
             'usageCount' => self::faker()->numberBetween(50, 200),
         ]);
+    }
+
+    protected function defaults(): array|callable
+    {
+        return [
+            'name'       => self::faker()->unique()->word(),
+            'color'      => self::faker()->hexColor(),
+            'user'       => UserFactory::new(),
+            'usageCount' => self::faker()->numberBetween(0, 50),
+        ];
+    }
+
+    protected function initialize(): static
+    {
+        return $this;
     }
 }

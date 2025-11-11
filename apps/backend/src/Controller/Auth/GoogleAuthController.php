@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller\Auth;
 
 use App\Security\GoogleAuthenticator;
+use DateTime;
 use Firebase\JWT\JWK;
 use Firebase\JWT\JWT;
 use Gesdinet\JWTRefreshTokenBundle\Model\RefreshTokenManagerInterface;
@@ -50,13 +51,13 @@ class GoogleAuthController extends AbstractController
         $refreshToken = $refreshTokenManager->create();
         $refreshToken->setRefreshToken(Uuid::v4()->toRfc4122());
         $refreshToken->setUsername($user->getUserIdentifier());
-        $refreshToken->setValid((new \DateTime())->modify('+30 days'));
+        $refreshToken->setValid((new DateTime())->modify('+30 days'));
 
         $refreshTokenManager->save($refreshToken);
 
         return $this->json([
-            'token' => $token,
-            'refreshToken' => $refreshToken->getRefreshToken(),
+            'token'                  => $token,
+            'refreshToken'           => $refreshToken->getRefreshToken(),
             'refreshTokenExpiration' => $refreshToken->getValid()?->getTimestamp(),
         ]);
     }

@@ -7,6 +7,7 @@ namespace App\Entity;
 use App\Enum\TaskPriority;
 use App\Enum\TaskStatus;
 use App\Repository\Database\TaskRepository;
+use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
@@ -42,7 +43,7 @@ class Task extends AbstractEntity
         min: 1,
         max: 255,
         minMessage: 'task.title.min_length',
-        maxMessage: 'task.title.max_length'
+        maxMessage: 'task.title.max_length',
     )]
     #[Groups(['task:read', 'task:write', 'task:list'])]
     private ?string $title = null;
@@ -50,7 +51,7 @@ class Task extends AbstractEntity
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     #[Assert\Length(
         max: 5000,
-        maxMessage: 'task.description.max_length'
+        maxMessage: 'task.description.max_length',
     )]
     #[Groups(['task:read', 'task:write'])]
     private ?string $description = null;
@@ -65,15 +66,15 @@ class Task extends AbstractEntity
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
     #[Groups(['task:read', 'task:write', 'task:list'])]
-    private ?\DateTimeImmutable $startDate = null;
+    private ?DateTimeImmutable $startDate = null;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
     #[Groups(['task:read', 'task:write', 'task:list'])]
-    private ?\DateTimeImmutable $dueDate = null;
+    private ?DateTimeImmutable $dueDate = null;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
     #[Groups(['task:read'])]
-    private ?\DateTimeImmutable $completedAt = null;
+    private ?DateTimeImmutable $completedAt = null;
 
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'tasks')]
     #[ORM\JoinColumn(nullable: false)]
@@ -130,6 +131,14 @@ class Task extends AbstractEntity
         $this->attachments = new ArrayCollection();
     }
 
+    /**
+     * String representation for EasyAdmin forms and debugging
+     */
+    public function __toString(): string
+    {
+        return sprintf('#%d: %s', $this->id ?? 0, $this->title ?? 'Untitled');
+    }
+
     public function getId(): ?int
     {
         return $this->id;
@@ -143,6 +152,7 @@ class Task extends AbstractEntity
     public function setTitle(string $title): static
     {
         $this->title = $title;
+
         return $this;
     }
 
@@ -154,6 +164,7 @@ class Task extends AbstractEntity
     public function setDescription(?string $description): static
     {
         $this->description = $description;
+
         return $this;
     }
 
@@ -165,14 +176,14 @@ class Task extends AbstractEntity
     public function setStatus(TaskStatus $status): static
     {
         $this->status = $status;
-        
+
         // Auto-set completedAt when status changes to completed
         if ($status === TaskStatus::COMPLETED && $this->completedAt === null) {
-            $this->completedAt = new \DateTimeImmutable();
+            $this->completedAt = new DateTimeImmutable();
         } elseif ($status !== TaskStatus::COMPLETED) {
             $this->completedAt = null;
         }
-        
+
         return $this;
     }
 
@@ -184,39 +195,43 @@ class Task extends AbstractEntity
     public function setPriority(TaskPriority $priority): static
     {
         $this->priority = $priority;
+
         return $this;
     }
 
-    public function getStartDate(): ?\DateTimeImmutable
+    public function getStartDate(): ?DateTimeImmutable
     {
         return $this->startDate;
     }
 
-    public function setStartDate(?\DateTimeImmutable $startDate): static
+    public function setStartDate(?DateTimeImmutable $startDate): static
     {
         $this->startDate = $startDate;
+
         return $this;
     }
 
-    public function getDueDate(): ?\DateTimeImmutable
+    public function getDueDate(): ?DateTimeImmutable
     {
         return $this->dueDate;
     }
 
-    public function setDueDate(?\DateTimeImmutable $dueDate): static
+    public function setDueDate(?DateTimeImmutable $dueDate): static
     {
         $this->dueDate = $dueDate;
+
         return $this;
     }
 
-    public function getCompletedAt(): ?\DateTimeImmutable
+    public function getCompletedAt(): ?DateTimeImmutable
     {
         return $this->completedAt;
     }
 
-    public function setCompletedAt(?\DateTimeImmutable $completedAt): static
+    public function setCompletedAt(?DateTimeImmutable $completedAt): static
     {
         $this->completedAt = $completedAt;
+
         return $this;
     }
 
@@ -228,6 +243,7 @@ class Task extends AbstractEntity
     public function setUser(?User $user): static
     {
         $this->user = $user;
+
         return $this;
     }
 
@@ -239,6 +255,7 @@ class Task extends AbstractEntity
     public function setParentTask(?self $parentTask): static
     {
         $this->parentTask = $parentTask;
+
         return $this;
     }
 
@@ -292,6 +309,7 @@ class Task extends AbstractEntity
     public function removeTag(Tag $tag): static
     {
         $this->tags->removeElement($tag);
+
         return $this;
     }
 
@@ -303,6 +321,7 @@ class Task extends AbstractEntity
     public function setSortOrder(int $sortOrder): static
     {
         $this->sortOrder = $sortOrder;
+
         return $this;
     }
 
@@ -314,6 +333,7 @@ class Task extends AbstractEntity
     public function setIsArchived(bool $isArchived): static
     {
         $this->isArchived = $isArchived;
+
         return $this;
     }
 
@@ -340,7 +360,7 @@ class Task extends AbstractEntity
 
         return $this;
     }
-    
+
     public function clearMediaObjects(): static
     {
         $this->mediaObjects->clear();
@@ -384,8 +404,8 @@ class Task extends AbstractEntity
         if ($this->dueDate === null || $this->isCompleted()) {
             return false;
         }
-        
-        return $this->dueDate < new \DateTimeImmutable();
+
+        return $this->dueDate < new DateTimeImmutable();
     }
 
     public function getCompletionProgress(): float
@@ -393,8 +413,9 @@ class Task extends AbstractEntity
         if ($this->subtasks->isEmpty()) {
             return $this->isCompleted() ? 100.0 : 0.0;
         }
-        
-        $completed = $this->subtasks->filter(fn($task) => $task->isCompleted())->count();
+
+        $completed = $this->subtasks->filter(fn ($task) => $task->isCompleted())->count();
+
         return ($completed / $this->subtasks->count()) * 100;
     }
 
@@ -406,6 +427,7 @@ class Task extends AbstractEntity
     public function setRecurrenceRule(?RecurrenceRule $recurrenceRule): self
     {
         $this->recurrenceRule = $recurrenceRule;
+
         return $this;
     }
 
@@ -417,6 +439,7 @@ class Task extends AbstractEntity
     public function setIsRecurringTemplate(bool $isRecurringTemplate): self
     {
         $this->isRecurringTemplate = $isRecurringTemplate;
+
         return $this;
     }
 
@@ -428,14 +451,7 @@ class Task extends AbstractEntity
     public function setGeneratedFromRule(?RecurrenceRule $generatedFromRule): self
     {
         $this->generatedFromRule = $generatedFromRule;
-        return $this;
-    }
 
-    /**
-     * String representation for EasyAdmin forms and debugging
-     */
-    public function __toString(): string
-    {
-        return sprintf('#%d: %s', $this->id ?? 0, $this->title ?? 'Untitled');
+        return $this;
     }
 }

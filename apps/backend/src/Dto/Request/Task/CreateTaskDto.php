@@ -15,13 +15,13 @@ final class CreateTaskDto
         min: 1,
         max: 255,
         minMessage: 'task.title.min_length',
-        maxMessage: 'task.title.max_length'
+        maxMessage: 'task.title.max_length',
     )]
     public string $title;
 
     #[Assert\Length(
         max: 5000,
-        maxMessage: 'task.description.max_length'
+        maxMessage: 'task.description.max_length',
     )]
     public ?string $description = null;
 
@@ -51,6 +51,7 @@ final class CreateTaskDto
 
     /**
      * Recurrence settings (optional)
+     *
      * @var array{
      *   recurrenceType: string,
      *   interval?: int,

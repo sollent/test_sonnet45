@@ -36,23 +36,23 @@ class UserRegistrationTest extends WebTestCase
             [],
             ['CONTENT_TYPE' => 'application/json'],
             json_encode([
-                'email' => $email,
+                'email'    => $email,
                 'password' => $password,
-            ])
+            ]),
         );
 
         $this->assertResponseStatusCodeSame(Response::HTTP_CREATED);
-        
+
         $responseData = json_decode($this->client->getResponse()->getContent(), true);
-        
+
         $this->assertArrayHasKey('id', $responseData);
         $this->assertArrayHasKey('email', $responseData);
         $this->assertEquals($email, $responseData['email']);
-        
+
         // Проверяем что пользователь создан в БД
         $userRepository = static::getContainer()->get('doctrine')->getRepository(User::class);
         $user = $userRepository->findOneBy(['email' => $email]);
-        
+
         $this->assertNotNull($user);
         $this->assertEquals($email, $user->getEmail());
         $this->assertNotNull($user->getPassword());
@@ -61,20 +61,20 @@ class UserRegistrationTest extends WebTestCase
     public function validRegistrationDataProvider(): array
     {
         return [
-            'standard email' => ['test@example.com', 'SecurePassword123!'],
+            'standard email'       => ['test@example.com', 'SecurePassword123!'],
             'email with subdomain' => ['user@mail.example.com', 'AnotherPass456!'],
-            'email with plus' => ['user+test@example.com', 'Password789!'],
-            'long password' => ['long@example.com', 'VeryLongSecurePassword123456789!@#$%'],
+            'email with plus'      => ['user+test@example.com', 'Password789!'],
+            'long password'        => ['long@example.com', 'VeryLongSecurePassword123456789!@#$%'],
         ];
     }
 
     public function testRegistrationWithExistingEmail(): void
     {
         $email = 'existing@example.com';
-        
+
         // Создаем пользователя через фабрику
         UserFactory::createOne([
-            'email' => $email,
+            'email'    => $email,
             'password' => 'password123',
         ]);
 
@@ -85,15 +85,15 @@ class UserRegistrationTest extends WebTestCase
             [],
             ['CONTENT_TYPE' => 'application/json'],
             json_encode([
-                'email' => $email,
+                'email'    => $email,
                 'password' => 'NewPassword123!',
-            ])
+            ]),
         );
 
         $this->assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
-        
+
         $responseData = json_decode($this->client->getResponse()->getContent(), true);
-        
+
         $this->assertArrayHasKey('message', $responseData);
         $this->assertStringContainsString('email', strtolower($responseData['message']));
     }
@@ -109,7 +109,7 @@ class UserRegistrationTest extends WebTestCase
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
-            json_encode($payload)
+            json_encode($payload),
         );
 
         $this->assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -153,7 +153,7 @@ class UserRegistrationTest extends WebTestCase
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
-            ''
+            '',
         );
 
         $this->assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -167,7 +167,7 @@ class UserRegistrationTest extends WebTestCase
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
-            '{invalid json}'
+            '{invalid json}',
         );
 
         $this->assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
@@ -182,17 +182,16 @@ class UserRegistrationTest extends WebTestCase
             [],
             [],
             json_encode([
-                'email' => 'test@example.com',
+                'email'    => 'test@example.com',
                 'password' => 'Password123!',
-            ])
+            ]),
         );
 
         // Без Content-Type Symfony может вернуть ошибку или обработать как form data
         $statusCode = $this->client->getResponse()->getStatusCode();
         $this->assertTrue(
-            in_array($statusCode, [Response::HTTP_BAD_REQUEST, Response::HTTP_UNPROCESSABLE_ENTITY, Response::HTTP_CREATED]),
-            sprintf('Expected 400, 422 or 201, got %d', $statusCode)
+            in_array($statusCode, [Response::HTTP_BAD_REQUEST, Response::HTTP_UNPROCESSABLE_ENTITY, Response::HTTP_CREATED], true),
+            sprintf('Expected 400, 422 or 201, got %d', $statusCode),
         );
     }
 }
-

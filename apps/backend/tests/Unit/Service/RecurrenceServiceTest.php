@@ -5,24 +5,31 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Service;
 
 use App\Entity\RecurrenceRule;
+use App\Entity\Tag;
 use App\Entity\Task;
 use App\Entity\User;
-use App\Entity\Tag;
-use App\Enum\TaskStatus;
 use App\Enum\TaskPriority;
+use App\Enum\TaskStatus;
 use App\Repository\Database\RecurrenceRuleRepository;
 use App\Repository\Database\TaskRepository;
 use App\Service\RecurrenceService;
+use DateTimeImmutable;
+use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 class RecurrenceServiceTest extends TestCase
 {
     private RecurrenceRuleRepository $recurrenceRepository;
+
     private TaskRepository $taskRepository;
+
     private LoggerInterface $logger;
+
     private RecurrenceService $recurrenceService;
+
     private User $user;
+
     private Task $templateTask;
 
     protected function setUp(): void
@@ -34,7 +41,7 @@ class RecurrenceServiceTest extends TestCase
         $this->recurrenceService = new RecurrenceService(
             $this->recurrenceRepository,
             $this->taskRepository,
-            $this->logger
+            $this->logger,
         );
 
         $this->user = new User();
@@ -47,7 +54,7 @@ class RecurrenceServiceTest extends TestCase
         $this->templateTask->setStatus(TaskStatus::PENDING);
         $this->templateTask->setPriority(TaskPriority::MEDIUM);
         $this->templateTask->setUser($this->user);
-        $this->templateTask->setStartDate(new \DateTimeImmutable('2024-01-01 10:00:00'));
+        $this->templateTask->setStartDate(new DateTimeImmutable('2024-01-01 10:00:00'));
     }
 
     /** @test */
@@ -61,7 +68,7 @@ class RecurrenceServiceTest extends TestCase
         // Act
         $rule = $this->recurrenceService->createRecurrenceRule(
             $this->templateTask,
-            RecurrenceRule::TYPE_DAILY
+            RecurrenceRule::TYPE_DAILY,
         );
 
         // Assert
@@ -84,7 +91,7 @@ class RecurrenceServiceTest extends TestCase
         $rule = $this->recurrenceService->createRecurrenceRule(
             $this->templateTask,
             RecurrenceRule::TYPE_WEEKLY,
-            $options
+            $options,
         );
 
         // Assert
@@ -101,7 +108,7 @@ class RecurrenceServiceTest extends TestCase
         // Act
         $rule = $this->recurrenceService->createRecurrenceRule(
             $this->templateTask,
-            RecurrenceRule::TYPE_WEEKLY
+            RecurrenceRule::TYPE_WEEKLY,
         );
 
         // Assert
@@ -120,7 +127,7 @@ class RecurrenceServiceTest extends TestCase
         $rule = $this->recurrenceService->createRecurrenceRule(
             $this->templateTask,
             RecurrenceRule::TYPE_MONTHLY,
-            $options
+            $options,
         );
 
         // Assert
@@ -135,7 +142,7 @@ class RecurrenceServiceTest extends TestCase
 
         // Arrange
         $options = [
-            'dayOfMonth' => 25,
+            'dayOfMonth'  => 25,
             'monthOfYear' => 12, // December 25th
         ];
 
@@ -145,7 +152,7 @@ class RecurrenceServiceTest extends TestCase
         $rule = $this->recurrenceService->createRecurrenceRule(
             $this->templateTask,
             RecurrenceRule::TYPE_YEARLY,
-            $options
+            $options,
         );
 
         // Assert
@@ -166,7 +173,7 @@ class RecurrenceServiceTest extends TestCase
         $rule = $this->recurrenceService->createRecurrenceRule(
             $this->templateTask,
             RecurrenceRule::TYPE_CUSTOM,
-            $options
+            $options,
         );
 
         // Assert
@@ -178,7 +185,7 @@ class RecurrenceServiceTest extends TestCase
     public function testCreateRecurrenceRuleWithEndDate(): void
     {
         // Arrange
-        $endDate = new \DateTimeImmutable('2024-12-31');
+        $endDate = new DateTimeImmutable('2024-12-31');
         $options = ['endDate' => $endDate];
 
         $this->recurrenceRepository->expects($this->once())->method('save');
@@ -187,7 +194,7 @@ class RecurrenceServiceTest extends TestCase
         $rule = $this->recurrenceService->createRecurrenceRule(
             $this->templateTask,
             RecurrenceRule::TYPE_DAILY,
-            $options
+            $options,
         );
 
         // Assert
@@ -207,7 +214,7 @@ class RecurrenceServiceTest extends TestCase
         $rule = $this->recurrenceService->createRecurrenceRule(
             $this->templateTask,
             RecurrenceRule::TYPE_DAILY,
-            $options
+            $options,
         );
 
         // Assert
@@ -227,7 +234,7 @@ class RecurrenceServiceTest extends TestCase
         $rule = $this->recurrenceService->createRecurrenceRule(
             $this->templateTask,
             RecurrenceRule::TYPE_DAILY,
-            $options
+            $options,
         );
 
         // Assert
@@ -246,7 +253,7 @@ class RecurrenceServiceTest extends TestCase
         $rule = $this->recurrenceService->createRecurrenceRule(
             $this->templateTask,
             RecurrenceRule::TYPE_DAILY,
-            $options
+            $options,
         );
 
         // Assert
@@ -280,7 +287,7 @@ class RecurrenceServiceTest extends TestCase
         $rule->setTemplateTask($this->templateTask);
         $rule->setCreatedBy($this->user);
         $rule->setRecurrenceType(RecurrenceRule::TYPE_DAILY);
-        $rule->setNextOccurrenceDate(new \DateTimeImmutable('2024-01-05 10:00:00'));
+        $rule->setNextOccurrenceDate(new DateTimeImmutable('2024-01-05 10:00:00'));
 
         $this->taskRepository->expects($this->once())->method('save');
         $this->recurrenceRepository->expects($this->once())->method('save');
@@ -302,13 +309,13 @@ class RecurrenceServiceTest extends TestCase
     public function testGenerateTaskFromRuleWithDuration(): void
     {
         // Arrange
-        $this->templateTask->setDueDate(new \DateTimeImmutable('2024-01-01 12:00:00')); // 2 hours after start
+        $this->templateTask->setDueDate(new DateTimeImmutable('2024-01-01 12:00:00')); // 2 hours after start
 
         $rule = new RecurrenceRule();
         $rule->setTemplateTask($this->templateTask);
         $rule->setCreatedBy($this->user);
         $rule->setRecurrenceType(RecurrenceRule::TYPE_DAILY);
-        $rule->setNextOccurrenceDate(new \DateTimeImmutable('2024-01-05 10:00:00'));
+        $rule->setNextOccurrenceDate(new DateTimeImmutable('2024-01-05 10:00:00'));
 
         $this->taskRepository->expects($this->once())->method('save');
         $this->recurrenceRepository->expects($this->once())->method('save');
@@ -336,7 +343,7 @@ class RecurrenceServiceTest extends TestCase
         $rule = new RecurrenceRule();
         $rule->setTemplateTask($this->templateTask);
         $rule->setRecurrenceType(RecurrenceRule::TYPE_DAILY);
-        $rule->setNextOccurrenceDate(new \DateTimeImmutable('2024-01-05'));
+        $rule->setNextOccurrenceDate(new DateTimeImmutable('2024-01-05'));
 
         $this->taskRepository->expects($this->once())->method('save');
         $this->recurrenceRepository->expects($this->once())->method('save');
@@ -355,7 +362,7 @@ class RecurrenceServiceTest extends TestCase
         $rule = new RecurrenceRule();
         $rule->setTemplateTask($this->templateTask);
         $rule->setRecurrenceType(RecurrenceRule::TYPE_DAILY);
-        $rule->setNextOccurrenceDate(new \DateTimeImmutable('2024-01-05'));
+        $rule->setNextOccurrenceDate(new DateTimeImmutable('2024-01-05'));
 
         $initialCount = $rule->getCurrentOccurrences();
 
@@ -396,7 +403,7 @@ class RecurrenceServiceTest extends TestCase
         $rule->setTemplateTask($this->templateTask);
         $rule->setRecurrenceType(RecurrenceRule::TYPE_CUSTOM);
         $rule->setInterval(1);
-        $rule->setNextOccurrenceDate(new \DateTimeImmutable('2024-01-01'));
+        $rule->setNextOccurrenceDate(new DateTimeImmutable('2024-01-01'));
 
         $options = ['interval' => 5];
 
@@ -417,7 +424,7 @@ class RecurrenceServiceTest extends TestCase
         $rule->setTemplateTask($this->templateTask);
         $rule->setRecurrenceType(RecurrenceRule::TYPE_WEEKLY);
         $rule->setDaysOfWeek([1]);
-        $rule->setNextOccurrenceDate(new \DateTimeImmutable('2024-01-01'));
+        $rule->setNextOccurrenceDate(new DateTimeImmutable('2024-01-01'));
 
         $options = ['daysOfWeek' => [2, 4]]; // Tuesday, Thursday
 
@@ -437,9 +444,9 @@ class RecurrenceServiceTest extends TestCase
         $rule = new RecurrenceRule();
         $rule->setTemplateTask($this->templateTask);
         $rule->setRecurrenceType(RecurrenceRule::TYPE_DAILY);
-        $rule->setNextOccurrenceDate(new \DateTimeImmutable('2024-01-01'));
+        $rule->setNextOccurrenceDate(new DateTimeImmutable('2024-01-01'));
 
-        $newEndDate = new \DateTimeImmutable('2024-12-31');
+        $newEndDate = new DateTimeImmutable('2024-12-31');
         $options = ['endDate' => $newEndDate];
 
         $this->recurrenceRepository->expects($this->once())->method('save');
@@ -458,8 +465,8 @@ class RecurrenceServiceTest extends TestCase
         $rule = new RecurrenceRule();
         $rule->setTemplateTask($this->templateTask);
         $rule->setRecurrenceType(RecurrenceRule::TYPE_DAILY);
-        $rule->setEndDate(new \DateTimeImmutable('2024-12-31'));
-        $rule->setNextOccurrenceDate(new \DateTimeImmutable('2024-01-01'));
+        $rule->setEndDate(new DateTimeImmutable('2024-12-31'));
+        $rule->setNextOccurrenceDate(new DateTimeImmutable('2024-01-01'));
 
         $options = ['endDate' => null];
 
@@ -479,7 +486,7 @@ class RecurrenceServiceTest extends TestCase
         $rule = new RecurrenceRule();
         $rule->setTemplateTask($this->templateTask);
         $rule->setRecurrenceType(RecurrenceRule::TYPE_DAILY);
-        $rule->setNextOccurrenceDate(new \DateTimeImmutable('2024-01-01'));
+        $rule->setNextOccurrenceDate(new DateTimeImmutable('2024-01-01'));
 
         $options = ['maxOccurrences' => 20];
 
@@ -499,7 +506,7 @@ class RecurrenceServiceTest extends TestCase
         $rule = new RecurrenceRule();
         $rule->setTemplateTask($this->templateTask);
         $rule->setRecurrenceType(RecurrenceRule::TYPE_DAILY);
-        $rule->setNextOccurrenceDate(new \DateTimeImmutable('2024-01-01'));
+        $rule->setNextOccurrenceDate(new DateTimeImmutable('2024-01-01'));
 
         $options = ['timeOfDay' => '15:45'];
 
@@ -520,10 +527,10 @@ class RecurrenceServiceTest extends TestCase
         $rule = new RecurrenceRule();
         $rule->setRecurrenceType('invalid_type');
 
-        $currentDate = new \DateTimeImmutable('2024-01-01');
+        $currentDate = new DateTimeImmutable('2024-01-01');
 
         // Assert
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('No strategy found for recurrence type: invalid_type');
 
         // Act

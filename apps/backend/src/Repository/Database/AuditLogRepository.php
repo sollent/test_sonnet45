@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Repository\Database;
 
 use App\Entity\AuditLog;
+use DateTimeImmutable;
 
 /**
  * @extends AbstractRepository<AuditLog>
@@ -34,17 +35,12 @@ class AuditLogRepository extends AbstractRepository
         }
     }
 
-    protected function getEntityClass(): string
-    {
-        return AuditLog::class;
-    }
-
     /**
      * Delete all expired audit logs older than specified days
      */
     public function deleteOlderThan(int $days): int
     {
-        $date = new \DateTimeImmutable("-{$days} days");
+        $date = new DateTimeImmutable("-{$days} days");
 
         return $this->createQueryBuilder('al')
             ->delete()
@@ -52,5 +48,10 @@ class AuditLogRepository extends AbstractRepository
             ->setParameter('date', $date)
             ->getQuery()
             ->execute();
+    }
+
+    protected function getEntityClass(): string
+    {
+        return AuditLog::class;
     }
 }

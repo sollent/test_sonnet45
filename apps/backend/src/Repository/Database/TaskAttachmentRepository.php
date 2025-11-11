@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Repository\Database;
 
-use App\Entity\TaskAttachment;
 use App\Entity\Task;
+use App\Entity\TaskAttachment;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -63,4 +63,3 @@ class TaskAttachmentRepository extends ServiceEntityRepository
         $this->getEntityManager()->flush();
     }
 }
-

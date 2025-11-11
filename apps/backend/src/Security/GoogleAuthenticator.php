@@ -7,6 +7,8 @@ namespace App\Security;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use KnpU\OAuth2ClientBundle\Security\User\OAuthUserProvider;
+use RuntimeException;
+use stdClass;
 
 class GoogleAuthenticator extends OAuthUserProvider
 {
@@ -15,11 +17,12 @@ class GoogleAuthenticator extends OAuthUserProvider
         parent::__construct();
     }
 
-    public function loadUserFromDecodedJwt(\stdClass $jwt): User
+    public function loadUserFromDecodedJwt(stdClass $jwt): User
     {
         $email = $jwt->email ?? null;
+
         if (!$email) {
-            throw new \RuntimeException('Email not found in Google token');
+            throw new RuntimeException('Email not found in Google token');
         }
 
         $user = $this->em->getRepository(User::class)->findOneBy(['email' => $email]);

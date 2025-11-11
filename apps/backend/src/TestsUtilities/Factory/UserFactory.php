@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\TestsUtilities\Factory;
 
 use App\Entity\User;
@@ -29,9 +31,9 @@ final class UserFactory extends PersistentProxyObjectFactory
     protected function defaults(): array|callable
     {
         return [
-            'email' => self::faker()->unique()->safeEmail(),
+            'email'    => self::faker()->unique()->safeEmail(),
             'password' => self::faker()->text(),
-            'roles' => [],
+            'roles'    => [],
         ];
     }
 
@@ -41,14 +43,13 @@ final class UserFactory extends PersistentProxyObjectFactory
     protected function initialize(): static
     {
         return $this
-             ->afterInstantiate(function (User $user): void {
-                 // Хешируем пароль только если он не null (для Google users пароль null)
-                 if ($user->getPassword() !== null) {
-                     $user->setPassword(
-                         $this->passwordHasher->hashPassword($user, $user->getPassword())
-                     );
-                 }
-             })
-        ;
+            ->afterInstantiate(function (User $user): void {
+                // Хешируем пароль только если он не null (для Google users пароль null)
+                if ($user->getPassword() !== null) {
+                    $user->setPassword(
+                        $this->passwordHasher->hashPassword($user, $user->getPassword()),
+                    );
+                }
+            });
     }
 }

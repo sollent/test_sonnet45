@@ -30,11 +30,11 @@ class GoogleAuthTest extends WebTestCase
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
-            json_encode([])
+            json_encode([]),
         );
 
         $this->assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
-        
+
         $responseData = json_decode($this->client->getResponse()->getContent(), true);
         $this->assertArrayHasKey('error', $responseData);
         $this->assertEquals('Missing credential', $responseData['error']);
@@ -50,7 +50,7 @@ class GoogleAuthTest extends WebTestCase
             ['CONTENT_TYPE' => 'application/json'],
             json_encode([
                 'credential' => '',
-            ])
+            ]),
         );
 
         $this->assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
@@ -66,7 +66,7 @@ class GoogleAuthTest extends WebTestCase
             ['CONTENT_TYPE' => 'application/json'],
             json_encode([
                 'credential' => null,
-            ])
+            ]),
         );
 
         $this->assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
@@ -82,14 +82,14 @@ class GoogleAuthTest extends WebTestCase
             ['CONTENT_TYPE' => 'application/json'],
             json_encode([
                 'credential' => 'invalid-jwt-token',
-            ])
+            ]),
         );
 
         // При попытке декодировать невалидный JWT возвращается ошибка сервера
         $statusCode = $this->client->getResponse()->getStatusCode();
         $this->assertTrue(
-            in_array($statusCode, [Response::HTTP_BAD_REQUEST, Response::HTTP_UNPROCESSABLE_ENTITY, Response::HTTP_INTERNAL_SERVER_ERROR]),
-            sprintf('Expected 400, 422 or 500, got %d', $statusCode)
+            in_array($statusCode, [Response::HTTP_BAD_REQUEST, Response::HTTP_UNPROCESSABLE_ENTITY, Response::HTTP_INTERNAL_SERVER_ERROR], true),
+            sprintf('Expected 400, 422 or 500, got %d', $statusCode),
         );
     }
 
@@ -103,14 +103,14 @@ class GoogleAuthTest extends WebTestCase
             ['CONTENT_TYPE' => 'application/json'],
             json_encode([
                 'credential' => 'not.a.valid.jwt.format',
-            ])
+            ]),
         );
 
         // При попытке декодировать невалидный JWT возвращается ошибка сервера
         $statusCode = $this->client->getResponse()->getStatusCode();
         $this->assertTrue(
-            in_array($statusCode, [Response::HTTP_BAD_REQUEST, Response::HTTP_UNPROCESSABLE_ENTITY, Response::HTTP_INTERNAL_SERVER_ERROR]),
-            sprintf('Expected 400, 422 or 500, got %d', $statusCode)
+            in_array($statusCode, [Response::HTTP_BAD_REQUEST, Response::HTTP_UNPROCESSABLE_ENTITY, Response::HTTP_INTERNAL_SERVER_ERROR], true),
+            sprintf('Expected 400, 422 or 500, got %d', $statusCode),
         );
     }
 
@@ -122,7 +122,7 @@ class GoogleAuthTest extends WebTestCase
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
-            ''
+            '',
         );
 
         $this->assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
@@ -136,7 +136,7 @@ class GoogleAuthTest extends WebTestCase
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
-            '{invalid json}'
+            '{invalid json}',
         );
 
         $this->assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
@@ -147,13 +147,12 @@ class GoogleAuthTest extends WebTestCase
      * 1. Мокирования HTTP запроса к Google API
      * 2. Создания валидного Google JWT токена
      * 3. Мокирования публичных ключей Google
-     * 
+     *
      * Это сложный сценарий, который лучше покрыть интеграционными тестами
      * с использованием моков или тестовым Google аккаунтом.
-     * 
+     *
      * Для unit тестов мы покрыли базовые сценарии валидации входных данных.
      */
-    
     public function testGoogleAuthEndpointExists(): void
     {
         // Просто проверяем что endpoint существует и отвечает
@@ -163,7 +162,7 @@ class GoogleAuthTest extends WebTestCase
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
-            json_encode(['credential' => 'test'])
+            json_encode(['credential' => 'test']),
         );
 
         // Endpoint существует - не 404, но JWT невалидный поэтому вернется ошибка
@@ -171,4 +170,3 @@ class GoogleAuthTest extends WebTestCase
         $this->assertNotEquals(Response::HTTP_NOT_FOUND, $statusCode);
     }
 }
-

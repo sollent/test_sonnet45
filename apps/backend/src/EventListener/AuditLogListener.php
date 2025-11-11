@@ -5,15 +5,18 @@ declare(strict_types=1);
 namespace App\EventListener;
 
 use App\Entity\AuditLog;
+use DateTimeInterface;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;
 use Doctrine\ORM\Event\PostPersistEventArgs;
 use Doctrine\ORM\Event\PostUpdateEventArgs;
 use Doctrine\ORM\Event\PreRemoveEventArgs;
 use Doctrine\ORM\Events;
 use Doctrine\Persistence\ManagerRegistry;
+use ReflectionClass;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
+use Throwable;
 
 #[AsDoctrineListener(event: Events::postPersist)]
 #[AsDoctrineListener(event: Events::postUpdate)]
@@ -56,6 +59,7 @@ final class AuditLogListener
 
         // Only log admin actions (from /admin routes)
         $request = $this->requestStack->getCurrentRequest();
+
         if (!$request || !str_starts_with($request->getPathInfo(), '/admin')) {
             return;
         }
@@ -78,16 +82,16 @@ final class AuditLogListener
             }
 
             $auditLog->setMetadata([
-                'ip' => $request->getClientIp(),
+                'ip'         => $request->getClientIp(),
                 'user_agent' => $request->headers->get('User-Agent'),
-                'route' => $request->attributes->get('_route'),
-                'method' => $request->getMethod(),
+                'route'      => $request->attributes->get('_route'),
+                'method'     => $request->getMethod(),
             ]);
 
             $em = $this->doctrine->getManager();
             $em->persist($auditLog);
             $em->flush();
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             // Silently fail to prevent breaking the main operation
             // In production, you might want to log this to a separate error log
             error_log(sprintf('AuditLog failed: %s', $e->getMessage()));
@@ -107,21 +111,21 @@ final class AuditLogListener
 
     private function getEntityShortName(object $entity): string
     {
-        return (new \ReflectionClass($entity))->getShortName();
+        return (new ReflectionClass($entity))->getShortName();
     }
 
     private function serializeEntity(object $entity): array
     {
         try {
             $normalized = $this->normalizer->normalize($entity, null, [
-                'groups' => ['audit'],
+                'groups'                     => ['audit'],
                 'circular_reference_handler' => function ($object) {
                     return method_exists($object, 'getId') ? $object->getId() : null;
                 },
             ]);
 
             return is_array($normalized) ? $normalized : [];
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             // Fallback to basic serialization
             return $this->basicSerialize($entity);
         }
@@ -134,7 +138,7 @@ final class AuditLogListener
         foreach ($changeSet as $field => $values) {
             $value = $oldValues ? $values[0] : $values[1];
 
-            if ($value instanceof \DateTimeInterface) {
+            if ($value instanceof DateTimeInterface) {
                 $result[$field] = $value->format('Y-m-d H:i:s');
             } elseif (is_object($value)) {
                 $result[$field] = method_exists($value, 'getId')
@@ -152,14 +156,14 @@ final class AuditLogListener
 
     private function basicSerialize(object $entity): array
     {
-        $reflection = new \ReflectionClass($entity);
+        $reflection = new ReflectionClass($entity);
         $data = [];
 
         foreach ($reflection->getProperties() as $property) {
             $property->setAccessible(true);
             $value = $property->getValue($entity);
 
-            if ($value instanceof \DateTimeInterface) {
+            if ($value instanceof DateTimeInterface) {
                 $data[$property->getName()] = $value->format('Y-m-d H:i:s');
             } elseif (is_object($value) && method_exists($value, 'getId')) {
                 $data[$property->getName()] = sprintf('%s#%s', $this->getEntityShortName($value), $value->getId());

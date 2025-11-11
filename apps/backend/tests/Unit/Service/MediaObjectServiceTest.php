@@ -8,15 +8,19 @@ use App\Entity\MediaObject;
 use App\Entity\User;
 use App\Repository\Database\MediaObjectRepository;
 use App\Service\MediaObjectService;
+use Exception;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
+use ReflectionClass;
 use Symfony\Component\String\Slugger\SluggerInterface;
 
 class MediaObjectServiceTest extends TestCase
 {
     private MediaObjectRepository $repository;
+
     private SluggerInterface $slugger;
+
     private MediaObjectService $service;
+
     private User $user;
 
     protected function setUp(): void
@@ -26,7 +30,7 @@ class MediaObjectServiceTest extends TestCase
 
         $this->service = new MediaObjectService(
             $this->repository,
-            $this->slugger
+            $this->slugger,
         );
 
         $this->user = new User();
@@ -76,7 +80,7 @@ class MediaObjectServiceTest extends TestCase
         // Act - delete will fail on file operations but we test repository call
         try {
             $this->service->deleteMediaObject($mediaObject);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Expected - file doesn't exist
         }
 
@@ -88,7 +92,7 @@ class MediaObjectServiceTest extends TestCase
     public function testServiceConstantsAreCorrect(): void
     {
         // Arrange
-        $reflection = new \ReflectionClass(MediaObjectService::class);
+        $reflection = new ReflectionClass(MediaObjectService::class);
 
         // Act
         $uploadDir = $reflection->getConstant('UPLOAD_DIR');
@@ -110,13 +114,14 @@ class MediaObjectServiceTest extends TestCase
     public function testAllowedExtensionsIncludesCommonFormats(): void
     {
         // Arrange
-        $reflection = new \ReflectionClass(MediaObjectService::class);
+        $reflection = new ReflectionClass(MediaObjectService::class);
         $allowedExtensions = $reflection->getConstant('ALLOWED_EXTENSIONS');
 
         // Assert
         $expectedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'zip', 'txt'];
+
         foreach ($expectedExtensions as $ext) {
-            $this->assertContains($ext, $allowedExtensions, "Extension $ext should be allowed");
+            $this->assertContains($ext, $allowedExtensions, "Extension {$ext} should be allowed");
         }
     }
 
@@ -124,7 +129,7 @@ class MediaObjectServiceTest extends TestCase
     public function testMaxFileSizeIs10MB(): void
     {
         // Arrange
-        $reflection = new \ReflectionClass(MediaObjectService::class);
+        $reflection = new ReflectionClass(MediaObjectService::class);
         $maxFileSize = $reflection->getConstant('MAX_FILE_SIZE');
 
         // Assert
@@ -136,7 +141,7 @@ class MediaObjectServiceTest extends TestCase
     public function testServiceUsesRepositoryAndSlugger(): void
     {
         // Arrange & Act
-        $reflection = new \ReflectionClass($this->service);
+        $reflection = new ReflectionClass($this->service);
         $repositoryProperty = $reflection->getProperty('repository');
         $repositoryProperty->setAccessible(true);
         $sluggerProperty = $reflection->getProperty('slugger');
@@ -151,7 +156,7 @@ class MediaObjectServiceTest extends TestCase
     public function testWebPathMatchesUploadDirStructure(): void
     {
         // Arrange
-        $reflection = new \ReflectionClass(MediaObjectService::class);
+        $reflection = new ReflectionClass(MediaObjectService::class);
         $uploadDir = $reflection->getConstant('UPLOAD_DIR');
         $webPath = $reflection->getConstant('WEB_PATH');
 

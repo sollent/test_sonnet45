@@ -19,7 +19,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 class MakeAdminCommand extends Command
 {
     public function __construct(
-        private readonly UserRepository $userRepository
+        private readonly UserRepository $userRepository,
     ) {
         parent::__construct();
     }
@@ -38,19 +38,21 @@ class MakeAdminCommand extends Command
 
         if (!$user) {
             $io->error(sprintf('User with email "%s" not found.', $email));
+
             return Command::FAILURE;
         }
 
         $roles = $user->getRoles();
-        
+
         if (in_array('ROLE_ADMIN', $roles, true)) {
             $io->warning(sprintf('User "%s" already has ROLE_ADMIN.', $email));
+
             return Command::SUCCESS;
         }
 
         $roles[] = 'ROLE_ADMIN';
         $user->setRoles($roles);
-        
+
         $this->userRepository->save($user, flush: true);
 
         $io->success(sprintf('ROLE_ADMIN granted to user "%s"', $email));
@@ -59,4 +61,3 @@ class MakeAdminCommand extends Command
         return Command::SUCCESS;
     }
 }
-

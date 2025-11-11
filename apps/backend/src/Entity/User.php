@@ -51,12 +51,12 @@ class User extends AbstractEntity implements UserInterface, PasswordAuthenticate
 
     #[ORM\Column(type: 'json', name: 'notification_settings')]
     protected array $notificationSettings = [
-        'email' => true,
-        'push' => true,
-        'taskReminders' => true,
+        'email'           => true,
+        'push'            => true,
+        'taskReminders'   => true,
         'taskAssignments' => true,
-        'taskCompletion' => true,
-        'weeklyDigest' => false,
+        'taskCompletion'  => true,
+        'weeklyDigest'    => false,
     ];
 
     #[ORM\OneToMany(targetEntity: Task::class, mappedBy: 'user', cascade: ['remove'], orphanRemoval: true)]
@@ -89,7 +89,7 @@ class User extends AbstractEntity implements UserInterface, PasswordAuthenticate
         return array_unique($roles);
     }
 
-    public function setRoles(array $roles): User
+    public function setRoles(array $roles): self
     {
         $this->roles = $roles;
 
@@ -119,7 +119,7 @@ class User extends AbstractEntity implements UserInterface, PasswordAuthenticate
         return $this->email;
     }
 
-    public function setEmail(string $email): User
+    public function setEmail(string $email): self
     {
         $this->email = $email;
 
@@ -131,7 +131,7 @@ class User extends AbstractEntity implements UserInterface, PasswordAuthenticate
         return $this->password;
     }
 
-    public function setPassword(?string $password): User
+    public function setPassword(?string $password): self
     {
         $this->password = $password;
 
@@ -143,7 +143,7 @@ class User extends AbstractEntity implements UserInterface, PasswordAuthenticate
         return $this->plainPassword;
     }
 
-    public function setPlainPassword(?string $plainPassword): User
+    public function setPlainPassword(?string $plainPassword): self
     {
         $this->plainPassword = $plainPassword;
 
@@ -155,7 +155,7 @@ class User extends AbstractEntity implements UserInterface, PasswordAuthenticate
         return $this->googleId;
     }
 
-    public function setGoogleId(mixed $googleId): User
+    public function setGoogleId(mixed $googleId): self
     {
         $this->googleId = $googleId;
 
@@ -167,7 +167,7 @@ class User extends AbstractEntity implements UserInterface, PasswordAuthenticate
         return $this->googleUserName;
     }
 
-    public function setGoogleUserName(?string $googleUserName): User
+    public function setGoogleUserName(?string $googleUserName): self
     {
         $this->googleUserName = $googleUserName;
 
@@ -250,6 +250,7 @@ class User extends AbstractEntity implements UserInterface, PasswordAuthenticate
     public function setName(?string $name): self
     {
         $this->name = $name;
+
         return $this;
     }
 
@@ -261,6 +262,7 @@ class User extends AbstractEntity implements UserInterface, PasswordAuthenticate
     public function setAvatar(?string $avatar): self
     {
         $this->avatar = $avatar;
+
         return $this;
     }
 
@@ -272,6 +274,7 @@ class User extends AbstractEntity implements UserInterface, PasswordAuthenticate
     public function setTheme(string $theme): self
     {
         $this->theme = $theme;
+
         return $this;
     }
 
@@ -283,6 +286,7 @@ class User extends AbstractEntity implements UserInterface, PasswordAuthenticate
     public function setLanguage(string $language): self
     {
         $this->language = $language;
+
         return $this;
     }
 
@@ -294,6 +298,7 @@ class User extends AbstractEntity implements UserInterface, PasswordAuthenticate
     public function setTimezone(string $timezone): self
     {
         $this->timezone = $timezone;
+
         return $this;
     }
 
@@ -305,6 +310,7 @@ class User extends AbstractEntity implements UserInterface, PasswordAuthenticate
     public function setNotificationSettings(array $notificationSettings): self
     {
         $this->notificationSettings = $notificationSettings;
+
         return $this;
     }
 

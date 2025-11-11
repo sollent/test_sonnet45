@@ -21,7 +21,7 @@ class MediaObjectRepository extends ServiceEntityRepository
     public function save(MediaObject $mediaObject, bool $flush = true): void
     {
         $this->getEntityManager()->persist($mediaObject);
-        
+
         if ($flush) {
             $this->getEntityManager()->flush();
         }
@@ -30,10 +30,9 @@ class MediaObjectRepository extends ServiceEntityRepository
     public function remove(MediaObject $mediaObject, bool $flush = true): void
     {
         $this->getEntityManager()->remove($mediaObject);
-        
+
         if ($flush) {
             $this->getEntityManager()->flush();
         }
     }
 }
-

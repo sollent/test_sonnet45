@@ -1,11 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\DataFixtures;
 
 use App\Entity\Task;
 use App\Entity\User;
 use App\Enum\TaskPriority;
 use App\Enum\TaskStatus;
+use DateTimeImmutable;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use Faker\Factory;
@@ -15,7 +18,7 @@ class TestTaskFixtures extends Fixture
     public function load(ObjectManager $manager): void
     {
         $faker = Factory::create('ru_RU');
-        
+
         /** @var User|null $user */
         $user = $manager->getRepository(User::class)->findOneBy(['email' => 'sollent98@gmail.com']);
 
@@ -26,8 +29,8 @@ class TestTaskFixtures extends Fixture
         }
 
         $tags = ['Работа', 'Личное', 'Покупки', 'Срочно', 'Проект X', 'Здоровье', 'Фитнес', 'Дом'];
-        
-        $now = new \DateTimeImmutable();
+
+        $now = new DateTimeImmutable();
 
         // --- Create Tasks for the Past (Overdue) ---
         for ($i = 0; $i < 5; $i++) {
@@ -38,7 +41,7 @@ class TestTaskFixtures extends Fixture
                 ->setStatus($i % 2 === 0 ? TaskStatus::PENDING : TaskStatus::IN_PROGRESS)
                 ->setPriority($faker->randomElement(TaskPriority::cases()))
                 ->setDueDate($now->modify('-' . $faker->numberBetween(2, 5) . ' days'));
-            
+
             $this->addRandomTags($task, $tags, $manager, $user);
             $manager->persist($task);
         }
@@ -54,7 +57,7 @@ class TestTaskFixtures extends Fixture
                 ->setDueDate($now->setTime(rand(9, 22), rand(0, 59)));
 
             $this->addRandomTags($task, $tags, $manager, $user);
-            
+
             // Add subtasks to some of today's tasks
             if ($i % 2 === 0) {
                 for ($j = 0; $j < rand(2, 5); $j++) {
@@ -67,7 +70,7 @@ class TestTaskFixtures extends Fixture
                     $manager->persist($subtask);
                 }
             }
-            
+
             $manager->persist($task);
         }
 
@@ -80,11 +83,11 @@ class TestTaskFixtures extends Fixture
                 ->setStatus(TaskStatus::PENDING)
                 ->setPriority($faker->randomElement([TaskPriority::LOW, TaskPriority::MEDIUM, TaskPriority::HIGH]))
                 ->setDueDate($now->modify('+' . $faker->numberBetween(1, 14) . ' days'));
-            
-             $this->addRandomTags($task, $tags, $manager, $user);
+
+            $this->addRandomTags($task, $tags, $manager, $user);
             $manager->persist($task);
         }
-        
+
         // --- Create a complex task with subtasks ---
         $complexTask = new Task();
         $complexTask->setUser($user)
@@ -94,7 +97,7 @@ class TestTaskFixtures extends Fixture
             ->setPriority(TaskPriority::URGENT)
             ->setDueDate($now->modify('+7 days'));
         $this->addRandomTags($complexTask, ['Проект X', 'Срочно', 'Работа'], $manager, $user);
-        
+
         $subtasksData = [
             ['title' => 'Провести анализ конкурентов', 'completed' => true],
             ['title' => 'Создать прототип в Figma', 'completed' => true],
@@ -102,7 +105,7 @@ class TestTaskFixtures extends Fixture
             ['title' => 'Написать frontend компоненты', 'completed' => false],
             ['title' => 'Протестировать на всех устройствах', 'completed' => false],
         ];
-        
+
         foreach ($subtasksData as $data) {
             $subtask = new Task();
             $subtask->setUser($user)
@@ -110,10 +113,9 @@ class TestTaskFixtures extends Fixture
                 ->setStatus($data['completed'] ? TaskStatus::COMPLETED : TaskStatus::PENDING)
                 ->setPriority(TaskPriority::HIGH)
                 ->setParentTask($complexTask);
-             $manager->persist($subtask);
+            $manager->persist($subtask);
         }
         $manager->persist($complexTask);
-
 
         $manager->flush();
     }
@@ -122,8 +124,9 @@ class TestTaskFixtures extends Fixture
     {
         $tagRepository = $manager->getRepository(\App\Entity\Tag::class);
         $tagsToUse = array_slice($tagNames, 0, rand(1, 4));
-        
+
         $tags = $tagRepository->findOrCreateByNames($tagsToUse, $user);
+
         foreach ($tags as $tag) {
             $task->addTag($tag);
         }

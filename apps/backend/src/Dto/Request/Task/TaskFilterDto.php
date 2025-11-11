@@ -48,11 +48,12 @@ final class TaskFilterDto
     {
         if ($tags === null) {
             $this->tags = null;
+
             return;
         }
 
         // Convert string values to integers
-        $this->tags = array_map('intval', array_filter($tags, fn($tag) => is_numeric($tag)));
+        $this->tags = array_map('intval', array_filter($tags, fn ($tag) => is_numeric($tag)));
     }
 
     /**
@@ -60,7 +61,7 @@ final class TaskFilterDto
      */
     #[Assert\All([
         new Assert\Type('integer'),
-        new Assert\Positive()
+        new Assert\Positive(),
     ])]
     public function getTags(): ?array
     {
@@ -74,18 +75,19 @@ final class TaskFilterDto
     {
         if ($priorities === null) {
             $this->priorities = null;
+
             return;
         }
 
         // Filter valid priorities
-        $this->priorities = array_filter($priorities, fn($p) => in_array($p, TaskPriority::values()));
+        $this->priorities = array_filter($priorities, fn ($p) => in_array($p, TaskPriority::values(), true));
     }
 
     /**
      * Validate priorities
      */
     #[Assert\All([
-        new Assert\Choice(callback: [TaskPriority::class, 'values'])
+        new Assert\Choice(callback: [TaskPriority::class, 'values']),
     ])]
     public function getPriorities(): ?array
     {
@@ -99,18 +101,19 @@ final class TaskFilterDto
     {
         if ($statuses === null) {
             $this->statuses = null;
+
             return;
         }
 
         // Filter valid statuses
-        $this->statuses = array_filter($statuses, fn($s) => in_array($s, TaskStatus::values()));
+        $this->statuses = array_filter($statuses, fn ($s) => in_array($s, TaskStatus::values(), true));
     }
 
     /**
      * Validate statuses
      */
     #[Assert\All([
-        new Assert\Choice(callback: [TaskStatus::class, 'values'])
+        new Assert\Choice(callback: [TaskStatus::class, 'values']),
     ])]
     public function getStatuses(): ?array
     {
@@ -175,4 +178,3 @@ final class TaskFilterDto
             || $this->statuses !== null;
     }
 }
-

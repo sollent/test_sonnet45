@@ -6,8 +6,8 @@ namespace App\Controller;
 
 use App\Dto\Request\User\UserRegistrationRequestDto;
 use App\Dto\Response\BadRequestResponseDto;
-use App\Dto\Response\User\UserRegistrationResponseDto;
 use App\Dto\Response\User\UserProfileResponseDto;
+use App\Dto\Response\User\UserRegistrationResponseDto;
 use App\Entity\User;
 use App\Exception\User\UserRegistrationException;
 use App\Service\UserRegistrationService;
@@ -30,12 +30,12 @@ final class UserController extends AbstractController
     #[OA\Response(
         response: 201,
         description: 'User has been successfully registered',
-        content: new Model(type: UserRegistrationResponseDto::class)
+        content: new Model(type: UserRegistrationResponseDto::class),
     )]
     #[OA\Response(
         response: 400,
         description: 'Provided user data has error or unprocessable',
-        content: new Model(type: BadRequestResponseDto::class)
+        content: new Model(type: BadRequestResponseDto::class),
     )]
     #[OA\Tag(name: 'User')]
     public function register(#[MapRequestPayload] UserRegistrationRequestDto $registrationRequestDto): JsonResponse
@@ -46,13 +46,13 @@ final class UserController extends AbstractController
         } catch (UserRegistrationException $e) {
             return $this->json(
                 new BadRequestResponseDto($e->getMessage(), $e->getCode()),
-                Response::HTTP_BAD_REQUEST
+                Response::HTTP_BAD_REQUEST,
             );
         }
 
         return $this->json(
             new UserRegistrationResponseDto($user->getId(), $user->getEmail()),
-            Response::HTTP_CREATED
+            Response::HTTP_CREATED,
         );
     }
 
@@ -60,11 +60,11 @@ final class UserController extends AbstractController
     #[OA\Response(
         response: 200,
         description: 'Current user profile information',
-        content: new Model(type: UserProfileResponseDto::class)
+        content: new Model(type: UserProfileResponseDto::class),
     )]
     #[OA\Response(
         response: 401,
-        description: 'User not authenticated'
+        description: 'User not authenticated',
     )]
     #[OA\Tag(name: 'User')]
     public function me(): JsonResponse
@@ -83,9 +83,9 @@ final class UserController extends AbstractController
                 $user->getGoogleUserName(),
                 $user->getRoles(),
                 $user->getCreatedAt(),
-                $user->getUpdatedAt()
+                $user->getUpdatedAt(),
             ),
-            Response::HTTP_OK
+            Response::HTTP_OK,
         );
     }
 }

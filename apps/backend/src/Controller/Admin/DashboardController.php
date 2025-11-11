@@ -13,6 +13,8 @@ use App\Entity\Task;
 use App\Entity\TaskAttachment;
 use App\Entity\User;
 use App\Enum\TaskStatus;
+use DateTime;
+use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Assets;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Dashboard;
@@ -26,7 +28,7 @@ class DashboardController extends AbstractDashboardController
 {
     public function __construct(
         private readonly AdminUrlGenerator $adminUrlGenerator,
-        private readonly EntityManagerInterface $entityManager
+        private readonly EntityManagerInterface $entityManager,
     ) {
     }
 
@@ -48,7 +50,7 @@ class DashboardController extends AbstractDashboardController
         $totalStorageMB = round(($totalStorage ?? 0) / 1024 / 1024, 2);
 
         // User activity (last 24h)
-        $yesterday = new \DateTimeImmutable('-24 hours');
+        $yesterday = new DateTimeImmutable('-24 hours');
         $activeUsersCount = $this->entityManager->createQueryBuilder()
             ->select('COUNT(DISTINCT al.user)')
             ->from(AuditLog::class, 'al')
@@ -58,7 +60,7 @@ class DashboardController extends AbstractDashboardController
             ->getSingleScalarResult();
 
         // Task completion rate (last 30 days)
-        $thirtyDaysAgo = new \DateTimeImmutable('-30 days');
+        $thirtyDaysAgo = new DateTimeImmutable('-30 days');
         $completedTasks = $this->entityManager->createQueryBuilder()
             ->select('COUNT(t.id)')
             ->from(Task::class, 't')
@@ -88,15 +90,16 @@ class DashboardController extends AbstractDashboardController
             ->where('t.dueDate < :now')
             ->andWhere('t.status != :completed')
             ->andWhere('t.isArchived = false')
-            ->setParameter('now', new \DateTimeImmutable())
+            ->setParameter('now', new DateTimeImmutable())
             ->setParameter('completed', TaskStatus::COMPLETED)
             ->getQuery()
             ->getSingleScalarResult();
 
         // === Activity Chart (Last 7 days) ===
         $activityData = [];
+
         for ($i = 6; $i >= 0; $i--) {
-            $date = new \DateTimeImmutable("-{$i} days");
+            $date = new DateTimeImmutable("-{$i} days");
             $dateStr = $date->format('Y-m-d');
 
             $activityCount = $this->entityManager->createQueryBuilder()
@@ -108,7 +111,7 @@ class DashboardController extends AbstractDashboardController
                 ->getSingleScalarResult();
 
             $activityData[] = [
-                'date' => $date->format('D, M j'),
+                'date'  => $date->format('D, M j'),
                 'count' => $activityCount,
             ];
         }
@@ -131,16 +134,16 @@ class DashboardController extends AbstractDashboardController
             ->select('COUNT(rt.id)')
             ->from(RefreshToken::class, 'rt')
             ->where('rt.valid < :now')
-            ->setParameter('now', new \DateTime())
+            ->setParameter('now', new DateTime())
             ->getQuery()
             ->getSingleScalarResult();
 
         if ($expiredTokensCount > 100) {
             $alerts[] = [
-                'type' => 'warning',
+                'type'    => 'warning',
                 'message' => "{$expiredTokensCount} expired refresh tokens need cleanup",
-                'action' => [
-                    'url' => $this->adminUrlGenerator->setController(RefreshTokenCrudController::class)->generateUrl(),
+                'action'  => [
+                    'url'   => $this->adminUrlGenerator->setController(RefreshTokenCrudController::class)->generateUrl(),
                     'label' => 'Cleanup Now',
                 ],
             ];
@@ -149,10 +152,10 @@ class DashboardController extends AbstractDashboardController
         // Alert: High storage usage
         if ($totalStorageMB > 500) {
             $alerts[] = [
-                'type' => 'danger',
+                'type'    => 'danger',
                 'message' => "Storage usage is high: {$totalStorageMB} MB",
-                'action' => [
-                    'url' => $this->adminUrlGenerator->setController(MediaObjectCrudController::class)->generateUrl(),
+                'action'  => [
+                    'url'   => $this->adminUrlGenerator->setController(MediaObjectCrudController::class)->generateUrl(),
                     'label' => 'View Files',
                 ],
             ];
@@ -163,10 +166,10 @@ class DashboardController extends AbstractDashboardController
 
         if ($inactiveRulesCount > 10) {
             $alerts[] = [
-                'type' => 'info',
+                'type'    => 'info',
                 'message' => "{$inactiveRulesCount} recurrence rules are inactive",
-                'action' => [
-                    'url' => $this->adminUrlGenerator->setController(RecurrenceRuleCrudController::class)->generateUrl(),
+                'action'  => [
+                    'url'   => $this->adminUrlGenerator->setController(RecurrenceRuleCrudController::class)->generateUrl(),
                     'label' => 'Review Rules',
                 ],
             ];
@@ -174,17 +177,17 @@ class DashboardController extends AbstractDashboardController
 
         return $this->render('admin/dashboard.html.twig', [
             'metrics' => [
-                'users' => $userCount,
-                'tasks' => $taskCount,
-                'activeRules' => $activeRulesCount,
-                'storage' => $totalStorageMB,
+                'users'          => $userCount,
+                'tasks'          => $taskCount,
+                'activeRules'    => $activeRulesCount,
+                'storage'        => $totalStorageMB,
                 'activeUsers24h' => $activeUsersCount,
                 'completionRate' => $completionRate,
-                'overdueTasks' => $overdueTasksCount,
+                'overdueTasks'   => $overdueTasksCount,
             ],
-            'activityChart' => $activityData,
+            'activityChart'  => $activityData,
             'recentActivity' => $recentActivity,
-            'alerts' => $alerts,
+            'alerts'         => $alerts,
         ]);
     }
 

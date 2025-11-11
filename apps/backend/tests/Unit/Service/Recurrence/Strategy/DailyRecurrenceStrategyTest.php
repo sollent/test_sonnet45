@@ -6,6 +6,7 @@ namespace App\Tests\Unit\Service\Recurrence\Strategy;
 
 use App\Entity\RecurrenceRule;
 use App\Service\Recurrence\Strategy\DailyRecurrenceStrategy;
+use DateTime;
 use PHPUnit\Framework\TestCase;
 
 class DailyRecurrenceStrategyTest extends TestCase
@@ -21,7 +22,7 @@ class DailyRecurrenceStrategyTest extends TestCase
     public function testCalculateNextOccurrenceAddsOneDay(): void
     {
         // Arrange
-        $currentDate = new \DateTime('2025-01-10');
+        $currentDate = new DateTime('2025-01-10');
         $rule = $this->createMock(RecurrenceRule::class);
         $rule->method('getTimeOfDay')->willReturn(null);
         $rule->method('getEndDate')->willReturn(null);
@@ -40,8 +41,8 @@ class DailyRecurrenceStrategyTest extends TestCase
     public function testAppliesTimeOfDayIfSet(): void
     {
         // Arrange
-        $currentDate = new \DateTime('2025-01-10 09:00:00');
-        $timeOfDay = new \DateTime('14:30:00');
+        $currentDate = new DateTime('2025-01-10 09:00:00');
+        $timeOfDay = new DateTime('14:30:00');
 
         $rule = $this->createMock(RecurrenceRule::class);
         $rule->method('getTimeOfDay')->willReturn($timeOfDay);
@@ -61,8 +62,8 @@ class DailyRecurrenceStrategyTest extends TestCase
     public function testRespectsEndDate(): void
     {
         // Arrange
-        $currentDate = new \DateTime('2025-01-15');
-        $endDate = new \DateTime('2025-01-15');
+        $currentDate = new DateTime('2025-01-15');
+        $endDate = new DateTime('2025-01-15');
 
         $rule = $this->createMock(RecurrenceRule::class);
         $rule->method('getTimeOfDay')->willReturn(null);
@@ -81,7 +82,7 @@ class DailyRecurrenceStrategyTest extends TestCase
     public function testRespectsMaxOccurrences(): void
     {
         // Arrange
-        $currentDate = new \DateTime('2025-01-10');
+        $currentDate = new DateTime('2025-01-10');
 
         $rule = $this->createMock(RecurrenceRule::class);
         $rule->method('getTimeOfDay')->willReturn(null);
@@ -111,7 +112,7 @@ class DailyRecurrenceStrategyTest extends TestCase
     public function testGetPreviewDatesReturnsCorrectCount(): void
     {
         // Arrange
-        $startDate = new \DateTime('2025-01-10');
+        $startDate = new DateTime('2025-01-10');
 
         $rule = $this->createMock(RecurrenceRule::class);
         $rule->method('getTimeOfDay')->willReturn(null);
@@ -133,8 +134,8 @@ class DailyRecurrenceStrategyTest extends TestCase
     public function testGetPreviewDatesStopsAtEndDate(): void
     {
         // Arrange
-        $startDate = new \DateTime('2025-01-10');
-        $endDate = new \DateTime('2025-01-12'); // Only 2 days forward
+        $startDate = new DateTime('2025-01-10');
+        $endDate = new DateTime('2025-01-12'); // Only 2 days forward
 
         $rule = $this->createMock(RecurrenceRule::class);
         $rule->method('getTimeOfDay')->willReturn(null);

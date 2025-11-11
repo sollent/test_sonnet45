@@ -1,0 +1,709 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Variable \$recurrenceInserts in empty\(\) always exists and is not falsy\.$#'
+			identifier: empty.variable
+			count: 1
+			path: src/Command/GenerateTestDataFastCommand.php
+
+		-
+			message: '#^Variable \$subtaskValues in empty\(\) always exists and is not falsy\.$#'
+			identifier: empty.variable
+			count: 1
+			path: src/Command/GenerateTestDataFastCommand.php
+
+		-
+			message: '#^Expression in empty\(\) is not falsy\.$#'
+			identifier: empty.expr
+			count: 1
+			path: src/Controller/Admin/RecurrenceRuleCrudController.php
+
+		-
+			message: '#^Variable \$days in empty\(\) always exists and is not falsy\.$#'
+			identifier: empty.variable
+			count: 1
+			path: src/Controller/Admin/RecurrenceRuleCrudController.php
+
+		-
+			message: '#^Comparison operation "\>" between int\<1, max\> and 0 is always true\.$#'
+			identifier: greater.alwaysTrue
+			count: 1
+			path: src/Controller/Admin/UserCrudController.php
+
+		-
+			message: '#^Instanceof between App\\Entity\\User and App\\Entity\\User will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 2
+			path: src/Controller/Admin/UserCrudController.php
+
+		-
+			message: '#^Match arm comparison between App\\Enum\\TaskStatus\:\:CANCELLED and App\\Enum\\TaskStatus\:\:CANCELLED is always true\.$#'
+			identifier: match.alwaysTrue
+			count: 2
+			path: src/Controller/Admin/UserCrudController.php
+
+		-
+			message: '#^Parameter \#2 \$default of method Symfony\\Component\\HttpFoundation\\InputBag\<string\>\:\:get\(\) expects string\|null, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Api/RecurrenceController.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Entity\\Tag\:\:setUser\(\) expects App\\Entity\\User\|null, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Api/TagController.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Repository\\Database\\TagRepository\:\:findUserTags\(\) expects App\\Entity\\User, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Api/TagController.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Repository\\Database\\TagRepository\:\:getMostUsedTags\(\) expects App\\Entity\\User, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Api/TagController.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Repository\\Database\\TagRepository\:\:searchTags\(\) expects App\\Entity\\User, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Api/TagController.php
+
+		-
+			message: '#^Parameter \#2 \$user of method App\\Repository\\Database\\TagRepository\:\:findByNameAndUser\(\) expects App\\Entity\\User, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/Api/TagController.php
+
+		-
+			message: '#^PHPDoc tag @var for variable \$user contains unknown class Symfony\\Component\\Security\\Core\\User\\User\.$#'
+			identifier: class.notFound
+			count: 2
+			path: src/Controller/Api/TaskController.php
+
+		-
+			message: '#^PHPDoc tag @var with type Symfony\\Component\\Security\\Core\\User\\User is not subtype of native type Symfony\\Component\\Security\\Core\\User\\UserInterface\|null\.$#'
+			identifier: varTag.nativeType
+			count: 2
+			path: src/Controller/Api/TaskController.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Repository\\Database\\TaskRepository\:\:findTasksByDayRaw\(\) expects App\\Entity\\User, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Api/TaskController.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Repository\\Database\\TaskRepository\:\:findTasksForMonthRaw\(\) expects App\\Entity\\User, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Api/TaskController.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Repository\\Database\\TaskRepository\:\:findTasksForWeekRaw\(\) expects App\\Entity\\User, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Api/TaskController.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Service\\TaskService\:\:getActiveTasks\(\) expects App\\Entity\\User, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Api/TaskController.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Service\\TaskService\:\:getOverdueTasksPaginated\(\) expects App\\Entity\\User, Symfony\\Component\\Security\\Core\\User\\User given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Api/TaskController.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Service\\TaskService\:\:getOverdueTasksPaginated\(\) expects App\\Entity\\User, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Api/TaskController.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Service\\TaskService\:\:getTaskStatistics\(\) expects App\\Entity\\User, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Api/TaskController.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Service\\TaskService\:\:getTodayTasks\(\) expects App\\Entity\\User, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Api/TaskController.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Service\\TaskService\:\:getUnscheduledTasksPaginated\(\) expects App\\Entity\\User, Symfony\\Component\\Security\\Core\\User\\User given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Api/TaskController.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Service\\TaskService\:\:getUnscheduledTasksPaginated\(\) expects App\\Entity\\User, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Api/TaskController.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Service\\TaskService\:\:getUpcomingTasks\(\) expects App\\Entity\\User, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Api/TaskController.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Service\\TaskService\:\:searchTasks\(\) expects App\\Entity\\User, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Api/TaskController.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Service\\TaskService\:\:updateTaskSortOrders\(\) expects App\\Entity\\User, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Api/TaskController.php
+
+		-
+			message: '#^Parameter \#2 \$user of method App\\Service\\TaskService\:\:archiveTask\(\) expects App\\Entity\\User, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Api/TaskController.php
+
+		-
+			message: '#^Parameter \#2 \$user of method App\\Service\\TaskService\:\:completeTask\(\) expects App\\Entity\\User, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Api/TaskController.php
+
+		-
+			message: '#^Parameter \#2 \$user of method App\\Service\\TaskService\:\:createTask\(\) expects App\\Entity\\User, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Api/TaskController.php
+
+		-
+			message: '#^Parameter \#2 \$user of method App\\Service\\TaskService\:\:deleteTask\(\) expects App\\Entity\\User, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Api/TaskController.php
+
+		-
+			message: '#^Parameter \#2 \$user of method App\\Service\\TaskService\:\:toggleTaskCompletion\(\) expects App\\Entity\\User, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Api/TaskController.php
+
+		-
+			message: '#^Parameter \#2 \$user of method App\\Service\\TaskService\:\:unarchiveTask\(\) expects App\\Entity\\User, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Api/TaskController.php
+
+		-
+			message: '#^Parameter \#3 \$user of method App\\Service\\TaskService\:\:updateTask\(\) expects App\\Entity\\User, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Api/TaskController.php
+
+		-
+			message: '#^Call to an undefined method Symfony\\Component\\Security\\Core\\User\\UserInterface\:\:hasPassword\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Controller/Api/UserProfileController.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Service\\UserProfileService\:\:updateNotifications\(\) expects App\\Entity\\User, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Api/UserProfileController.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Service\\UserProfileService\:\:updatePassword\(\) expects App\\Entity\\User, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Api/UserProfileController.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Service\\UserProfileService\:\:updateProfile\(\) expects App\\Entity\\User, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Api/UserProfileController.php
+
+		-
+			message: '#^Parameter \#1 \$user of static method App\\Dto\\Response\\User\\UserProfileDto\:\:fromEntity\(\) expects App\\Entity\\User, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Api/UserProfileController.php
+
+		-
+			message: '#^Negated boolean expression is always false\.$#'
+			identifier: booleanNot.alwaysFalse
+			count: 1
+			path: src/Controller/UserController.php
+
+		-
+			message: '#^Call to an undefined method Doctrine\\Common\\Collections\\Collection\<int, App\\Entity\\MediaObject\>\:\:isInitialized\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Dto/Response/Task/TaskResponseDto.php
+
+		-
+			message: '#^Call to an undefined method Doctrine\\Common\\Collections\\Collection\<int, App\\Entity\\Tag\>\:\:isInitialized\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Dto/Response/Task/TaskResponseDto.php
+
+		-
+			message: '#^Property App\\Entity\\MediaObject\:\:\$createdAt type mapping mismatch\: property can contain DateTimeImmutable\|null but database expects DateTimeImmutable\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/MediaObject.php
+
+		-
+			message: '#^Property App\\Entity\\MediaObject\:\:\$fileName type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/MediaObject.php
+
+		-
+			message: '#^Property App\\Entity\\MediaObject\:\:\$filePath type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/MediaObject.php
+
+		-
+			message: '#^Property App\\Entity\\MediaObject\:\:\$fileSize type mapping mismatch\: property can contain int\|null but database expects int\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/MediaObject.php
+
+		-
+			message: '#^Property App\\Entity\\MediaObject\:\:\$fileType type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/MediaObject.php
+
+		-
+			message: '#^Property App\\Entity\\MediaObject\:\:\$mimeType type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/MediaObject.php
+
+		-
+			message: '#^Property App\\Entity\\MediaObject\:\:\$originalName type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/MediaObject.php
+
+		-
+			message: '#^Property App\\Entity\\MediaObject\:\:\$uploadedBy type mapping mismatch\: property can contain App\\Entity\\User\|null but database expects App\\Entity\\User\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/MediaObject.php
+
+		-
+			message: '#^Property App\\Entity\\RecurrenceRule\:\:\$endDate type mapping mismatch\: property can contain DateTimeInterface\|null but database expects DateTimeImmutable\|null\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/RecurrenceRule.php
+
+		-
+			message: '#^Property App\\Entity\\RecurrenceRule\:\:\$nextOccurrenceDate type mapping mismatch\: property can contain DateTimeInterface but database expects DateTimeImmutable\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/RecurrenceRule.php
+
+		-
+			message: '#^Property App\\Entity\\RecurrenceRule\:\:\$timeOfDay type mapping mismatch\: property can contain DateTimeInterface\|null but database expects DateTimeImmutable\|null\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/RecurrenceRule.php
+
+		-
+			message: '#^Property App\\Entity\\Tag\:\:\$name type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/Tag.php
+
+		-
+			message: '#^Property App\\Entity\\Tag\:\:\$tasks type mapping mismatch\: property can contain Doctrine\\Common\\Collections\\Collection but database expects Doctrine\\Common\\Collections\\Collection&iterable\<App\\Entity\\Task\>\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/Tag.php
+
+		-
+			message: '#^Property App\\Entity\\Tag\:\:\$user type mapping mismatch\: property can contain App\\Entity\\User\|null but database expects App\\Entity\\User\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/Tag.php
+
+		-
+			message: '#^Property App\\Entity\\Task\:\:\$attachments type mapping mismatch\: property can contain Doctrine\\Common\\Collections\\Collection but database expects Doctrine\\Common\\Collections\\Collection&iterable\<App\\Entity\\TaskAttachment\>\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/Task.php
+
+		-
+			message: '#^Property App\\Entity\\Task\:\:\$mediaObjects type mapping mismatch\: property can contain Doctrine\\Common\\Collections\\Collection but database expects Doctrine\\Common\\Collections\\Collection&iterable\<App\\Entity\\MediaObject\>\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/Task.php
+
+		-
+			message: '#^Property App\\Entity\\Task\:\:\$subtasks type mapping mismatch\: property can contain Doctrine\\Common\\Collections\\Collection but database expects Doctrine\\Common\\Collections\\Collection&iterable\<App\\Entity\\Task\>\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/Task.php
+
+		-
+			message: '#^Property App\\Entity\\Task\:\:\$tags type mapping mismatch\: property can contain Doctrine\\Common\\Collections\\Collection but database expects Doctrine\\Common\\Collections\\Collection&iterable\<App\\Entity\\Tag\>\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/Task.php
+
+		-
+			message: '#^Property App\\Entity\\Task\:\:\$title type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/Task.php
+
+		-
+			message: '#^Property App\\Entity\\Task\:\:\$user type mapping mismatch\: property can contain App\\Entity\\User\|null but database expects App\\Entity\\User\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/Task.php
+
+		-
+			message: '#^Property App\\Entity\\TaskAttachment\:\:\$fileName type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/TaskAttachment.php
+
+		-
+			message: '#^Property App\\Entity\\TaskAttachment\:\:\$fileSize type mapping mismatch\: property can contain int\|null but database expects int\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/TaskAttachment.php
+
+		-
+			message: '#^Property App\\Entity\\TaskAttachment\:\:\$fileType type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/TaskAttachment.php
+
+		-
+			message: '#^Property App\\Entity\\TaskAttachment\:\:\$mimeType type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/TaskAttachment.php
+
+		-
+			message: '#^Property App\\Entity\\TaskAttachment\:\:\$originalName type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/TaskAttachment.php
+
+		-
+			message: '#^Property App\\Entity\\TaskAttachment\:\:\$task type mapping mismatch\: property can contain App\\Entity\\Task\|null but database expects App\\Entity\\Task\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/TaskAttachment.php
+
+		-
+			message: '#^Property App\\Entity\\TaskAttachment\:\:\$uploadedAt type mapping mismatch\: property can contain DateTimeImmutable\|null but database expects DateTimeImmutable\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/TaskAttachment.php
+
+		-
+			message: '#^Property App\\Entity\\TaskAttachment\:\:\$uploadedBy type mapping mismatch\: property can contain App\\Entity\\User\|null but database expects App\\Entity\\User\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/TaskAttachment.php
+
+		-
+			message: '#^Property App\\Entity\\User\:\:\$tags type mapping mismatch\: property can contain Doctrine\\Common\\Collections\\Collection but database expects Doctrine\\Common\\Collections\\Collection&iterable\<App\\Entity\\Tag\>\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/User.php
+
+		-
+			message: '#^Property App\\Entity\\User\:\:\$tasks type mapping mismatch\: property can contain Doctrine\\Common\\Collections\\Collection but database expects Doctrine\\Common\\Collections\\Collection&iterable\<App\\Entity\\Task\>\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/User.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Entity\\AuditLog\:\:setUser\(\) expects App\\Entity\\User\|null, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/EventListener/AuditLogListener.php
+
+		-
+			message: '#^PHPDoc tag @extends contains generic type App\\Repository\\Database\\AbstractRepository\<App\\Entity\\AuditLog\> but class App\\Repository\\Database\\AbstractRepository is not generic\.$#'
+			identifier: generics.notGeneric
+			count: 1
+			path: src/Repository/Database/AuditLogRepository.php
+
+		-
+			message: '#^Instanceof between App\\Enum\\TaskStatus and App\\Enum\\TaskStatus will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 1
+			path: src/Repository/Database/TaskRepository.php
+
+		-
+			message: '#^Method App\\Repository\\Database\\TaskRepository\:\:loadSubtasksRecursively\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: src/Repository/Database/TaskRepository.php
+
+		-
+			message: '#^The @extends tag of class App\\Repository\\Database\\UserRepository describes Doctrine\\Bundle\\DoctrineBundle\\Repository\\ServiceEntityRepository but the class extends App\\Repository\\Database\\AbstractRepository\.$#'
+			identifier: generics.wrongParent
+			count: 1
+			path: src/Repository/Database/UserRepository.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 1
+			path: src/Service/MediaObjectService.php
+
+		-
+			message: '#^Parameter \#1 \$year of method DateTime\:\:setDate\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Recurrence/Strategy/MonthlyRecurrenceStrategy.php
+
+		-
+			message: '#^Parameter \#1 \$year of method DateTimeImmutable\:\:setDate\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Recurrence/Strategy/MonthlyRecurrenceStrategy.php
+
+		-
+			message: '#^Parameter \#2 \$month of method DateTime\:\:setDate\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Recurrence/Strategy/MonthlyRecurrenceStrategy.php
+
+		-
+			message: '#^Parameter \#2 \$month of method DateTimeImmutable\:\:setDate\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Recurrence/Strategy/MonthlyRecurrenceStrategy.php
+
+		-
+			message: '#^Call to an undefined method DateTimeInterface\:\:add\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Service/RecurrenceService.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 1
+			path: src/Service/RecurrenceService.php
+
+		-
+			message: '#^Parameter \#1 \$now of method App\\Repository\\Database\\RecurrenceRuleRepository\:\:deactivateExpiredRules\(\) expects DateTime\|null, DateTimeInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/RecurrenceService.php
+
+		-
+			message: '#^Parameter \#1 \$now of method App\\Repository\\Database\\RecurrenceRuleRepository\:\:findActiveRulesToProcess\(\) expects DateTime\|null, DateTimeInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/RecurrenceService.php
+
+		-
+			message: '#^Method App\\Service\\TaskService\:\:enrichDtoWithTranslations\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: src/Service/TaskService.php
+
+		-
+			message: '#^Offset ''recurrenceType'' on array\{recurrenceType\: string, interval\?\: int, daysOfWeek\?\: array\<int\>, dayOfMonth\?\: int, monthOfYear\?\: int, endDate\?\: string, maxOccurrences\?\: int, timeOfDay\?\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Service/TaskService.php
+
+		-
+			message: '#^Parameter \#1 \$priority of method App\\Service\\TranslationService\:\:translatePriority\(\) expects App\\Enum\\TaskPriority, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/TaskService.php
+
+		-
+			message: '#^Parameter \#1 \$status of method App\\Service\\TranslationService\:\:translateStatus\(\) expects App\\Enum\\TaskStatus, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/TaskService.php
+
+		-
+			message: '#^Access to undefined constant App\\Enum\\TaskStatus\:\:ARCHIVED\.$#'
+			identifier: classConstant.notFound
+			count: 1
+			path: src/Service/TranslationService.php
+
+		-
+			message: '#^Call to an undefined method Symfony\\Contracts\\Translation\\TranslatorInterface\:\:setLocale\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Service/TranslationService.php
+
+		-
+			message: '#^Match arm comparison between App\\Enum\\TaskStatus\:\:CANCELLED and App\\Enum\\TaskStatus\:\:CANCELLED is always true\.$#'
+			identifier: match.alwaysTrue
+			count: 1
+			path: src/Service/TranslationService.php
+
+		-
+			message: '#^Ternary operator condition is always true\.$#'
+			identifier: ternary.alwaysTrue
+			count: 2
+			path: src/TestsUtilities/Factory/TaskFactory.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertIsArray\(\) with array will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 21
+			path: tests/Functional/Api/AnalyticsControllerTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertIsArray\(\) with array will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 2
+			path: tests/Functional/Api/AttachmentControllerTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertIsArray\(\) with array will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 2
+			path: tests/Functional/Api/EnumControllerTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertIsArray\(\) with array will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 2
+			path: tests/Functional/Api/RecurrenceControllerTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertIsArray\(\) with array will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 4
+			path: tests/Functional/Api/TagControllerTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertIsArray\(\) with array will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 6
+			path: tests/Functional/Api/TaskControllerTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertIsArray\(\) with array will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 3
+			path: tests/Functional/Api/TranslationControllerTest.php
+
+		-
+			message: '#^Method App\\Tests\\Integration\\Api\\GoogleAuthIntegrationTest\:\:mockGoogleJWKsEndpoint\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: tests/Integration/Api/GoogleAuthIntegrationTest.php
+
+		-
+			message: '#^Method App\\Tests\\Integration\\Api\\GoogleAuthWithHttpMockTest\:\:createGoogleJWKsMock\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: tests/Integration/Api/GoogleAuthWithHttpMockTest.php
+
+		-
+			message: '#^Property App\\Tests\\Integration\\Command\\ProcessRecurrenceRulesCommandTest\:\:\$recurrenceService is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: tests/Integration/Command/ProcessRecurrenceRulesCommandTest.php
+
+		-
+			message: '#^Property App\\Tests\\Integration\\Service\\TaskServiceIntegrationTest\:\:\$taskService is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: tests/Integration/Service/TaskServiceIntegrationTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertIsArray\(\) with array\<string, bool\|null\> will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 1
+			path: tests/Unit/Serializer/Normalizer/TaskEnumNormalizerTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertIsArray\(\) with array\{value\: string, label\: string, color\: string, icon\: string\} will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 2
+			path: tests/Unit/Serializer/Normalizer/TaskEnumNormalizerTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertIsString\(\) with string will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 2
+			path: tests/Unit/Serializer/Normalizer/TaskEnumNormalizerTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertIsArray\(\) with array\<string, string\> will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 2
+			path: tests/Unit/Service/EnumTranslatorServiceTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertTrue\(\) with true will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 1
+			path: tests/Unit/Service/FileUploadServiceTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertTrue\(\) with true will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 1
+			path: tests/Unit/Service/MediaObjectServiceTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertNotNull\(\) with DateTimeInterface will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 1
+			path: tests/Unit/Service/RecurrenceServiceTest.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: tests/Unit/Service/RecurrenceServiceTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertTrue\(\) with true will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 1
+			path: tests/Unit/Service/TaskServiceTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertIsArray\(\) with array will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 3
+			path: tests/Unit/Service/TranslationServiceTest.php
+
+		-
+			message: '#^Call to an undefined method Symfony\\Component\\Security\\Core\\User\\UserInterface\:\:getPassword\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Unit/Service/UserRegistrationServiceTest.php
+
+		-
+			message: '#^Call to an undefined method Symfony\\Component\\Security\\Core\\User\\UserInterface\:\:getPlainPassword\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Unit/Service/UserRegistrationServiceTest.php

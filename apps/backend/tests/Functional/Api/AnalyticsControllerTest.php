@@ -10,6 +10,7 @@ use App\Enum\TaskStatus;
 use App\TestsUtilities\Factory\TagFactory;
 use App\TestsUtilities\Factory\TaskFactory;
 use App\TestsUtilities\Factory\UserFactory;
+use DateTimeImmutable;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -23,8 +24,11 @@ class AnalyticsControllerTest extends WebTestCase
     use Factories;
 
     private KernelBrowser $client;
+
     private JWTTokenManagerInterface $jwtManager;
+
     private User $user;
+
     private string $token;
 
     protected function setUp(): void
@@ -34,35 +38,11 @@ class AnalyticsControllerTest extends WebTestCase
 
         // Create authenticated user
         $userProxy = UserFactory::createOne([
-            'email' => 'test-' . uniqid() . '@example.com',
+            'email'    => 'test-' . uniqid() . '@example.com',
             'password' => 'password123',
         ]);
         $this->user = $userProxy->_real();
         $this->token = $this->jwtManager->create($this->user);
-    }
-
-    private function request(
-        string $method,
-        string $uri,
-        array $parameters = [],
-        string $content = null
-    ): void {
-        $this->client->request(
-            $method,
-            $uri,
-            $parameters,
-            [],
-            [
-                'HTTP_AUTHORIZATION' => 'Bearer ' . $this->token,
-                'CONTENT_TYPE' => 'application/json',
-            ],
-            $content
-        );
-    }
-
-    private function getResponseData(): array
-    {
-        return json_decode($this->client->getResponse()->getContent(), true);
     }
 
     // ==================== GET /api/analytics/overview ====================
@@ -72,15 +52,15 @@ class AnalyticsControllerTest extends WebTestCase
     {
         // Arrange: Create diverse tasks
         TaskFactory::createMany(5, [
-            'user' => $this->user,
-            'status' => TaskStatus::PENDING,
+            'user'       => $this->user,
+            'status'     => TaskStatus::PENDING,
             'isArchived' => false,
         ]);
         TaskFactory::createMany(3, [
-            'user' => $this->user,
-            'status' => TaskStatus::COMPLETED,
-            'completedAt' => new \DateTimeImmutable(),
-            'isArchived' => false,
+            'user'        => $this->user,
+            'status'      => TaskStatus::COMPLETED,
+            'completedAt' => new DateTimeImmutable(),
+            'isArchived'  => false,
         ]);
 
         // Act
@@ -125,14 +105,14 @@ class AnalyticsControllerTest extends WebTestCase
     {
         // Arrange: Create completed tasks over time
         TaskFactory::createMany(3, [
-            'user' => $this->user,
-            'status' => TaskStatus::COMPLETED,
-            'completedAt' => new \DateTimeImmutable('-5 days'),
+            'user'        => $this->user,
+            'status'      => TaskStatus::COMPLETED,
+            'completedAt' => new DateTimeImmutable('-5 days'),
         ]);
         TaskFactory::createMany(2, [
-            'user' => $this->user,
-            'status' => TaskStatus::COMPLETED,
-            'completedAt' => new \DateTimeImmutable('-2 days'),
+            'user'        => $this->user,
+            'status'      => TaskStatus::COMPLETED,
+            'completedAt' => new DateTimeImmutable('-2 days'),
         ]);
 
         // Act
@@ -150,9 +130,9 @@ class AnalyticsControllerTest extends WebTestCase
     {
         // Arrange
         TaskFactory::createMany(5, [
-            'user' => $this->user,
-            'status' => TaskStatus::COMPLETED,
-            'completedAt' => new \DateTimeImmutable('-10 days'),
+            'user'        => $this->user,
+            'status'      => TaskStatus::COMPLETED,
+            'completedAt' => new DateTimeImmutable('-10 days'),
         ]);
 
         // Act: Request specific period
@@ -170,9 +150,9 @@ class AnalyticsControllerTest extends WebTestCase
     {
         // Arrange
         TaskFactory::createMany(3, [
-            'user' => $this->user,
-            'status' => TaskStatus::COMPLETED,
-            'completedAt' => new \DateTimeImmutable('2025-11-01'),
+            'user'        => $this->user,
+            'status'      => TaskStatus::COMPLETED,
+            'completedAt' => new DateTimeImmutable('2025-11-01'),
         ]);
 
         // Act
@@ -202,15 +182,15 @@ class AnalyticsControllerTest extends WebTestCase
     {
         // Arrange: Create tasks with different statuses
         TaskFactory::createMany(5, [
-            'user' => $this->user,
+            'user'   => $this->user,
             'status' => TaskStatus::PENDING,
         ]);
         TaskFactory::createMany(3, [
-            'user' => $this->user,
+            'user'   => $this->user,
             'status' => TaskStatus::IN_PROGRESS,
         ]);
         TaskFactory::createMany(2, [
-            'user' => $this->user,
+            'user'   => $this->user,
             'status' => TaskStatus::COMPLETED,
         ]);
 
@@ -244,15 +224,15 @@ class AnalyticsControllerTest extends WebTestCase
     {
         // Arrange: Create tasks with different priorities
         TaskFactory::createMany(4, [
-            'user' => $this->user,
+            'user'     => $this->user,
             'priority' => TaskPriority::HIGH,
         ]);
         TaskFactory::createMany(3, [
-            'user' => $this->user,
+            'user'     => $this->user,
             'priority' => TaskPriority::MEDIUM,
         ]);
         TaskFactory::createMany(2, [
-            'user' => $this->user,
+            'user'     => $this->user,
             'priority' => TaskPriority::LOW,
         ]);
 
@@ -287,9 +267,9 @@ class AnalyticsControllerTest extends WebTestCase
         // Arrange: Create completed tasks throughout the year
         for ($i = 0; $i < 10; $i++) {
             TaskFactory::createOne([
-                'user' => $this->user,
-                'status' => TaskStatus::COMPLETED,
-                'completedAt' => new \DateTimeImmutable("-{$i} days"),
+                'user'        => $this->user,
+                'status'      => TaskStatus::COMPLETED,
+                'completedAt' => new DateTimeImmutable("-{$i} days"),
             ]);
         }
 
@@ -308,9 +288,9 @@ class AnalyticsControllerTest extends WebTestCase
     {
         // Arrange
         TaskFactory::createMany(5, [
-            'user' => $this->user,
-            'status' => TaskStatus::COMPLETED,
-            'completedAt' => new \DateTimeImmutable('2025-06-15'),
+            'user'        => $this->user,
+            'status'      => TaskStatus::COMPLETED,
+            'completedAt' => new DateTimeImmutable('2025-06-15'),
         ]);
 
         // Act
@@ -344,9 +324,9 @@ class AnalyticsControllerTest extends WebTestCase
         // Arrange: Create completed tasks on different weekdays
         for ($i = 0; $i < 7; $i++) {
             TaskFactory::createOne([
-                'user' => $this->user,
-                'status' => TaskStatus::COMPLETED,
-                'completedAt' => new \DateTimeImmutable("-{$i} days"),
+                'user'        => $this->user,
+                'status'      => TaskStatus::COMPLETED,
+                'completedAt' => new DateTimeImmutable("-{$i} days"),
             ]);
         }
 
@@ -380,18 +360,18 @@ class AnalyticsControllerTest extends WebTestCase
     {
         // Arrange: Create tags with usage
         $tag1 = TagFactory::createOne([
-            'user' => $this->user,
-            'name' => 'popular',
+            'user'       => $this->user,
+            'name'       => 'popular',
             'usageCount' => 100,
         ]);
         $tag2 = TagFactory::createOne([
-            'user' => $this->user,
-            'name' => 'common',
+            'user'       => $this->user,
+            'name'       => 'common',
             'usageCount' => 50,
         ]);
         $tag3 = TagFactory::createOne([
-            'user' => $this->user,
-            'name' => 'rare',
+            'user'       => $this->user,
+            'name'       => 'rare',
             'usageCount' => 5,
         ]);
 
@@ -448,14 +428,14 @@ class AnalyticsControllerTest extends WebTestCase
     {
         // Arrange: Create data for insights
         TaskFactory::createMany(10, [
-            'user' => $this->user,
-            'status' => TaskStatus::COMPLETED,
-            'completedAt' => new \DateTimeImmutable('-5 days'),
+            'user'        => $this->user,
+            'status'      => TaskStatus::COMPLETED,
+            'completedAt' => new DateTimeImmutable('-5 days'),
         ]);
         TaskFactory::createMany(5, [
-            'user' => $this->user,
-            'status' => TaskStatus::PENDING,
-            'dueDate' => new \DateTimeImmutable('-2 days'), // Overdue
+            'user'    => $this->user,
+            'status'  => TaskStatus::PENDING,
+            'dueDate' => new DateTimeImmutable('-2 days'), // Overdue
         ]);
 
         // Act
@@ -488,13 +468,13 @@ class AnalyticsControllerTest extends WebTestCase
     {
         // Arrange: Create comprehensive data
         TaskFactory::createMany(5, [
-            'user' => $this->user,
+            'user'   => $this->user,
             'status' => TaskStatus::PENDING,
         ]);
         TaskFactory::createMany(3, [
-            'user' => $this->user,
-            'status' => TaskStatus::COMPLETED,
-            'completedAt' => new \DateTimeImmutable(),
+            'user'        => $this->user,
+            'status'      => TaskStatus::COMPLETED,
+            'completedAt' => new DateTimeImmutable(),
         ]);
 
         $tag = TagFactory::createOne(['user' => $this->user]);
@@ -514,9 +494,9 @@ class AnalyticsControllerTest extends WebTestCase
     {
         // Arrange
         TaskFactory::createMany(5, [
-            'user' => $this->user,
-            'status' => TaskStatus::COMPLETED,
-            'completedAt' => new \DateTimeImmutable('-10 days'),
+            'user'        => $this->user,
+            'status'      => TaskStatus::COMPLETED,
+            'completedAt' => new DateTimeImmutable('-10 days'),
         ]);
 
         // Act
@@ -534,9 +514,9 @@ class AnalyticsControllerTest extends WebTestCase
     {
         // Arrange
         TaskFactory::createMany(3, [
-            'user' => $this->user,
-            'status' => TaskStatus::COMPLETED,
-            'completedAt' => new \DateTimeImmutable('2025-11-01'),
+            'user'        => $this->user,
+            'status'      => TaskStatus::COMPLETED,
+            'completedAt' => new DateTimeImmutable('2025-11-01'),
         ]);
 
         // Act
@@ -551,9 +531,9 @@ class AnalyticsControllerTest extends WebTestCase
     {
         // Arrange
         TaskFactory::createMany(5, [
-            'user' => $this->user,
-            'status' => TaskStatus::COMPLETED,
-            'completedAt' => new \DateTimeImmutable('2025-06-15'),
+            'user'        => $this->user,
+            'status'      => TaskStatus::COMPLETED,
+            'completedAt' => new DateTimeImmutable('2025-06-15'),
         ]);
 
         // Act
@@ -574,5 +554,29 @@ class AnalyticsControllerTest extends WebTestCase
 
         // Assert
         $this->assertResponseStatusCodeSame(Response::HTTP_UNAUTHORIZED);
+    }
+
+    private function request(
+        string $method,
+        string $uri,
+        array $parameters = [],
+        ?string $content = null,
+    ): void {
+        $this->client->request(
+            $method,
+            $uri,
+            $parameters,
+            [],
+            [
+                'HTTP_AUTHORIZATION' => 'Bearer ' . $this->token,
+                'CONTENT_TYPE'       => 'application/json',
+            ],
+            $content,
+        );
+    }
+
+    private function getResponseData(): array
+    {
+        return json_decode($this->client->getResponse()->getContent(), true);
     }
 }

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Exception\User;
 
-final class UserRegistrationException extends \Exception
+use Exception;
+
+final class UserRegistrationException extends Exception
 {
 }

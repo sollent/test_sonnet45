@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Tests\Integration\Service;
 
 use App\Entity\User;
-use App\Service\TaskService;
 use App\Service\RecurrenceService;
-use App\TestsUtilities\Factory\TaskFactory;
-use App\TestsUtilities\Factory\UserFactory;
+use App\Service\TaskService;
 use App\TestsUtilities\Factory\RecurrenceRuleFactory;
 use App\TestsUtilities\Factory\TagFactory;
+use App\TestsUtilities\Factory\TaskFactory;
+use App\TestsUtilities\Factory\UserFactory;
+use DateTimeImmutable;
+use DateTimeInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Zenstruck\Foundry\Test\Factories;
 use Zenstruck\Foundry\Test\ResetDatabase;
@@ -25,7 +27,9 @@ class TaskServiceIntegrationTest extends KernelTestCase
     use Factories;
 
     private TaskService $taskService;
+
     private RecurrenceService $recurrenceService;
+
     private User $user;
 
     protected function setUp(): void
@@ -39,7 +43,7 @@ class TaskServiceIntegrationTest extends KernelTestCase
 
         // Create test user
         $userProxy = UserFactory::createOne([
-            'email' => 'test-' . uniqid() . '@example.com',
+            'email'    => 'test-' . uniqid() . '@example.com',
             'password' => 'password123',
         ]);
         $this->user = $userProxy->_real();
@@ -54,17 +58,17 @@ class TaskServiceIntegrationTest extends KernelTestCase
     {
         // Arrange: Create task with recurrence data
         $taskData = [
-            'title' => 'Daily standup meeting',
+            'title'       => 'Daily standup meeting',
             'description' => 'Team sync meeting',
-            'user' => $this->user,
+            'user'        => $this->user,
         ];
 
         $recurrenceData = [
             'recurrenceType' => 'daily',
-            'interval' => 1,
-            'startDate' => new \DateTimeImmutable('2025-01-01'),
-            'endDate' => new \DateTimeImmutable('2025-01-31'),
-            'isActive' => true,
+            'interval'       => 1,
+            'startDate'      => new DateTimeImmutable('2025-01-01'),
+            'endDate'        => new DateTimeImmutable('2025-01-31'),
+            'isActive'       => true,
         ];
 
         // Act: Create task (simulating what controller does)
@@ -72,9 +76,9 @@ class TaskServiceIntegrationTest extends KernelTestCase
 
         // Create recurrence rule for the task
         $rule = RecurrenceRuleFactory::new()->daily()->create([
-            'createdBy' => $this->user,
+            'createdBy'    => $this->user,
             'templateTask' => $task->_real(),
-            'isActive' => true,
+            'isActive'     => true,
         ]);
 
         // Set end date and next occurrence manually (no setters in factory)
@@ -94,11 +98,11 @@ class TaskServiceIntegrationTest extends KernelTestCase
         $previewDates = $this->recurrenceService->getPreviewDates(
             $recurrenceData['startDate'],
             $rule->_real(),
-            5
+            5,
         );
 
         $this->assertCount(5, $previewDates); // Should generate 5 daily preview dates
-        $this->assertInstanceOf(\DateTimeInterface::class, $previewDates[0]);
+        $this->assertInstanceOf(DateTimeInterface::class, $previewDates[0]);
     }
 
     /**
@@ -110,30 +114,30 @@ class TaskServiceIntegrationTest extends KernelTestCase
     {
         // Arrange: Create parent task with subtasks
         $parentTask = TaskFactory::createOne([
-            'title' => 'Complete project',
-            'user' => $this->user,
+            'title'  => 'Complete project',
+            'user'   => $this->user,
             'status' => \App\Enum\TaskStatus::PENDING,
         ]);
 
         $subtask1 = TaskFactory::createOne([
-            'title' => 'Design mockups',
-            'user' => $this->user,
+            'title'      => 'Design mockups',
+            'user'       => $this->user,
             'parentTask' => $parentTask->_real(),
-            'status' => \App\Enum\TaskStatus::PENDING,
+            'status'     => \App\Enum\TaskStatus::PENDING,
         ]);
 
         $subtask2 = TaskFactory::createOne([
-            'title' => 'Write code',
-            'user' => $this->user,
+            'title'      => 'Write code',
+            'user'       => $this->user,
             'parentTask' => $parentTask->_real(),
-            'status' => \App\Enum\TaskStatus::PENDING,
+            'status'     => \App\Enum\TaskStatus::PENDING,
         ]);
 
         $subtask3 = TaskFactory::createOne([
-            'title' => 'Write tests',
-            'user' => $this->user,
+            'title'      => 'Write tests',
+            'user'       => $this->user,
             'parentTask' => $parentTask->_real(),
-            'status' => \App\Enum\TaskStatus::PENDING,
+            'status'     => \App\Enum\TaskStatus::PENDING,
         ]);
 
         // Act: Complete all subtasks
@@ -155,6 +159,7 @@ class TaskServiceIntegrationTest extends KernelTestCase
         // Verify all subtasks are indeed completed
         $subtasks = $parentTask->_real()->getSubtasks();
         $this->assertCount(3, $subtasks);
+
         foreach ($subtasks as $subtask) {
             $this->assertTrue($subtask->isCompleted());
         }
@@ -173,7 +178,7 @@ class TaskServiceIntegrationTest extends KernelTestCase
 
         $parentTask = TaskFactory::createOne([
             'title' => 'Main task',
-            'user' => $this->user,
+            'user'  => $this->user,
         ]);
 
         // Add tags to task
@@ -182,20 +187,20 @@ class TaskServiceIntegrationTest extends KernelTestCase
 
         // Create subtasks
         $subtask1 = TaskFactory::createOne([
-            'title' => 'Subtask 1',
-            'user' => $this->user,
+            'title'      => 'Subtask 1',
+            'user'       => $this->user,
             'parentTask' => $parentTask->_real(),
         ]);
 
         $subtask2 = TaskFactory::createOne([
-            'title' => 'Subtask 2',
-            'user' => $this->user,
+            'title'      => 'Subtask 2',
+            'user'       => $this->user,
             'parentTask' => $parentTask->_real(),
         ]);
 
         // Create recurrence rule
         $rule = RecurrenceRuleFactory::new()->weekly()->create([
-            'createdBy' => $this->user,
+            'createdBy'    => $this->user,
             'templateTask' => $parentTask->_real(),
         ]);
 
@@ -250,10 +255,11 @@ class TaskServiceIntegrationTest extends KernelTestCase
 
         // Act: Create 20 tasks with same tag
         $tasks = [];
+
         for ($i = 1; $i <= 20; $i++) {
             $task = TaskFactory::createOne([
-                'title' => 'Bulk task #' . $i,
-                'user' => $this->user,
+                'title'    => 'Bulk task #' . $i,
+                'user'     => $this->user,
                 'priority' => $i % 3 === 0 ? \App\Enum\TaskPriority::HIGH : \App\Enum\TaskPriority::MEDIUM,
             ]);
             $task->_real()->addTag($tag->_real());
@@ -276,6 +282,7 @@ class TaskServiceIntegrationTest extends KernelTestCase
         $batchTag = $tagRepository->findOneBy(['name' => $tagName, 'user' => $this->user]);
 
         $highPriorityCount = 0;
+
         foreach ($batchTag->getTasks() as $task) {
             if ($task->getPriority() === \App\Enum\TaskPriority::HIGH) {
                 $task->setStatus(\App\Enum\TaskStatus::IN_PROGRESS);
@@ -296,6 +303,7 @@ class TaskServiceIntegrationTest extends KernelTestCase
 
         // Assert: Bulk deletion
         $tasksToDelete = array_slice($tasks, 0, 10);
+
         foreach ($tasksToDelete as $task) {
             $entityManager->remove($task->_real());
         }

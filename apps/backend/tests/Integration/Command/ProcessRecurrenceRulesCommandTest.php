@@ -5,15 +5,14 @@ declare(strict_types=1);
 namespace App\Tests\Integration\Command;
 
 use App\Command\ProcessRecurrenceRulesCommand;
-use App\Entity\RecurrenceRule;
 use App\Entity\Task;
 use App\Entity\User;
-use App\Enum\RecurrenceType;
 use App\Enum\TaskStatus;
 use App\Service\RecurrenceService;
 use App\TestsUtilities\Factory\RecurrenceRuleFactory;
 use App\TestsUtilities\Factory\TaskFactory;
 use App\TestsUtilities\Factory\UserFactory;
+use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -34,15 +33,18 @@ final class ProcessRecurrenceRulesCommandTest extends KernelTestCase
     use Factories;
 
     private CommandTester $commandTester;
+
     private EntityManagerInterface $entityManager;
+
     private RecurrenceService $recurrenceService;
+
     private User $user;
 
     protected function setUp(): void
     {
         self::bootKernel();
 
-        $container = static::getContainer();
+        $container = self::getContainer();
         $this->entityManager = $container->get(EntityManagerInterface::class);
         $this->recurrenceService = $container->get(RecurrenceService::class);
 
@@ -53,10 +55,16 @@ final class ProcessRecurrenceRulesCommandTest extends KernelTestCase
 
         // Create test user
         $userProxy = UserFactory::createOne([
-            'email' => 'command-test-' . uniqid() . '@example.com',
+            'email'    => 'command-test-' . uniqid() . '@example.com',
             'password' => 'password123',
         ]);
         $this->user = $userProxy->_real();
+    }
+
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+        $this->entityManager->close();
     }
 
     /**
@@ -71,36 +79,36 @@ final class ProcessRecurrenceRulesCommandTest extends KernelTestCase
     {
         // Arrange: Create active recurrence rules with upcoming dates
         $templateTask1 = TaskFactory::createOne([
-            'title' => 'Daily task template',
-            'user' => $this->user,
+            'title'  => 'Daily task template',
+            'user'   => $this->user,
             'status' => TaskStatus::PENDING,
         ]);
 
         $templateTask2 = TaskFactory::createOne([
-            'title' => 'Weekly task template',
-            'user' => $this->user,
+            'title'  => 'Weekly task template',
+            'user'   => $this->user,
             'status' => TaskStatus::PENDING,
         ]);
 
         // Create daily recurrence rule (next occurrence is today)
         $dailyRule = RecurrenceRuleFactory::new()->daily()->create([
-            'createdBy' => $this->user,
+            'createdBy'    => $this->user,
             'templateTask' => $templateTask1->_real(),
-            'isActive' => true,
+            'isActive'     => true,
         ]);
 
-        $dailyRule->_real()->setEndDate(new \DateTimeImmutable('+30 days'));
-        $dailyRule->_real()->setNextOccurrenceDate(new \DateTimeImmutable('today'));
+        $dailyRule->_real()->setEndDate(new DateTimeImmutable('+30 days'));
+        $dailyRule->_real()->setNextOccurrenceDate(new DateTimeImmutable('today'));
 
         // Create weekly recurrence rule (next occurrence is today)
         $weeklyRule = RecurrenceRuleFactory::new()->weekly()->create([
-            'createdBy' => $this->user,
+            'createdBy'    => $this->user,
             'templateTask' => $templateTask2->_real(),
-            'isActive' => true,
+            'isActive'     => true,
         ]);
 
-        $weeklyRule->_real()->setEndDate(new \DateTimeImmutable('+30 days'));
-        $weeklyRule->_real()->setNextOccurrenceDate(new \DateTimeImmutable('today'));
+        $weeklyRule->_real()->setEndDate(new DateTimeImmutable('+30 days'));
+        $weeklyRule->_real()->setNextOccurrenceDate(new DateTimeImmutable('today'));
 
         $this->entityManager->flush();
         $this->entityManager->clear();
@@ -128,7 +136,7 @@ final class ProcessRecurrenceRulesCommandTest extends KernelTestCase
         $this->assertGreaterThanOrEqual(
             $tasksBeforeCount + 2,
             $tasksAfterCount,
-            'New tasks should be generated from recurrence rules'
+            'New tasks should be generated from recurrence rules',
         );
     }
 
@@ -144,19 +152,19 @@ final class ProcessRecurrenceRulesCommandTest extends KernelTestCase
     {
         // Arrange: Create active recurrence rule
         $templateTask = TaskFactory::createOne([
-            'title' => 'Dry run template',
-            'user' => $this->user,
+            'title'  => 'Dry run template',
+            'user'   => $this->user,
             'status' => TaskStatus::PENDING,
         ]);
 
         $rule = RecurrenceRuleFactory::new()->daily()->create([
-            'createdBy' => $this->user,
+            'createdBy'    => $this->user,
             'templateTask' => $templateTask->_real(),
-            'isActive' => true,
+            'isActive'     => true,
         ]);
 
-        $rule->_real()->setEndDate(new \DateTimeImmutable('+30 days'));
-        $rule->_real()->setNextOccurrenceDate(new \DateTimeImmutable('today'));
+        $rule->_real()->setEndDate(new DateTimeImmutable('+30 days'));
+        $rule->_real()->setNextOccurrenceDate(new DateTimeImmutable('today'));
 
         $this->entityManager->flush();
         $this->entityManager->clear();
@@ -185,7 +193,7 @@ final class ProcessRecurrenceRulesCommandTest extends KernelTestCase
         $this->assertEquals(
             $tasksBeforeCount,
             $tasksAfterCount,
-            'Dry-run should not create any new tasks'
+            'Dry-run should not create any new tasks',
         );
     }
 
@@ -204,19 +212,19 @@ final class ProcessRecurrenceRulesCommandTest extends KernelTestCase
 
         for ($i = 1; $i <= $rulesToCreate; $i++) {
             $templateTask = TaskFactory::createOne([
-                'title' => "Limited task template #{$i}",
-                'user' => $this->user,
+                'title'  => "Limited task template #{$i}",
+                'user'   => $this->user,
                 'status' => TaskStatus::PENDING,
             ]);
 
             $rule = RecurrenceRuleFactory::new()->daily()->create([
-                'createdBy' => $this->user,
+                'createdBy'    => $this->user,
                 'templateTask' => $templateTask->_real(),
-                'isActive' => true,
+                'isActive'     => true,
             ]);
 
-            $rule->_real()->setEndDate(new \DateTimeImmutable('+30 days'));
-            $rule->_real()->setNextOccurrenceDate(new \DateTimeImmutable('today'));
+            $rule->_real()->setEndDate(new DateTimeImmutable('+30 days'));
+            $rule->_real()->setNextOccurrenceDate(new DateTimeImmutable('today'));
         }
 
         $this->entityManager->flush();
@@ -224,7 +232,7 @@ final class ProcessRecurrenceRulesCommandTest extends KernelTestCase
 
         // Act: Execute command with --limit
         $exitCode = $this->commandTester->execute([
-            '--limit' => (string)$limit,
+            '--limit' => (string) $limit,
         ]);
 
         // Assert: Command executed successfully
@@ -248,19 +256,19 @@ final class ProcessRecurrenceRulesCommandTest extends KernelTestCase
     {
         // Arrange: Create only inactive or expired rules
         $templateTask = TaskFactory::createOne([
-            'title' => 'Inactive template',
-            'user' => $this->user,
+            'title'  => 'Inactive template',
+            'user'   => $this->user,
             'status' => TaskStatus::PENDING,
         ]);
 
         $inactiveRule = RecurrenceRuleFactory::new()->daily()->create([
-            'createdBy' => $this->user,
+            'createdBy'    => $this->user,
             'templateTask' => $templateTask->_real(),
-            'isActive' => false, // Inactive rule
+            'isActive'     => false, // Inactive rule
         ]);
 
-        $inactiveRule->_real()->setEndDate(new \DateTimeImmutable('-1 day')); // Expired
-        $inactiveRule->_real()->setNextOccurrenceDate(new \DateTimeImmutable('-30 days'));
+        $inactiveRule->_real()->setEndDate(new DateTimeImmutable('-1 day')); // Expired
+        $inactiveRule->_real()->setNextOccurrenceDate(new DateTimeImmutable('-30 days'));
 
         $this->entityManager->flush();
 
@@ -272,11 +280,5 @@ final class ProcessRecurrenceRulesCommandTest extends KernelTestCase
 
         $output = $this->commandTester->getDisplay();
         $this->assertStringContainsString('Processed', $output);
-    }
-
-    protected function tearDown(): void
-    {
-        parent::tearDown();
-        $this->entityManager->close();
     }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Repository\Database\AuditLogRepository;
+use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: AuditLogRepository::class)]
@@ -43,11 +44,11 @@ class AuditLog
     private ?array $metadata = null;
 
     #[ORM\Column(type: 'datetime_immutable')]
-    private \DateTimeImmutable $createdAt;
+    private DateTimeImmutable $createdAt;
 
     public function __construct()
     {
-        $this->createdAt = new \DateTimeImmutable();
+        $this->createdAt = new DateTimeImmutable();
     }
 
     public function __toString(): string
@@ -57,7 +58,7 @@ class AuditLog
             $this->action,
             $this->entityType,
             $this->entityId ?? 'N/A',
-            $this->user?->getEmail() ?? 'System'
+            $this->user?->getEmail() ?? 'System',
         );
     }
 
@@ -74,6 +75,7 @@ class AuditLog
     public function setUser(?User $user): self
     {
         $this->user = $user;
+
         return $this;
     }
 
@@ -85,6 +87,7 @@ class AuditLog
     public function setAction(string $action): self
     {
         $this->action = $action;
+
         return $this;
     }
 
@@ -96,6 +99,7 @@ class AuditLog
     public function setEntityType(string $entityType): self
     {
         $this->entityType = $entityType;
+
         return $this;
     }
 
@@ -107,6 +111,7 @@ class AuditLog
     public function setEntityId(?int $entityId): self
     {
         $this->entityId = $entityId;
+
         return $this;
     }
 
@@ -118,6 +123,7 @@ class AuditLog
     public function setOldData(?array $oldData): self
     {
         $this->oldData = $oldData;
+
         return $this;
     }
 
@@ -129,6 +135,7 @@ class AuditLog
     public function setNewData(?array $newData): self
     {
         $this->newData = $newData;
+
         return $this;
     }
 
@@ -140,10 +147,11 @@ class AuditLog
     public function setMetadata(?array $metadata): self
     {
         $this->metadata = $metadata;
+
         return $this;
     }
 
-    public function getCreatedAt(): \DateTimeImmutable
+    public function getCreatedAt(): DateTimeImmutable
     {
         return $this->createdAt;
     }

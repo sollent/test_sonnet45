@@ -10,17 +10,12 @@ use App\Dto\Request\Task\UpdateTaskDto;
 use App\Entity\Task;
 use App\Entity\User;
 use App\Enum\TaskStatus;
-use App\Exception\Task\TaskNotFoundException;
 use App\Exception\Task\TaskAccessDeniedException;
-use App\Dto\Request\Recurrence\CreateRecurrenceDto;
+use App\Repository\Database\MediaObjectRepository;
 use App\Repository\Database\TagRepository;
 use App\Repository\Database\TaskRepository;
-use App\Repository\Database\MediaObjectRepository;
-use App\Entity\MediaObject;
-use App\Service\RecurrenceService;
-use App\Service\TranslationService;
+use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\Security\Core\User\UserInterface;
 use Doctrine\ORM\Tools\Pagination\Paginator;
 use Symfony\Component\HttpFoundation\RequestStack;
 
@@ -33,31 +28,8 @@ final class TaskService
         private readonly MediaObjectRepository $mediaObjectRepository,
         private readonly ?RecurrenceService $recurrenceService = null,
         private readonly ?TranslationService $translationService = null,
-        private readonly ?RequestStack $requestStack = null
+        private readonly ?RequestStack $requestStack = null,
     ) {
-    }
-
-    /**
-     * Enrich task DTO with translations
-     */
-    private function enrichDtoWithTranslations(\App\Dto\Response\Task\TaskResponseDto $dto): void
-    {
-        if ($this->translationService === null) {
-            return;
-        }
-        
-        // Get locale from current request
-        $locale = null;
-        if ($this->requestStack !== null) {
-            $request = $this->requestStack->getCurrentRequest();
-            if ($request !== null) {
-                $locale = $request->getLocale();
-            }
-        }
-        
-        // Add translations
-        $dto->priorityLabel = $this->translationService->translatePriority($dto->priority, $locale);
-        $dto->statusLabel = $this->translationService->translateStatus($dto->status, $locale);
     }
 
     /**
@@ -70,8 +42,8 @@ final class TaskService
             ->setDescription($dto->description)
             ->setStatus($dto->status)
             ->setPriority($dto->priority)
-            ->setStartDate($dto->startDate ? new \DateTimeImmutable($dto->startDate) : null)
-            ->setDueDate($dto->dueDate ? new \DateTimeImmutable($dto->dueDate) : null)
+            ->setStartDate($dto->startDate ? new DateTimeImmutable($dto->startDate) : null)
+            ->setDueDate($dto->dueDate ? new DateTimeImmutable($dto->dueDate) : null)
             ->setSortOrder($dto->sortOrder)
             ->setIsArchived($dto->isArchived)
             ->setUser($user);
@@ -79,6 +51,7 @@ final class TaskService
         // Handle parent task
         if ($dto->parentTaskId !== null) {
             $parentTask = $this->taskRepository->find($dto->parentTaskId);
+
             if ($parentTask && $parentTask->getUser() === $user) {
                 $task->setParentTask($parentTask);
             }
@@ -87,6 +60,7 @@ final class TaskService
         // Handle tags
         if (!empty($dto->tags)) {
             $tags = $this->tagRepository->findOrCreateByNames($dto->tags, $user);
+
             foreach ($tags as $tag) {
                 $task->addTag($tag);
             }
@@ -95,8 +69,10 @@ final class TaskService
         // Handle media objects
         if (!empty($dto->mediaIds)) {
             error_log('Processing mediaIds: ' . json_encode($dto->mediaIds));
+
             foreach ($dto->mediaIds as $mediaId) {
                 $mediaObject = $this->mediaObjectRepository->find($mediaId);
+
                 if ($mediaObject && $mediaObject->getUploadedBy() === $user) {
                     error_log('Adding media object ' . $mediaId . ' to task');
                     $task->addMediaObject($mediaObject);
@@ -113,9 +89,10 @@ final class TaskService
 
         // Handle recurrence if specified
         if ($dto->recurrence !== null && $this->recurrenceService !== null) {
-            $this->recurrenceService->createRecurrenceRule($task, 
+            $this->recurrenceService->createRecurrenceRule(
+                $task,
                 $dto->recurrence['recurrenceType'] ?? 'daily',
-                $dto->recurrence
+                $dto->recurrence,
             );
         }
 
@@ -146,11 +123,11 @@ final class TaskService
         }
 
         if ($dto->startDate !== null) {
-            $task->setStartDate(new \DateTimeImmutable($dto->startDate));
+            $task->setStartDate(new DateTimeImmutable($dto->startDate));
         }
 
         if ($dto->dueDate !== null) {
-            $task->setDueDate(new \DateTimeImmutable($dto->dueDate));
+            $task->setDueDate(new DateTimeImmutable($dto->dueDate));
         }
 
         if ($dto->sortOrder !== null) {
@@ -171,6 +148,7 @@ final class TaskService
             // Add new tags
             if (!empty($dto->tags)) {
                 $tags = $this->tagRepository->findOrCreateByNames($dto->tags, $user);
+
                 foreach ($tags as $tag) {
                     $task->addTag($tag);
                 }
@@ -186,6 +164,7 @@ final class TaskService
             if (!empty($dto->mediaIds)) {
                 foreach ($dto->mediaIds as $mediaId) {
                     $mediaObject = $this->mediaObjectRepository->find($mediaId);
+
                     if ($mediaObject && $mediaObject->getUploadedBy() === $user) {
                         $task->addMediaObject($mediaObject);
                     }
@@ -250,21 +229,6 @@ final class TaskService
     }
 
     /**
-     * Complete all subtasks recursively
-     */
-    private function completeSubtasksRecursively(Task $task): void
-    {
-        foreach ($task->getSubtasks() as $subtask) {
-            if (!$subtask->isCompleted()) {
-                $subtask->setStatus(TaskStatus::COMPLETED);
-
-                // Recursively complete nested subtasks
-                $this->completeSubtasksRecursively($subtask);
-            }
-        }
-    }
-
-    /**
      * Archive a task
      */
     public function archiveTask(Task $task, User $user): Task
@@ -297,13 +261,13 @@ final class TaskService
         User $user,
         ?TaskStatus $status = null,
         bool $includeArchived = false,
-        bool $onlyParentTasks = true
+        bool $onlyParentTasks = true,
     ): array {
         return $this->taskRepository->findUserTasks(
             $user,
             $status,
             $includeArchived,
-            $onlyParentTasks
+            $onlyParentTasks,
         );
     }
 
@@ -346,6 +310,7 @@ final class TaskService
         $paginator = $this->taskRepository->findUnscheduledByUserPaginated($user, $page, $limit, $filters, $onlyWithSubtasks);
 
         $tasks = [];
+
         foreach ($paginator as $task) {
             $tasks[] = $task;
         }
@@ -389,13 +354,15 @@ final class TaskService
     public function updateTaskSortOrders(User $user, array $taskIds): void
     {
         $sortOrder = 0;
+
         foreach ($taskIds as $taskId) {
             $task = $this->taskRepository->find($taskId);
+
             if ($task && $task->getUser() === $user) {
                 $task->setSortOrder($sortOrder++);
             }
         }
-        
+
         $this->entityManager->flush();
     }
 
@@ -404,6 +371,7 @@ final class TaskService
         $paginator = $this->taskRepository->findOverdueByUserPaginated($user, $page, $limit, $filters, $onlyWithSubtasks);
 
         $tasks = [];
+
         foreach ($paginator as $task) {
             $tasks[] = $task;
         }
@@ -418,8 +386,48 @@ final class TaskService
     }
 
     /**
+     * Enrich task DTO with translations
+     */
+    private function enrichDtoWithTranslations(\App\Dto\Response\Task\TaskResponseDto $dto): void
+    {
+        if ($this->translationService === null) {
+            return;
+        }
+
+        // Get locale from current request
+        $locale = null;
+
+        if ($this->requestStack !== null) {
+            $request = $this->requestStack->getCurrentRequest();
+
+            if ($request !== null) {
+                $locale = $request->getLocale();
+            }
+        }
+
+        // Add translations
+        $dto->priorityLabel = $this->translationService->translatePriority($dto->priority, $locale);
+        $dto->statusLabel = $this->translationService->translateStatus($dto->status, $locale);
+    }
+
+    /**
+     * Complete all subtasks recursively
+     */
+    private function completeSubtasksRecursively(Task $task): void
+    {
+        foreach ($task->getSubtasks() as $subtask) {
+            if (!$subtask->isCompleted()) {
+                $subtask->setStatus(TaskStatus::COMPLETED);
+
+                // Recursively complete nested subtasks
+                $this->completeSubtasksRecursively($subtask);
+            }
+        }
+    }
+
+    /**
      * Ensure user can modify the task
-     * 
+     *
      * @throws TaskAccessDeniedException
      */
     private function ensureUserCanModifyTask(Task $task, User $user): void

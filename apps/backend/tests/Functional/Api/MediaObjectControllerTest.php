@@ -7,6 +7,7 @@ namespace App\Tests\Functional\Api;
 use App\Entity\User;
 use App\TestsUtilities\Factory\MediaObjectFactory;
 use App\TestsUtilities\Factory\UserFactory;
+use DateTimeImmutable;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -21,8 +22,11 @@ class MediaObjectControllerTest extends WebTestCase
     use Factories;
 
     private KernelBrowser $client;
+
     private JWTTokenManagerInterface $jwtManager;
+
     private User $user;
+
     private string $token;
 
     protected function setUp(): void
@@ -32,65 +36,18 @@ class MediaObjectControllerTest extends WebTestCase
 
         // Create authenticated user for tests
         $userProxy = UserFactory::createOne([
-            'email' => 'test-' . uniqid() . '@example.com',
+            'email'    => 'test-' . uniqid() . '@example.com',
             'password' => 'password123',
         ]);
         $this->user = $userProxy->_real();
         $this->token = $this->jwtManager->create($this->user);
     }
 
-    /**
-     * Helper: Make authenticated request
-     */
-    private function request(
-        string $method,
-        string $uri,
-        array $parameters = [],
-        array $files = [],
-        string $content = null
-    ): void {
-        $this->client->request(
-            $method,
-            $uri,
-            $parameters,
-            $files,
-            [
-                'HTTP_AUTHORIZATION' => 'Bearer ' . $this->token,
-                'CONTENT_TYPE' => 'application/json',
-            ],
-            $content
-        );
-    }
-
-    /**
-     * Helper: Get response data
-     */
-    private function getResponseData(): array
-    {
-        return json_decode($this->client->getResponse()->getContent(), true);
-    }
-
-    /**
-     * Helper: Create test file
-     */
-    private function createTestFile(string $filename = 'test.jpg', string $content = 'Test image content', string $mimeType = 'image/jpeg'): UploadedFile
-    {
-        $tempFile = tempnam(sys_get_temp_dir(), 'test_');
-        file_put_contents($tempFile, $content);
-
-        return new UploadedFile(
-            $tempFile,
-            $filename,
-            $mimeType,
-            null,
-            true // test mode
-        );
-    }
-
     // ==================== POST /api/media (Upload Media) ====================
 
     /**
      * @test
+     *
      * @group skip
      * Note: File upload tests require real file content matching MIME types
      * Current implementation is tested via integration with MediaObjectService mocks
@@ -102,6 +59,7 @@ class MediaObjectControllerTest extends WebTestCase
 
     /**
      * @test
+     *
      * @group skip
      */
     public function testUploadDocument(): void
@@ -111,6 +69,7 @@ class MediaObjectControllerTest extends WebTestCase
 
     /**
      * @test
+     *
      * @group skip
      */
     public function testUploadVideo(): void
@@ -120,6 +79,7 @@ class MediaObjectControllerTest extends WebTestCase
 
     /**
      * @test
+     *
      * @group skip
      */
     public function testUploadPdf(): void
@@ -136,7 +96,7 @@ class MediaObjectControllerTest extends WebTestCase
             '/api/media',
             [],
             [],
-            ['HTTP_AUTHORIZATION' => 'Bearer ' . $this->token]
+            ['HTTP_AUTHORIZATION' => 'Bearer ' . $this->token],
         );
 
         // Assert
@@ -156,7 +116,7 @@ class MediaObjectControllerTest extends WebTestCase
             'POST',
             '/api/media',
             [],
-            ['file' => $file]
+            ['file' => $file],
         );
 
         // Assert
@@ -287,7 +247,7 @@ class MediaObjectControllerTest extends WebTestCase
         // Arrange: Create media with 1KB size
         $mediaObject = MediaObjectFactory::new()->create([
             'uploadedBy' => $this->user,
-            'fileSize' => 1024,
+            'fileSize'   => 1024,
         ]);
 
         // Assert
@@ -301,7 +261,7 @@ class MediaObjectControllerTest extends WebTestCase
         // Arrange: Create media with 2MB size
         $mediaObject = MediaObjectFactory::new()->create([
             'uploadedBy' => $this->user,
-            'fileSize' => 2 * 1024 * 1024,
+            'fileSize'   => 2 * 1024 * 1024,
         ]);
 
         // Assert
@@ -315,7 +275,7 @@ class MediaObjectControllerTest extends WebTestCase
         // Arrange
         $thumbnailPath = '/uploads/media/thumbnails/' . uniqid() . '.jpg';
         $mediaObject = MediaObjectFactory::new()->image()->create([
-            'uploadedBy' => $this->user,
+            'uploadedBy'    => $this->user,
             'thumbnailPath' => $thumbnailPath,
         ]);
 
@@ -357,7 +317,55 @@ class MediaObjectControllerTest extends WebTestCase
         ]);
 
         // Assert
-        $this->assertInstanceOf(\DateTimeImmutable::class, $mediaObject->_real()->getCreatedAt());
+        $this->assertInstanceOf(DateTimeImmutable::class, $mediaObject->_real()->getCreatedAt());
         $this->assertNotNull($mediaObject->_real()->getCreatedAt());
+    }
+
+    /**
+     * Helper: Make authenticated request
+     */
+    private function request(
+        string $method,
+        string $uri,
+        array $parameters = [],
+        array $files = [],
+        ?string $content = null,
+    ): void {
+        $this->client->request(
+            $method,
+            $uri,
+            $parameters,
+            $files,
+            [
+                'HTTP_AUTHORIZATION' => 'Bearer ' . $this->token,
+                'CONTENT_TYPE'       => 'application/json',
+            ],
+            $content,
+        );
+    }
+
+    /**
+     * Helper: Get response data
+     */
+    private function getResponseData(): array
+    {
+        return json_decode($this->client->getResponse()->getContent(), true);
+    }
+
+    /**
+     * Helper: Create test file
+     */
+    private function createTestFile(string $filename = 'test.jpg', string $content = 'Test image content', string $mimeType = 'image/jpeg'): UploadedFile
+    {
+        $tempFile = tempnam(sys_get_temp_dir(), 'test_');
+        file_put_contents($tempFile, $content);
+
+        return new UploadedFile(
+            $tempFile,
+            $filename,
+            $mimeType,
+            null,
+            true, // test mode
+        );
     }
 }

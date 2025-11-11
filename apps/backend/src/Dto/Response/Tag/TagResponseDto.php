@@ -5,16 +5,23 @@ declare(strict_types=1);
 namespace App\Dto\Response\Tag;
 
 use App\Entity\Tag;
+use DateTimeImmutable;
 
 final class TagResponseDto
 {
     public int $id;
+
     public string $name;
+
     public string $color;
+
     public ?string $icon;
+
     public int $usageCount;
-    public \DateTimeImmutable $createdAt;
-    public \DateTimeImmutable $updatedAt;
+
+    public DateTimeImmutable $createdAt;
+
+    public DateTimeImmutable $updatedAt;
 
     public static function fromEntity(Tag $tag): self
     {

@@ -17,7 +17,6 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
-use Symfony\Component\Validator\Constraints as Assert;
 
 #[Route('/api/tags')]
 #[IsGranted('ROLE_USER')]
@@ -27,7 +26,7 @@ class TagController extends AbstractController
     public function __construct(
         private readonly TagRepository $tagRepository,
         private readonly EntityManagerInterface $entityManager,
-        private readonly ValidatorInterface $validator
+        private readonly ValidatorInterface $validator,
     ) {
     }
 
@@ -39,14 +38,14 @@ class TagController extends AbstractController
                 name: 'search',
                 in: 'query',
                 required: false,
-                schema: new OA\Schema(type: 'string')
+                schema: new OA\Schema(type: 'string'),
             ),
             new OA\Parameter(
                 name: 'limit',
                 in: 'query',
                 required: false,
-                schema: new OA\Schema(type: 'integer', default: null)
-            )
+                schema: new OA\Schema(type: 'integer', default: null),
+            ),
         ],
         responses: [
             new OA\Response(
@@ -54,10 +53,10 @@ class TagController extends AbstractController
                 description: 'List of tags',
                 content: new OA\JsonContent(
                     type: 'array',
-                    items: new OA\Items(ref: new Model(type: TagResponseDto::class))
-                )
-            )
-        ]
+                    items: new OA\Items(ref: new Model(type: TagResponseDto::class)),
+                ),
+            ),
+        ],
     )]
     public function list(Request $request): JsonResponse
     {
@@ -72,8 +71,8 @@ class TagController extends AbstractController
         }
 
         $response = array_map(
-            fn($tag) => TagResponseDto::fromEntity($tag),
-            $tags
+            fn ($tag) => TagResponseDto::fromEntity($tag),
+            $tags,
         );
 
         return $this->json($response);
@@ -87,8 +86,8 @@ class TagController extends AbstractController
                 name: 'limit',
                 in: 'query',
                 required: false,
-                schema: new OA\Schema(type: 'integer', default: 5)
-            )
+                schema: new OA\Schema(type: 'integer', default: 5),
+            ),
         ],
         responses: [
             new OA\Response(
@@ -96,10 +95,10 @@ class TagController extends AbstractController
                 description: 'List of most used tags',
                 content: new OA\JsonContent(
                     type: 'array',
-                    items: new OA\Items(ref: new Model(type: TagResponseDto::class))
-                )
-            )
-        ]
+                    items: new OA\Items(ref: new Model(type: TagResponseDto::class)),
+                ),
+            ),
+        ],
     )]
     public function mostUsed(Request $request): JsonResponse
     {
@@ -107,8 +106,8 @@ class TagController extends AbstractController
         $tags = $this->tagRepository->getMostUsedTags($this->getUser(), $limit);
 
         $response = array_map(
-            fn($tag) => TagResponseDto::fromEntity($tag),
-            $tags
+            fn ($tag) => TagResponseDto::fromEntity($tag),
+            $tags,
         );
 
         return $this->json($response);
@@ -121,10 +120,10 @@ class TagController extends AbstractController
             new OA\Response(
                 response: 200,
                 description: 'Tag details',
-                content: new OA\JsonContent(ref: new Model(type: TagResponseDto::class))
+                content: new OA\JsonContent(ref: new Model(type: TagResponseDto::class)),
             ),
-            new OA\Response(response: 404, description: 'Tag not found')
-        ]
+            new OA\Response(response: 404, description: 'Tag not found'),
+        ],
     )]
     public function show(Tag $tag): JsonResponse
     {
@@ -143,19 +142,19 @@ class TagController extends AbstractController
                 properties: [
                     new OA\Property(property: 'name', type: 'string', maxLength: 50),
                     new OA\Property(property: 'color', type: 'string', example: '#3B82F6'),
-                    new OA\Property(property: 'icon', type: 'string', nullable: true)
-                ]
-            )
+                    new OA\Property(property: 'icon', type: 'string', nullable: true),
+                ],
+            ),
         ),
         responses: [
             new OA\Response(
                 response: 201,
                 description: 'Tag created',
-                content: new OA\JsonContent(ref: new Model(type: TagResponseDto::class))
+                content: new OA\JsonContent(ref: new Model(type: TagResponseDto::class)),
             ),
             new OA\Response(response: 400, description: 'Invalid input'),
-            new OA\Response(response: 409, description: 'Tag with this name already exists')
-        ]
+            new OA\Response(response: 409, description: 'Tag with this name already exists'),
+        ],
     )]
     public function create(Request $request): JsonResponse
     {
@@ -164,10 +163,11 @@ class TagController extends AbstractController
 
         // Check if tag already exists
         $existingTag = $this->tagRepository->findByNameAndUser($data['name'] ?? '', $user);
+
         if ($existingTag) {
             return $this->json(
                 ['message' => 'Tag with this name already exists'],
-                Response::HTTP_CONFLICT
+                Response::HTTP_CONFLICT,
             );
         }
 
@@ -179,11 +179,14 @@ class TagController extends AbstractController
 
         // Validate
         $errors = $this->validator->validate($tag);
+
         if (count($errors) > 0) {
             $errorMessages = [];
+
             foreach ($errors as $error) {
                 $errorMessages[] = $error->getMessage();
             }
+
             return $this->json(['errors' => $errorMessages], Response::HTTP_BAD_REQUEST);
         }
 
@@ -192,7 +195,7 @@ class TagController extends AbstractController
 
         return $this->json(
             TagResponseDto::fromEntity($tag),
-            Response::HTTP_CREATED
+            Response::HTTP_CREATED,
         );
     }
 
@@ -205,20 +208,20 @@ class TagController extends AbstractController
                 properties: [
                     new OA\Property(property: 'name', type: 'string', maxLength: 50),
                     new OA\Property(property: 'color', type: 'string', example: '#3B82F6'),
-                    new OA\Property(property: 'icon', type: 'string', nullable: true)
-                ]
-            )
+                    new OA\Property(property: 'icon', type: 'string', nullable: true),
+                ],
+            ),
         ),
         responses: [
             new OA\Response(
                 response: 200,
                 description: 'Tag updated',
-                content: new OA\JsonContent(ref: new Model(type: TagResponseDto::class))
+                content: new OA\JsonContent(ref: new Model(type: TagResponseDto::class)),
             ),
             new OA\Response(response: 404, description: 'Tag not found'),
             new OA\Response(response: 403, description: 'Access denied'),
-            new OA\Response(response: 409, description: 'Tag with this name already exists')
-        ]
+            new OA\Response(response: 409, description: 'Tag with this name already exists'),
+        ],
     )]
     public function update(Tag $tag, Request $request): JsonResponse
     {
@@ -231,10 +234,11 @@ class TagController extends AbstractController
         if (isset($data['name']) && $data['name'] !== $tag->getName()) {
             // Check if new name already exists
             $existingTag = $this->tagRepository->findByNameAndUser($data['name'], $user);
+
             if ($existingTag && $existingTag->getId() !== $tag->getId()) {
                 return $this->json(
                     ['message' => 'Tag with this name already exists'],
-                    Response::HTTP_CONFLICT
+                    Response::HTTP_CONFLICT,
                 );
             }
             $tag->setName($data['name']);
@@ -250,11 +254,14 @@ class TagController extends AbstractController
 
         // Validate
         $errors = $this->validator->validate($tag);
+
         if (count($errors) > 0) {
             $errorMessages = [];
+
             foreach ($errors as $error) {
                 $errorMessages[] = $error->getMessage();
             }
+
             return $this->json(['errors' => $errorMessages], Response::HTTP_BAD_REQUEST);
         }
 
@@ -269,8 +276,8 @@ class TagController extends AbstractController
         responses: [
             new OA\Response(response: 204, description: 'Tag deleted'),
             new OA\Response(response: 404, description: 'Tag not found'),
-            new OA\Response(response: 403, description: 'Access denied')
-        ]
+            new OA\Response(response: 403, description: 'Access denied'),
+        ],
     )]
     public function delete(Tag $tag): Response
     {

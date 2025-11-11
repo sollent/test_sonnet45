@@ -22,8 +22,11 @@ class AttachmentControllerTest extends WebTestCase
     use Factories;
 
     private KernelBrowser $client;
+
     private JWTTokenManagerInterface $jwtManager;
+
     private User $user;
+
     private string $token;
 
     protected function setUp(): void
@@ -33,59 +36,11 @@ class AttachmentControllerTest extends WebTestCase
 
         // Create authenticated user for tests
         $userProxy = UserFactory::createOne([
-            'email' => 'test-' . uniqid() . '@example.com',
+            'email'    => 'test-' . uniqid() . '@example.com',
             'password' => 'password123',
         ]);
         $this->user = $userProxy->_real();
         $this->token = $this->jwtManager->create($this->user);
-    }
-
-    /**
-     * Helper: Make authenticated request
-     */
-    private function request(
-        string $method,
-        string $uri,
-        array $parameters = [],
-        array $files = [],
-        string $content = null
-    ): void {
-        $this->client->request(
-            $method,
-            $uri,
-            $parameters,
-            $files,
-            [
-                'HTTP_AUTHORIZATION' => 'Bearer ' . $this->token,
-                'CONTENT_TYPE' => 'application/json',
-            ],
-            $content
-        );
-    }
-
-    /**
-     * Helper: Get response data
-     */
-    private function getResponseData(): array
-    {
-        return json_decode($this->client->getResponse()->getContent(), true);
-    }
-
-    /**
-     * Helper: Create test file
-     */
-    private function createTestFile(string $filename = 'test.pdf', string $content = 'Test content', string $mimeType = 'application/pdf'): UploadedFile
-    {
-        $tempFile = tempnam(sys_get_temp_dir(), 'test_');
-        file_put_contents($tempFile, $content);
-
-        return new UploadedFile(
-            $tempFile,
-            $filename,
-            $mimeType,
-            null,
-            true // test mode
-        );
     }
 
     // ==================== GET /api/tasks/{taskId}/attachments (List Attachments) ====================
@@ -98,7 +53,7 @@ class AttachmentControllerTest extends WebTestCase
 
         // Create 3 attachments for the task
         TaskAttachmentFactory::createMany(3, [
-            'task' => $task->_real(),
+            'task'       => $task->_real(),
             'uploadedBy' => $this->user,
         ]);
 
@@ -163,6 +118,7 @@ class AttachmentControllerTest extends WebTestCase
 
     /**
      * @test
+     *
      * @group skip
      * Note: File upload tests require real file content matching MIME types
      * Current implementation is tested via integration with FileUploadService mocks
@@ -174,6 +130,7 @@ class AttachmentControllerTest extends WebTestCase
 
     /**
      * @test
+     *
      * @group skip
      */
     public function testUploadImageAttachment(): void
@@ -183,6 +140,7 @@ class AttachmentControllerTest extends WebTestCase
 
     /**
      * @test
+     *
      * @group skip
      */
     public function testUploadDocumentAttachment(): void
@@ -192,6 +150,7 @@ class AttachmentControllerTest extends WebTestCase
 
     /**
      * @test
+     *
      * @group skip
      */
     public function testUploadPdfAttachment(): void
@@ -201,6 +160,7 @@ class AttachmentControllerTest extends WebTestCase
 
     /**
      * @test
+     *
      * @group skip
      */
     public function testUploadMultipleAttachmentsSequentially(): void
@@ -220,7 +180,7 @@ class AttachmentControllerTest extends WebTestCase
             '/api/tasks/' . $task->getId() . '/attachments',
             [],
             [],
-            ['HTTP_AUTHORIZATION' => 'Bearer ' . $this->token]
+            ['HTTP_AUTHORIZATION' => 'Bearer ' . $this->token],
         );
 
         // Assert
@@ -240,8 +200,8 @@ class AttachmentControllerTest extends WebTestCase
             'POST',
             '/api/tasks/99999/attachments',
             [],
-            ['file' => $file],
-            ['HTTP_AUTHORIZATION' => 'Bearer ' . $this->token]
+            ['file'               => $file],
+            ['HTTP_AUTHORIZATION' => 'Bearer ' . $this->token],
         );
 
         // Assert
@@ -261,8 +221,8 @@ class AttachmentControllerTest extends WebTestCase
             'POST',
             '/api/tasks/' . $task->getId() . '/attachments',
             [],
-            ['file' => $file],
-            ['HTTP_AUTHORIZATION' => 'Bearer ' . $this->token]
+            ['file'               => $file],
+            ['HTTP_AUTHORIZATION' => 'Bearer ' . $this->token],
         );
 
         // Assert
@@ -281,7 +241,7 @@ class AttachmentControllerTest extends WebTestCase
             'POST',
             '/api/tasks/' . $task->getId() . '/attachments',
             [],
-            ['file' => $file]
+            ['file' => $file],
         );
 
         // Assert
@@ -296,14 +256,14 @@ class AttachmentControllerTest extends WebTestCase
         // Arrange
         $task = TaskFactory::createOne(['user' => $this->user]);
         $attachment = TaskAttachmentFactory::createOne([
-            'task' => $task->_real(),
+            'task'       => $task->_real(),
             'uploadedBy' => $this->user,
         ]);
 
         // Act
         $this->request(
             'DELETE',
-            '/api/tasks/' . $task->getId() . '/attachments/' . $attachment->getId()
+            '/api/tasks/' . $task->getId() . '/attachments/' . $attachment->getId(),
         );
 
         // Assert
@@ -319,7 +279,7 @@ class AttachmentControllerTest extends WebTestCase
         // Act
         $this->request(
             'DELETE',
-            '/api/tasks/' . $task->getId() . '/attachments/99999'
+            '/api/tasks/' . $task->getId() . '/attachments/99999',
         );
 
         // Assert
@@ -333,14 +293,14 @@ class AttachmentControllerTest extends WebTestCase
         $otherUser = UserFactory::createOne()->_real();
         $task = TaskFactory::createOne(['user' => $otherUser]);
         $attachment = TaskAttachmentFactory::createOne([
-            'task' => $task->_real(),
+            'task'       => $task->_real(),
             'uploadedBy' => $otherUser,
         ]);
 
         // Act
         $this->request(
             'DELETE',
-            '/api/tasks/' . $task->getId() . '/attachments/' . $attachment->getId()
+            '/api/tasks/' . $task->getId() . '/attachments/' . $attachment->getId(),
         );
 
         // Assert
@@ -353,7 +313,7 @@ class AttachmentControllerTest extends WebTestCase
         // Arrange
         $task = TaskFactory::createOne(['user' => $this->user]);
         $attachment = TaskAttachmentFactory::createOne([
-            'task' => $task->_real(),
+            'task'       => $task->_real(),
             'uploadedBy' => $this->user,
         ]);
 
@@ -364,7 +324,7 @@ class AttachmentControllerTest extends WebTestCase
         // Act: Delete attachment
         $this->request(
             'DELETE',
-            '/api/tasks/' . $task->getId() . '/attachments/' . $attachment->getId()
+            '/api/tasks/' . $task->getId() . '/attachments/' . $attachment->getId(),
         );
         $this->assertResponseStatusCodeSame(Response::HTTP_NO_CONTENT);
 
@@ -382,17 +342,17 @@ class AttachmentControllerTest extends WebTestCase
         $task = TaskFactory::createOne(['user' => $this->user]);
 
         TaskAttachmentFactory::new()->image()->create([
-            'task' => $task->_real(),
+            'task'       => $task->_real(),
             'uploadedBy' => $this->user,
         ]);
 
         TaskAttachmentFactory::new()->pdf()->create([
-            'task' => $task->_real(),
+            'task'       => $task->_real(),
             'uploadedBy' => $this->user,
         ]);
 
         TaskAttachmentFactory::new()->video()->create([
-            'task' => $task->_real(),
+            'task'       => $task->_real(),
             'uploadedBy' => $this->user,
         ]);
 
@@ -418,9 +378,9 @@ class AttachmentControllerTest extends WebTestCase
         $task = TaskFactory::createOne(['user' => $this->user]);
 
         TaskAttachmentFactory::createOne([
-            'task' => $task->_real(),
+            'task'       => $task->_real(),
             'uploadedBy' => $this->user,
-            'fileSize' => 1024, // 1 KB
+            'fileSize'   => 1024, // 1 KB
         ]);
 
         // Act
@@ -430,5 +390,53 @@ class AttachmentControllerTest extends WebTestCase
         $data = $this->getResponseData();
         $this->assertArrayHasKey('fileSizeHuman', $data[0]);
         $this->assertStringContainsString('KB', $data[0]['fileSizeHuman']);
+    }
+
+    /**
+     * Helper: Make authenticated request
+     */
+    private function request(
+        string $method,
+        string $uri,
+        array $parameters = [],
+        array $files = [],
+        ?string $content = null,
+    ): void {
+        $this->client->request(
+            $method,
+            $uri,
+            $parameters,
+            $files,
+            [
+                'HTTP_AUTHORIZATION' => 'Bearer ' . $this->token,
+                'CONTENT_TYPE'       => 'application/json',
+            ],
+            $content,
+        );
+    }
+
+    /**
+     * Helper: Get response data
+     */
+    private function getResponseData(): array
+    {
+        return json_decode($this->client->getResponse()->getContent(), true);
+    }
+
+    /**
+     * Helper: Create test file
+     */
+    private function createTestFile(string $filename = 'test.pdf', string $content = 'Test content', string $mimeType = 'application/pdf'): UploadedFile
+    {
+        $tempFile = tempnam(sys_get_temp_dir(), 'test_');
+        file_put_contents($tempFile, $content);
+
+        return new UploadedFile(
+            $tempFile,
+            $filename,
+            $mimeType,
+            null,
+            true, // test mode
+        );
     }
 }

@@ -24,7 +24,8 @@ final readonly class TaskEnumNormalizer implements NormalizerInterface
 
     /**
      * @param TaskPriority|TaskStatus $object
-     * @param array<string, mixed> $context
+     * @param array<string, mixed>    $context
+     *
      * @return array{value: string, label: string, color: string, icon: string}
      */
     public function normalize(mixed $object, ?string $format = null, array $context = []): array
@@ -32,14 +33,12 @@ final readonly class TaskEnumNormalizer implements NormalizerInterface
         // Get current request locale
         $locale = $this->requestStack->getCurrentRequest()?->getLocale();
 
-        $data = [
+        return [
             'value' => $object->value,
             'label' => $this->getTranslatedLabel($object, $locale),
             'color' => $object->getColor(),
-            'icon' => $object->getIcon(),
+            'icon'  => $object->getIcon(),
         ];
-
-        return $data;
     }
 
     public function supportsNormalization(mixed $data, ?string $format = null, array $context = []): bool
@@ -51,7 +50,7 @@ final readonly class TaskEnumNormalizer implements NormalizerInterface
     {
         return [
             TaskPriority::class => true,
-            TaskStatus::class => true,
+            TaskStatus::class   => true,
         ];
     }
 
@@ -59,7 +58,7 @@ final readonly class TaskEnumNormalizer implements NormalizerInterface
     {
         return match (true) {
             $enum instanceof TaskPriority => $this->enumTranslator->translatePriority($enum, $locale),
-            $enum instanceof TaskStatus => $this->enumTranslator->translateStatus($enum, $locale),
+            $enum instanceof TaskStatus   => $this->enumTranslator->translateStatus($enum, $locale),
         };
     }
 }

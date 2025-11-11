@@ -8,18 +8,21 @@ use App\Entity\Task;
 use App\Entity\TaskAttachment;
 use App\Entity\User;
 use App\Repository\Database\TaskAttachmentRepository;
+use RuntimeException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\String\Slugger\SluggerInterface;
 
 class FileUploadService
 {
     private const UPLOAD_DIR = '/public/uploads/tasks';
+
     private const MAX_FILE_SIZE = 10485760; // 10MB
+
     private const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'zip'];
 
     public function __construct(
         private readonly TaskAttachmentRepository $repository,
-        private readonly SluggerInterface $slugger
+        private readonly SluggerInterface $slugger,
     ) {
     }
 
@@ -40,6 +43,7 @@ class FileUploadService
         // Move file
         $projectDir = dirname(__DIR__, 2); // Go up from src/ to project root
         $uploadDirectory = $projectDir . self::UPLOAD_DIR;
+
         if (!is_dir($uploadDirectory)) {
             mkdir($uploadDirectory, 0777, true);
         }
@@ -70,6 +74,7 @@ class FileUploadService
         // Delete physical file
         $projectDir = dirname(__DIR__, 2);
         $filePath = $projectDir . $attachment->getFilePath();
+
         if (file_exists($filePath)) {
             unlink($filePath);
         }
@@ -79,13 +84,21 @@ class FileUploadService
     }
 
     /**
+     * Get file URL
+     */
+    public function getFileUrl(TaskAttachment $attachment): string
+    {
+        return $attachment->getFilePath() ?? '';
+    }
+
+    /**
      * Validate uploaded file
      */
     private function validateFile(UploadedFile $file): void
     {
         // Check file size
         if ($file->getSize() > self::MAX_FILE_SIZE) {
-            throw new \RuntimeException('File size exceeds 10MB limit');
+            throw new RuntimeException('File size exceeds 10MB limit');
         }
 
         // Get extension - prioritize client original name for test mode
@@ -94,22 +107,14 @@ class FileUploadService
         // In production, prefer guessed extension for security
         if (!$file->isValid() || $file->getError() === UPLOAD_ERR_OK) {
             $guessed = $file->guessExtension();
+
             if ($guessed && !$file->getPath()) { // Not in test mode
                 $extension = $guessed;
             }
         }
 
-        if (!in_array($extension, self::ALLOWED_EXTENSIONS)) {
-            throw new \RuntimeException('File type not allowed. Allowed: ' . implode(', ', self::ALLOWED_EXTENSIONS));
+        if (!in_array($extension, self::ALLOWED_EXTENSIONS, true)) {
+            throw new RuntimeException('File type not allowed. Allowed: ' . implode(', ', self::ALLOWED_EXTENSIONS));
         }
     }
-
-    /**
-     * Get file URL
-     */
-    public function getFileUrl(TaskAttachment $attachment): string
-    {
-        return $attachment->getFilePath() ?? '';
-    }
 }
-

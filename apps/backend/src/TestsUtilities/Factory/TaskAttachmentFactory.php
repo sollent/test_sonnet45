@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace App\TestsUtilities\Factory;
 
-use App\Entity\TaskAttachment;
 use App\Entity\Task;
+use App\Entity\TaskAttachment;
 use App\Entity\User;
+use DateTimeImmutable;
 use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
 
 /**
@@ -19,39 +20,17 @@ final class TaskAttachmentFactory extends PersistentProxyObjectFactory
         return TaskAttachment::class;
     }
 
-    protected function defaults(): array|callable
-    {
-        return [
-            'task' => TaskFactory::new(),
-            'fileName' => self::faker()->uuid() . '.txt',
-            'originalName' => self::faker()->word() . '.txt',
-            'mimeType' => 'text/plain',
-            'fileSize' => self::faker()->numberBetween(1000, 100000),
-            'fileType' => 'document',
-            'filePath' => 'uploads/' . self::faker()->uuid() . '.txt',
-            'uploadedBy' => UserFactory::new(),
-            'uploadedAt' => \DateTimeImmutable::createFromMutable(
-                self::faker()->dateTimeBetween('-30 days', 'now')
-            ),
-        ];
-    }
-
-    protected function initialize(): static
-    {
-        return $this;
-    }
-
     /**
      * Create an image attachment
      */
     public function image(): self
     {
         return $this->with([
-            'fileName' => self::faker()->uuid() . '.jpg',
+            'fileName'     => self::faker()->uuid() . '.jpg',
             'originalName' => self::faker()->word() . '.jpg',
-            'mimeType' => 'image/jpeg',
-            'fileType' => 'image',
-            'filePath' => 'uploads/' . self::faker()->uuid() . '.jpg',
+            'mimeType'     => 'image/jpeg',
+            'fileType'     => 'image',
+            'filePath'     => 'uploads/' . self::faker()->uuid() . '.jpg',
         ]);
     }
 
@@ -61,11 +40,11 @@ final class TaskAttachmentFactory extends PersistentProxyObjectFactory
     public function pdf(): self
     {
         return $this->with([
-            'fileName' => self::faker()->uuid() . '.pdf',
+            'fileName'     => self::faker()->uuid() . '.pdf',
             'originalName' => self::faker()->word() . '.pdf',
-            'mimeType' => 'application/pdf',
-            'fileType' => 'document',
-            'filePath' => 'uploads/' . self::faker()->uuid() . '.pdf',
+            'mimeType'     => 'application/pdf',
+            'fileType'     => 'document',
+            'filePath'     => 'uploads/' . self::faker()->uuid() . '.pdf',
         ]);
     }
 
@@ -75,12 +54,12 @@ final class TaskAttachmentFactory extends PersistentProxyObjectFactory
     public function video(): self
     {
         return $this->with([
-            'fileName' => self::faker()->uuid() . '.mp4',
+            'fileName'     => self::faker()->uuid() . '.mp4',
             'originalName' => self::faker()->word() . '.mp4',
-            'mimeType' => 'video/mp4',
-            'fileType' => 'video',
-            'filePath' => 'uploads/' . self::faker()->uuid() . '.mp4',
-            'fileSize' => self::faker()->numberBetween(1000000, 10000000),
+            'mimeType'     => 'video/mp4',
+            'fileType'     => 'video',
+            'filePath'     => 'uploads/' . self::faker()->uuid() . '.mp4',
+            'fileSize'     => self::faker()->numberBetween(1000000, 10000000),
         ]);
     }
 
@@ -122,5 +101,27 @@ final class TaskAttachmentFactory extends PersistentProxyObjectFactory
         return $this->with([
             'fileSize' => self::faker()->numberBetween(5000000, 10000000),
         ]);
+    }
+
+    protected function defaults(): array|callable
+    {
+        return [
+            'task'         => TaskFactory::new(),
+            'fileName'     => self::faker()->uuid() . '.txt',
+            'originalName' => self::faker()->word() . '.txt',
+            'mimeType'     => 'text/plain',
+            'fileSize'     => self::faker()->numberBetween(1000, 100000),
+            'fileType'     => 'document',
+            'filePath'     => 'uploads/' . self::faker()->uuid() . '.txt',
+            'uploadedBy'   => UserFactory::new(),
+            'uploadedAt'   => DateTimeImmutable::createFromMutable(
+                self::faker()->dateTimeBetween('-30 days', 'now'),
+            ),
+        ];
+    }
+
+    protected function initialize(): static
+    {
+        return $this;
     }
 }

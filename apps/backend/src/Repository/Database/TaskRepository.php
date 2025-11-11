@@ -7,8 +7,11 @@ namespace App\Repository\Database;
 use App\Dto\Request\Task\TaskFilterDto;
 use App\Entity\Task;
 use App\Entity\User;
-use App\Enum\TaskStatus;
 use App\Enum\TaskPriority;
+use App\Enum\TaskStatus;
+use DateTime;
+use DateTimeImmutable;
+use DateTimeInterface;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\ORM\Tools\Pagination\Paginator;
@@ -38,7 +41,7 @@ class TaskRepository extends ServiceEntityRepository
         User $user,
         ?TaskStatus $status = null,
         ?bool $includeArchived = false,
-        ?bool $onlyParentTasks = true
+        ?bool $onlyParentTasks = true,
     ): array {
         $qb = $this->createQueryBuilder('t')
             ->leftJoin('t.tags', 'tag')
@@ -78,8 +81,8 @@ class TaskRepository extends ServiceEntityRepository
      */
     public function findTodayTasks(User $user, ?TaskFilterDto $filters = null, bool $onlyWithSubtasks = false): array
     {
-        $todayStart = new \DateTimeImmutable('today');
-        $todayEnd = new \DateTimeImmutable('today 23:59:59');
+        $todayStart = new DateTimeImmutable('today');
+        $todayEnd = new DateTimeImmutable('today 23:59:59');
 
         $qb = $this->createQueryBuilder('t')
             ->leftJoin('t.tags', 'tag')
@@ -97,7 +100,7 @@ class TaskRepository extends ServiceEntityRepository
             ->andWhere('t.isArchived = false')
             ->andWhere('t.status != :cancelledStatus')  // Exclude cancelled tasks
             ->andWhere(
-                '(t.dueDate BETWEEN :todayStart AND :todayEnd) OR (t.startDate BETWEEN :todayStart AND :todayEnd)'
+                '(t.dueDate BETWEEN :todayStart AND :todayEnd) OR (t.startDate BETWEEN :todayStart AND :todayEnd)',
             )
             ->setParameter('user', $user)
             ->setParameter('todayStart', $todayStart)
@@ -113,13 +116,13 @@ class TaskRepository extends ServiceEntityRepository
             $stmt = $conn->executeQuery(
                 'SELECT DISTINCT parent_task_id FROM task WHERE parent_task_id IN (SELECT id FROM task WHERE user_id = ? AND parent_task_id IS NULL)',
                 [$user->getId()],
-                [\Doctrine\DBAL\ParameterType::INTEGER]
+                [\Doctrine\DBAL\ParameterType::INTEGER],
             );
             $parentIds = $stmt->fetchFirstColumn();
 
             if (!empty($parentIds)) {
                 $qb->andWhere('t.id IN (:parentTaskIds)')
-                   ->setParameter('parentTaskIds', $parentIds);
+                    ->setParameter('parentTaskIds', $parentIds);
             } else {
                 // No tasks with subtasks found - return empty result
                 $qb->andWhere('1 = 0');
@@ -133,14 +136,15 @@ class TaskRepository extends ServiceEntityRepository
 
         // Sort by completion status first (uncompleted first, then completed), then by priority
         $qb->addSelect('CASE WHEN t.status = :completedStatus THEN 1 ELSE 0 END AS HIDDEN completedOrder')
-           ->setParameter('completedStatus', TaskStatus::COMPLETED)
-           ->orderBy('completedOrder', 'ASC')  // 0=uncompleted first, 1=completed after
-           ->addOrderBy('t.priority', 'DESC')
-           ->addOrderBy('t.dueDate', 'ASC')
-           ->addOrderBy('t.id', 'ASC');
+            ->setParameter('completedStatus', TaskStatus::COMPLETED)
+            ->orderBy('completedOrder', 'ASC')  // 0=uncompleted first, 1=completed after
+            ->addOrderBy('t.priority', 'DESC')
+            ->addOrderBy('t.dueDate', 'ASC')
+            ->addOrderBy('t.id', 'ASC');
 
         // Use Paginator for correct LEFT JOIN + LIMIT handling
         $paginator = new Paginator($qb->getQuery(), $fetchJoinCollection = true);
+
         return iterator_to_array($paginator);
     }
 
@@ -151,7 +155,7 @@ class TaskRepository extends ServiceEntityRepository
      */
     public function findOverdueTasks(User $user): array
     {
-        $now = new \DateTimeImmutable();
+        $now = new DateTimeImmutable();
 
         return $this->createQueryBuilder('t')
             ->leftJoin('t.tags', 'tag')
@@ -181,8 +185,8 @@ class TaskRepository extends ServiceEntityRepository
      */
     public function findUpcomingTasks(User $user, int $days = 7, ?TaskFilterDto $filters = null, bool $onlyWithSubtasks = false): array
     {
-        $tomorrow = new \DateTimeImmutable('tomorrow');
-        $endDate = new \DateTimeImmutable("+{$days} days");
+        $tomorrow = new DateTimeImmutable('tomorrow');
+        $endDate = new DateTimeImmutable("+{$days} days");
 
         $qb = $this->createQueryBuilder('t')
             ->leftJoin('t.tags', 'tag')
@@ -214,13 +218,13 @@ class TaskRepository extends ServiceEntityRepository
             $stmt = $conn->executeQuery(
                 'SELECT DISTINCT parent_task_id FROM task WHERE parent_task_id IN (SELECT id FROM task WHERE user_id = ? AND parent_task_id IS NULL)',
                 [$user->getId()],
-                [\Doctrine\DBAL\ParameterType::INTEGER]
+                [\Doctrine\DBAL\ParameterType::INTEGER],
             );
             $parentIds = $stmt->fetchFirstColumn();
 
             if (!empty($parentIds)) {
                 $qb->andWhere('t.id IN (:parentTaskIds)')
-                   ->setParameter('parentTaskIds', $parentIds);
+                    ->setParameter('parentTaskIds', $parentIds);
             } else {
                 // No tasks with subtasks found - return empty result
                 $qb->andWhere('1 = 0');
@@ -234,23 +238,24 @@ class TaskRepository extends ServiceEntityRepository
 
         // Sort by date first, then by completion status (uncompleted first, then completed), then by priority
         $qb->addSelect('DATE(COALESCE(t.dueDate, t.startDate)) AS HIDDEN dateOnly')
-           ->addSelect('CASE WHEN t.status = :completedStatus THEN 1 ELSE 0 END AS HIDDEN completedOrder')
-           ->setParameter('completedStatus', TaskStatus::COMPLETED)
-           ->orderBy('dateOnly', 'ASC')  // Group by day
-           ->addOrderBy('completedOrder', 'ASC')  // 0=uncompleted first, 1=completed after
-           ->addOrderBy('t.priority', 'DESC')
-           ->addOrderBy('t.id', 'ASC')
+            ->addSelect('CASE WHEN t.status = :completedStatus THEN 1 ELSE 0 END AS HIDDEN completedOrder')
+            ->setParameter('completedStatus', TaskStatus::COMPLETED)
+            ->orderBy('dateOnly', 'ASC')  // Group by day
+            ->addOrderBy('completedOrder', 'ASC')  // 0=uncompleted first, 1=completed after
+            ->addOrderBy('t.priority', 'DESC')
+            ->addOrderBy('t.id', 'ASC')
            // PERFORMANCE: Limit to 200 tasks to prevent loading thousands of tasks
-           ->setMaxResults(200);
+            ->setMaxResults(200);
 
         // Use Paginator for correct LEFT JOIN + LIMIT handling
         $paginator = new Paginator($qb->getQuery(), $fetchJoinCollection = true);
+
         return iterator_to_array($paginator);
     }
 
     public function findActiveTasks(User $user, ?TaskFilterDto $filters = null, ?int $limit = null, ?int $offset = null, bool $onlyWithSubtasks = false): array
     {
-        $todayStart = new \DateTimeImmutable('today');
+        $todayStart = new DateTimeImmutable('today');
 
         $qb = $this->createQueryBuilder('t')
             ->leftJoin('t.recurrenceRule', 'rr')
@@ -281,13 +286,13 @@ class TaskRepository extends ServiceEntityRepository
             $stmt = $conn->executeQuery(
                 'SELECT DISTINCT parent_task_id FROM task WHERE parent_task_id IN (SELECT id FROM task WHERE user_id = ? AND parent_task_id IS NULL)',
                 [$user->getId()],
-                [\Doctrine\DBAL\ParameterType::INTEGER]
+                [\Doctrine\DBAL\ParameterType::INTEGER],
             );
             $parentIds = $stmt->fetchFirstColumn();
 
             if (!empty($parentIds)) {
                 $qb->andWhere('t.id IN (:parentTaskIds)')
-                   ->setParameter('parentTaskIds', $parentIds);
+                    ->setParameter('parentTaskIds', $parentIds);
             } else {
                 // No tasks with subtasks found - return empty result
                 $qb->andWhere('1 = 0');
@@ -304,21 +309,22 @@ class TaskRepository extends ServiceEntityRepository
         // COALESCE ensures we use startDate if dueDate is null
         // This ensures tasks are grouped by day, with uncompleted tasks first within each day
         $qb->addSelect('DATE(COALESCE(t.dueDate, t.startDate)) AS HIDDEN dateOnly')
-           ->addSelect('CASE WHEN t.status = :completedStatus THEN 1 ELSE 0 END AS HIDDEN completedOrder')
-           ->setParameter('completedStatus', TaskStatus::COMPLETED)
+            ->addSelect('CASE WHEN t.status = :completedStatus THEN 1 ELSE 0 END AS HIDDEN completedOrder')
+            ->setParameter('completedStatus', TaskStatus::COMPLETED)
            // First sort by DATE only (groups tasks into days, ignoring time)
-           ->orderBy('dateOnly', 'ASC')
+            ->orderBy('dateOnly', 'ASC')
            // Then sort by completion status (0=uncompleted first, 1=completed after)
-           ->addOrderBy('completedOrder', 'ASC')
+            ->addOrderBy('completedOrder', 'ASC')
            // Then by priority within same completion status
-           ->addOrderBy('t.priority', 'DESC')
+            ->addOrderBy('t.priority', 'DESC')
            // Finally by ID to ensure stable order for pagination
-           ->addOrderBy('t.id', 'ASC');
+            ->addOrderBy('t.id', 'ASC');
 
         // Apply pagination
         if ($limit !== null) {
             $qb->setMaxResults($limit);
         }
+
         if ($offset !== null) {
             $qb->setFirstResult($offset);
         }
@@ -328,6 +334,7 @@ class TaskRepository extends ServiceEntityRepository
         // which causes duplicates when JOINing collections (subtasks)
         // fetchJoinCollection=true wraps main query with LIMIT in subquery BEFORE JOIN
         $paginator = new Paginator($qb->getQuery(), $fetchJoinCollection = true);
+
         return iterator_to_array($paginator);
     }
 
@@ -336,7 +343,7 @@ class TaskRepository extends ServiceEntityRepository
      */
     public function countActiveTasks(User $user, ?TaskFilterDto $filters = null): int
     {
-        $todayStart = new \DateTimeImmutable('today');
+        $todayStart = new DateTimeImmutable('today');
 
         $qb = $this->createQueryBuilder('t')
             ->select('COUNT(t.id)')
@@ -385,7 +392,7 @@ class TaskRepository extends ServiceEntityRepository
 
         // FIX N+1: Batch load subtasks
         if (!empty($tasks)) {
-            $taskIds = array_map(fn(Task $task) => $task->getId(), $tasks);
+            $taskIds = array_map(fn (Task $task) => $task->getId(), $tasks);
             $this->createQueryBuilder('subtask')
                 ->where('subtask.parentTask IN (:parentIds)')
                 ->setParameter('parentIds', $taskIds)
@@ -433,7 +440,7 @@ class TaskRepository extends ServiceEntityRepository
     public function getUserTaskStatistics(User $user): array
     {
         $qb = $this->createQueryBuilder('t');
-        
+
         $stats = $qb
             ->select('t.status, COUNT(t.id) as count')
             ->where('t.user = :user')
@@ -443,22 +450,22 @@ class TaskRepository extends ServiceEntityRepository
             ->groupBy('t.status')
             ->getQuery()
             ->getResult();
-        
+
         $result = [
-            'total' => 0,
-            TaskStatus::PENDING->value => 0,
+            'total'                        => 0,
+            TaskStatus::PENDING->value     => 0,
             TaskStatus::IN_PROGRESS->value => 0,
-            TaskStatus::COMPLETED->value => 0,
-            TaskStatus::CANCELLED->value => 0,
-            'overdue' => count($this->findOverdueTasks($user)),
+            TaskStatus::COMPLETED->value   => 0,
+            TaskStatus::CANCELLED->value   => 0,
+            'overdue'                      => count($this->findOverdueTasks($user)),
         ];
-        
+
         foreach ($stats as $stat) {
             $statusValue = $stat['status'] instanceof TaskStatus ? $stat['status']->value : $stat['status'];
             $result[$statusValue] = (int) $stat['count'];
             $result['total'] += (int) $stat['count'];
         }
-        
+
         return $result;
     }
 
@@ -472,7 +479,7 @@ class TaskRepository extends ServiceEntityRepository
         // Recursive CTE to load all subtasks in ONE query
         // OPTIMIZED: Select only 'id' in CTE (not t.*) for better performance
         // Index idx_task_parent_task_id speeds up the recursive JOIN
-        $sql = "
+        $sql = '
             WITH RECURSIVE subtask_tree AS (
                 -- Base case: get the main task
                 SELECT t.id FROM task t WHERE t.id = :id
@@ -483,7 +490,7 @@ class TaskRepository extends ServiceEntityRepository
                 INNER JOIN subtask_tree st ON t.parent_task_id = st.id
             )
             SELECT id FROM subtask_tree
-        ";
+        ';
 
         $taskIds = $conn->executeQuery($sql, ['id' => $id])->fetchFirstColumn();
 
@@ -514,16 +521,6 @@ class TaskRepository extends ServiceEntityRepository
         return null;
     }
 
-    /**
-     * @deprecated No longer needed - use findWithSubtasks() with CTE
-     * Recursively load subtasks
-     */
-    private function loadSubtasksRecursively(Task $task): void
-    {
-        // This method is deprecated and no longer used
-        // Kept for backward compatibility only
-    }
-
     public function save(Task $entity, bool $flush = false): void
     {
         $this->getEntityManager()->persist($entity);
@@ -545,7 +542,7 @@ class TaskRepository extends ServiceEntityRepository
     /**
      * Find tasks for a specific date range
      */
-    public function findTasksByDateRange(User $user, \DateTime $startDate, \DateTime $endDate, bool $includeCompleted = true): array
+    public function findTasksByDateRange(User $user, DateTime $startDate, DateTime $endDate, bool $includeCompleted = true): array
     {
         $qb = $this->createQueryBuilder('t')
             ->leftJoin('t.tags', 'tag')
@@ -569,7 +566,7 @@ class TaskRepository extends ServiceEntityRepository
 
         if (!$includeCompleted) {
             $qb->andWhere('t.status != :completed')
-               ->setParameter('completed', TaskStatus::COMPLETED);
+                ->setParameter('completed', TaskStatus::COMPLETED);
         }
 
         $tasks = $qb->orderBy('t.startDate', 'ASC')
@@ -580,7 +577,7 @@ class TaskRepository extends ServiceEntityRepository
         // FIX N+1: Batch load ALL subtasks for all tasks in ONE query
         // This prevents 2500+ individual queries when accessing $task->getSubtasks()
         if (!empty($tasks)) {
-            $taskIds = array_map(fn(Task $task) => $task->getId(), $tasks);
+            $taskIds = array_map(fn (Task $task) => $task->getId(), $tasks);
 
             // Load ALL subtasks for all parent tasks in ONE query
             // Doctrine will automatically populate subtasks collections
@@ -597,11 +594,11 @@ class TaskRepository extends ServiceEntityRepository
     /**
      * Find tasks for a specific day
      */
-    public function findTasksByDay(User $user, \DateTime $date, bool $includeCompleted = true): array
+    public function findTasksByDay(User $user, DateTime $date, bool $includeCompleted = true): array
     {
         $startOfDay = clone $date;
         $startOfDay->setTime(0, 0, 0);
-        
+
         $endOfDay = clone $date;
         $endOfDay->setTime(23, 59, 59);
 
@@ -613,7 +610,7 @@ class TaskRepository extends ServiceEntityRepository
      */
     public function findTasksForMonth(User $user, int $year, int $month, bool $includeCompleted = true): array
     {
-        $startDate = new \DateTime("$year-$month-01");
+        $startDate = new DateTime("{$year}-{$month}-01");
         $endDate = clone $startDate;
         $endDate->modify('last day of this month')->setTime(23, 59, 59);
 
@@ -621,185 +618,9 @@ class TaskRepository extends ServiceEntityRepository
     }
 
     /**
-     * OPTIMIZED: Universal method for fetching tasks by date range with raw SQL
-     * Used by calendar/day, calendar/week, calendar/month endpoints
-     *
-     * Returns raw data arrays (no Doctrine entities, no N+1)
-     * Performance: 2500+ queries → 4 queries (600x+ improvement!)
-     */
-    private function findTasksByDateRangeRaw(User $user, \DateTime $startDate, \DateTime $endDate, bool $includeCompleted = true): array
-    {
-        $conn = $this->getEntityManager()->getConnection();
-
-        // Step 1: Get ALL parent tasks for the month
-        $parentsSql = "
-            SELECT
-                t.id, t.title, t.description, t.status, t.priority,
-                t.start_date, t.due_date, t.completed_at, t.sort_order,
-                t.is_archived, t.is_recurring_template, t.created_at, t.updated_at,
-                t.parent_task_id,
-                rr.id as rr_id, rr.recurrence_type, rr.interval, rr.days_of_week,
-                rr.day_of_month, rr.month_of_year, rr.end_date, rr.max_occurrences,
-                rr.current_occurrences, rr.next_occurrence_date, rr.time_of_day, rr.is_active
-            FROM task t
-            LEFT JOIN recurrence_rules rr ON t.id = rr.template_task_id
-            WHERE t.user_id = :userId
-              AND t.parent_task_id IS NULL
-              AND (
-                  (t.start_date BETWEEN :startDate AND :endDate) OR
-                  (t.due_date BETWEEN :startDate AND :endDate) OR
-                  (t.start_date <= :startDate AND t.due_date >= :endDate) OR
-                  (t.start_date IS NULL AND t.due_date BETWEEN :startDate AND :endDate) OR
-                  (t.due_date IS NULL AND t.start_date BETWEEN :startDate AND :endDate)
-              )
-        ";
-
-        if (!$includeCompleted) {
-            $parentsSql .= " AND t.status != 'completed'";
-        }
-
-        $parentsSql .= " ORDER BY t.start_date ASC, t.due_date ASC";
-
-        $parents = $conn->fetchAllAssociative($parentsSql, [
-            'userId' => $user->getId(),
-            'startDate' => $startDate->format('Y-m-d H:i:s'),
-            'endDate' => $endDate->format('Y-m-d H:i:s'),
-        ]);
-
-        if (empty($parents)) {
-            return [];
-        }
-
-        $parentIds = array_column($parents, 'id');
-
-        // Step 2: Get ALL subtasks for these parent tasks
-        $subtasksSql = "
-            SELECT
-                t.id, t.title, t.description, t.status, t.priority,
-                t.start_date, t.due_date, t.completed_at, t.sort_order,
-                t.is_archived, t.is_recurring_template, t.created_at, t.updated_at,
-                t.parent_task_id,
-                rr.id as rr_id, rr.recurrence_type, rr.interval, rr.days_of_week,
-                rr.day_of_month, rr.month_of_year, rr.end_date, rr.max_occurrences,
-                rr.current_occurrences, rr.next_occurrence_date, rr.time_of_day, rr.is_active
-            FROM task t
-            LEFT JOIN recurrence_rules rr ON t.id = rr.template_task_id
-            WHERE t.parent_task_id IN (?)
-            ORDER BY t.sort_order ASC, t.id ASC
-        ";
-
-        $subtasks = $conn->fetchAllAssociative(
-            $subtasksSql,
-            [$parentIds],
-            [\Doctrine\DBAL\ArrayParameterType::INTEGER]
-        );
-
-        // Build subtasks map: parent_id => [subtask, subtask, ...]
-        $subtasksMap = [];
-        foreach ($subtasks as $subtask) {
-            $parentId = $subtask['parent_task_id'];
-            if (!isset($subtasksMap[$parentId])) {
-                $subtasksMap[$parentId] = [];
-            }
-            $subtasksMap[$parentId][] = $subtask;
-        }
-
-        // Step 3: Get ALL task IDs (parents + subtasks)
-        $allTaskIds = array_merge($parentIds, array_column($subtasks, 'id'));
-
-        // Step 4: Get ALL task_tags relationships
-        $taskTagsSql = "
-            SELECT task_id, tag_id
-            FROM task_tags
-            WHERE task_id IN (?)
-        ";
-
-        $taskTagsRelations = $conn->fetchAllAssociative(
-            $taskTagsSql,
-            [$allTaskIds],
-            [\Doctrine\DBAL\ArrayParameterType::INTEGER]
-        );
-
-        // Build map: task_id => [tag_id, tag_id, ...]
-        $taskTagsMap = [];
-        $allTagIds = [];
-        foreach ($taskTagsRelations as $relation) {
-            $taskId = $relation['task_id'];
-            $tagId = $relation['tag_id'];
-
-            if (!isset($taskTagsMap[$taskId])) {
-                $taskTagsMap[$taskId] = [];
-            }
-            $taskTagsMap[$taskId][] = $tagId;
-            $allTagIds[] = $tagId;
-        }
-
-        // Step 5: Get ALL tag details (if any tags exist)
-        $tagsData = [];
-        if (!empty($allTagIds)) {
-            $tagsSql = "
-                SELECT id, name, color
-                FROM tag
-                WHERE id IN (?)
-            ";
-
-            $tags = $conn->fetchAllAssociative(
-                $tagsSql,
-                [array_unique($allTagIds)],
-                [\Doctrine\DBAL\ArrayParameterType::INTEGER]
-            );
-
-            // Build map: tag_id => tag_data
-            foreach ($tags as $tag) {
-                $tagsData[$tag['id']] = $tag;
-            }
-        }
-
-        // Step 6: Assemble final structure
-        $result = [];
-        foreach ($parents as $parent) {
-            $parentId = $parent['id'];
-
-            // Attach tags to parent
-            $parent['tags'] = [];
-            if (isset($taskTagsMap[$parentId])) {
-                foreach ($taskTagsMap[$parentId] as $tagId) {
-                    if (isset($tagsData[$tagId])) {
-                        $parent['tags'][] = $tagsData[$tagId];
-                    }
-                }
-            }
-
-            // Attach subtasks to parent
-            $parent['subtasks'] = [];
-            if (isset($subtasksMap[$parentId])) {
-                foreach ($subtasksMap[$parentId] as $subtask) {
-                    $subtaskId = $subtask['id'];
-
-                    // Attach tags to subtask
-                    $subtask['tags'] = [];
-                    if (isset($taskTagsMap[$subtaskId])) {
-                        foreach ($taskTagsMap[$subtaskId] as $tagId) {
-                            if (isset($tagsData[$tagId])) {
-                                $subtask['tags'][] = $tagsData[$tagId];
-                            }
-                        }
-                    }
-
-                    $parent['subtasks'][] = $subtask;
-                }
-            }
-
-            $result[] = $parent;
-        }
-
-        return $result;
-    }
-
-    /**
      * OPTIMIZED: Get tasks for specific day with raw SQL (no N+1)
      */
-    public function findTasksByDayRaw(User $user, \DateTime $date, bool $includeCompleted = true): array
+    public function findTasksByDayRaw(User $user, DateTime $date, bool $includeCompleted = true): array
     {
         $startOfDay = clone $date;
         $startOfDay->setTime(0, 0, 0);
@@ -813,7 +634,7 @@ class TaskRepository extends ServiceEntityRepository
     /**
      * OPTIMIZED: Get tasks for week with raw SQL (no N+1)
      */
-    public function findTasksForWeekRaw(User $user, \DateTime $weekStart, bool $includeCompleted = true): array
+    public function findTasksForWeekRaw(User $user, DateTime $weekStart, bool $includeCompleted = true): array
     {
         $startDate = clone $weekStart;
         $startDate->setTime(0, 0, 0);
@@ -829,7 +650,7 @@ class TaskRepository extends ServiceEntityRepository
      */
     public function findTasksForMonthRaw(User $user, int $year, int $month, bool $includeCompleted = true): array
     {
-        $startDate = new \DateTime("$year-$month-01");
+        $startDate = new DateTime("{$year}-{$month}-01");
         $endDate = clone $startDate;
         $endDate->modify('last day of this month')->setTime(23, 59, 59);
 
@@ -839,11 +660,11 @@ class TaskRepository extends ServiceEntityRepository
     /**
      * Find tasks for calendar week view
      */
-    public function findTasksForWeek(User $user, \DateTime $weekStart, bool $includeCompleted = true): array
+    public function findTasksForWeek(User $user, DateTime $weekStart, bool $includeCompleted = true): array
     {
         $startDate = clone $weekStart;
         $startDate->setTime(0, 0, 0);
-        
+
         $endDate = clone $weekStart;
         $endDate->modify('+6 days')->setTime(23, 59, 59);
 
@@ -862,7 +683,7 @@ class TaskRepository extends ServiceEntityRepository
             ->andWhere('t.status != :cancelledStatus')
             ->andWhere('t.dueDate < :today')
             ->setParameter('user', $user)
-            ->setParameter('today', new \DateTimeImmutable())
+            ->setParameter('today', new DateTimeImmutable())
             ->setParameter('cancelledStatus', TaskStatus::CANCELLED);
 
         // Filter by tasks with/without subtasks
@@ -873,16 +694,17 @@ class TaskRepository extends ServiceEntityRepository
             $stmt = $conn->executeQuery(
                 'SELECT DISTINCT parent_task_id FROM task WHERE parent_task_id IN (SELECT id FROM task WHERE user_id = ? AND parent_task_id IS NULL)',
                 [$user->getId()],
-                [\Doctrine\DBAL\ParameterType::INTEGER]
+                [\Doctrine\DBAL\ParameterType::INTEGER],
             );
             $parentIds = $stmt->fetchFirstColumn();
 
             if (!empty($parentIds)) {
                 $idsQb->andWhere('t.id IN (:parentTaskIds)')
-                      ->setParameter('parentTaskIds', $parentIds);
+                    ->setParameter('parentTaskIds', $parentIds);
             } else {
                 // No tasks with subtasks found - return empty paginator
                 $emptyQb = $this->createQueryBuilder('t')->where('1 = 0');
+
                 return new Paginator($emptyQb->getQuery());
             }
         }
@@ -894,13 +716,13 @@ class TaskRepository extends ServiceEntityRepository
 
         // Sort and paginate IDs
         $idsQb->addSelect('CASE WHEN t.status = :completedStatus THEN 1 ELSE 0 END AS HIDDEN completedOrder')
-              ->setParameter('completedStatus', TaskStatus::COMPLETED)
-              ->orderBy('completedOrder', 'ASC')
-              ->addOrderBy('t.dueDate', 'ASC')
-              ->addOrderBy('t.priority', 'DESC')
-              ->addOrderBy('t.id', 'ASC')
-              ->setFirstResult(($page - 1) * $limit)
-              ->setMaxResults($limit);
+            ->setParameter('completedStatus', TaskStatus::COMPLETED)
+            ->orderBy('completedOrder', 'ASC')
+            ->addOrderBy('t.dueDate', 'ASC')
+            ->addOrderBy('t.priority', 'DESC')
+            ->addOrderBy('t.id', 'ASC')
+            ->setFirstResult(($page - 1) * $limit)
+            ->setMaxResults($limit);
 
         $taskIds = array_column($idsQb->getQuery()->getScalarResult(), 'id');
 
@@ -908,6 +730,7 @@ class TaskRepository extends ServiceEntityRepository
             // Return empty paginator
             $emptyQb = $this->createQueryBuilder('t')
                 ->where('1 = 0');
+
             return new Paginator($emptyQb->getQuery());
         }
 
@@ -928,11 +751,11 @@ class TaskRepository extends ServiceEntityRepository
 
         // Preserve original sort order using FIELD()
         $qb->addSelect('CASE WHEN t.status = :completedStatus THEN 1 ELSE 0 END AS HIDDEN completedOrder')
-           ->setParameter('completedStatus', TaskStatus::COMPLETED)
-           ->orderBy('completedOrder', 'ASC')
-           ->addOrderBy('t.dueDate', 'ASC')
-           ->addOrderBy('t.priority', 'DESC')
-           ->addOrderBy('t.id', 'ASC');
+            ->setParameter('completedStatus', TaskStatus::COMPLETED)
+            ->orderBy('completedOrder', 'ASC')
+            ->addOrderBy('t.dueDate', 'ASC')
+            ->addOrderBy('t.priority', 'DESC')
+            ->addOrderBy('t.id', 'ASC');
 
         return new Paginator($qb->getQuery(), false);
     }
@@ -959,16 +782,17 @@ class TaskRepository extends ServiceEntityRepository
             $stmt = $conn->executeQuery(
                 'SELECT DISTINCT parent_task_id FROM task WHERE parent_task_id IN (SELECT id FROM task WHERE user_id = ? AND parent_task_id IS NULL)',
                 [$user->getId()],
-                [\Doctrine\DBAL\ParameterType::INTEGER]
+                [\Doctrine\DBAL\ParameterType::INTEGER],
             );
             $parentIds = $stmt->fetchFirstColumn();
 
             if (!empty($parentIds)) {
                 $idsQb->andWhere('t.id IN (:parentTaskIds)')
-                      ->setParameter('parentTaskIds', $parentIds);
+                    ->setParameter('parentTaskIds', $parentIds);
             } else {
                 // No tasks with subtasks found - return empty paginator
                 $emptyQb = $this->createQueryBuilder('t')->where('1 = 0');
+
                 return new Paginator($emptyQb->getQuery());
             }
         }
@@ -980,13 +804,13 @@ class TaskRepository extends ServiceEntityRepository
 
         // Sort and paginate IDs
         $idsQb->addSelect('CASE WHEN t.status = :completedStatus THEN 1 ELSE 0 END AS HIDDEN completedOrder')
-              ->setParameter('completedStatus', TaskStatus::COMPLETED)
-              ->orderBy('completedOrder', 'ASC')
-              ->addOrderBy('t.createdAt', 'DESC')
-              ->addOrderBy('t.priority', 'DESC')
-              ->addOrderBy('t.id', 'ASC')
-              ->setFirstResult(($page - 1) * $limit)
-              ->setMaxResults($limit);
+            ->setParameter('completedStatus', TaskStatus::COMPLETED)
+            ->orderBy('completedOrder', 'ASC')
+            ->addOrderBy('t.createdAt', 'DESC')
+            ->addOrderBy('t.priority', 'DESC')
+            ->addOrderBy('t.id', 'ASC')
+            ->setFirstResult(($page - 1) * $limit)
+            ->setMaxResults($limit);
 
         $taskIds = array_column($idsQb->getQuery()->getScalarResult(), 'id');
 
@@ -994,6 +818,7 @@ class TaskRepository extends ServiceEntityRepository
             // Return empty paginator
             $emptyQb = $this->createQueryBuilder('t')
                 ->where('1 = 0');
+
             return new Paginator($emptyQb->getQuery());
         }
 
@@ -1014,11 +839,11 @@ class TaskRepository extends ServiceEntityRepository
 
         // Preserve original sort order
         $qb->addSelect('CASE WHEN t.status = :completedStatus THEN 1 ELSE 0 END AS HIDDEN completedOrder')
-           ->setParameter('completedStatus', TaskStatus::COMPLETED)
-           ->orderBy('completedOrder', 'ASC')
-           ->addOrderBy('t.createdAt', 'DESC')
-           ->addOrderBy('t.priority', 'DESC')
-           ->addOrderBy('t.id', 'ASC');
+            ->setParameter('completedStatus', TaskStatus::COMPLETED)
+            ->orderBy('completedOrder', 'ASC')
+            ->addOrderBy('t.createdAt', 'DESC')
+            ->addOrderBy('t.priority', 'DESC')
+            ->addOrderBy('t.id', 'ASC');
 
         return new Paginator($qb->getQuery(), false);
     }
@@ -1036,7 +861,7 @@ class TaskRepository extends ServiceEntityRepository
             ->andWhere('t.status != :cancelledStatus')
             ->andWhere('t.dueDate < :today')
             ->setParameter('user', $user)
-            ->setParameter('today', new \DateTimeImmutable())
+            ->setParameter('today', new DateTimeImmutable())
             ->setParameter('cancelledStatus', TaskStatus::CANCELLED);
 
         if ($filters) {
@@ -1068,103 +893,12 @@ class TaskRepository extends ServiceEntityRepository
         return (int) $qb->getQuery()->getSingleScalarResult();
     }
 
-    /**
-     * Apply filters to query builder
-     *
-     * @param QueryBuilder $qb
-     * @param TaskFilterDto $filters
-     */
-    private function applyFilters(QueryBuilder $qb, TaskFilterDto $filters): void
-    {
-        if (!$filters->hasFilters()) {
-            return;
-        }
-
-        // Filter by tags
-        $tags = $filters->getTags();
-        if ($tags !== null && !empty($tags)) {
-            $qb->join('t.tags', 'filter_tag')
-               ->andWhere('filter_tag.id IN (:filterTags)')
-               ->setParameter('filterTags', $tags);
-        }
-
-        // Filter by completion status
-        $completed = $filters->getCompleted();
-        if ($completed !== null) {
-            if ($completed) {
-                $qb->andWhere('t.status = :completedFilterStatus')
-                   ->setParameter('completedFilterStatus', TaskStatus::COMPLETED);
-            } else {
-                $qb->andWhere('t.status != :notCompletedFilterStatus')
-                   ->setParameter('notCompletedFilterStatus', TaskStatus::COMPLETED);
-            }
-        }
-
-        // Filter by date range
-        // Task is included if at least one of its dates (dueDate or startDate) falls within the range [dateFrom, dateTo]
-        $dateFrom = $filters->getDateFrom();
-        $dateTo = $filters->getDateTo();
-        
-        if ($dateFrom !== null || $dateTo !== null) {
-            $dateCondition = [];
-            $params = [];
-            
-            if ($dateFrom !== null && $dateTo !== null) {
-                // Both boundaries specified: task must have at least one date in range [dateFrom, dateTo]
-                $dateFromObj = new \DateTimeImmutable($dateFrom);
-                $dateToObj = new \DateTimeImmutable($dateTo . ' 23:59:59');
-                
-                // Task is included if:
-                // 1. dueDate is in range [dateFrom, dateTo], OR
-                // 2. startDate is in range [dateFrom, dateTo]
-                $dateCondition[] = '(
-                    (t.dueDate IS NOT NULL AND t.dueDate >= :filterDateFrom AND t.dueDate <= :filterDateTo) OR
-                    (t.startDate IS NOT NULL AND t.startDate >= :filterDateFrom AND t.startDate <= :filterDateTo)
-                )';
-                $params['filterDateFrom'] = $dateFromObj;
-                $params['filterDateTo'] = $dateToObj;
-            } elseif ($dateFrom !== null) {
-                // Only lower boundary: task must have at least one date >= dateFrom
-                $dateFromObj = new \DateTimeImmutable($dateFrom);
-                $dateCondition[] = '(t.dueDate >= :filterDateFrom OR t.startDate >= :filterDateFrom)';
-                $params['filterDateFrom'] = $dateFromObj;
-            } elseif ($dateTo !== null) {
-                // Only upper boundary: task must have at least one date <= dateTo
-                $dateToObj = new \DateTimeImmutable($dateTo . ' 23:59:59');
-                $dateCondition[] = '(t.dueDate <= :filterDateTo OR t.startDate <= :filterDateTo)';
-                $params['filterDateTo'] = $dateToObj;
-            }
-            
-            $qb->andWhere(implode(' AND ', $dateCondition));
-            
-            foreach ($params as $key => $value) {
-                $qb->setParameter($key, $value);
-            }
-        }
-
-        // Filter by priorities
-        $priorities = $filters->getPriorities();
-        if ($priorities !== null && !empty($priorities)) {
-            $priorityEnums = array_map(fn($p) => TaskPriority::from($p), $priorities);
-            $qb->andWhere('t.priority IN (:filterPriorities)')
-               ->setParameter('filterPriorities', $priorityEnums);
-        }
-
-        // Filter by statuses
-        $statuses = $filters->getStatuses();
-        if ($statuses !== null && !empty($statuses)) {
-            $statusEnums = array_map(fn($s) => TaskStatus::from($s), $statuses);
-            $qb->andWhere('t.status IN (:filterStatuses)')
-               ->setParameter('filterStatuses', $statusEnums);
-        }
-    }
-
     // ==================== ANALYTICS METHODS ====================
 
     /**
      * Find tasks created between dates
      */
-    public function findTasksCreatedBetween(User $user, \DateTimeInterface $start, \DateTimeInterface $end): array
+    public function findTasksCreatedBetween(User $user, DateTimeInterface $start, DateTimeInterface $end): array
     {
         return $this->createQueryBuilder('t')
             ->leftJoin('t.tags', 'tag')
@@ -1186,7 +920,7 @@ class TaskRepository extends ServiceEntityRepository
     /**
      * Find tasks completed between dates
      */
-    public function findTasksCompletedBetween(User $user, \DateTimeInterface $start, \DateTimeInterface $end): array
+    public function findTasksCompletedBetween(User $user, DateTimeInterface $start, DateTimeInterface $end): array
     {
         return $this->createQueryBuilder('t')
             ->leftJoin('t.tags', 'tag')
@@ -1230,9 +964,11 @@ class TaskRepository extends ServiceEntityRepository
         }
 
         $totalDays = 0;
+
         foreach ($tasks as $task) {
             $created = $task->getCreatedAt();
             $completed = $task->getCompletedAt();
+
             if ($created && $completed) {
                 $diff = $completed->diff($created);
                 $totalDays += $diff->days;
@@ -1248,7 +984,7 @@ class TaskRepository extends ServiceEntityRepository
     public function getOnTimeCompletionRate(User $user): int
     {
         $qb = $this->createQueryBuilder('t');
-        
+
         $totalWithDueDate = $qb
             ->select('COUNT(t.id)')
             ->where('t.user = :user')
@@ -1258,11 +994,11 @@ class TaskRepository extends ServiceEntityRepository
             ->setParameter('user', $user)
             ->getQuery()
             ->getSingleScalarResult();
-        
-        if ($totalWithDueDate == 0) {
+
+        if ($totalWithDueDate === 0) {
             return 100;
         }
-        
+
         $qb = $this->createQueryBuilder('t');
         $onTime = $qb
             ->select('COUNT(t.id)')
@@ -1274,8 +1010,8 @@ class TaskRepository extends ServiceEntityRepository
             ->setParameter('user', $user)
             ->getQuery()
             ->getSingleScalarResult();
-        
-        return (int)round(($onTime / $totalWithDueDate) * 100);
+
+        return (int) round(($onTime / $totalWithDueDate) * 100);
     }
 
     /**
@@ -1302,6 +1038,7 @@ class TaskRepository extends ServiceEntityRepository
         }
 
         $dayCount = [];
+
         foreach ($tasks as $task) {
             if ($task->getCompletedAt()) {
                 $dayName = $task->getCompletedAt()->format('l'); // Monday, Tuesday, etc.
@@ -1314,28 +1051,29 @@ class TaskRepository extends ServiceEntityRepository
         }
 
         arsort($dayCount);
+
         return array_key_first($dayCount);
     }
 
     /**
      * Get completion timeline data for chart
      */
-    public function getCompletionTimelineData(User $user, \DateTimeInterface $start, \DateTimeInterface $end): array
+    public function getCompletionTimelineData(User $user, DateTimeInterface $start, DateTimeInterface $end): array
     {
         $dates = [];
         $created = [];
         $completed = [];
         $overdue = [];
-        
-        $current = \DateTimeImmutable::createFromInterface($start);
-        $endDate = \DateTimeImmutable::createFromInterface($end);
-        
+
+        $current = DateTimeImmutable::createFromInterface($start);
+        $endDate = DateTimeImmutable::createFromInterface($end);
+
         while ($current <= $endDate) {
             $dayStart = $current->setTime(0, 0);
             $dayEnd = $current->setTime(23, 59, 59);
-            
+
             $dates[] = $current->format('Y-m-d');
-            
+
             // Created tasks
             $createdCount = $this->createQueryBuilder('t')
                 ->select('COUNT(t.id)')
@@ -1347,7 +1085,7 @@ class TaskRepository extends ServiceEntityRepository
                 ->setParameter('end', $dayEnd)
                 ->getQuery()
                 ->getSingleScalarResult();
-            
+
             // Completed tasks
             $completedCount = $this->createQueryBuilder('t')
                 ->select('COUNT(t.id)')
@@ -1359,7 +1097,7 @@ class TaskRepository extends ServiceEntityRepository
                 ->setParameter('end', $dayEnd)
                 ->getQuery()
                 ->getSingleScalarResult();
-            
+
             // Overdue tasks
             $overdueCount = $this->createQueryBuilder('t')
                 ->select('COUNT(t.id)')
@@ -1373,19 +1111,19 @@ class TaskRepository extends ServiceEntityRepository
                 ->setParameter('completed', TaskStatus::COMPLETED)
                 ->getQuery()
                 ->getSingleScalarResult();
-            
-            $created[] = (int)$createdCount;
-            $completed[] = (int)$completedCount;
-            $overdue[] = (int)$overdueCount;
-            
+
+            $created[] = (int) $createdCount;
+            $completed[] = (int) $completedCount;
+            $overdue[] = (int) $overdueCount;
+
             $current = $current->modify('+1 day');
         }
-        
+
         return [
-            'dates' => $dates,
-            'created' => $created,
+            'dates'     => $dates,
+            'created'   => $created,
             'completed' => $completed,
-            'overdue' => $overdue
+            'overdue'   => $overdue,
         ];
     }
 
@@ -1395,8 +1133,8 @@ class TaskRepository extends ServiceEntityRepository
     public function getPriorityBreakdown(User $user): array
     {
         $result = [];
-        
-        foreach (\App\Enum\TaskPriority::cases() as $priority) {
+
+        foreach (TaskPriority::cases() as $priority) {
             $total = $this->createQueryBuilder('t')
                 ->select('COUNT(t.id)')
                 ->where('t.user = :user')
@@ -1407,7 +1145,7 @@ class TaskRepository extends ServiceEntityRepository
                 ->setParameter('priority', $priority)
                 ->getQuery()
                 ->getSingleScalarResult();
-            
+
             $completed = $this->createQueryBuilder('t')
                 ->select('COUNT(t.id)')
                 ->where('t.user = :user')
@@ -1420,7 +1158,7 @@ class TaskRepository extends ServiceEntityRepository
                 ->setParameter('completedStatus', TaskStatus::COMPLETED)
                 ->getQuery()
                 ->getSingleScalarResult();
-            
+
             $inProgress = $this->createQueryBuilder('t')
                 ->select('COUNT(t.id)')
                 ->where('t.user = :user')
@@ -1433,15 +1171,15 @@ class TaskRepository extends ServiceEntityRepository
                 ->setParameter('inProgressStatus', TaskStatus::IN_PROGRESS)
                 ->getQuery()
                 ->getSingleScalarResult();
-            
+
             $result[strtolower($priority->value)] = [
-                'total' => (int)$total,
-                'completed' => (int)$completed,
-                'inProgress' => (int)$inProgress,
-                'pending' => (int)$total - (int)$completed - (int)$inProgress
+                'total'      => (int) $total,
+                'completed'  => (int) $completed,
+                'inProgress' => (int) $inProgress,
+                'pending'    => (int) $total - (int) $completed - (int) $inProgress,
             ];
         }
-        
+
         return $result;
     }
 
@@ -1450,8 +1188,8 @@ class TaskRepository extends ServiceEntityRepository
      */
     public function getProductivityHeatmap(User $user, int $year): array
     {
-        $startDate = new \DateTimeImmutable("{$year}-01-01");
-        $endDate = new \DateTimeImmutable("{$year}-12-31");
+        $startDate = new DateTimeImmutable("{$year}-01-01");
+        $endDate = new DateTimeImmutable("{$year}-12-31");
 
         $qb = $this->createQueryBuilder('t');
         $tasks = $qb
@@ -1471,6 +1209,7 @@ class TaskRepository extends ServiceEntityRepository
             ->getResult();
 
         $heatmap = [];
+
         foreach ($tasks as $task) {
             if ($task->getCompletedAt()) {
                 $date = $task->getCompletedAt()->format('Y-m-d');
@@ -1505,6 +1244,7 @@ class TaskRepository extends ServiceEntityRepository
         foreach ($tasks as $task) {
             if ($task->getCompletedAt()) {
                 $dayName = $task->getCompletedAt()->format('l'); // Monday, Tuesday, etc.
+
                 if (isset($days[$dayName])) {
                     $days[$dayName]++;
                 }
@@ -1538,9 +1278,10 @@ class TaskRepository extends ServiceEntityRepository
         }
 
         $hourCount = [];
+
         foreach ($tasks as $task) {
             if ($task->getCompletedAt()) {
-                $hour = (int)$task->getCompletedAt()->format('G'); // 0-23
+                $hour = (int) $task->getCompletedAt()->format('G'); // 0-23
                 $hourCount[$hour] = ($hourCount[$hour] ?? 0) + 1;
             }
         }
@@ -1550,6 +1291,7 @@ class TaskRepository extends ServiceEntityRepository
         }
 
         arsort($hourCount);
+
         return array_key_first($hourCount);
     }
 
@@ -1582,12 +1324,12 @@ class TaskRepository extends ServiceEntityRepository
             ->getQuery()
             ->getSingleScalarResult();
 
-        $completionRate = $total > 0 ? (int)round(($completed / $total) * 100) : 0;
+        $completionRate = $total > 0 ? (int) round(($completed / $total) * 100) : 0;
 
         return [
-            'total' => (int)$total,
-            'completed' => (int)$completed,
-            'completionRate' => $completionRate
+            'total'          => (int) $total,
+            'completed'      => (int) $completed,
+            'completionRate' => $completionRate,
         ];
     }
 
@@ -1605,28 +1347,29 @@ class TaskRepository extends ServiceEntityRepository
 
         // Extract parameters
         $userId = $user->getId();
-        $year = $params['year'] ?? (int)date('Y');
+        $year = $params['year'] ?? (int) date('Y');
         $period = $params['period'] ?? 30;
         $dateFrom = $params['dateFrom'];
         $dateTo = $params['dateTo'];
 
         // Calculate date ranges
-        $thisWeekStart = (new \DateTimeImmutable('monday this week'))->format('Y-m-d H:i:s');
-        $lastWeekStart = (new \DateTimeImmutable('monday this week'))->modify('-7 days')->format('Y-m-d H:i:s');
-        $today = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
+        $thisWeekStart = (new DateTimeImmutable('monday this week'))->format('Y-m-d H:i:s');
+        $lastWeekStart = (new DateTimeImmutable('monday this week'))->modify('-7 days')->format('Y-m-d H:i:s');
+        $today = (new DateTimeImmutable())->format('Y-m-d H:i:s');
         $yearStart = "{$year}-01-01 00:00:00";
         $yearEnd = "{$year}-12-31 23:59:59";
 
         // Calculate timeline date range
         if ($dateFrom && $dateTo) {
-            $timelineStart = (new \DateTimeImmutable($dateFrom))->format('Y-m-d');
-            $timelineEnd = (new \DateTimeImmutable($dateTo))->format('Y-m-d');
+            $timelineStart = (new DateTimeImmutable($dateFrom))->format('Y-m-d');
+            $timelineEnd = (new DateTimeImmutable($dateTo))->format('Y-m-d');
         } else {
-            $timelineEnd = (new \DateTimeImmutable())->format('Y-m-d');
+            $timelineEnd = (new DateTimeImmutable())->format('Y-m-d');
+
             if ($period >= 365) {
-                $timelineStart = (new \DateTimeImmutable())->modify('-6 months')->format('Y-m-d');
+                $timelineStart = (new DateTimeImmutable())->modify('-6 months')->format('Y-m-d');
             } else {
-                $timelineStart = (new \DateTimeImmutable())->modify("-{$period} days")->format('Y-m-d');
+                $timelineStart = (new DateTimeImmutable())->modify("-{$period} days")->format('Y-m-d');
             }
         }
 
@@ -1838,18 +1581,304 @@ class TaskRepository extends ServiceEntityRepository
         ";
 
         $result = $conn->executeQuery($sql, [
-            'userId' => $userId,
+            'userId'        => $userId,
             'thisWeekStart' => $thisWeekStart,
             'lastWeekStart' => $lastWeekStart,
-            'today' => $today,
-            'yearStart' => $yearStart,
-            'yearEnd' => $yearEnd,
+            'today'         => $today,
+            'yearStart'     => $yearStart,
+            'yearEnd'       => $yearEnd,
             'timelineStart' => $timelineStart,
-            'timelineEnd' => $timelineEnd,
+            'timelineEnd'   => $timelineEnd,
         ]);
 
         $data = $result->fetchAssociative();
 
         return json_decode($data['aggregated_data'], true);
+    }
+
+    /**
+     * @deprecated No longer needed - use findWithSubtasks() with CTE
+     * Recursively load subtasks
+     */
+    private function loadSubtasksRecursively(Task $task): void
+    {
+        // This method is deprecated and no longer used
+        // Kept for backward compatibility only
+    }
+
+    /**
+     * OPTIMIZED: Universal method for fetching tasks by date range with raw SQL
+     * Used by calendar/day, calendar/week, calendar/month endpoints
+     *
+     * Returns raw data arrays (no Doctrine entities, no N+1)
+     * Performance: 2500+ queries → 4 queries (600x+ improvement!)
+     */
+    private function findTasksByDateRangeRaw(User $user, DateTime $startDate, DateTime $endDate, bool $includeCompleted = true): array
+    {
+        $conn = $this->getEntityManager()->getConnection();
+
+        // Step 1: Get ALL parent tasks for the month
+        $parentsSql = '
+            SELECT
+                t.id, t.title, t.description, t.status, t.priority,
+                t.start_date, t.due_date, t.completed_at, t.sort_order,
+                t.is_archived, t.is_recurring_template, t.created_at, t.updated_at,
+                t.parent_task_id,
+                rr.id as rr_id, rr.recurrence_type, rr.interval, rr.days_of_week,
+                rr.day_of_month, rr.month_of_year, rr.end_date, rr.max_occurrences,
+                rr.current_occurrences, rr.next_occurrence_date, rr.time_of_day, rr.is_active
+            FROM task t
+            LEFT JOIN recurrence_rules rr ON t.id = rr.template_task_id
+            WHERE t.user_id = :userId
+              AND t.parent_task_id IS NULL
+              AND (
+                  (t.start_date BETWEEN :startDate AND :endDate) OR
+                  (t.due_date BETWEEN :startDate AND :endDate) OR
+                  (t.start_date <= :startDate AND t.due_date >= :endDate) OR
+                  (t.start_date IS NULL AND t.due_date BETWEEN :startDate AND :endDate) OR
+                  (t.due_date IS NULL AND t.start_date BETWEEN :startDate AND :endDate)
+              )
+        ';
+
+        if (!$includeCompleted) {
+            $parentsSql .= " AND t.status != 'completed'";
+        }
+
+        $parentsSql .= ' ORDER BY t.start_date ASC, t.due_date ASC';
+
+        $parents = $conn->fetchAllAssociative($parentsSql, [
+            'userId'    => $user->getId(),
+            'startDate' => $startDate->format('Y-m-d H:i:s'),
+            'endDate'   => $endDate->format('Y-m-d H:i:s'),
+        ]);
+
+        if (empty($parents)) {
+            return [];
+        }
+
+        $parentIds = array_column($parents, 'id');
+
+        // Step 2: Get ALL subtasks for these parent tasks
+        $subtasksSql = '
+            SELECT
+                t.id, t.title, t.description, t.status, t.priority,
+                t.start_date, t.due_date, t.completed_at, t.sort_order,
+                t.is_archived, t.is_recurring_template, t.created_at, t.updated_at,
+                t.parent_task_id,
+                rr.id as rr_id, rr.recurrence_type, rr.interval, rr.days_of_week,
+                rr.day_of_month, rr.month_of_year, rr.end_date, rr.max_occurrences,
+                rr.current_occurrences, rr.next_occurrence_date, rr.time_of_day, rr.is_active
+            FROM task t
+            LEFT JOIN recurrence_rules rr ON t.id = rr.template_task_id
+            WHERE t.parent_task_id IN (?)
+            ORDER BY t.sort_order ASC, t.id ASC
+        ';
+
+        $subtasks = $conn->fetchAllAssociative(
+            $subtasksSql,
+            [$parentIds],
+            [\Doctrine\DBAL\ArrayParameterType::INTEGER],
+        );
+
+        // Build subtasks map: parent_id => [subtask, subtask, ...]
+        $subtasksMap = [];
+
+        foreach ($subtasks as $subtask) {
+            $parentId = $subtask['parent_task_id'];
+
+            if (!isset($subtasksMap[$parentId])) {
+                $subtasksMap[$parentId] = [];
+            }
+            $subtasksMap[$parentId][] = $subtask;
+        }
+
+        // Step 3: Get ALL task IDs (parents + subtasks)
+        $allTaskIds = array_merge($parentIds, array_column($subtasks, 'id'));
+
+        // Step 4: Get ALL task_tags relationships
+        $taskTagsSql = '
+            SELECT task_id, tag_id
+            FROM task_tags
+            WHERE task_id IN (?)
+        ';
+
+        $taskTagsRelations = $conn->fetchAllAssociative(
+            $taskTagsSql,
+            [$allTaskIds],
+            [\Doctrine\DBAL\ArrayParameterType::INTEGER],
+        );
+
+        // Build map: task_id => [tag_id, tag_id, ...]
+        $taskTagsMap = [];
+        $allTagIds = [];
+
+        foreach ($taskTagsRelations as $relation) {
+            $taskId = $relation['task_id'];
+            $tagId = $relation['tag_id'];
+
+            if (!isset($taskTagsMap[$taskId])) {
+                $taskTagsMap[$taskId] = [];
+            }
+            $taskTagsMap[$taskId][] = $tagId;
+            $allTagIds[] = $tagId;
+        }
+
+        // Step 5: Get ALL tag details (if any tags exist)
+        $tagsData = [];
+
+        if (!empty($allTagIds)) {
+            $tagsSql = '
+                SELECT id, name, color
+                FROM tag
+                WHERE id IN (?)
+            ';
+
+            $tags = $conn->fetchAllAssociative(
+                $tagsSql,
+                [array_unique($allTagIds)],
+                [\Doctrine\DBAL\ArrayParameterType::INTEGER],
+            );
+
+            // Build map: tag_id => tag_data
+            foreach ($tags as $tag) {
+                $tagsData[$tag['id']] = $tag;
+            }
+        }
+
+        // Step 6: Assemble final structure
+        $result = [];
+
+        foreach ($parents as $parent) {
+            $parentId = $parent['id'];
+
+            // Attach tags to parent
+            $parent['tags'] = [];
+
+            if (isset($taskTagsMap[$parentId])) {
+                foreach ($taskTagsMap[$parentId] as $tagId) {
+                    if (isset($tagsData[$tagId])) {
+                        $parent['tags'][] = $tagsData[$tagId];
+                    }
+                }
+            }
+
+            // Attach subtasks to parent
+            $parent['subtasks'] = [];
+
+            if (isset($subtasksMap[$parentId])) {
+                foreach ($subtasksMap[$parentId] as $subtask) {
+                    $subtaskId = $subtask['id'];
+
+                    // Attach tags to subtask
+                    $subtask['tags'] = [];
+
+                    if (isset($taskTagsMap[$subtaskId])) {
+                        foreach ($taskTagsMap[$subtaskId] as $tagId) {
+                            if (isset($tagsData[$tagId])) {
+                                $subtask['tags'][] = $tagsData[$tagId];
+                            }
+                        }
+                    }
+
+                    $parent['subtasks'][] = $subtask;
+                }
+            }
+
+            $result[] = $parent;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Apply filters to query builder
+     */
+    private function applyFilters(QueryBuilder $qb, TaskFilterDto $filters): void
+    {
+        if (!$filters->hasFilters()) {
+            return;
+        }
+
+        // Filter by tags
+        $tags = $filters->getTags();
+
+        if ($tags !== null && !empty($tags)) {
+            $qb->join('t.tags', 'filter_tag')
+                ->andWhere('filter_tag.id IN (:filterTags)')
+                ->setParameter('filterTags', $tags);
+        }
+
+        // Filter by completion status
+        $completed = $filters->getCompleted();
+
+        if ($completed !== null) {
+            if ($completed) {
+                $qb->andWhere('t.status = :completedFilterStatus')
+                    ->setParameter('completedFilterStatus', TaskStatus::COMPLETED);
+            } else {
+                $qb->andWhere('t.status != :notCompletedFilterStatus')
+                    ->setParameter('notCompletedFilterStatus', TaskStatus::COMPLETED);
+            }
+        }
+
+        // Filter by date range
+        // Task is included if at least one of its dates (dueDate or startDate) falls within the range [dateFrom, dateTo]
+        $dateFrom = $filters->getDateFrom();
+        $dateTo = $filters->getDateTo();
+
+        if ($dateFrom !== null || $dateTo !== null) {
+            $dateCondition = [];
+            $params = [];
+
+            if ($dateFrom !== null && $dateTo !== null) {
+                // Both boundaries specified: task must have at least one date in range [dateFrom, dateTo]
+                $dateFromObj = new DateTimeImmutable($dateFrom);
+                $dateToObj = new DateTimeImmutable($dateTo . ' 23:59:59');
+
+                // Task is included if:
+                // 1. dueDate is in range [dateFrom, dateTo], OR
+                // 2. startDate is in range [dateFrom, dateTo]
+                $dateCondition[] = '(
+                    (t.dueDate IS NOT NULL AND t.dueDate >= :filterDateFrom AND t.dueDate <= :filterDateTo) OR
+                    (t.startDate IS NOT NULL AND t.startDate >= :filterDateFrom AND t.startDate <= :filterDateTo)
+                )';
+                $params['filterDateFrom'] = $dateFromObj;
+                $params['filterDateTo'] = $dateToObj;
+            } elseif ($dateFrom !== null) {
+                // Only lower boundary: task must have at least one date >= dateFrom
+                $dateFromObj = new DateTimeImmutable($dateFrom);
+                $dateCondition[] = '(t.dueDate >= :filterDateFrom OR t.startDate >= :filterDateFrom)';
+                $params['filterDateFrom'] = $dateFromObj;
+            } elseif ($dateTo !== null) {
+                // Only upper boundary: task must have at least one date <= dateTo
+                $dateToObj = new DateTimeImmutable($dateTo . ' 23:59:59');
+                $dateCondition[] = '(t.dueDate <= :filterDateTo OR t.startDate <= :filterDateTo)';
+                $params['filterDateTo'] = $dateToObj;
+            }
+
+            $qb->andWhere(implode(' AND ', $dateCondition));
+
+            foreach ($params as $key => $value) {
+                $qb->setParameter($key, $value);
+            }
+        }
+
+        // Filter by priorities
+        $priorities = $filters->getPriorities();
+
+        if ($priorities !== null && !empty($priorities)) {
+            $priorityEnums = array_map(fn ($p) => TaskPriority::from($p), $priorities);
+            $qb->andWhere('t.priority IN (:filterPriorities)')
+                ->setParameter('filterPriorities', $priorityEnums);
+        }
+
+        // Filter by statuses
+        $statuses = $filters->getStatuses();
+
+        if ($statuses !== null && !empty($statuses)) {
+            $statusEnums = array_map(fn ($s) => TaskStatus::from($s), $statuses);
+            $qb->andWhere('t.status IN (:filterStatuses)')
+                ->setParameter('filterStatuses', $statusEnums);
+        }
     }
 }

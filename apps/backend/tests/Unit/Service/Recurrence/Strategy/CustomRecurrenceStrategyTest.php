@@ -6,6 +6,7 @@ namespace App\Tests\Unit\Service\Recurrence\Strategy;
 
 use App\Entity\RecurrenceRule;
 use App\Service\Recurrence\Strategy\CustomRecurrenceStrategy;
+use DateTime;
 use PHPUnit\Framework\TestCase;
 
 class CustomRecurrenceStrategyTest extends TestCase
@@ -20,7 +21,7 @@ class CustomRecurrenceStrategyTest extends TestCase
     /** @test */
     public function testCalculateNextOccurrenceAddsCustomInterval(): void
     {
-        $currentDate = new \DateTime('2025-01-10');
+        $currentDate = new DateTime('2025-01-10');
         $rule = $this->createMock(RecurrenceRule::class);
         $rule->method('getInterval')->willReturn(3); // Every 3 days
         $rule->method('getTimeOfDay')->willReturn(null);
@@ -37,8 +38,8 @@ class CustomRecurrenceStrategyTest extends TestCase
     /** @test */
     public function testAppliesTimeOfDayIfSet(): void
     {
-        $currentDate = new \DateTime('2025-01-10');
-        $timeOfDay = new \DateTime('14:30:00');
+        $currentDate = new DateTime('2025-01-10');
+        $timeOfDay = new DateTime('14:30:00');
 
         $rule = $this->createMock(RecurrenceRule::class);
         $rule->method('getInterval')->willReturn(5);
@@ -55,8 +56,8 @@ class CustomRecurrenceStrategyTest extends TestCase
     /** @test */
     public function testRespectsEndDate(): void
     {
-        $currentDate = new \DateTime('2025-01-10');
-        $endDate = new \DateTime('2025-01-11');
+        $currentDate = new DateTime('2025-01-10');
+        $endDate = new DateTime('2025-01-11');
 
         $rule = $this->createMock(RecurrenceRule::class);
         $rule->method('getInterval')->willReturn(5);
@@ -73,7 +74,7 @@ class CustomRecurrenceStrategyTest extends TestCase
     /** @test */
     public function testRespectsMaxOccurrences(): void
     {
-        $currentDate = new \DateTime('2025-01-10');
+        $currentDate = new DateTime('2025-01-10');
 
         $rule = $this->createMock(RecurrenceRule::class);
         $rule->method('getInterval')->willReturn(2);
@@ -97,7 +98,7 @@ class CustomRecurrenceStrategyTest extends TestCase
     /** @test */
     public function testGetPreviewDatesReturnsCorrectCount(): void
     {
-        $startDate = new \DateTime('2025-01-10');
+        $startDate = new DateTime('2025-01-10');
 
         $rule = $this->createMock(RecurrenceRule::class);
         $rule->method('getInterval')->willReturn(7); // Every 7 days
@@ -116,8 +117,8 @@ class CustomRecurrenceStrategyTest extends TestCase
     /** @test */
     public function testGetPreviewDatesStopsAtEndDate(): void
     {
-        $startDate = new \DateTime('2025-01-10');
-        $endDate = new \DateTime('2025-01-20');
+        $startDate = new DateTime('2025-01-10');
+        $endDate = new DateTime('2025-01-20');
 
         $rule = $this->createMock(RecurrenceRule::class);
         $rule->method('getInterval')->willReturn(7);

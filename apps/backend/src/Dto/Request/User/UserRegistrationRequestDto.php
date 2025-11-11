@@ -9,6 +9,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 final readonly class UserRegistrationRequestDto
 {
     public const MIN_PASSWORD_LENGTH = 6;
+
     public const MAX_PASSWORD_LENGTH = 40;
 
     public function __construct(
