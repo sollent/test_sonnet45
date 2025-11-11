@@ -192,13 +192,13 @@ class DashboardController extends AbstractDashboardController
         return Dashboard::new()
             ->setTitle('Auth App - Admin Panel')
             ->setFaviconPath('favicon.svg')
-            
+
             // Enable dark mode
             ->setDefaultColorScheme('auto')
-            
+
             // Sidebar settings
             ->renderSidebarMinimized(false)
-            
+
             // Content settings
             ->renderContentMaximized(false);
     }
