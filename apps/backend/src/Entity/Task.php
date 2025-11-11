@@ -430,4 +430,12 @@ class Task extends AbstractEntity
         $this->generatedFromRule = $generatedFromRule;
         return $this;
     }
+
+    /**
+     * String representation for EasyAdmin forms and debugging
+     */
+    public function __toString(): string
+    {
+        return sprintf('#%d: %s', $this->id ?? 0, $this->title ?? 'Untitled');
+    }
 }

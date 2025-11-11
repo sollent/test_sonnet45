@@ -106,69 +106,99 @@ class UserCrudController extends AbstractCrudController
         // Total Tasks
         yield IntegerField::new('totalTasks', 'Total Tasks')
             ->formatValue(function ($value, User $user) {
-                $count = $user->getTasks()->count();
-                if ($count === 0) {
-                    return '<span class="text-muted">-</span>';
+                try {
+                    $tasks = $user->getTasks();
+                    if (!$tasks) {
+                        return '<span class="text-muted">-</span>';
+                    }
+                    $count = $tasks->count();
+                    if ($count === 0) {
+                        return '<span class="text-muted">-</span>';
+                    }
+                    return sprintf('<span class="badge badge-primary">%d</span>', $count);
+                } catch (\Exception $e) {
+                    return '<span class="text-danger">Error</span>';
                 }
-                return sprintf('<span class="badge badge-primary">%d</span>', $count);
             })
             ->onlyOnIndex();
 
         // Completed Tasks
         yield IntegerField::new('completedTasks', 'Completed')
             ->formatValue(function ($value, User $user) {
-                $completed = 0;
-                foreach ($user->getTasks() as $task) {
-                    if ($task->getStatus() === TaskStatus::COMPLETED) {
-                        $completed++;
+                try {
+                    $tasks = $user->getTasks();
+                    if (!$tasks) {
+                        return '<span class="text-muted">-</span>';
                     }
-                }
 
-                if ($completed === 0) {
-                    return '<span class="text-muted">-</span>';
-                }
+                    $completed = 0;
+                    foreach ($tasks as $task) {
+                        if ($task->getStatus() === TaskStatus::COMPLETED) {
+                            $completed++;
+                        }
+                    }
 
-                return sprintf('<span class="badge badge-success">%d</span>', $completed);
+                    if ($completed === 0) {
+                        return '<span class="text-muted">-</span>';
+                    }
+
+                    return sprintf('<span class="badge badge-success">%d</span>', $completed);
+                } catch (\Exception $e) {
+                    return '<span class="text-danger">Error</span>';
+                }
             })
             ->onlyOnIndex();
 
         // Active Tasks (not completed, not cancelled)
         yield IntegerField::new('activeTasks', 'Active')
             ->formatValue(function ($value, User $user) {
-                $active = 0;
-                foreach ($user->getTasks() as $task) {
-                    if ($task->getStatus() !== TaskStatus::COMPLETED &&
-                        $task->getStatus() !== TaskStatus::CANCELLED) {
-                        $active++;
+                try {
+                    $tasks = $user->getTasks();
+                    if (!$tasks) {
+                        return '<span class="text-muted">-</span>';
                     }
-                }
 
-                if ($active === 0) {
-                    return '<span class="text-muted">-</span>';
-                }
+                    $active = 0;
+                    foreach ($tasks as $task) {
+                        if ($task->getStatus() !== TaskStatus::COMPLETED &&
+                            $task->getStatus() !== TaskStatus::CANCELLED) {
+                            $active++;
+                        }
+                    }
 
-                $badgeClass = $active > 10 ? 'warning' : 'info';
-                return sprintf('<span class="badge badge-%s">%d</span>', $badgeClass, $active);
+                    if ($active === 0) {
+                        return '<span class="text-muted">-</span>';
+                    }
+
+                    $badgeClass = $active > 10 ? 'warning' : 'info';
+                    return sprintf('<span class="badge badge-%s">%d</span>', $badgeClass, $active);
+                } catch (\Exception $e) {
+                    return '<span class="text-danger">Error</span>';
+                }
             })
             ->onlyOnIndex();
 
         // Total Tags
         yield IntegerField::new('totalTags', 'Tags')
             ->formatValue(function ($value, User $user) {
-                // Get tags count via query to avoid loading all tags
-                $count = $this->entityManager->createQueryBuilder()
-                    ->select('COUNT(tag.id)')
-                    ->from('App\Entity\Tag', 'tag')
-                    ->where('tag.user = :user')
-                    ->setParameter('user', $user)
-                    ->getQuery()
-                    ->getSingleScalarResult();
+                try {
+                    // Get tags count via query to avoid loading all tags
+                    $count = $this->entityManager->createQueryBuilder()
+                        ->select('COUNT(tag.id)')
+                        ->from('App\Entity\Tag', 'tag')
+                        ->where('tag.user = :user')
+                        ->setParameter('user', $user)
+                        ->getQuery()
+                        ->getSingleScalarResult();
 
-                if ($count == 0) {
-                    return '<span class="text-muted">-</span>';
+                    if ($count == 0) {
+                        return '<span class="text-muted">-</span>';
+                    }
+
+                    return sprintf('<span class="badge badge-info">%d</span>', $count);
+                } catch (\Exception $e) {
+                    return '<span class="text-danger">Error</span>';
                 }
-
-                return sprintf('<span class="badge badge-info">%d</span>', $count);
             })
             ->onlyOnIndex();
 
