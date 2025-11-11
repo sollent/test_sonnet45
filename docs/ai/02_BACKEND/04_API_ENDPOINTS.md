@@ -1,20 +1,20 @@
-# 🌐 Phase 2.4: API Endpoints - Quick Implementation
+# 🌐 Фаза 2.4: API Эндпоинты - Быстрая Реализация
 
-> **For AI**: Simple REST API endpoints for voice assistant. Copy, adapt, test.
+> **Для AI**: Простые REST API эндпоинты для голосового ассистента. Копируйте, адаптируйте, тестируйте.
 
-## 📍 What You're Building
+## 📍 Что Вы Создаете
 
-3 essential endpoints for MVP:
+3 основных эндпоинта для MVP:
 
-1. `POST /api/voice/command` - Submit audio/text command
-2. `GET /api/voice/command/{id}` - Get command status
-3. `GET /api/voice/history` - Get command history
+1. `POST /api/voice/command` - Отправка аудио/текстовой команды
+2. `GET /api/voice/command/{id}` - Получение статуса команды
+3. `GET /api/voice/history` - Получение истории команд
 
 ---
 
-## 🚀 Step 1: Create Controller
+## 🚀 Шаг 1: Создание Контроллера
 
-**AI**: Create controller file:
+**AI**: Создайте файл контроллера:
 
 ```php
 <?php
@@ -182,9 +182,9 @@ class VoiceCommandController extends AbstractController
 
 ---
 
-## 🔐 Step 2: Security Configuration
+## 🔐 Шаг 2: Конфигурация Безопасности
 
-**AI**: Make sure JWT is configured in `backend/config/packages/security.yaml`:
+**AI**: Убедитесь, что JWT настроен в `backend/config/packages/security.yaml`:
 
 ```yaml
 security:
@@ -201,9 +201,9 @@ security:
 
 ---
 
-## 📤 Step 3: Request Examples
+## 📤 Шаг 3: Примеры Запросов
 
-### Submit Audio Command
+### Отправка Аудио Команды
 
 ```bash
 curl -X POST http://localhost:8089/api/voice/command \
@@ -212,7 +212,7 @@ curl -X POST http://localhost:8089/api/voice/command \
   -F "source=web"
 ```
 
-Response:
+Ответ:
 ```json
 {
   "success": true,
@@ -222,7 +222,7 @@ Response:
 }
 ```
 
-### Submit Text Command
+### Отправка Текстовой Команды
 
 ```bash
 curl -X POST http://localhost:8089/api/voice/command \
@@ -234,14 +234,14 @@ curl -X POST http://localhost:8089/api/voice/command \
   }'
 ```
 
-### Get Command Status
+### Получение Статуса Команды
 
 ```bash
 curl -X GET http://localhost:8089/api/voice/command/550e8400-e29b-41d4-a716-446655440000 \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
-Response:
+Ответ:
 ```json
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
@@ -270,9 +270,9 @@ Response:
 
 ---
 
-## ✅ Step 4: Frontend Integration Example
+## ✅ Шаг 4: Пример Интеграции с Frontend
 
-**AI**: This is how frontend will use the API:
+**AI**: Так frontend будет использовать API:
 
 ```typescript
 // frontend/src/services/voiceCommand.service.ts
@@ -323,9 +323,9 @@ export default new VoiceCommandService();
 
 ---
 
-## 🧪 Step 5: Test Your API
+## 🧪 Шаг 5: Тестирование API
 
-**AI**: Create simple test:
+**AI**: Создайте простой тест:
 
 ```php
 <?php
@@ -361,22 +361,22 @@ class VoiceCommandControllerTest extends WebTestCase
 
 ---
 
-## 🚨 Error Handling
+## 🚨 Обработка Ошибок
 
-**AI**: Controller handles these errors automatically:
+**AI**: Контроллер автоматически обрабатывает эти ошибки:
 
-| Error | Status | Response |
+| Ошибка | Статус | Ответ |
 |-------|--------|----------|
-| No audio/text | 400 | `{"error": "No audio or text provided"}` |
-| Invalid file format | 400 | `{"error": "Invalid audio format"}` |
-| File too large | 400 | `{"error": "Audio file too large"}` |
-| Command not found | 404 | `{"error": "Command not found"}` |
-| Access denied | 403 | `{"error": "Access denied"}` |
-| Server error | 500 | `{"error": "Failed to process command"}` |
+| Нет аудио/текста | 400 | `{"error": "No audio or text provided"}` |
+| Неверный формат файла | 400 | `{"error": "Invalid audio format"}` |
+| Файл слишком большой | 400 | `{"error": "Audio file too large"}` |
+| Команда не найдена | 404 | `{"error": "Command not found"}` |
+| Доступ запрещен | 403 | `{"error": "Access denied"}` |
+| Ошибка сервера | 500 | `{"error": "Failed to process command"}` |
 
 ---
 
-## 📊 API Flow Diagram
+## 📊 Диаграмма Потока API
 
 ```
 Frontend
@@ -398,29 +398,29 @@ GET /api/voice/command/{id} (if needed)
 
 ---
 
-## ✅ AI Implementation Checklist
+## ✅ Чеклист Реализации для AI
 
-- [ ] Created VoiceCommandController.php
-- [ ] Verified security configuration
-- [ ] Tested POST /api/voice/command with text
-- [ ] Tested GET /api/voice/command/{id}
-- [ ] (Optional) Tested audio upload
-
----
-
-## 🎯 Next Steps
-
-**API ready!** Now set up queue processing:
-
-→ [Queue Processing](05_QUEUE_PROCESSING.md) - Async command processing with RabbitMQ
+- [ ] Создан VoiceCommandController.php
+- [ ] Проверена конфигурация безопасности
+- [ ] Протестирован POST /api/voice/command с текстом
+- [ ] Протестирован GET /api/voice/command/{id}
+- [ ] (Опционально) Протестирована загрузка аудио
 
 ---
 
-**AI Quick Tips**:
-- Controller is simple - just calls services
-- Security is handled by Symfony
-- Use 202 status for async processing
-- Return command_id immediately
-- WebSocket will notify when done
+## 🎯 Следующие Шаги
 
-**Time to Implement**: 30 minutes
+**API готов!** Теперь настройте обработку очереди:
+
+→ [Обработка Очереди](05_QUEUE_PROCESSING.md) - Асинхронная обработка команд с RabbitMQ
+
+---
+
+**Быстрые Советы для AI**:
+- Контроллер простой - просто вызывает сервисы
+- Безопасность обрабатывается Symfony
+- Используйте статус 202 для асинхронной обработки
+- Возвращайте command_id немедленно
+- WebSocket уведомит, когда готово
+
+**Время на Реализацию**: 30 минут

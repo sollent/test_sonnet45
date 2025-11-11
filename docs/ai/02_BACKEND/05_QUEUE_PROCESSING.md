@@ -1,19 +1,19 @@
-# ⚡ Phase 2.5: Queue Processing - Simple Async
+# ⚡ Фаза 2.5: Обработка Очереди - Простая Асинхронность
 
-> **For AI**: Super simple RabbitMQ setup for async voice processing.
+> **Для AI**: Супер простая настройка RabbitMQ для асинхронной обработки голоса.
 
-## 🎯 Why Queue?
+## 🎯 Зачем Очередь?
 
-Voice processing is slow (2-5 seconds). Queue lets us:
-- ✅ Return response immediately (202 Accepted)
-- ✅ Process in background
-- ✅ Send WebSocket updates when done
+Обработка голоса медленная (2-5 секунд). Очередь позволяет:
+- ✅ Вернуть ответ немедленно (202 Accepted)
+- ✅ Обработать в фоне
+- ✅ Отправить WebSocket обновления когда готово
 
 ---
 
-## 📦 Step 1: Message Class
+## 📦 Шаг 1: Класс Сообщения
 
-**AI**: Create message for queue:
+**AI**: Создайте сообщение для очереди:
 
 ```php
 <?php
@@ -36,9 +36,9 @@ class ProcessVoiceCommandMessage
 
 ---
 
-## 🔧 Step 2: Message Handler
+## 🔧 Шаг 2: Обработчик Сообщения
 
-**AI**: This runs asynchronously in worker:
+**AI**: Это выполняется асинхронно в воркере:
 
 ```php
 <?php
@@ -187,9 +187,9 @@ class ProcessVoiceCommandHandler
 
 ---
 
-## ⚙️ Step 3: Configure Messenger
+## ⚙️ Шаг 3: Конфигурация Messenger
 
-**AI**: Add to `backend/config/packages/messenger.yaml`:
+**AI**: Добавьте в `backend/config/packages/messenger.yaml`:
 
 ```yaml
 framework:
@@ -212,7 +212,7 @@ framework:
             App\Message\ProcessVoiceCommandMessage: async
 ```
 
-**Add to `.env`**:
+**Добавьте в `.env`**:
 ```env
 MESSENGER_TRANSPORT_DSN=amqp://user:password@localhost:5672/%2f/messages
 WHISPER_URL=http://localhost:8090
@@ -220,16 +220,16 @@ WHISPER_URL=http://localhost:8090
 
 ---
 
-## 🚀 Step 4: Run Worker
+## 🚀 Шаг 4: Запуск Воркера
 
-**AI**: Tell user to run worker:
+**AI**: Сообщите пользователю запустить воркер:
 
 ```bash
-# In separate terminal or supervisor
+# В отдельном терминале или supervisor
 docker exec backend-php83 php bin/console messenger:consume async -vv
 ```
 
-Or with supervisor (production):
+Или с supervisor (продакшн):
 
 ```ini
 # /etc/supervisor/conf.d/messenger-worker.conf
@@ -243,76 +243,76 @@ autorestart=true
 
 ---
 
-## 🧪 Test Queue
+## 🧪 Тестирование Очереди
 
-**AI**: Quick test:
+**AI**: Быстрый тест:
 
 ```php
 // In VoiceProcessingService or Controller
 $this->messageBus->dispatch(new ProcessVoiceCommandMessage($command->getId()));
 ```
 
-Check logs:
+Проверьте логи:
 ```bash
 docker exec backend-php83 tail -f /var/www/backend/var/log/dev.log
 ```
 
 ---
 
-## 🎯 Queue Flow
+## 🎯 Поток Очереди
 
 ```
-User submits command
+Пользователь отправляет команду
        ↓
-API returns 202 (queued)
+API возвращает 202 (в очереди)
        ↓
-Message → RabbitMQ
+Сообщение → RabbitMQ
        ↓
-Worker picks up
+Воркер подхватывает
        ↓
-Process (STT → LLM → Execute)
+Обработка (STT → LLM → Execute)
        ↓
-WebSocket update → Frontend
+WebSocket обновление → Frontend
 ```
 
 ---
 
-## ✅ Checklist
+## ✅ Чеклист
 
-- [ ] Created ProcessVoiceCommandMessage
-- [ ] Created ProcessVoiceCommandHandler
-- [ ] Configured messenger.yaml
-- [ ] Added MESSENGER_TRANSPORT_DSN to .env
-- [ ] Started worker process
-- [ ] Tested end-to-end flow
+- [ ] Создан ProcessVoiceCommandMessage
+- [ ] Создан ProcessVoiceCommandHandler
+- [ ] Настроен messenger.yaml
+- [ ] Добавлен MESSENGER_TRANSPORT_DSN в .env
+- [ ] Запущен процесс воркера
+- [ ] Протестирован end-to-end поток
 
 ---
 
-## 🚨 Troubleshooting
+## 🚨 Устранение Неполадок
 
-**Worker not processing**:
+**Воркер не обрабатывает**:
 ```bash
-# Check RabbitMQ
+# Проверьте RabbitMQ
 docker ps | grep rabbitmq
 
-# Check queue
+# Проверьте очередь
 docker exec backend-rabbitmq rabbitmqctl list_queues
 
-# Restart worker
+# Перезапустите воркер
 docker exec backend-php83 pkill -f messenger:consume
 docker exec backend-php83 php bin/console messenger:consume async
 ```
 
-**Failed messages**:
+**Проваленные сообщения**:
 ```bash
-# View failed
+# Просмотр проваленных
 php bin/console messenger:failed:show
 
-# Retry
+# Повтор
 php bin/console messenger:failed:retry
 ```
 
 ---
 
-**Time to Implement**: 30 minutes
-**Complexity**: Low (RabbitMQ already in project)
+**Время на Реализацию**: 30 минут
+**Сложность**: Низкая (RabbitMQ уже в проекте)
