@@ -1,20 +1,20 @@
-# 🎯 Phase 2.3: Command Handlers - Simple Implementation
+# 🎯 Фаза 2.3: Обработчики Команд - Простая Реализация
 
-> **For AI**: Quick guide to implement command handlers. Copy templates, adapt to your needs.
+> **Для AI**: Быстрое руководство по реализации обработчиков команд. Копируйте шаблоны, адаптируйте под свои нужды.
 
-## 📍 What You Need
+## 📍 Что Вам Нужно
 
-- ✅ Services completed ([Step 2.2](02_SERVICES.md))
-- 📂 Location: `backend/src/Service/VoiceAssistant/Command/Handlers/`
-- 🎯 Goal: Handle 5 basic commands for MVP
+- ✅ Сервисы завершены ([Шаг 2.2](02_SERVICES.md))
+- 📂 Расположение: `backend/src/Service/VoiceAssistant/Command/Handlers/`
+- 🎯 Цель: Обработать 5 базовых команд для MVP
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Быстрый Старт
 
-### Handler Interface
+### Интерфейс Обработчика
 
-**AI**: Create this first - all handlers implement it.
+**AI**: Создайте это сначала - все обработчики реализуют его.
 
 ```php
 <?php
@@ -33,11 +33,11 @@ interface CommandHandlerInterface
 
 ---
 
-## 📝 Handler Templates
+## 📝 Шаблоны Обработчиков
 
 ### 1. CreateTaskHandler
 
-**AI**: Most common command - creating tasks.
+**AI**: Самая частая команда - создание задач.
 
 ```php
 <?php
@@ -153,7 +153,7 @@ class CreateTaskHandler implements CommandHandlerInterface
 
 ### 2. CompleteTaskHandler
 
-**AI**: Mark tasks as done.
+**AI**: Отметить задачи как выполненные.
 
 ```php
 <?php
@@ -238,7 +238,7 @@ class CompleteTaskHandler implements CommandHandlerInterface
 
 ### 3. FilterTasksHandler
 
-**AI**: Search and filter tasks.
+**AI**: Поиск и фильтрация задач.
 
 ```php
 <?php
@@ -340,9 +340,9 @@ class FilterTasksHandler implements CommandHandlerInterface
 }
 ```
 
-### 4. CreateSubtaskHandler (Optional for MVP)
+### 4. CreateSubtaskHandler (Опционально для MVP)
 
-**AI**: Add this if you have time, otherwise skip.
+**AI**: Добавьте это, если есть время, иначе пропустите.
 
 ```php
 <?php
@@ -421,9 +421,9 @@ class CreateSubtaskHandler implements CommandHandlerInterface
 
 ---
 
-## 🔧 Handler Configuration
+## 🔧 Конфигурация Обработчиков
 
-**AI**: Register handlers in `backend/config/services.yaml`:
+**AI**: Зарегистрируйте обработчики в `backend/config/services.yaml`:
 
 ```yaml
 services:
@@ -456,9 +456,9 @@ services:
 
 ---
 
-## ✅ Quick Test
+## ✅ Быстрый Тест
 
-**AI**: Create test file to verify handlers work:
+**AI**: Создайте тестовый файл для проверки работы обработчиков:
 
 ```php
 <?php
@@ -491,20 +491,20 @@ class CommandHandlersTest extends KernelTestCase
 
 ---
 
-## 🎯 MVP Implementation Priority
+## 🎯 Приоритет Реализации для MVP
 
-**AI**: Implement in this order:
+**AI**: Реализуйте в таком порядке:
 
-1. ✅ **CreateTaskHandler** - Most important (90% of commands)
-2. ✅ **CompleteTaskHandler** - Second most used
-3. ⚠️ **FilterTasksHandler** - Nice to have
-4. ⏭️ **CreateSubtaskHandler** - Skip for initial MVP
+1. ✅ **CreateTaskHandler** - Самый важный (90% команд)
+2. ✅ **CompleteTaskHandler** - Второй по частоте использования
+3. ⚠️ **FilterTasksHandler** - Желательно иметь
+4. ⏭️ **CreateSubtaskHandler** - Пропустить для начального MVP
 
 ---
 
-## 🚨 Common Patterns
+## 🚨 Общие Шаблоны
 
-### Pattern 1: Task Not Found - Ask User
+### Шаблон 1: Задача Не Найдена - Спросить Пользователя
 
 ```php
 if (!$task) {
@@ -517,7 +517,7 @@ if (!$task) {
 }
 ```
 
-### Pattern 2: Error Handling
+### Шаблон 2: Обработка Ошибок
 
 ```php
 try {
@@ -529,7 +529,7 @@ try {
 }
 ```
 
-### Pattern 3: Natural Language Dates
+### Шаблон 3: Даты на Естественном Языке
 
 ```php
 private function parseDate(string $input): ?\DateTimeImmutable
@@ -554,7 +554,7 @@ private function parseDate(string $input): ?\DateTimeImmutable
 
 ---
 
-## 📊 Handler Flow
+## 📊 Поток Обработчика
 
 ```
 VoiceCommand
@@ -565,39 +565,39 @@ getHandler($action) → CreateTaskHandler
      ↓
 handle(VoiceCommand)
      ↓
-Extract parameters
+Извлечь параметры
      ↓
-Call TaskService
+Вызвать TaskService
      ↓
-Return result
+Вернуть результат
 ```
 
 ---
 
-## ✅ AI Implementation Checklist
+## ✅ Чеклист Реализации для AI
 
-- [ ] Created `CommandHandlerInterface.php`
-- [ ] Implemented `CreateTaskHandler.php`
-- [ ] Implemented `CompleteTaskHandler.php`
-- [ ] (Optional) Implemented `FilterTasksHandler.php`
-- [ ] Added services to `services.yaml`
-- [ ] Tested at least CreateTaskHandler
-
----
-
-## 🎯 Next Step
-
-**Handlers ready!** Now create API endpoints:
-
-→ [API Endpoints](04_API_ENDPOINTS.md) - Create REST API for frontend
+- [ ] Создан `CommandHandlerInterface.php`
+- [ ] Реализован `CreateTaskHandler.php`
+- [ ] Реализован `CompleteTaskHandler.php`
+- [ ] (Опционально) Реализован `FilterTasksHandler.php`
+- [ ] Добавлены сервисы в `services.yaml`
+- [ ] Протестирован хотя бы CreateTaskHandler
 
 ---
 
-**AI Tips**:
-- Start with CreateTaskHandler only
-- Use existing TaskService methods
-- Don't create new database operations
-- Error handling is simple: try/catch + return array
-- Natural language parsing is basic for MVP
+## 🎯 Следующий Шаг
 
-**Time**: 1-2 hours for MVP handlers
+**Обработчики готовы!** Теперь создайте API эндпоинты:
+
+→ [API Эндпоинты](04_API_ENDPOINTS.md) - Создать REST API для frontend
+
+---
+
+**Советы для AI**:
+- Начните только с CreateTaskHandler
+- Используйте существующие методы TaskService
+- Не создавайте новые операции с базой данных
+- Обработка ошибок простая: try/catch + return array
+- Разбор естественного языка базовый для MVP
+
+**Время**: 1-2 часа для MVP обработчиков

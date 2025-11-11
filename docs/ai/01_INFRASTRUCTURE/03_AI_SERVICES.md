@@ -1,27 +1,27 @@
-# 🤖 Phase 1.3: AI Services Installation & Configuration
+# 🤖 Фаза 1.3: Установка и Конфигурация AI Сервисов
 
-> **Document Version**: 1.0.0
-> **Last Updated**: 2025-11-08
-> **Estimated Time**: 2 days
-> **Complexity**: HIGH
-> **Prerequisites**: Docker running, Infrastructure set up
+> **Версия Документа**: 1.0.0
+> **Последнее Обновление**: 2025-11-08
+> **Предполагаемое Время**: 2 дня
+> **Сложность**: ВЫСОКАЯ
+> **Предварительные Требования**: Docker запущен, инфраструктура настроена
 
-## 📋 Table of Contents
+## 📋 Содержание
 
-1. [Ollama LLM Setup](#ollama-llm-setup)
-2. [Whisper STT Setup](#whisper-stt-setup)
-3. [Centrifugo WebSocket Setup](#centrifugo-websocket-setup)
-4. [Integration Testing](#integration-testing)
-5. [Performance Tuning](#performance-tuning)
-6. [Troubleshooting](#troubleshooting)
+1. [Настройка Ollama LLM](#настройка-ollama-llm)
+2. [Настройка Whisper STT](#настройка-whisper-stt)
+3. [Настройка Centrifugo WebSocket](#настройка-centrifugo-websocket)
+4. [Интеграционное Тестирование](#интеграционное-тестирование)
+5. [Настройка Производительности](#настройка-производительности)
+6. [Устранение Неполадок](#устранение-неполадок)
 
 ---
 
-## 🧠 Ollama LLM Setup
+## 🧠 Настройка Ollama LLM
 
-### Installation & Configuration
+### Установка и Конфигурация
 
-#### Step 1: Deploy Ollama Container
+#### Шаг 1: Развертывание Контейнера Ollama
 
 ```bash
 #!/bin/bash
@@ -67,7 +67,7 @@ done
 echo "Ollama installation completed!"
 ```
 
-#### Step 2: Install and Configure Llama 3.2
+#### Шаг 2: Установка и Конфигурация Llama 3.2
 
 ```bash
 #!/bin/bash
@@ -120,7 +120,7 @@ docker exec -i voice-ai-ollama ollama create voice-assistant < /tmp/Modelfile
 echo "✅ Llama 3.2 configured for Russian voice commands!"
 ```
 
-#### Step 3: Test Llama Performance
+#### Шаг 3: Тестирование Производительности Llama
 
 ```python
 #!/usr/bin/env python3
@@ -184,7 +184,7 @@ if __name__ == "__main__":
     test_llama()
 ```
 
-### Advanced Ollama Configuration
+### Расширенная Конфигурация Ollama
 
 ```yaml
 # File: infrastructure/ai-services/configs/ollama/config.yml
@@ -222,11 +222,11 @@ logging:
 
 ---
 
-## 🎤 Whisper STT Setup
+## 🎤 Настройка Whisper STT
 
-### Installation & Configuration
+### Установка и Конфигурация
 
-#### Step 1: Build Whisper Service
+#### Шаг 1: Сборка Сервиса Whisper
 
 ```dockerfile
 # File: infrastructure/ai-services/configs/whisper/Dockerfile.complete
@@ -275,7 +275,7 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=60s \
 CMD ["uvicorn", "whisper_api:app", "--host", "0.0.0.0", "--port", "8090", "--workers", "2"]
 ```
 
-#### Step 2: Whisper API Implementation
+#### Шаг 2: Реализация Whisper API
 
 ```python
 # File: infrastructure/ai-services/configs/whisper/whisper_api.py
@@ -693,7 +693,7 @@ if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8090)
 ```
 
-#### Step 3: Test Whisper Service
+#### Шаг 3: Тестирование Сервиса Whisper
 
 ```python
 #!/usr/bin/env python3
@@ -787,11 +787,11 @@ if __name__ == "__main__":
 
 ---
 
-## 🌐 Centrifugo WebSocket Setup
+## 🌐 Настройка Centrifugo WebSocket
 
-### Installation & Configuration
+### Установка и Конфигурация
 
-#### Step 1: Configure Centrifugo
+#### Шаг 1: Конфигурация Centrifugo
 
 ```json
 // File: infrastructure/ai-services/configs/centrifugo/config.production.json
@@ -914,7 +914,7 @@ if __name__ == "__main__":
 }
 ```
 
-#### Step 2: PHP Integration Service
+#### Шаг 2: Сервис Интеграции с PHP
 
 ```php
 <?php
@@ -1129,7 +1129,7 @@ class CentrifugoService
 }
 ```
 
-#### Step 3: Frontend WebSocket Client
+#### Шаг 3: Клиент WebSocket для Frontend
 
 ```typescript
 // File: infrastructure/ai-services/configs/centrifugo/centrifugo.client.ts
@@ -1346,9 +1346,9 @@ export default VoiceWebSocketClient;
 
 ---
 
-## 🧪 Integration Testing
+## 🧪 Интеграционное Тестирование
 
-### Complete Integration Test Suite
+### Полный Набор Интеграционных Тестов
 
 ```python
 #!/usr/bin/env python3
@@ -1543,9 +1543,9 @@ if __name__ == "__main__":
 
 ---
 
-## ⚡ Performance Tuning
+## ⚡ Настройка Производительности
 
-### Optimization Script
+### Скрипт Оптимизации
 
 ```bash
 #!/bin/bash
@@ -1611,9 +1611,9 @@ python3 scripts/benchmark.py
 
 ---
 
-## 🔧 Troubleshooting
+## 🔧 Устранение Неполадок
 
-### Common Issues and Solutions
+### Распространенные Проблемы и Решения
 
 ```bash
 #!/bin/bash
@@ -1673,30 +1673,30 @@ echo "4. For production, use fixed versions instead of 'latest'"
 
 ---
 
-## ✅ Verification Checklist
+## ✅ Чеклист Верификации
 
-- [ ] Ollama is running and responsive
-- [ ] Llama 3.2 model is loaded
-- [ ] Whisper service is healthy
-- [ ] Whisper can transcribe Russian audio
-- [ ] Centrifugo WebSocket is accessible
-- [ ] Redis is connected to Centrifugo
-- [ ] All health checks pass
-- [ ] Integration tests complete successfully
-- [ ] Performance is within acceptable limits
-- [ ] Logs show no critical errors
-
----
-
-## 📚 Next Steps
-
-1. ✅ AI Services are installed and configured
-2. → Proceed to [Security & Networking](04_SECURITY.md)
-3. → Begin [Backend Core Implementation](../02_BACKEND/01_DOMAIN_MODEL.md)
-4. → Set up [Frontend Voice Components](../03_FRONTEND/01_VOICE_RECORDING.md)
+- [ ] Ollama запущен и отвечает на запросы
+- [ ] Модель Llama 3.2 загружена
+- [ ] Сервис Whisper работает нормально
+- [ ] Whisper может транскрибировать русскую речь
+- [ ] Centrifugo WebSocket доступен
+- [ ] Redis подключен к Centrifugo
+- [ ] Все проверки состояния проходят успешно
+- [ ] Интеграционные тесты выполнены успешно
+- [ ] Производительность находится в допустимых пределах
+- [ ] Логи не показывают критических ошибок
 
 ---
 
-**Document Status**: Complete
-**Last Tested**: 2025-11-08
-**Author**: AI Architecture Team
+## 📚 Следующие Шаги
+
+1. ✅ AI сервисы установлены и сконфигурированы
+2. → Переходите к [Безопасность и Сетевая Настройка](04_SECURITY.md)
+3. → Начните [Реализацию Backend Core](../02_BACKEND/01_DOMAIN_MODEL.md)
+4. → Настройте [Frontend Компоненты Голоса](../03_FRONTEND/01_VOICE_RECORDING.md)
+
+---
+
+**Статус Документа**: Завершен
+**Последнее Тестирование**: 2025-11-08
+**Автор**: AI Architecture Team
