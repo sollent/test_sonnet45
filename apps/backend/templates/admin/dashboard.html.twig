@@ -1,0 +1,187 @@
+{% extends '@EasyAdmin/page/content.html.twig' %}
+
+{% block content_title %}
+    <h1>📊 Admin Dashboard</h1>
+    <p class="text-muted">System Overview & Metrics</p>
+{% endblock %}
+
+{% block main %}
+    {# System Alerts #}
+    {% if alerts is not empty %}
+        <div class="mb-4">
+            <h3>⚠️ System Alerts</h3>
+            {% for alert in alerts %}
+                <div class="alert alert-{{ alert.type }} d-flex justify-content-between align-items-center">
+                    <span>{{ alert.message }}</span>
+                    {% if alert.action is defined %}
+                        <a href="{{ alert.action.url }}" class="btn btn-sm btn-{{ alert.type }}">
+                            {{ alert.action.label }}
+                        </a>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {# Overview Cards #}
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">👥 Total Users</h5>
+                    <p class="card-text display-4">{{ metrics.users }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">📝 Total Tasks</h5>
+                    <p class="card-text display-4">{{ metrics.tasks }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">🔄 Active Rules</h5>
+                    <p class="card-text display-4">{{ metrics.activeRules }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title">💾 Storage (MB)</h5>
+                    <p class="card-text display-4">{{ metrics.storage }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Secondary Metrics #}
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title">👤 Active Users (24h)</h6>
+                    <p class="display-6">{{ metrics.activeUsers24h }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title">✅ Completion Rate (30d)</h6>
+                    <p class="display-6">{{ metrics.completionRate }}%</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title">⏰ Overdue Tasks</h6>
+                    <p class="display-6">{{ metrics.overdueTasks }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Activity Chart #}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>📈 Admin Activity (Last 7 Days)</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="activityChart" style="max-height: 300px;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Recent Activity Feed #}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>🕒 Recent Activity</h5>
+                </div>
+                <div class="card-body">
+                    {% if recentActivity is not empty %}
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>User</th>
+                                    <th>Action</th>
+                                    <th>Entity</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in recentActivity %}
+                                    <tr>
+                                        <td>{{ log.createdAt|date('H:i:s') }}</td>
+                                        <td>{{ log.user ? log.user.email : 'System' }}</td>
+                                        <td>
+                                            <span class="badge bg-{{ log.action == 'CREATE' ? 'success' : (log.action == 'DELETE' ? 'danger' : 'info') }}">
+                                                {{ log.action }}
+                                            </span>
+                                        </td>
+                                        <td>{{ log.entityType }} #{{ log.entityId }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <p class="text-muted">No recent activity</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block body_javascript %}
+    {{ parent() }}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        const ctx = document.getElementById('activityChart').getContext('2d');
+        const activityChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: {{ activityChart|map(a => a.date)|json_encode|raw }},
+                datasets: [{
+                    label: 'Admin Actions',
+                    data: {{ activityChart|map(a => a.count)|json_encode|raw }},
+                    borderColor: 'rgb(75, 192, 192)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    tension: 0.1,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        enabled: true
+                    }
+                }
+            }
+        });
+    </script>
+{% endblock %}

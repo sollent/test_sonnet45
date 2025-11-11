@@ -15,9 +15,11 @@ use EasyCorp\Bundle\EasyAdminBundle\Collection\FilterCollection;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
+use EasyCorp\Bundle\EasyAdminBundle\Orm\EntityRepository;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
 use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
+use EasyCorp\Bundle\EasyAdminBundle\Dto\BatchActionDto;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\EntityDto;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\SearchDto;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
@@ -339,6 +341,13 @@ class TaskCrudController extends AbstractCrudController
             ->setIcon('fa fa-inbox')
             ->setCssClass('btn btn-sm btn-info');
 
+        // Export action
+        $exportAction = Action::new('export', 'Export to CSV')
+            ->linkToCrudAction('exportToCsv')
+            ->createAsGlobalAction()
+            ->setIcon('fa fa-download')
+            ->addCssClass('btn btn-success');
+
         return $actions
             // Add view action to index page
             ->add(Crud::PAGE_INDEX, Action::DETAIL)
@@ -347,6 +356,7 @@ class TaskCrudController extends AbstractCrudController
             ->add(Crud::PAGE_INDEX, $completeAction)
             ->add(Crud::PAGE_INDEX, $archiveAction)
             ->add(Crud::PAGE_INDEX, $unarchiveAction)
+            ->add(Crud::PAGE_INDEX, $exportAction)
             ->add(Crud::PAGE_DETAIL, $completeAction)
             ->add(Crud::PAGE_DETAIL, $archiveAction)
             ->add(Crud::PAGE_DETAIL, $unarchiveAction)
@@ -490,5 +500,68 @@ class TaskCrudController extends AbstractCrudController
         }
 
         parent::updateEntity($entityManager, $entityInstance);
+    }
+
+    /**
+     * Export tasks to CSV
+     */
+    public function exportToCsv(AdminContext $context): Response
+    {
+        // Get all tasks (or filtered tasks based on current filters)
+        $tasks = $this->entityManager->getRepository(Task::class)
+            ->createQueryBuilder('t')
+            ->leftJoin('t.user', 'u')
+            ->addSelect('u')
+            ->getQuery()
+            ->getResult();
+
+        // Create CSV content
+        $csv = [];
+        $csv[] = [
+            'ID',
+            'Title',
+            'Description',
+            'User Email',
+            'Status',
+            'Priority',
+            'Is Archived',
+            'Start Date',
+            'Due Date',
+            'Completed At',
+            'Created At',
+        ];
+
+        /** @var Task $task */
+        foreach ($tasks as $task) {
+            $csv[] = [
+                $task->getId(),
+                $task->getTitle(),
+                $task->getDescription() ?? '',
+                $task->getUser()?->getEmail() ?? 'N/A',
+                $task->getStatus()->value,
+                $task->getPriority()->value,
+                $task->isArchived() ? 'Yes' : 'No',
+                $task->getStartDate()?->format('Y-m-d H:i:s') ?? '',
+                $task->getDueDate()?->format('Y-m-d H:i:s') ?? '',
+                $task->getCompletedAt()?->format('Y-m-d H:i:s') ?? '',
+                $task->getCreatedAt()?->format('Y-m-d H:i:s') ?? '',
+            ];
+        }
+
+        // Generate CSV string
+        $output = fopen('php://temp', 'w');
+        foreach ($csv as $row) {
+            fputcsv($output, $row);
+        }
+        rewind($output);
+        $csvContent = stream_get_contents($output);
+        fclose($output);
+
+        // Create response
+        $response = new Response($csvContent);
+        $response->headers->set('Content-Type', 'text/csv');
+        $response->headers->set('Content-Disposition', 'attachment; filename="tasks_export_' . date('Y-m-d_His') . '.csv"');
+
+        return $response;
     }
 }
