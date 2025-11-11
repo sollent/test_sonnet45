@@ -91,6 +91,68 @@ test.describe('Calendar View', () => {
       expect(dayCount).toBeLessThanOrEqual(42)
     })
 
+    test('TC-CAL-003: Switch to week view', async ({ page }) => {
+      // Navigate to calendar
+      await calendarPage.goto()
+      await calendarPage.waitForCalendarToLoad()
+
+      // Switch to week view
+      await calendarPage.switchToWeekView()
+
+      // Verify week calendar is displayed
+      const isWeekView = await calendarPage.isWeekView()
+      expect(isWeekView).toBe(true)
+
+      // Verify 7 days are displayed
+      const dayCount = await calendarPage.getDayCount()
+      expect(dayCount).toBe(7)
+    })
+
+    test('TC-CAL-004: Navigate to previous month/week', async ({ page }) => {
+      // Navigate to calendar
+      await calendarPage.goto()
+      await calendarPage.waitForCalendarToLoad()
+
+      // Get current month/year
+      const currentTitle = await calendarPage.getMonthYearTitle()
+
+      // Navigate to previous month
+      await calendarPage.goToPrevious()
+
+      // Get new month/year
+      const newTitle = await calendarPage.getMonthYearTitle()
+
+      // Titles should be different
+      expect(newTitle).not.toBe(currentTitle)
+
+      // Verify calendar loaded new period (tasks loaded)
+      await page.waitForTimeout(500)
+      const dayCount = await calendarPage.getDayCount()
+      expect(dayCount).toBeGreaterThan(0)
+    })
+
+    test('TC-CAL-005: Navigate to next month/week', async ({ page }) => {
+      // Navigate to calendar
+      await calendarPage.goto()
+      await calendarPage.waitForCalendarToLoad()
+
+      // Get current month/year
+      const currentTitle = await calendarPage.getMonthYearTitle()
+
+      // Navigate to next month
+      await calendarPage.goToNext()
+
+      // Get new month/year
+      const newTitle = await calendarPage.getMonthYearTitle()
+
+      // Titles should be different
+      expect(newTitle).not.toBe(currentTitle)
+
+      // Verify calendar loaded new period
+      await page.waitForTimeout(500)
+      const dayCount = await calendarPage.getDayCount()
+      expect(dayCount).toBeGreaterThan(0)
+    })
 
     test('TC-CAL-006: Navigate to today', async ({ page }) => {
       // Navigate to calendar
@@ -201,5 +263,49 @@ test.describe('Calendar View', () => {
       }
     })
 
+    test('TC-CAL-009: Create task from calendar date', async ({ page }) => {
+      // Navigate to calendar
+      await calendarPage.goto()
+      await calendarPage.waitForCalendarToLoad()
+
+      // Click on a future date (e.g., today + 2)
+      const today = new Date()
+      const futureDay = today.getDate() + 2
+
+      // Make sure we don't go beyond month end (simple check)
+      const targetDay = futureDay > 28 ? 15 : futureDay
+
+      await calendarPage.clickDay(targetDay)
+      await page.waitForTimeout(1000)
+
+      // Look for "New Task" button in selected date panel
+      const createButton = page.getByRole('button', { name: /новая задача|new task|create/i })
+
+      if (await createButton.isVisible({ timeout: 3000 }).catch(() => false)) {
+        await createButton.click()
+        await page.waitForTimeout(1500)
+
+        // Verify task dialog opens
+        const dialog = page.locator('.p-dialog, [role="dialog"]')
+        const isDialogVisible = await dialog.isVisible().catch(() => false)
+        expect(isDialogVisible).toBe(true)
+
+        // Fill task details
+        await taskDialogPage.fillTitle('Task Created from Calendar')
+        await page.waitForTimeout(300)
+        await taskDialogPage.saveButton.click()
+        await page.waitForTimeout(2000)
+
+        // Verify we're back on calendar
+        expect(await calendarPage.isOnCalendar()).toBe(true)
+
+        // Click on the same day again and verify task appears
+        await calendarPage.clickDay(targetDay)
+        await page.waitForTimeout(1000)
+
+        const taskCount = await calendarPage.getSelectedDateTaskCount()
+        expect(taskCount).toBeGreaterThanOrEqual(1)
+      }
+    })
   })
 })

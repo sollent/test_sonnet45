@@ -73,6 +73,81 @@ test.describe('Filters', () => {
   })
 
   test.describe('6.1 Quick Filters', () => {
+    test('TC-FILTER-001: Apply "На сегодня" quick filter', async ({ page }) => {
+      // Get initial task count
+      const initialCount = await dashboardPage.getTaskCount()
+      expect(initialCount).toBeGreaterThanOrEqual(2) // We created 2 tasks for today
+
+      // Click "На сегодня" quick filter
+      const todayFilterButton = page.getByRole('button', { name: /На сегодня/i }).first()
+      await expect(todayFilterButton).toBeVisible({ timeout: 5000 })
+      await todayFilterButton.click()
+      await page.waitForTimeout(1500)
+
+      // Verify "Очистить фильтры" button appears
+      const clearButton = page.getByRole('button', { name: /очистить фильтры/i })
+      await expect(clearButton).toBeVisible({ timeout: 3000 })
+
+      // Verify filtered task count (should show today's tasks)
+      const filteredCount = await dashboardPage.getTaskCount()
+      expect(filteredCount).toBeGreaterThanOrEqual(1) // At least some tasks for today
+      expect(filteredCount).toBeLessThanOrEqual(initialCount)
+
+      // Verify today's tasks are shown
+      const todayTask1 = await dashboardPage.findTaskByTitle('Task Today 1')
+      expect(todayTask1).not.toBeNull()
+    })
+
+    test('TC-FILTER-002: Apply "Срочные" quick filter', async ({ page }) => {
+      // Click "Срочные" quick filter
+      const urgentFilterButton = page.getByRole('button', { name: /Срочные/i }).first()
+      await expect(urgentFilterButton).toBeVisible({ timeout: 5000 })
+      await urgentFilterButton.click()
+      await page.waitForTimeout(1500)
+
+      // Verify "Очистить фильтры" button appears
+      const clearButton = page.getByRole('button', { name: /очистить фильтры/i })
+      await expect(clearButton).toBeVisible({ timeout: 3000 })
+
+      // With simple test data (no urgent tasks), we expect empty state or 0 tasks
+      const taskCount = await dashboardPage.getTaskCount()
+      const isEmpty = await dashboardPage.isEmptyStateVisible()
+      expect(taskCount === 0 || isEmpty).toBe(true)
+    })
+
+    test('TC-FILTER-003: Apply "Просроченные" quick filter', async ({ page }) => {
+      // Click "Просроченные" quick filter
+      const overdueFilterButton = page.getByRole('button', { name: /Просроченные/i }).first()
+      await expect(overdueFilterButton).toBeVisible({ timeout: 5000 })
+      await overdueFilterButton.click()
+      await page.waitForTimeout(1500)
+
+      // Verify "Очистить фильтры" button appears
+      const clearButton = page.getByRole('button', { name: /очистить фильтры/i })
+      await expect(clearButton).toBeVisible({ timeout: 3000 })
+
+      // With simple test data (no overdue tasks), we expect empty state or 0 tasks
+      const taskCount = await dashboardPage.getTaskCount()
+      const isEmpty = await dashboardPage.isEmptyStateVisible()
+      expect(taskCount === 0 || isEmpty).toBe(true)
+    })
+
+    test('TC-FILTER-004: Apply "В процессе" quick filter', async ({ page }) => {
+      // Click "В процессе" quick filter
+      const inProgressFilterButton = page.getByRole('button', { name: /В процессе/i }).first()
+      await expect(inProgressFilterButton).toBeVisible({ timeout: 5000 })
+      await inProgressFilterButton.click()
+      await page.waitForTimeout(1500)
+
+      // Verify "Очистить фильтры" button appears
+      const clearButton = page.getByRole('button', { name: /очистить фильтры/i })
+      await expect(clearButton).toBeVisible({ timeout: 3000 })
+
+      // With simple test data (default status is 'pending'), we expect empty state
+      const taskCount = await dashboardPage.getTaskCount()
+      const isEmpty = await dashboardPage.isEmptyStateVisible()
+      expect(taskCount === 0 || isEmpty).toBe(true)
+    })
 
     test('TC-FILTER-005: Apply multiple quick filters', async ({ page }) => {
       // Get initial count
