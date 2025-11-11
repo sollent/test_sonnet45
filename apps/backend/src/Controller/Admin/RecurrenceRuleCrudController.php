@@ -315,9 +315,9 @@ class RecurrenceRuleCrudController extends AbstractCrudController
             // Active status filter
             ->add(BooleanFilter::new('isActive', 'Active'))
 
-            // Entity filters
-            ->add(EntityFilter::new('createdBy', 'Created By'))
-            ->add(EntityFilter::new('templateTask', 'Template Task'));
+            // Entity filter - only for createdBy (small table - 25 users)
+            // REMOVED templateTask filter - causes N+1 on 213K tasks!
+            ->add(EntityFilter::new('createdBy', 'Created By'));
     }
 
     public function configureActions(Actions $actions): Actions
