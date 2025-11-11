@@ -203,6 +203,17 @@ Day-to-day development process
 - Testing workflow
 - Git workflow & commits
 
+#### [`guides/CODE_QUALITY.md`](guides/CODE_QUALITY.md)
+Code quality tools and automated checks
+
+**Key Topics:**
+- PHP-CS-Fixer (PSR-12 + PHP 8.3 code style)
+- PHPStan (static analysis level 5)
+- Git pre-commit hooks setup
+- Makefile commands for quality checks
+- Configuration details and customization
+- Troubleshooting quality tools
+
 #### [`guides/TROUBLESHOOTING.md`](guides/TROUBLESHOOTING.md)
 Common issues and their solutions
 

@@ -104,6 +104,19 @@ npm run dev
 - **PostgreSQL:** localhost:15432 (external port)
 - **RabbitMQ Management:** http://localhost:15672 (user/password)
 
+### 5. Install Git Hooks (Recommended)
+
+```bash
+# Install pre-commit hooks for code quality checks
+bash scripts/install-git-hooks.sh
+```
+
+This installs Git hooks that automatically run:
+- **PHP-CS-Fixer** - Code style checks (PSR-12)
+- **PHPStan** - Static analysis (level 5)
+
+Hooks run before each commit and block commits with issues.
+
 ---
 
 ## Daily Development
@@ -280,6 +293,89 @@ docker exec backend-php83 php bin/console debug:autowiring
 # Messenger (queue) operations
 docker exec backend-php83 php bin/console messenger:consume async -vv
 docker exec backend-php83 php bin/console messenger:stats
+```
+
+### Code Quality Tools
+
+#### PHP-CS-Fixer (Code Style)
+
+PHP-CS-Fixer automatically fixes PHP code to follow PSR-12 and modern PHP 8.3 standards.
+
+```bash
+# Check code style (dry-run, no changes)
+make cs-fixer-check
+# OR
+docker exec backend-php83 vendor/bin/php-cs-fixer fix --dry-run --diff --verbose
+
+# Fix code style automatically
+make cs-fixer-fix
+# OR
+docker exec backend-php83 vendor/bin/php-cs-fixer fix --verbose
+```
+
+**Configuration:** `apps/backend/.php-cs-fixer.php`
+
+**Key features:**
+- PSR-12 compliance
+- Modern PHP 8.3 features (strict types, readonly, enums)
+- Array trailing commas
+- Aligned binary operators
+- Ordered class elements
+- PHPDoc formatting
+
+#### PHPStan (Static Analysis)
+
+PHPStan performs static analysis to find bugs without running code.
+
+```bash
+# Run static analysis (level 5)
+make phpstan
+# OR
+docker exec backend-php83 vendor/bin/phpstan analyse --memory-limit=1G
+
+# Generate baseline (ignore existing errors)
+make phpstan-baseline
+# OR
+docker exec backend-php83 vendor/bin/phpstan analyse --generate-baseline
+```
+
+**Configuration:** `apps/backend/phpstan.neon`
+
+**Current level:** 5 (good starting point)
+
+**Extensions enabled:**
+- phpstan-symfony (Symfony-specific checks)
+- phpstan-doctrine (Doctrine ORM checks)
+
+#### Run All Quality Checks
+
+```bash
+# Check code style + static analysis
+make quality-check
+
+# Fix code style + run static analysis
+make quality-fix
+```
+
+#### Git Pre-Commit Hooks
+
+Automatically runs quality checks before each commit.
+
+**Installation:**
+```bash
+# Install Git hooks (run once after cloning)
+bash scripts/install-git-hooks.sh
+```
+
+**What it does:**
+1. Detects changed PHP files in `apps/backend/`
+2. Runs PHP-CS-Fixer check (dry-run)
+3. Runs PHPStan analysis
+4. Blocks commit if issues found
+
+**Bypass hook** (not recommended):
+```bash
+git commit --no-verify
 ```
 
 ### Complete Project Rebuild

@@ -60,6 +60,7 @@
 | Topic | Document | Key Info |
 |-------|----------|----------|
 | **Daily Workflow** | [`docs/guides/DEVELOPMENT_WORKFLOW.md`](docs/guides/DEVELOPMENT_WORKFLOW.md) | Docker commands, migrations, PostgreSQL |
+| **Code Quality** | [`docs/guides/CODE_QUALITY.md`](docs/guides/CODE_QUALITY.md) | PHP-CS-Fixer, PHPStan, Git hooks |
 | **Testing** | [`docs/guides/testing/TESTING.md`](docs/guides/testing/TESTING.md) | PHPUnit, Vitest, test organization |
 | **Troubleshooting** | [`docs/guides/TROUBLESHOOTING.md`](docs/guides/TROUBLESHOOTING.md) | All solved issues & solutions |
 
@@ -84,6 +85,11 @@ docker exec backend-php83 php bin/console <command>
 
 # Migrations
 docker exec backend-php83 php bin/console doctrine:migrations:migrate
+
+# Code quality checks
+make cs-fixer-fix              # Fix code style
+make phpstan                   # Static analysis
+make quality-check             # Run both checks
 ```
 
 **IMPORTANT**: Main Docker config is `docker-compose.yml` in root (includes infrastructure/docker/*.yml)

@@ -51,3 +51,30 @@ frontend-install: ## Install frontend dependencies
 
 frontend-build: ## Build frontend for production
 	cd apps/frontend && npm run build
+
+## Backend Quality Tools
+cs-fixer-check: ## Check PHP code style (dry-run)
+	docker exec backend-php83 vendor/bin/php-cs-fixer fix --dry-run --diff --verbose
+
+cs-fixer-fix: ## Fix PHP code style automatically
+	docker exec backend-php83 vendor/bin/php-cs-fixer fix --verbose
+
+phpstan: ## Run PHPStan static analysis
+	docker exec backend-php83 vendor/bin/phpstan analyse --memory-limit=1G
+
+phpstan-baseline: ## Generate PHPStan baseline
+	docker exec backend-php83 vendor/bin/phpstan analyse --generate-baseline
+
+quality-check: ## Run all quality checks (cs-fixer + phpstan)
+	@echo "Running PHP-CS-Fixer check..."
+	@docker exec backend-php83 vendor/bin/php-cs-fixer fix --dry-run --diff --verbose
+	@echo "\nRunning PHPStan analysis..."
+	@docker exec backend-php83 vendor/bin/phpstan analyse --memory-limit=1G
+	@echo "\n✓ All quality checks completed!"
+
+quality-fix: ## Fix code style and re-run checks
+	@echo "Fixing PHP code style..."
+	@docker exec backend-php83 vendor/bin/php-cs-fixer fix --verbose
+	@echo "\nRunning PHPStan analysis..."
+	@docker exec backend-php83 vendor/bin/phpstan analyse --memory-limit=1G
+	@echo "\n✓ Code fixed and analyzed!"
