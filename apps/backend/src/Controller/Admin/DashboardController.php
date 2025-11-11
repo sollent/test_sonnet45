@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Controller\Admin;
 
+use App\Entity\AuditLog;
+use App\Entity\MediaObject;
 use App\Entity\RecurrenceRule;
+use App\Entity\RefreshToken;
 use App\Entity\Tag;
 use App\Entity\Task;
 use App\Entity\TaskAttachment;
@@ -67,6 +70,16 @@ class DashboardController extends AbstractDashboardController
             ->setPermission('ROLE_ADMIN');
         yield MenuItem::linkToCrud('Recurrence Rules', 'fa fa-repeat', RecurrenceRule::class)
             ->setPermission('ROLE_ADMIN');
+
+        yield MenuItem::section('Media Library');
+        yield MenuItem::linkToCrud('Media Objects', 'fa fa-file-image-o', MediaObject::class)
+            ->setPermission('ROLE_ADMIN');
+
+        yield MenuItem::section('System');
+        yield MenuItem::linkToCrud('Refresh Tokens', 'fa fa-key', RefreshToken::class)
+            ->setPermission('ROLE_ADMIN');
+        yield MenuItem::linkToCrud('Audit Logs', 'fa fa-history', AuditLog::class)
+            ->setPermission('ROLE_SUPER_ADMIN');
 
         yield MenuItem::section();
 
