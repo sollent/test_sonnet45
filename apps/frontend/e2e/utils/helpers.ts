@@ -100,6 +100,12 @@ export async function waitForDialogToClose(page: Page, timeout = 30000): Promise
   // Step 2: Wait for mask to be completely removed from DOM
   let maskRemoved = false
   while (!maskRemoved && (Date.now() - startTime) < timeout) {
+    // CRITICAL: Check if page is closed before trying to access it
+    if (page.isClosed()) {
+      console.warn('Page was closed while waiting for dialog mask to close')
+      return
+    }
+
     const maskExists = await page.locator('.p-dialog-mask').count()
     if (maskExists === 0) {
       maskRemoved = true
@@ -111,31 +117,42 @@ export async function waitForDialogToClose(page: Page, timeout = 30000): Promise
       await page.locator('.p-dialog-mask').waitFor({ state: 'detached', timeout: 2000 })
       maskRemoved = true
     } catch (e) {
+      // Check again if page is closed after timeout
+      if (page.isClosed()) {
+        console.warn('Page was closed during mask wait')
+        return
+      }
       // Mask still exists, wait a bit and retry
       await page.waitForTimeout(500)
     }
   }
 
   // Step 3: Additional safety wait for animations
-  await page.waitForTimeout(1000)
+  if (!page.isClosed()) {
+    await page.waitForTimeout(1000)
+  }
 
   // Step 4: Final verification - if mask still exists, force remove it via script
-  const finalMaskCount = await page.locator('.p-dialog-mask').count()
-  if (finalMaskCount > 0) {
-    console.warn('Dialog mask still present after timeout, force removing...')
-    await page.evaluate(() => {
-      const masks = document.querySelectorAll('.p-dialog-mask')
-      masks.forEach(mask => mask.remove())
-    })
-    await page.waitForTimeout(500)
+  if (!page.isClosed()) {
+    const finalMaskCount = await page.locator('.p-dialog-mask').count()
+    if (finalMaskCount > 0) {
+      console.warn('Dialog mask still present after timeout, force removing...')
+      await page.evaluate(() => {
+        const masks = document.querySelectorAll('.p-dialog-mask')
+        masks.forEach(mask => mask.remove())
+      })
+      await page.waitForTimeout(500)
+    }
   }
 
   // Step 5: Verify no dialog or mask is blocking
-  const dialogCount = await page.locator('.p-dialog').count()
-  const maskCount = await page.locator('.p-dialog-mask').count()
+  if (!page.isClosed()) {
+    const dialogCount = await page.locator('.p-dialog').count()
+    const maskCount = await page.locator('.p-dialog-mask').count()
 
-  if (dialogCount > 0 || maskCount > 0) {
-    console.warn(`Warning: ${dialogCount} dialogs and ${maskCount} masks still present`)
+    if (dialogCount > 0 || maskCount > 0) {
+      console.warn(`Warning: ${dialogCount} dialogs and ${maskCount} masks still present`)
+    }
   }
 }
 

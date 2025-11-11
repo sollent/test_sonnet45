@@ -10,6 +10,9 @@ test.describe('Search', () => {
   let taskDialogPage: TaskDialogPage
   let loginPage: LoginPage
 
+  // Increase timeout due to creating multiple tasks in beforeEach
+  test.setTimeout(120000) // 2 minutes
+
   test.beforeEach(async ({ page, context }) => {
     dashboardPage = new DashboardPage(page)
     taskDialogPage = new TaskDialogPage(page)
