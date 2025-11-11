@@ -1,27 +1,27 @@
-# 🐳 Phase 1.2: Docker Configuration Guide
+# 🐳 Фаза 1.2: Руководство по Конфигурации Docker
 
-> **Document Version**: 1.0.0
-> **Last Updated**: 2025-11-08
-> **Estimated Time**: 1 day
-> **Complexity**: MEDIUM
-> **Prerequisites**: Docker basics, YAML understanding
+> **Версия Документа**: 1.0.0
+> **Последнее Обновление**: 2025-11-08
+> **Предполагаемое Время**: 1 день
+> **Сложность**: СРЕДНЯЯ
+> **Предварительные Требования**: Основы Docker, понимание YAML
 
-## 📋 Table of Contents
+## 📋 Содержание
 
-1. [Docker Architecture Overview](#docker-architecture-overview)
-2. [Development Configuration](#development-configuration)
-3. [Production Configuration](#production-configuration)
-4. [Network Configuration](#network-configuration)
-5. [Volume Management](#volume-management)
-6. [Resource Limits](#resource-limits)
-7. [Multi-Stage Builds](#multi-stage-builds)
-8. [Optimization Techniques](#optimization-techniques)
+1. [Обзор Архитектуры Docker](#обзор-архитектуры-docker)
+2. [Конфигурация Разработки](#конфигурация-разработки)
+3. [Конфигурация Продакшна](#конфигурация-продакшна)
+4. [Конфигурация Сети](#конфигурация-сети)
+5. [Управление Томами](#управление-томами)
+6. [Ограничения Ресурсов](#ограничения-ресурсов)
+7. [Многоступенчатые Сборки](#многоступенчатые-сборки)
+8. [Техники Оптимизации](#техники-оптимизации)
 
 ---
 
-## 🏗️ Docker Architecture Overview
+## 🏗️ Обзор Архитектуры Docker
 
-### Service Topology
+### Топология Сервисов
 
 ```yaml
 Architecture:
@@ -43,7 +43,7 @@ Architecture:
     - bridge-network (inter-communication)
 ```
 
-### Communication Flow
+### Поток Коммуникации
 
 ```mermaid
 graph LR
@@ -72,9 +72,9 @@ graph LR
 
 ---
 
-## 🚀 Development Configuration
+## 🚀 Конфигурация Разработки
 
-### Main docker-compose.dev.yml
+### Главный docker-compose.dev.yml
 
 ```yaml
 # File: infrastructure/ai-services/docker-compose.dev.yml
@@ -393,7 +393,7 @@ CMD ["python", "dev_server.py"]
 
 ---
 
-## 🏭 Production Configuration
+## 🏭 Конфигурация Продакшна
 
 ### Production docker-compose.prod.yml
 
@@ -664,9 +664,9 @@ volumes:
 
 ---
 
-## 🌐 Network Configuration
+## 🌐 Конфигурация Сети
 
-### Custom Bridge Network
+### Пользовательская Bridge Сеть
 
 ```yaml
 # File: infrastructure/ai-services/configs/network/bridge.yml
@@ -717,7 +717,7 @@ networks:
     name: backend-network
 ```
 
-### Network Security Rules
+### Правила Безопасности Сети
 
 ```bash
 #!/bin/bash
@@ -742,9 +742,9 @@ iptables-save > /etc/iptables/rules.v4
 
 ---
 
-## 💾 Volume Management
+## 💾 Управление Томами
 
-### Volume Strategy
+### Стратегия Томов
 
 ```yaml
 # File: infrastructure/ai-services/configs/volumes/volume-config.yml
@@ -781,7 +781,7 @@ volumes:
       - "max-size=1GB"
 ```
 
-### Backup Script
+### Скрипт Резервного Копирования
 
 ```bash
 #!/bin/bash
@@ -821,9 +821,9 @@ echo "Backup completed: ${BACKUP_DIR}/${DATE}"
 
 ---
 
-## ⚡ Resource Limits
+## ⚡ Ограничения Ресурсов
 
-### Memory Limits Configuration
+### Конфигурация Ограничений Памяти
 
 ```yaml
 # File: infrastructure/ai-services/configs/resources/limits.yml
@@ -896,7 +896,7 @@ production:
     cpu_shares: 128
 ```
 
-### Apply Resource Limits
+### Применение Ограничений Ресурсов
 
 ```bash
 #!/bin/bash
@@ -941,9 +941,9 @@ echo "Resource limits applied for ${ENVIRONMENT}"
 
 ---
 
-## 🔨 Multi-Stage Builds
+## 🔨 Многоступенчатые Сборки
 
-### Optimized Whisper Build
+### Оптимизированная Сборка Whisper
 
 ```dockerfile
 # File: infrastructure/ai-services/configs/whisper/Dockerfile.prod
@@ -992,9 +992,9 @@ CMD ["python", "-m", "uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8090"
 
 ---
 
-## 🚀 Optimization Techniques
+## 🚀 Техники Оптимизации
 
-### 1. Layer Caching Optimization
+### 1. Оптимизация Кеширования Слоев
 
 ```dockerfile
 # Good practice: Order from least to most frequently changed
@@ -1011,7 +1011,7 @@ RUN pip install -r requirements.txt
 COPY app.py .
 ```
 
-### 2. Build Cache Management
+### 2. Управление Кешем Сборки
 
 ```bash
 #!/bin/bash
@@ -1029,7 +1029,7 @@ docker buildx build \
 docker image prune -af --filter "until=24h"
 ```
 
-### 3. Container Startup Optimization
+### 3. Оптимизация Запуска Контейнеров
 
 ```yaml
 # Optimize startup order and dependencies
@@ -1059,9 +1059,9 @@ services:
 
 ---
 
-## 📊 Monitoring & Metrics
+## 📊 Мониторинг и Метрики
 
-### Docker Metrics Collection
+### Сбор Метрик Docker
 
 ```yaml
 # File: infrastructure/ai-services/configs/prometheus/prometheus.yml
@@ -1088,7 +1088,7 @@ scrape_configs:
       - targets: ['whisper:8090']
 ```
 
-### Health Check Monitoring
+### Мониторинг Проверки Здоровья
 
 ```bash
 #!/bin/bash
@@ -1119,7 +1119,7 @@ done
 
 ---
 
-## ✅ Verification
+## ✅ Проверка
 
 ```bash
 # Verify Docker configuration
@@ -1147,9 +1147,9 @@ docker-compose logs --tail=50
 
 ---
 
-## 🔧 Troubleshooting
+## 🔧 Устранение Неполадок
 
-### Common Docker Issues
+### Общие Проблемы Docker
 
 ```bash
 # 1. Container keeps restarting
@@ -1175,15 +1175,15 @@ docker system prune -af
 
 ---
 
-## ✅ Next Steps
+## ✅ Следующие Шаги
 
-1. ✅ Docker configuration is complete
-2. → Proceed to [AI Services Installation](03_AI_SERVICES.md)
-3. → Configure [Security & Networking](04_SECURITY.md)
-4. → Begin [Backend Implementation](../02_BACKEND/01_DOMAIN_MODEL.md)
+1. ✅ Конфигурация Docker завершена
+2. → Перейти к [Установке AI Сервисов](03_AI_SERVICES.md)
+3. → Настроить [Безопасность и Сеть](04_SECURITY.md)
+4. → Начать [Реализацию Backend](../02_BACKEND/01_DOMAIN_MODEL.md)
 
 ---
 
-**Document Status**: Complete
-**Last Tested**: 2025-11-08
-**Author**: AI Architecture Team
+**Статус Документа**: Завершен
+**Последнее Тестирование**: 2025-11-08
+**Автор**: AI Architecture Team

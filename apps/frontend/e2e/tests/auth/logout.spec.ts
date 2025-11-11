@@ -40,7 +40,7 @@ test.describe('Logout Flow', () => {
     await page.waitForTimeout(1000)
     
     // Find and click logout button
-    const logoutButton = page.getByRole('button', { name: /выйти|logout|sign out/i }).or(
+    const logoutButton = page.getByRole('button', { name: /выход|выйти|logout|sign out/i }).or(
       page.locator('button[aria-label*="logout"]').or(
         page.locator('button').filter({ has: page.locator('i.pi-sign-out') })
       )

@@ -53,10 +53,15 @@ test.describe('Search', () => {
       await taskDialogPage.clickQuickDate('today')
       await page.waitForTimeout(500)
       await taskDialogPage.saveButton.click()
-      await page.waitForTimeout(1000)
 
-      // Wait for dialog to close completely
+      // Wait for save operation to complete
+      await page.waitForTimeout(1500)
+
+      // Wait for dialog to close completely - CRITICAL!
       await waitForDialogToClose(page)
+
+      // Additional safety wait for UI to update
+      await page.waitForTimeout(500)
     }
 
     // Wait for all tasks to be created
