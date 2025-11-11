@@ -10,11 +10,22 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
+use App\Entity\Task;
+use App\Enum\TaskStatus;
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\QueryBuilder;
+use EasyCorp\Bundle\EasyAdminBundle\Collection\FieldCollection;
+use EasyCorp\Bundle\EasyAdminBundle\Collection\FilterCollection;
+use EasyCorp\Bundle\EasyAdminBundle\Dto\EntityDto;
+use EasyCorp\Bundle\EasyAdminBundle\Dto\SearchDto;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ArrayField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\BooleanField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\CollectionField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\EmailField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\Field;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\BooleanFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\DateTimeFilter;
@@ -25,7 +36,8 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 class UserCrudController extends AbstractCrudController
 {
     public function __construct(
-        private readonly UserPasswordHasherInterface $passwordHasher
+        private readonly UserPasswordHasherInterface $passwordHasher,
+        private readonly EntityManagerInterface $entityManager
     ) {
     }
 
@@ -44,12 +56,12 @@ class UserCrudController extends AbstractCrudController
             ->setPageTitle('edit', fn (User $user) => sprintf('Edit user: %s', $user->getEmail()))
             ->setPageTitle('detail', fn (User $user) => sprintf('User: %s', $user->getEmail()))
             
-            // Pagination
-            ->setPaginatorPageSize(25)
-            ->setPaginatorRangeSize(4)
-            
-            // Search
-            ->setSearchFields(['email', 'googleUserName', 'googleId'])
+            // Pagination - optimized for performance
+            ->setPaginatorPageSize(20)
+            ->setPaginatorRangeSize(3)
+
+            // Search - only by email
+            ->setSearchFields(['email'])
             
             // Default sort
             ->setDefaultSort(['createdAt' => 'DESC'])
@@ -65,7 +77,7 @@ class UserCrudController extends AbstractCrudController
 
     public function configureFields(string $pageName): iterable
     {
-        // ID field - only on index and detail
+        // ID field - only on index
         yield IdField::new('id', 'ID')
             ->onlyOnIndex();
 
@@ -75,7 +87,7 @@ class UserCrudController extends AbstractCrudController
             ->setHelp('User email address (unique)')
             ->setColumns('col-md-6');
 
-        // Password field - only on forms, not on list/detail
+        // Password field - only on forms
         if (Crud::PAGE_NEW === $pageName || Crud::PAGE_EDIT === $pageName) {
             yield TextField::new('plainPassword', 'Password')
                 ->setFormType(PasswordType::class)
@@ -89,54 +101,261 @@ class UserCrudController extends AbstractCrudController
                 ->onlyOnForms();
         }
 
-        // Google User Name - optional
-        yield TextField::new('googleUserName', 'Google Name')
-            ->setHelp('Name from Google account (if authenticated via Google)')
-            ->hideOnForm()
-            ->setColumns('col-md-4');
+        // === STATISTICS SECTION (INDEX) ===
 
-        // Google ID - readonly on edit
-        yield TextField::new('googleId', 'Google ID')
-            ->setHelp('Unique Google user ID (if authenticated via Google)')
-            ->hideOnForm()
-            ->setColumns('col-md-4');
+        // Total Tasks
+        yield IntegerField::new('totalTasks', 'Total Tasks')
+            ->formatValue(function ($value, User $user) {
+                $count = $user->getTasks()->count();
+                if ($count === 0) {
+                    return '<span class="text-muted">-</span>';
+                }
+                return sprintf('<span class="badge badge-primary">%d</span>', $count);
+            })
+            ->onlyOnIndex();
 
-        // Roles field
+        // Completed Tasks
+        yield IntegerField::new('completedTasks', 'Completed')
+            ->formatValue(function ($value, User $user) {
+                $completed = 0;
+                foreach ($user->getTasks() as $task) {
+                    if ($task->getStatus() === TaskStatus::COMPLETED) {
+                        $completed++;
+                    }
+                }
+
+                if ($completed === 0) {
+                    return '<span class="text-muted">-</span>';
+                }
+
+                return sprintf('<span class="badge badge-success">%d</span>', $completed);
+            })
+            ->onlyOnIndex();
+
+        // Active Tasks (not completed, not cancelled)
+        yield IntegerField::new('activeTasks', 'Active')
+            ->formatValue(function ($value, User $user) {
+                $active = 0;
+                foreach ($user->getTasks() as $task) {
+                    if ($task->getStatus() !== TaskStatus::COMPLETED &&
+                        $task->getStatus() !== TaskStatus::CANCELLED) {
+                        $active++;
+                    }
+                }
+
+                if ($active === 0) {
+                    return '<span class="text-muted">-</span>';
+                }
+
+                $badgeClass = $active > 10 ? 'warning' : 'info';
+                return sprintf('<span class="badge badge-%s">%d</span>', $badgeClass, $active);
+            })
+            ->onlyOnIndex();
+
+        // Total Tags
+        yield IntegerField::new('totalTags', 'Tags')
+            ->formatValue(function ($value, User $user) {
+                // Get tags count via query to avoid loading all tags
+                $count = $this->entityManager->createQueryBuilder()
+                    ->select('COUNT(tag.id)')
+                    ->from('App\Entity\Tag', 'tag')
+                    ->where('tag.user = :user')
+                    ->setParameter('user', $user)
+                    ->getQuery()
+                    ->getSingleScalarResult();
+
+                if ($count == 0) {
+                    return '<span class="text-muted">-</span>';
+                }
+
+                return sprintf('<span class="badge badge-info">%d</span>', $count);
+            })
+            ->onlyOnIndex();
+
+        // === GOOGLE AUTH (DETAIL ONLY) ===
+
+        // Google fields - moved to detail page only
+        if (Crud::PAGE_DETAIL === $pageName) {
+            yield TextField::new('googleUserName', 'Google Name')
+                ->setHelp('Name from Google account')
+                ->onlyOnDetail()
+                ->setColumns('col-md-6');
+
+            yield TextField::new('googleId', 'Google ID')
+                ->setHelp('Unique Google user ID')
+                ->onlyOnDetail()
+                ->setColumns('col-md-6');
+
+            yield BooleanField::new('hasGoogleAuth', 'Google Authentication')
+                ->renderAsSwitch(false)
+                ->setHelp('Authenticated via Google')
+                ->onlyOnDetail();
+        }
+
+        // Roles field - detail/edit only
         yield ArrayField::new('roles', 'Roles')
             ->setHelp('User roles')
-            ->hideOnIndex();
+            ->hideOnIndex()
+            ->setColumns('col-md-6');
 
-        // Has Google Auth - computed field
-        yield BooleanField::new('hasGoogleAuth', 'Google Authentication')
-            ->renderAsSwitch(false)
-            ->setHelp('Authenticated via Google')
-            ->hideOnForm();
+        // === DETAILED STATISTICS (DETAIL PAGE) ===
+
+        if (Crud::PAGE_DETAIL === $pageName) {
+            // Task Statistics Summary
+            yield Field::new('taskStatistics', 'Task Statistics')
+                ->formatValue(function ($value, User $user) {
+                    $tasks = $user->getTasks();
+                    $total = $tasks->count();
+
+                    if ($total === 0) {
+                        return '<div class="alert alert-info">No tasks yet</div>';
+                    }
+
+                    $completed = 0;
+                    $inProgress = 0;
+                    $pending = 0;
+                    $cancelled = 0;
+                    $archived = 0;
+
+                    foreach ($tasks as $task) {
+                        match ($task->getStatus()) {
+                            TaskStatus::COMPLETED => $completed++,
+                            TaskStatus::IN_PROGRESS => $inProgress++,
+                            TaskStatus::PENDING => $pending++,
+                            TaskStatus::CANCELLED => $cancelled++,
+                            default => null,
+                        };
+
+                        if ($task->isArchived()) {
+                            $archived++;
+                        }
+                    }
+
+                    $completionRate = $total > 0 ? round(($completed / $total) * 100) : 0;
+
+                    return sprintf('
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h6>Status Breakdown:</h6>
+                                <div class="mb-3">
+                                    <span class="badge badge-success mr-2">Completed: %d</span>
+                                    <span class="badge badge-primary mr-2">In Progress: %d</span>
+                                    <span class="badge badge-secondary mr-2">Pending: %d</span>
+                                    <span class="badge badge-danger mr-2">Cancelled: %d</span>
+                                    <span class="badge badge-warning mr-2">Archived: %d</span>
+                                </div>
+                                <div class="progress" style="height: 25px;">
+                                    <div class="progress-bar bg-success" style="width: %d%%">
+                                        Completion: %d%%
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ', $completed, $inProgress, $pending, $cancelled, $archived, $completionRate, $completionRate);
+                })
+                ->onlyOnDetail();
+
+            // Recent Tasks (last 5)
+            yield Field::new('recentTasks', 'Recent Tasks (Last 5)')
+                ->formatValue(function ($value, User $user) {
+                    $recentTasks = $this->entityManager->createQueryBuilder()
+                        ->select('t')
+                        ->from('App\Entity\Task', 't')
+                        ->where('t.user = :user')
+                        ->setParameter('user', $user)
+                        ->orderBy('t.createdAt', 'DESC')
+                        ->setMaxResults(5)
+                        ->getQuery()
+                        ->getResult();
+
+                    if (empty($recentTasks)) {
+                        return '<span class="badge badge-secondary">No recent tasks</span>';
+                    }
+
+                    $html = '<ul class="list-group list-group-flush">';
+
+                    foreach ($recentTasks as $task) {
+                        $statusBadge = match($task->getStatus()) {
+                            TaskStatus::COMPLETED => 'success',
+                            TaskStatus::IN_PROGRESS => 'primary',
+                            TaskStatus::PENDING => 'secondary',
+                            TaskStatus::CANCELLED => 'danger',
+                            default => 'secondary',
+                        };
+
+                        $html .= sprintf(
+                            '<li class="list-group-item">
+                                <div class="d-flex justify-content-between">
+                                    <span><strong>%s</strong></span>
+                                    <span class="badge badge-%s">%s</span>
+                                </div>
+                                <small class="text-muted">Created: %s</small>
+                            </li>',
+                            htmlspecialchars($task->getTitle()),
+                            $statusBadge,
+                            $task->getStatus()->value,
+                            $task->getCreatedAt()->format('d.m.Y H:i')
+                        );
+                    }
+
+                    $html .= '</ul>';
+                    return $html;
+                })
+                ->onlyOnDetail();
+
+            // User Tags List
+            yield Field::new('userTags', 'User Tags')
+                ->formatValue(function ($value, User $user) {
+                    $tags = $this->entityManager->createQueryBuilder()
+                        ->select('tag')
+                        ->from('App\Entity\Tag', 'tag')
+                        ->where('tag.user = :user')
+                        ->setParameter('user', $user)
+                        ->orderBy('tag.usageCount', 'DESC')
+                        ->setMaxResults(10)
+                        ->getQuery()
+                        ->getResult();
+
+                    if (empty($tags)) {
+                        return '<span class="badge badge-secondary">No tags</span>';
+                    }
+
+                    $html = '<div class="mb-2">';
+
+                    foreach ($tags as $tag) {
+                        $html .= sprintf(
+                            '<span class="badge mr-2 mb-2" style="background-color: %s; color: white;">
+                                %s <small>(%d)</small>
+                            </span>',
+                            htmlspecialchars($tag->getColor()),
+                            htmlspecialchars($tag->getName()),
+                            $tag->getUsageCount()
+                        );
+                    }
+
+                    $html .= '</div>';
+                    return $html;
+                })
+                ->onlyOnDetail();
+        }
 
         // Timestamps
         yield DateTimeField::new('createdAt', 'Created At')
             ->hideOnForm()
-            ->setColumns('col-md-4');
+            ->setColumns('col-md-6');
 
         yield DateTimeField::new('updatedAt', 'Updated At')
             ->hideOnForm()
             ->hideOnIndex()
-            ->setColumns('col-md-4');
+            ->setColumns('col-md-6');
     }
 
     public function configureFilters(Filters $filters): Filters
     {
         return $filters
-            // Text filters
+            // Text filter
             ->add(TextFilter::new('email', 'Email'))
-            ->add(TextFilter::new('googleUserName', 'Google Name'))
-            ->add(TextFilter::new('googleId', 'Google ID'))
-            
-            // Boolean filter for Google users
-            ->add(
-                BooleanFilter::new('hasGoogleAuth', 'Has Google Auth')
-                    ->setFormTypeOption('expanded', false)
-            )
-            
+
             // Date filters
             ->add(DateTimeFilter::new('createdAt', 'Created At'))
             ->add(DateTimeFilter::new('updatedAt', 'Updated At'));
@@ -147,7 +366,7 @@ class UserCrudController extends AbstractCrudController
         return $actions
             // Add view action to index page
             ->add(Crud::PAGE_INDEX, Action::DETAIL)
-            
+
             // Customize labels and icons for better UX
             ->update(Crud::PAGE_INDEX, Action::NEW, fn (Action $action) => $action
                 ->setIcon('fa fa-plus')
@@ -166,6 +385,25 @@ class UserCrudController extends AbstractCrudController
                 ->setIcon('fa fa-eye')
                 ->setLabel(false)
             );
+    }
+
+    /**
+     * Optimize query with eager loading to prevent N+1 problems
+     */
+    public function createIndexQueryBuilder(
+        SearchDto $searchDto,
+        EntityDto $entityDto,
+        FieldCollection $fields,
+        FilterCollection $filters
+    ): QueryBuilder {
+        $qb = parent::createIndexQueryBuilder($searchDto, $entityDto, $fields, $filters);
+
+        // Eager load tasks for statistics (needed for totalTasks, completedTasks, activeTasks)
+        // This prevents N+1 queries when showing statistics on INDEX page
+        $qb->leftJoin('entity.tasks', 't')
+           ->addSelect('t');
+
+        return $qb;
     }
 
     /**
