@@ -430,9 +430,18 @@ button {
     color: var(--white);
 }
 
-.btn-danger {
-    background: var(--danger);
-    color: var(--white);
+.btn-danger,
+.action-delete,
+.btn.btn-danger,
+a.btn-danger {
+    background: var(--danger) !important;
+    color: var(--white) !important;
+}
+
+.btn-danger:hover,
+.action-delete:hover {
+    background: #dc2626 !important;
+    color: var(--white) !important;
 }
 
 .btn-sm {
@@ -684,6 +693,61 @@ tbody tr:hover {
     .page-header {
         padding: var(--space-sm) !important;
         margin-top: 0 !important;
+        margin-bottom: var(--space-sm) !important;
+    }
+
+    /* Page title and actions on mobile */
+    .page-title,
+    .content-title,
+    .content-header-title {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: var(--space-sm) !important;
+        width: 100% !important;
+    }
+
+    /* Page header - reorganize for mobile */
+    .content-header,
+    .page-header {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: var(--space-sm) !important;
+    }
+
+    /* Page title (h1) */
+    .content-header h1,
+    .page-header h1 {
+        font-size: 1.5rem !important;
+        margin: 0 !important;
+        width: 100% !important;
+    }
+
+    /* Page actions on mobile - stack vertically */
+    .page-actions,
+    .content-header-wrapper,
+    .global-actions,
+    .content-header > div:last-child {
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        gap: var(--space-xs) !important;
+        margin-top: 0 !important;
+    }
+
+    /* Buttons in actions - full width */
+    .page-actions .btn,
+    .global-actions .btn,
+    .content-header .btn {
+        width: 100% !important;
+        justify-content: center !important;
+    }
+
+    /* HIDE local search input on each page - use only global search */
+    .page-header .form-widget,
+    .content-header .form-widget,
+    form[name="filters"] input[type="search"],
+    .ea-search {
+        display: none !important;
     }
 
     /* Content body on mobile */
@@ -721,15 +785,39 @@ tbody tr:hover {
         pointer-events: auto !important;
     }
 
-    /* Responsive cards */
-    .row.mb-4 {
-        flex-direction: column;
-        gap: var(--space-sm);
+    /* Responsive cards - CRITICAL FIX */
+    .row.mb-4,
+    .row {
+        flex-direction: column !important;
+        gap: var(--space-sm) !important;
+        width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
     }
 
-    .row.mb-4 > [class*="col-"] {
-        width: 100%;
-        flex: none;
+    .row.mb-4 > [class*="col-"],
+    .row > [class*="col-"] {
+        width: 100% !important;
+        max-width: 100% !important;
+        flex: none !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+
+    /* Dashboard cards - fit to mobile screen */
+    .card {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+
+    /* Chart container */
+    canvas,
+    #activityChart {
+        max-width: 100% !important;
+        width: 100% !important;
+        height: auto !important;
     }
 
     /* Tables on mobile - make scrollable */
@@ -754,11 +842,23 @@ tbody tr:hover {
         padding: var(--space-sm) var(--space-md);
     }
 
-    /* Global search on mobile */
+    /* Global search on mobile - HIDE IT */
     .global-search {
-        max-width: none;
-        width: 100%;
-        margin: var(--space-sm) 0;
+        display: none !important;
+    }
+
+    /* Top search bar - keep visible but compact */
+    .content-top-header .form-widget,
+    nav .form-widget {
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    nav .form-widget input,
+    .content-top-header input[type="search"] {
+        width: 100% !important;
+        font-size: 16px !important;
     }
 
     /* Hide some elements on mobile */
