@@ -212,22 +212,21 @@ class DashboardController extends AbstractDashboardController
             ->setPermission('ROLE_ADMIN');
 
         yield MenuItem::section('Task Management');
+
+        $taskCount = $this->entityManager->getRepository(Task::class)->count([]);
         yield MenuItem::linkToCrud('Tasks', 'fa fa-tasks', Task::class)
             ->setPermission('ROLE_ADMIN')
-            ->setBadge(
-                fn () => $this->entityManager->getRepository(Task::class)->count([]),
-                'info'
-            );
+            ->setBadge($taskCount, 'info');
+
         yield MenuItem::linkToCrud('Tags', 'fa fa-tags', Tag::class)
             ->setPermission('ROLE_ADMIN');
         yield MenuItem::linkToCrud('Attachments', 'fa fa-paperclip', TaskAttachment::class)
             ->setPermission('ROLE_ADMIN');
+
+        $activeRulesCount = $this->entityManager->getRepository(RecurrenceRule::class)->count(['isActive' => true]);
         yield MenuItem::linkToCrud('Recurrence Rules', 'fa fa-repeat', RecurrenceRule::class)
             ->setPermission('ROLE_ADMIN')
-            ->setBadge(
-                fn () => $this->entityManager->getRepository(RecurrenceRule::class)->count(['isActive' => true]),
-                'success'
-            );
+            ->setBadge($activeRulesCount, 'success');
 
         yield MenuItem::section('Media Library');
         yield MenuItem::linkToCrud('Media Objects', 'fa fa-file-image-o', MediaObject::class)
