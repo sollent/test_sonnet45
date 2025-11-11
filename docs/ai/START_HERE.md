@@ -1,93 +1,93 @@
-# 🎯 START HERE - Voice AI Assistant Implementation
+# 🎯 НАЧНИ ЗДЕСЬ - Реализация Voice AI Assistant
 
-> **For AI (Opus 4.1, Sonnet 4.5)**: This is your starting point. Read this first!
+> **Для AI (Opus 4.1, Sonnet 4.5)**: Это твоя стартовая точка. Прочитай это первым!
 
-## 📍 Current Location
+## 📍 Текущее Местоположение
 
-You are in: `test_sonnet45/` project
-Documentation: `docs/ai/` directory
+Ты находишься в: `test_sonnet45/` проекте
+Документация: `docs/ai/` директория
 
-## 🎯 Mission
+## 🎯 Миссия
 
-Implement Voice AI Assistant for Task Manager:
-- User speaks → AI understands → Task created/updated
-- Works in web app + Telegram
-- Uses local LLM (Llama 3.2) + Whisper STT
+Реализовать Voice AI Assistant для Task Manager:
+- Пользователь говорит → AI понимает → Задача создана/обновлена
+- Работает в веб-приложении + Telegram
+- Использует локальную LLM (Llama 3.2) + Whisper STT
 
-## 🚦 Implementation Checklist
+## 🚦 Чеклист Реализации
 
-### ✅ Before You Start
+### ✅ Перед Началом
 
-- [ ] Read [INDEX.md](INDEX.md) - Full documentation map
-- [ ] Read [PROMPTS_LIBRARY.md](REFERENCE/PROMPTS_LIBRARY.md) - ⭐ MOST IMPORTANT
-- [ ] Check existing code in `backend/src/` and `frontend/src/`
+- [ ] Прочитай [INDEX.md](INDEX.md) - Полная карта документации
+- [ ] Прочитай [PROMPTS_LIBRARY.md](REFERENCE/PROMPTS_LIBRARY.md) - ⭐ САМОЕ ВАЖНОЕ
+- [ ] Проверь существующий код в `backend/src/` и `frontend/src/`
 
-### 📝 Step-by-Step Implementation
+### 📝 Пошаговая Реализация
 
-#### Phase 1: Backend (2-3 days)
+#### Фаза 1: Бэкенд (2-3 дня)
 
-**Day 1: Domain & Services**
-- [ ] 1.1: [Domain Model](02_BACKEND/01_DOMAIN_MODEL.md) - Create VoiceCommand entity
-- [ ] 1.2: Run migration to create tables
-- [ ] 1.3: [Services](02_BACKEND/02_SERVICES.md) - Implement 5 core services
-- [ ] 1.4: Test LLMService with Ollama (use prompts from library!)
+**День 1: Домен и Сервисы**
+- [ ] 1.1: [Доменная Модель](02_BACKEND/01_DOMAIN_MODEL.md) - Создай VoiceCommand сущность
+- [ ] 1.2: Запусти миграцию для создания таблиц
+- [ ] 1.3: [Сервисы](02_BACKEND/02_SERVICES.md) - Реализуй 5 основных сервисов
+- [ ] 1.4: Протестируй LLMService с Ollama (используй промпты из библиотеки!)
 
-**Day 2: Handlers & API**
-- [ ] 2.1: [Command Handlers](02_BACKEND/03_COMMAND_HANDLERS.md) - Start with CreateTaskHandler
-- [ ] 2.2: [API Endpoints](02_BACKEND/04_API_ENDPOINTS.md) - Create 3 endpoints
-- [ ] 2.3: Test with curl/Postman
+**День 2: Обработчики и API**
+- [ ] 2.1: [Обработчики Команд](02_BACKEND/03_COMMAND_HANDLERS.md) - Начни с CreateTaskHandler
+- [ ] 2.2: [API Endpoints](02_BACKEND/04_API_ENDPOINTS.md) - Создай 3 endpoints
+- [ ] 2.3: Протестируй с curl/Postman
 
-**Day 3: Queue & Processing**
-- [ ] 3.1: [Queue Processing](02_BACKEND/05_QUEUE_PROCESSING.md) - Setup async worker
-- [ ] 3.2: Test end-to-end: API → Queue → WebSocket
+**День 3: Очередь и Обработка**
+- [ ] 3.1: [Обработка Очереди](02_BACKEND/05_QUEUE_PROCESSING.md) - Настрой асинхронный worker
+- [ ] 3.2: Протестируй end-to-end: API → Очередь → WebSocket
 
-#### Phase 2: Frontend (1-2 days)
+#### Фаза 2: Фронтенд (1-2 дня)
 
-**Day 4: Voice UI**
-- [ ] 4.1: [Voice Recording](03_FRONTEND/01_VOICE_RECORDING.md) - Create VoiceButton component
-- [ ] 4.2: Implement WebSocket listener
-- [ ] 4.3: Test recording → backend → result display
+**День 4: Голосовой UI**
+- [ ] 4.1: [Голосовая Запись](03_FRONTEND/01_VOICE_RECORDING.md) - Создай VoiceButton компонент
+- [ ] 4.2: Реализуй WebSocket listener
+- [ ] 4.3: Протестируй запись → бэкенд → отображение результата
 
-#### Phase 3: Infrastructure (1 day)
+#### Фаза 3: Инфраструктура (1 день)
 
-**Day 5: AI Services**
-- [ ] 5.1: [AI Services](01_INFRASTRUCTURE/03_AI_SERVICES.md) - Install Ollama + Whisper
-- [ ] 5.2: Load Llama 3.2 3B model
-- [ ] 5.3: Test Whisper transcription
-- [ ] 5.4: Integration test full flow
+**День 5: AI Сервисы**
+- [ ] 5.1: [AI Сервисы](01_INFRASTRUCTURE/03_AI_SERVICES.md) - Установи Ollama + Whisper
+- [ ] 5.2: Загрузи модель Llama 3.2 3B
+- [ ] 5.3: Протестируй транскрипцию Whisper
+- [ ] 5.4: Интеграционный тест полного потока
 
-## 🎯 MVP Scope (What to Build)
+## 🎯 MVP Границы (Что Строить)
 
-### Must Have (Core)
-1. ✅ **Create task** - "Создай задачу купить молоко завтра"
-2. ✅ **Complete task** - "Отметь задачу купить молоко как выполненную"
-3. ✅ **Filter tasks** - "Покажи все задачи на завтра"
+### Обязательно (Ядро)
+1. ✅ **Создать задачу** - "Создай задачу купить молоко завтра"
+2. ✅ **Завершить задачу** - "Отметь задачу купить молоко как выполненную"
+3. ✅ **Фильтровать задачи** - "Покажи все задачи на завтра"
 
-### Nice to Have (Add if time)
-4. ⚪ **Create subtask** - "Добавь подзадачу к проекту"
-5. ⚪ **Bulk operations** - "Заверши три задачи"
+### Желательно (Добавить при наличии времени)
+4. ⚪ **Создать подзадачу** - "Добавь подзадачу к проекту"
+5. ⚪ **Массовые операции** - "Заверши три задачи"
 
-### Skip for Now
-- ❌ Telegram integration (implement later)
-- ❌ Complex analytics
-- ❌ Multi-language support
+### Пропустить Пока
+- ❌ Интеграция с Telegram (реализуй позже)
+- ❌ Сложная аналитика
+- ❌ Поддержка нескольких языков
 
-## 📋 Code Structure Overview
+## 📋 Обзор Структуры Кода
 
 ```
 backend/src/
 ├── Entity/
-│   └── VoiceCommand.php               [CREATE THIS]
+│   └── VoiceCommand.php               [СОЗДАЙ ЭТО]
 ├── ValueObject/
-│   ├── CommandType.php                [CREATE THIS]
-│   ├── CommandStatus.php              [CREATE THIS]
-│   ├── TranscriptionResult.php        [CREATE THIS]
-│   └── ParsedCommand.php              [CREATE THIS]
+│   ├── CommandType.php                [СОЗДАЙ ЭТО]
+│   ├── CommandStatus.php              [СОЗДАЙ ЭТО]
+│   ├── TranscriptionResult.php        [СОЗДАЙ ЭТО]
+│   └── ParsedCommand.php              [СОЗДАЙ ЭТО]
 ├── Service/
 │   └── VoiceAssistant/
-│       ├── VoiceProcessingService.php [CREATE THIS]
-│       ├── LLMService.php             [CREATE THIS - USE PROMPTS!]
-│       ├── CommandExecutorService.php [CREATE THIS]
+│       ├── VoiceProcessingService.php [СОЗДАЙ ЭТО]
+│       ├── LLMService.php             [СОЗДАЙ ЭТО - ИСПОЛЬЗУЙ ПРОМПТЫ!]
+│       ├── CommandExecutorService.php [СОЗДАЙ ЭТО]
 │       ├── WebSocketPublisherService.php
 │       ├── SmartSearchService.php
 │       └── Command/
@@ -95,64 +95,64 @@ backend/src/
 │               ├── CreateTaskHandler.php
 │               └── CompleteTaskHandler.php
 ├── Controller/
-│   └── VoiceCommandController.php     [CREATE THIS]
+│   └── VoiceCommandController.php     [СОЗДАЙ ЭТО]
 ├── Message/
-│   └── ProcessVoiceCommandMessage.php [CREATE THIS]
+│   └── ProcessVoiceCommandMessage.php [СОЗДАЙ ЭТО]
 └── MessageHandler/
-    └── ProcessVoiceCommandHandler.php [CREATE THIS]
+    └── ProcessVoiceCommandHandler.php [СОЗДАЙ ЭТО]
 
 frontend/src/
 ├── composables/
-│   ├── useVoiceRecording.ts           [CREATE THIS]
-│   └── useWebSocket.ts                [CREATE THIS]
+│   ├── useVoiceRecording.ts           [СОЗДАЙ ЭТО]
+│   └── useWebSocket.ts                [СОЗДАЙ ЭТО]
 ├── services/
-│   └── voiceCommand.service.ts        [CREATE THIS]
+│   └── voiceCommand.service.ts        [СОЗДАЙ ЭТО]
 └── components/
     └── VoiceAssistant/
-        └── VoiceButton.vue             [CREATE THIS]
+        └── VoiceButton.vue             [СОЗДАЙ ЭТО]
 ```
 
-## 🚨 Critical Files to Read
+## 🚨 Критические Файлы для Чтения
 
 1. **[PROMPTS_LIBRARY.md](REFERENCE/PROMPTS_LIBRARY.md)** ⭐⭐⭐
-   - System prompt for LLM
-   - JSON structure
-   - Test cases
+   - Системный промпт для LLM
+   - Структура JSON
+   - Тестовые кейсы
 
-2. **[Services Guide](02_BACKEND/02_SERVICES.md)** ⭐⭐
-   - LLMService implementation
-   - Ollama integration
-   - Error handling
+2. **[Руководство по Сервисам](02_BACKEND/02_SERVICES.md)** ⭐⭐
+   - Реализация LLMService
+   - Интеграция с Ollama
+   - Обработка ошибок
 
-3. **[Domain Model](02_BACKEND/01_DOMAIN_MODEL.md)** ⭐
-   - Entity structure
+3. **[Доменная Модель](02_BACKEND/01_DOMAIN_MODEL.md)** ⭐
+   - Структура сущностей
    - Value objects
-   - Database schema
+   - Схема БД
 
-## 💡 Quick Tips for AI
+## 💡 Быстрые Советы для AI
 
-### When Implementing Services
+### При Реализации Сервисов
 
 ```php
-// ALWAYS use prompts from PROMPTS_LIBRARY.md
+// ВСЕГДА используй промпты из PROMPTS_LIBRARY.md
 private function buildPrompt(string $text): string
 {
     return <<<PROMPT
-You are a task management assistant.
-[... copy EXACT prompt from library ...]
+Ты - ассистент для управления задачами.
+[... скопируй ТОЧНЫЙ промпт из библиотеки ...]
 PROMPT;
 }
 ```
 
-### When Creating Handlers
+### При Создании Обработчиков
 
 ```php
-// Keep it simple - use existing TaskService
+// Делай просто - используй существующий TaskService
 public function handle(VoiceCommand $command): array
 {
     $params = $command->getParsedCommand()->getParameters();
 
-    // Use EXISTING TaskService - don't create new methods!
+    // Используй СУЩЕСТВУЮЩИЙ TaskService - не создавай новые методы!
     $task = $this->taskService->createTask(
         $command->getUser(),
         $params['title'],
@@ -163,113 +163,113 @@ public function handle(VoiceCommand $command): array
 }
 ```
 
-### When Testing
+### При Тестировании
 
 ```bash
-# Test LLM
+# Тест LLM
 curl -X POST http://localhost:11434/api/generate \
   -d '{"model":"llama3.2:3b","prompt":"Создай задачу купить молоко"}'
 
-# Test API
+# Тест API
 curl -X POST http://localhost:8089/api/voice/command \
   -H "Authorization: Bearer TOKEN" \
   -d '{"text":"Создай задачу тест"}'
 ```
 
-## 🚨 Common Mistakes to Avoid
+## 🚨 Распространенные Ошибки Которых Следует Избегать
 
-### ❌ Don't Do This
+### ❌ Не Делай Так
 
 ```php
-// Don't create new repository methods if not needed
-$this->taskRepository->findByVoiceDescription($text); // NO!
+// Не создавай новые методы репозитория если они не нужны
+$this->taskRepository->findByVoiceDescription($text); // НЕТ!
 
-// Don't create complex parsing logic
-$this->parseComplexCommand($text); // NO!
+// Не создавай сложную логику парсинга
+$this->parseComplexCommand($text); // НЕТ!
 
-// Don't add unnecessary services
-class VoiceCommandAnalyticsService {} // NO! (not for MVP)
+// Не добавляй ненужные сервисы
+class VoiceCommandAnalyticsService {} // НЕТ! (не для MVP)
 ```
 
-### ✅ Do This Instead
+### ✅ Делай Так Вместо
 
 ```php
-// Use existing methods
+// Используй существующие методы
 $task = $this->searchService->findTaskByDescription($text, $user);
 
-// Keep parsing in LLM
+// Оставляй парсинг в LLM
 $parsed = $this->llmService->parseCommand($text);
 
-// Only create what's needed for MVP
+// Создавай только то, что нужно для MVP
 ```
 
-## 📊 Success Criteria
+## 📊 Критерии Успеха
 
-Your implementation is complete when:
+Твоя реализация завершена когда:
 
-1. ✅ User can click button and record voice
-2. ✅ Voice is transcribed to text (Whisper)
-3. ✅ Text is parsed to JSON (LLM with prompts from library)
-4. ✅ Command is executed (task created/completed)
-5. ✅ User sees result via WebSocket
-6. ✅ Works for Russian language
-7. ✅ Response time < 5 seconds
+1. ✅ Пользователь может нажать кнопку и записать голос
+2. ✅ Голос транскрибирован в текст (Whisper)
+3. ✅ Текст распарсен в JSON (LLM с промптами из библиотеки)
+4. ✅ Команда выполнена (задача создана/завершена)
+5. ✅ Пользователь видит результат через WebSocket
+6. ✅ Работает для русского языка
+7. ✅ Время отклика < 5 секунд
 
-## 🆘 If You Get Stuck
+## 🆘 Если Застрял
 
-### Problem: LLM returns invalid JSON
-→ Check [PROMPTS_LIBRARY.md](REFERENCE/PROMPTS_LIBRARY.md)
-→ Verify `format: 'json'` in Ollama request
+### Проблема: LLM возвращает невалидный JSON
+→ Проверь [PROMPTS_LIBRARY.md](REFERENCE/PROMPTS_LIBRARY.md)
+→ Убедись что `format: 'json'` в запросе Ollama
 
-### Problem: Task not found by voice
-→ Check SmartSearchService in [Services](02_BACKEND/02_SERVICES.md)
-→ Adjust similarity threshold
+### Проблема: Задача не найдена по голосу
+→ Проверь SmartSearchService в [Сервисах](02_BACKEND/02_SERVICES.md)
+→ Настрой порог сходства
 
-### Problem: WebSocket not updating
-→ Check Centrifugo is running: `docker ps | grep centrifugo`
-→ Verify API key in .env
+### Проблема: WebSocket не обновляется
+→ Проверь что Centrifugo запущен: `docker ps | grep centrifugo`
+→ Проверь API ключ в .env
 
-### Problem: Queue not processing
-→ Check worker is running: `docker exec backend-php83 php bin/console messenger:consume async`
-→ Check RabbitMQ: `docker ps | grep rabbitmq`
+### Проблема: Очередь не обрабатывается
+→ Проверь что worker запущен: `docker exec backend-php83 php bin/console messenger:consume async`
+→ Проверь RabbitMQ: `docker ps | grep rabbitmq`
 
-## 📚 Documentation Index
+## 📚 Индекс Документации
 
-Full map: [INDEX.md](INDEX.md)
+Полная карта: [INDEX.md](INDEX.md)
 
-Quick links:
-- Backend: [02_BACKEND/](02_BACKEND/)
-- Frontend: [03_FRONTEND/](03_FRONTEND/)
-- Infrastructure: [01_INFRASTRUCTURE/](01_INFRASTRUCTURE/)
-- Reference: [REFERENCE/](REFERENCE/)
+Быстрые ссылки:
+- Бэкенд: [02_BACKEND/](02_BACKEND/)
+- Фронтенд: [03_FRONTEND/](03_FRONTEND/)
+- Инфраструктура: [01_INFRASTRUCTURE/](01_INFRASTRUCTURE/)
+- Справочник: [REFERENCE/](REFERENCE/)
 
-## ✅ Final Checklist
+## ✅ Финальный Чеклист
 
-Before marking as complete:
+Перед отметкой как завершено:
 
-- [ ] All Phase 1 (Backend) implemented
-- [ ] All Phase 2 (Frontend) implemented
-- [ ] AI services (Ollama, Whisper) installed
-- [ ] End-to-end test passes
-- [ ] Can create task via voice
-- [ ] Can complete task via voice
-- [ ] WebSocket updates work
-- [ ] Russian language works
-- [ ] Code follows SOLID principles (check docs)
+- [ ] Вся Фаза 1 (Бэкенд) реализована
+- [ ] Вся Фаза 2 (Фронтенд) реализована
+- [ ] AI сервисы (Ollama, Whisper) установлены
+- [ ] End-to-end тест проходит
+- [ ] Можно создать задачу через голос
+- [ ] Можно завершить задачу через голос
+- [ ] Обновления WebSocket работают
+- [ ] Русский язык работает
+- [ ] Код следует принципам SOLID (проверь документацию)
 
-## 🎯 Remember
+## 🎯 Помни
 
-**For MVP:**
-- ✅ Simple and working > Complex and broken
-- ✅ Use existing services (TaskService)
-- ✅ Follow prompts library exactly
-- ✅ Test each phase before moving on
+**Для MVP:**
+- ✅ Простое и рабочее > Сложное и сломанное
+- ✅ Используй существующие сервисы (TaskService)
+- ✅ Следуй библиотеке промптов точно
+- ✅ Тестируй каждую фазу перед переходом дальше
 
-**Priority:**
-1. Make it work
-2. Make it correct (SOLID)
-3. Make it fast (later)
+**Приоритет:**
+1. Заставь это работать
+2. Сделай это правильно (SOLID)
+3. Сделай это быстро (позже)
 
 ---
 
-**Good luck! Start with [INDEX.md](INDEX.md) for full context.**
+**Удачи! Начни с [INDEX.md](INDEX.md) для полного контекста.**

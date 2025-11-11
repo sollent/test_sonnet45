@@ -1,51 +1,51 @@
-# 🎯 LLM Prompts Library - Critical for Voice AI
+# 🎯 Библиотека Промптов LLM - Критически Важно для Voice AI
 
-> **For AI**: This is THE MOST IMPORTANT file. These prompts make Llama understand voice commands correctly.
+> **Для AI**: Это САМЫЙ ВАЖНЫЙ файл. Эти промпты заставляют Llama правильно понимать голосовые команды.
 
-## 🎪 Why This Matters
+## 🎪 Почему это Важно
 
-Without good prompts, LLM will:
-- ❌ Generate invalid JSON
-- ❌ Misunderstand commands
-- ❌ Return wrong actions
+Без хороших промптов LLM будет:
+- ❌ Генерировать невалидный JSON
+- ❌ Неправильно понимать команды
+- ❌ Возвращать неверные действия
 
-With these prompts:
-- ✅ 90%+ accuracy
-- ✅ Valid JSON every time
-- ✅ Handles Russian language well
+С этими промптами:
+- ✅ 90%+ точность
+- ✅ Валидный JSON каждый раз
+- ✅ Хорошо справляется с русским языком
 
 ---
 
-## 🔧 Main System Prompt for LLM
+## 🔧 Основной Системный Промпт для LLM
 
-**AI**: Use this EXACT prompt in LLMService.php:
+**AI**: Используй ЭТОТ ТОЧНЫЙ промпт в LLMService.php:
 
 ```
-You are a task management assistant for Russian-speaking users.
+Ты - ассистент для управления задачами для русскоязычных пользователей.
 
-Your job: Convert voice commands into valid JSON.
+Твоя задача: Конвертировать голосовые команды в валидный JSON.
 
-IMPORTANT RULES:
-1. ALWAYS return ONLY valid JSON (no extra text!)
-2. Understand Russian language commands
-3. Extract: action, parameters, confidence
-4. If unsure, set confidence < 0.5
+ВАЖНЫЕ ПРАВИЛА:
+1. ВСЕГДА возвращай ТОЛЬКО валидный JSON (никакого дополнительного текста!)
+2. Понимай команды на русском языке
+3. Извлекай: действие (action), параметры (parameters), уверенность (confidence)
+4. Если не уверен, установи confidence < 0.5
 
-Available actions:
+Доступные действия (actions):
 - create_task
 - complete_task
 - filter_tasks
 - create_subtask
 - bulk_complete
 
-JSON format (EXACTLY this structure):
+Формат JSON (ТОЧНО эта структура):
 {
   "action": "action_name",
   "parameters": {},
   "confidence": 0.0-1.0
 }
 
-Examples of commands you'll receive:
+Примеры команд, которые ты будешь получать:
 
 "Создай задачу купить молоко завтра" →
 {
@@ -78,21 +78,21 @@ Examples of commands you'll receive:
   "confidence": 0.88
 }
 
-Now process this command:
+Теперь обработай эту команду:
 ```
 
 ---
 
-## 📝 Prompt Templates for Each Action
+## 📝 Шаблоны Промптов для Каждого Действия
 
-### 1. Create Task Command
+### 1. Команда Создания Задачи
 
-**Input Examples**:
+**Примеры Ввода**:
 - "Создай задачу купить молоко"
 - "Добавь задачу сделать отчет завтра в 15:00"
 - "Новая задача: позвонить маме, срочно, с тегом семья"
 
-**Expected JSON**:
+**Ожидаемый JSON**:
 ```json
 {
   "action": "create_task",
@@ -106,7 +106,7 @@ Now process this command:
 }
 ```
 
-**With details**:
+**С деталями**:
 ```json
 {
   "action": "create_task",
@@ -120,14 +120,14 @@ Now process this command:
 }
 ```
 
-### 2. Complete Task Command
+### 2. Команда Завершения Задачи
 
-**Input Examples**:
+**Примеры Ввода**:
 - "Отметь задачу купить молоко как выполненную"
 - "Заверши задачу позвонить маме"
 - "Задача сделать отчет готова"
 
-**Expected JSON**:
+**Ожидаемый JSON**:
 ```json
 {
   "action": "complete_task",
@@ -138,14 +138,14 @@ Now process this command:
 }
 ```
 
-### 3. Filter Tasks Command
+### 3. Команда Фильтрации Задач
 
-**Input Examples**:
+**Примеры Ввода**:
 - "Покажи все задачи на завтра"
 - "Отобрази задачи со статусом в процессе и приоритетом высокий"
 - "Все важные задачи за 13-16 ноября с тегами личное и работа"
 
-**Expected JSON**:
+**Ожидаемый JSON**:
 ```json
 {
   "action": "filter_tasks",
@@ -162,13 +162,13 @@ Now process this command:
 }
 ```
 
-### 4. Create Subtask Command
+### 4. Команда Создания Подзадачи
 
-**Input Examples**:
+**Примеры Ввода**:
 - "Для задачи сделать проект добавь подзадачу написать код"
 - "К задаче купить продукты добавь три подзадачи: молоко, хлеб, масло"
 
-**Expected JSON**:
+**Ожидаемый JSON**:
 ```json
 {
   "action": "create_subtask",
@@ -182,7 +182,7 @@ Now process this command:
 }
 ```
 
-**Multiple subtasks**:
+**Несколько подзадач**:
 ```json
 {
   "action": "create_subtask",
@@ -198,13 +198,13 @@ Now process this command:
 }
 ```
 
-### 5. Bulk Complete Command
+### 5. Команда Массового Завершения
 
-**Input Examples**:
+**Примеры Ввода**:
 - "Заверши три задачи: задача 1, задача 2, задача 3"
 - "Отметь как выполненные: купить молоко, позвонить маме"
 
-**Expected JSON**:
+**Ожидаемый JSON**:
 ```json
 {
   "action": "bulk_complete",
@@ -221,13 +221,13 @@ Now process this command:
 
 ---
 
-## 🌍 Natural Language Understanding
+## 🌍 Понимание Естественного Языка
 
-### Date/Time Parsing
+### Парсинг Даты/Времени
 
-**AI**: LLM should convert these to standard format:
+**AI**: LLM должна конвертировать эти выражения в стандартный формат:
 
-| User says | LLM returns |
+| Пользователь говорит | LLM возвращает |
 |-----------|-------------|
 | "завтра" | "tomorrow" |
 | "послезавтра" | "+2 days" |
@@ -236,17 +236,17 @@ Now process this command:
 | "15 числа" | "2025-01-15" |
 | "завтра в 15:00" | "tomorrow 15:00" |
 
-### Priority Recognition
+### Распознавание Приоритета
 
-| User says | LLM returns |
+| Пользователь говорит | LLM возвращает |
 |-----------|-------------|
 | "срочно", "важно", "высокий" | "high" |
 | "обычно", "средний" | "medium" |
 | "низкий", "потом" | "low" |
 
-### Status Recognition
+### Распознавание Статуса
 
-| User says | LLM returns |
+| Пользователь говорит | LLM возвращает |
 |-----------|-------------|
 | "в процессе", "делаю" | "in_progress" |
 | "в ожидании", "отложено" | "pending" |
@@ -254,9 +254,9 @@ Now process this command:
 
 ---
 
-## 🎯 Context-Aware Prompt
+## 🎯 Контекстно-Осведомленный Промпт
 
-**AI**: Add context to improve accuracy:
+**AI**: Добавь контекст для улучшения точности:
 
 ```php
 private function buildPrompt(string $text, array $context): string
@@ -266,28 +266,28 @@ private function buildPrompt(string $text, array $context): string
     $timezone = $context['timezone'] ?? 'UTC';
     $userTasks = $context['recent_tasks'] ?? [];
 
-    // Build list of recent tasks for context
+    // Построить список последних задач для контекста
     $tasksContext = '';
     if ($userTasks) {
-        $tasksContext = "User's recent tasks:\n";
+        $tasksContext = "Недавние задачи пользователя:\n";
         foreach (array_slice($userTasks, 0, 5) as $task) {
             $tasksContext .= "- {$task['title']}\n";
         }
     }
 
     return <<<PROMPT
-You are a task management assistant.
+Ты - ассистент для управления задачами.
 
-Current context:
-- Date: $currentDate
-- Time: $currentTime
-- Timezone: $timezone
+Текущий контекст:
+- Дата: $currentDate
+- Время: $currentTime
+- Часовой пояс: $timezone
 
 $tasksContext
 
-User command: "$text"
+Команда пользователя: "$text"
 
-Return ONLY JSON:
+Верни ТОЛЬКО JSON:
 {
   "action": "...",
   "parameters": {...},
@@ -299,17 +299,17 @@ PROMPT;
 
 ---
 
-## 🧪 Testing Prompts
+## 🧪 Тестирование Промптов
 
-### Test Cases for AI
+### Тестовые Кейсы для AI
 
-**AI**: Use these to verify LLM works:
+**AI**: Используй их для проверки работы LLM:
 
 ```php
-// File: apps/backend/tests/LLMPromptTest.php
+// Файл: apps/backend/tests/LLMPromptTest.php
 
 $testCases = [
-    // Case 1: Simple task creation
+    // Кейс 1: Простое создание задачи
     [
         'input' => 'Создай задачу купить молоко',
         'expected' => [
@@ -318,7 +318,7 @@ $testCases = [
         ]
     ],
 
-    // Case 2: Task with date
+    // Кейс 2: Задача с датой
     [
         'input' => 'Добавь задачу позвонить маме завтра в 15:00',
         'expected' => [
@@ -330,7 +330,7 @@ $testCases = [
         ]
     ],
 
-    // Case 3: Task with priority and tags
+    // Кейс 3: Задача с приоритетом и тегами
     [
         'input' => 'Создай срочную задачу сделать отчет, теги работа и важное',
         'expected' => [
@@ -343,7 +343,7 @@ $testCases = [
         ]
     ],
 
-    // Case 4: Complete task
+    // Кейс 4: Завершение задачи
     [
         'input' => 'Отметь задачу купить молоко как выполненную',
         'expected' => [
@@ -352,21 +352,21 @@ $testCases = [
         ]
     ],
 
-    // Case 5: Filter tasks
+    // Кейс 5: Фильтрация задач
     [
         'input' => 'Покажи все задачи на завтра с высоким приоритетом',
         'expected' => [
             'action' => 'filter_tasks',
             'parameters' => [
                 'filters' => [
-                    'date': 'tomorrow',
+                    'date' => 'tomorrow',
                     'priority' => 'high'
                 ]
             ]
         ]
     ],
 
-    // Case 6: Multiple subtasks
+    // Кейс 6: Несколько подзадач
     [
         'input' => 'Для задачи проект добавь три подзадачи: дизайн, код, тесты',
         'expected' => [
@@ -382,7 +382,7 @@ $testCases = [
         ]
     ],
 
-    // Case 7: Bulk complete
+    // Кейс 7: Массовое завершение
     [
         'input' => 'Заверши задачи: молоко, хлеб, масло',
         'expected' => [
@@ -397,17 +397,17 @@ $testCases = [
 
 ---
 
-## 🚨 Handling Ambiguous Commands
+## 🚨 Обработка Неоднозначных Команд
 
-### Low Confidence Response
+### Ответ с Низкой Уверенностью
 
-When LLM is unsure (confidence < 0.5):
+Когда LLM не уверена (confidence < 0.5):
 
 ```json
 {
   "action": "clarification_needed",
   "parameters": {
-    "original_text": "user command",
+    "original_text": "пользовательская команда",
     "possible_actions": ["create_task", "complete_task"],
     "question": "Вы хотите создать новую задачу или отметить существующую как выполненную?"
   },
@@ -415,13 +415,13 @@ When LLM is unsure (confidence < 0.5):
 }
 ```
 
-### Invalid Command
+### Невалидная Команда
 
 ```json
 {
   "action": "unknown",
   "parameters": {
-    "raw_text": "user command"
+    "raw_text": "пользовательская команда"
   },
   "confidence": 0.1
 }
@@ -429,73 +429,73 @@ When LLM is unsure (confidence < 0.5):
 
 ---
 
-## 🔧 Prompt Optimization Tips for AI
+## 🔧 Советы по Оптимизации Промптов для AI
 
-### 1. Keep Context Small
+### 1. Сохраняй Контекст Маленьким
 ```php
-// Good: Only last 5 tasks
+// Хорошо: Только последние 5 задач
 $context['recent_tasks'] = array_slice($allTasks, 0, 5);
 
-// Bad: All 1000 tasks
+// Плохо: Все 1000 задач
 $context['all_tasks'] = $allTasks;
 ```
 
-### 2. Use Strict JSON Mode
+### 2. Используй Строгий JSON Режим
 ```php
 $response = $this->httpClient->request('POST', $ollamaUrl . '/api/generate', [
     'json' => [
         'model' => 'llama3.2:3b',
         'prompt' => $prompt,
-        'format' => 'json',  // Force JSON output
+        'format' => 'json',  // Принудительный вывод JSON
         'options' => [
-            'temperature' => 0.3,  // Lower = more consistent
+            'temperature' => 0.3,  // Ниже = более консистентно
         ]
     ]
 ]);
 ```
 
-### 3. Fallback Parsing
+### 3. Резервный Парсинг
 ```php
 private function parseWithFallback(string $llmResponse): array
 {
-    // Try parse as JSON
+    // Попытка распарсить как JSON
     $json = json_decode($llmResponse, true);
 
     if ($json && isset($json['action'])) {
         return $json;
     }
 
-    // Fallback: keyword matching
+    // Резерв: сопоставление по ключевым словам
     return $this->keywordParse($llmResponse);
 }
 ```
 
 ---
 
-## ✅ Checklist for AI Implementation
+## ✅ Чеклист для AI Реализации
 
-- [ ] Use exact system prompt from this file
-- [ ] Add context (date, time, recent tasks)
-- [ ] Set `format: 'json'` in Ollama request
-- [ ] Set `temperature: 0.3` for consistency
-- [ ] Validate JSON structure
-- [ ] Handle low confidence (< 0.5)
-- [ ] Add fallback parsing
-- [ ] Test with all 7 test cases
-
----
-
-## 🎯 Expected Accuracy
-
-With these prompts:
-- ✅ Simple commands (create task): 95%+
-- ✅ Commands with details: 90%+
-- ✅ Filter commands: 85%+
-- ✅ Complex multi-step: 80%+
+- [ ] Используй точный системный промпт из этого файла
+- [ ] Добавь контекст (дата, время, недавние задачи)
+- [ ] Установи `format: 'json'` в запросе Ollama
+- [ ] Установи `temperature: 0.3` для консистентности
+- [ ] Валидируй структуру JSON
+- [ ] Обрабатывай низкую уверенность (< 0.5)
+- [ ] Добавь резервный парсинг
+- [ ] Протестируй со всеми 7 тестовыми кейсами
 
 ---
 
-**Remember**: Llama 3.2 3B is smart but small. These prompts are optimized for it. Don't change unless testing shows issues.
+## 🎯 Ожидаемая Точность
 
-**Document Status**: CRITICAL - Follow Exactly
-**Last Updated**: 2025-01-08
+С этими промптами:
+- ✅ Простые команды (создать задачу): 95%+
+- ✅ Команды с деталями: 90%+
+- ✅ Команды фильтрации: 85%+
+- ✅ Сложные многошаговые: 80%+
+
+---
+
+**Помни**: Llama 3.2 3B - умная, но маленькая. Эти промпты оптимизированы для нее. Не изменяй их, если тесты не покажут проблемы.
+
+**Статус Документа**: КРИТИЧЕСКИЙ - Следуй Точно
+**Последнее Обновление**: 2025-01-08

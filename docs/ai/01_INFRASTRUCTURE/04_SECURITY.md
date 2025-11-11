@@ -1,137 +1,137 @@
-# 🔐 Phase 1.4: Security & Networking Configuration
+# 🔐 Фаза 1.4: Настройка Безопасности и Сети
 
-> **Document Version**: 1.0.0
-> **Last Updated**: 2025-11-08
-> **Estimated Time**: 1 day
-> **Complexity**: HIGH
-> **Prerequisites**: Infrastructure deployed, Services running
+> **Версия документа**: 1.0.0
+> **Последнее обновление**: 2025-11-08
+> **Оценочное время**: 1 день
+> **Сложность**: ВЫСОКАЯ
+> **Пререквизиты**: Развернута инфраструктура, Работают сервисы
 
-## 📋 Table of Contents
+## 📋 Содержание
 
-1. [Security Architecture Overview](#security-architecture-overview)
-2. [Network Security Configuration](#network-security-configuration)
-3. [Authentication & Authorization](#authentication--authorization)
-4. [Data Encryption](#data-encryption)
-5. [API Security](#api-security)
-6. [Container Security](#container-security)
-7. [Monitoring & Auditing](#monitoring--auditing)
-8. [Incident Response](#incident-response)
-
----
-
-## 🏛️ Security Architecture Overview
-
-### Defense in Depth Strategy
-
-```yaml
-Security Layers:
-  1. Network Layer:
-     - Firewall rules
-     - Network segmentation
-     - DDoS protection
-
-  2. Application Layer:
-     - JWT authentication
-     - Rate limiting
-     - Input validation
-
-  3. Container Layer:
-     - Rootless containers
-     - Read-only filesystems
-     - Resource limits
-
-  4. Data Layer:
-     - Encryption at rest
-     - Encryption in transit
-     - Key management
-
-  5. Monitoring Layer:
-     - Security events logging
-     - Anomaly detection
-     - Audit trails
-```
-
-### Threat Model
-
-```yaml
-Identified Threats:
-  - Unauthorized API access
-  - Voice command injection
-  - LLM prompt injection
-  - Data exfiltration
-  - Container escape
-  - Resource exhaustion
-  - Man-in-the-middle attacks
-  - Replay attacks
-
-Mitigation Strategies:
-  - Strong authentication
-  - Input sanitization
-  - Prompt validation
-  - Network isolation
-  - Container hardening
-  - Rate limiting
-  - TLS everywhere
-  - Request signing
-```
+1. [Обзор Архитектуры Безопасности](#обзор-архитектуры-безопасности)
+2. [Настройка Сетевой Безопасности](#настройка-сетевой-безопасности)
+3. [Аутентификация и Авторизация](#аутентификация-и-авторизация)
+4. [Шифрование Данных](#шифрование-данных)
+5. [Безопасность API](#безопасность-api)
+6. [Безопасность Контейнеров](#безопасность-контейнеров)
+7. [Мониторинг и Аудит](#мониторинг-и-аудит)
+8. [Реагирование на Инциденты](#реагирование-на-инциденты)
 
 ---
 
-## 🌐 Network Security Configuration
+## 🏛️ Обзор Архитектуры Безопасности
 
-### Firewall Rules Setup
+### Стратегия Эшелонированной Защиты
+
+```yaml
+Уровни Безопасности:
+  1. Сетевой Уровень:
+     - Правила файрвола
+     - Сегментация сети
+     - Защита от DDoS
+
+  2. Уровень Приложения:
+     - JWT аутентификация
+     - Ограничение частоты запросов
+     - Валидация ввода
+
+  3. Уровень Контейнеров:
+     - Контейнеры без root
+     - Файловые системы только для чтения
+     - Лимиты ресурсов
+
+  4. Уровень Данных:
+     - Шифрование в покое
+     - Шифрование в транзите
+     - Управление ключами
+
+  5. Уровень Мониторинга:
+     - Логирование событий безопасности
+     - Обнаружение аномалий
+     - Аудиторские следы
+```
+
+### Модель Угроз
+
+```yaml
+Выявленные Угрозы:
+  - Несанкционированный доступ к API
+  - Инъекции в голосовые команды
+  - Инъекции промптов в LLM
+  - Эксфильтрация данных
+  - Побег из контейнера
+  - Исчерпание ресурсов
+  - Атаки Man-in-the-middle
+  - Повторные атаки
+
+Стратегии Митигации:
+  - Строгая аутентификация
+  - Санитизация ввода
+  - Валидация промптов
+  - Изоляция сети
+  - Усиление контейнеров
+  - Ограничение частоты запросов
+  - TLS везде
+  - Подписывание запросов
+```
+
+---
+
+## 🌐 Настройка Сетевой Безопасности
+
+### Настройка Правил Файрвола
 
 ```bash
 #!/bin/bash
-# File: infrastructure/ai-services/scripts/setup_firewall.sh
+# Файл: infrastructure/ai-services/scripts/setup_firewall.sh
 
 set -e
 
-echo "🔥 Configuring Firewall Rules..."
+echo "🔥 Настройка Правил Файрвола..."
 
-# Enable UFW
+# Включение UFW
 sudo ufw --force enable
 
-# Default policies
+# Политики по умолчанию
 sudo ufw default deny incoming
 sudo ufw default allow outgoing
 sudo ufw default deny routed
 
-# Allow SSH (rate limited)
+# Разрешить SSH (с ограничением частоты)
 sudo ufw limit 22/tcp comment 'SSH rate limited'
 
-# Allow HTTP/HTTPS
+# Разрешить HTTP/HTTPS
 sudo ufw allow 80/tcp comment 'HTTP'
 sudo ufw allow 443/tcp comment 'HTTPS'
 
-# Allow Voice AI services (restricted to specific IPs in production)
+# Разрешить Voice AI сервисы (ограничено конкретными IP в production)
 sudo ufw allow 8089/tcp comment 'Backend API'
 sudo ufw allow 8000/tcp comment 'Centrifugo WebSocket'
 
-# Internal services (should be blocked from external access in production)
+# Внутренние сервисы (должны быть заблокированы от внешнего доступа в production)
 # sudo ufw deny 11434/tcp comment 'Ollama - internal only'
 # sudo ufw deny 8090/tcp comment 'Whisper - internal only'
 # sudo ufw deny 6379/tcp comment 'Redis - internal only'
 
-# Docker specific rules
+# Docker специфичные правила
 sudo ufw allow in on docker0
 sudo ufw allow from 172.17.0.0/16 to any
 
-# Apply rules
+# Применить правила
 sudo ufw reload
 
-echo "✅ Firewall configured successfully"
+echo "✅ Файрвол настроен успешно"
 ```
 
-### Network Segmentation
+### Сегментация Сети
 
 ```yaml
-# File: infrastructure/ai-services/docker-compose.security.yml
+# Файл: infrastructure/ai-services/docker-compose.security.yml
 
 version: '3.8'
 
 networks:
-  # DMZ network for external-facing services
+  # DMZ сеть для публичных сервисов
   dmz_network:
     driver: bridge
     ipam:
@@ -141,17 +141,17 @@ networks:
       com.docker.network.bridge.name: br-dmz
       com.docker.network.bridge.enable_ip_masquerade: "true"
 
-  # Internal network for AI services
+  # Внутренняя сеть для AI сервисов
   ai_internal:
     driver: bridge
-    internal: true  # No external access
+    internal: true  # Без внешнего доступа
     ipam:
       config:
         - subnet: 172.31.0.0/24
     driver_opts:
       com.docker.network.bridge.name: br-ai-internal
 
-  # Data network for database access
+  # Сеть данных для доступа к БД
   data_network:
     driver: bridge
     internal: true
@@ -177,7 +177,7 @@ services:
       - /var/cache/nginx
       - /var/run
 
-  # Ollama (Internal only)
+  # Ollama (Только внутренняя)
   ollama:
     image: ollama/ollama:latest
     networks:
@@ -187,7 +187,7 @@ services:
     security_opt:
       - no-new-privileges:true
 
-  # Whisper (Internal only)
+  # Whisper (Только внутренняя)
   whisper:
     image: voice-ai/whisper:secure
     networks:
@@ -199,52 +199,52 @@ services:
       - seccomp:unconfined
 ```
 
-### IPTables Advanced Rules
+### Расширенные Правила IPTables
 
 ```bash
 #!/bin/bash
-# File: infrastructure/ai-services/scripts/advanced_iptables.sh
+# Файл: infrastructure/ai-services/scripts/advanced_iptables.sh
 
-# Rate limiting for API endpoints
+# Ограничение частоты для API endpoints
 iptables -N RATE_LIMIT
 iptables -A RATE_LIMIT -m recent --name api_rate --set
 iptables -A RATE_LIMIT -m recent --name api_rate --update --seconds 1 --hitcount 100 -j DROP
 
-# Apply rate limiting to API port
+# Применить ограничение к API порту
 iptables -A INPUT -p tcp --dport 8089 -j RATE_LIMIT
 
-# Prevent port scanning
+# Предотвращение сканирования портов
 iptables -N PORT_SCAN
 iptables -A PORT_SCAN -p tcp --tcp-flags SYN,ACK,FIN,RST RST -m limit --limit 1/s -j RETURN
 iptables -A PORT_SCAN -j DROP
 
-# Block invalid packets
+# Блокировка невалидных пакетов
 iptables -A INPUT -m state --state INVALID -j DROP
 iptables -A INPUT -p tcp --tcp-flags ALL NONE -j DROP
 iptables -A INPUT -p tcp --tcp-flags ALL ALL -j DROP
 
-# Allow established connections
+# Разрешить установленные соединения
 iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 
-# Log dropped packets
+# Логирование отброшенных пакетов
 iptables -N LOGGING
 iptables -A INPUT -j LOGGING
 iptables -A LOGGING -m limit --limit 2/min -j LOG --log-prefix "IPTables-Dropped: "
 iptables -A LOGGING -j DROP
 
-# Save rules
+# Сохранить правила
 iptables-save > /etc/iptables/rules.v4
 ```
 
 ---
 
-## 🔑 Authentication & Authorization
+## 🔑 Аутентификация и Авторизация
 
-### JWT Implementation with RSA
+### Реализация JWT с RSA
 
 ```php
 <?php
-// File: apps/backend/src/Security/JWTManager.php
+// Файл: apps/backend/src/Security/JWTManager.php
 
 namespace App\Security;
 
@@ -257,8 +257,8 @@ class JWTManager
     private string $privateKey;
     private string $publicKey;
     private string $algorithm = 'RS256';
-    private int $ttl = 900; // 15 minutes
-    private int $refreshTtl = 604800; // 7 days
+    private int $ttl = 900; // 15 минут
+    private int $refreshTtl = 604800; // 7 дней
 
     public function __construct(ParameterBagInterface $params)
     {
@@ -328,11 +328,11 @@ class JWTManager
 }
 ```
 
-### API Key Management
+### Управление API Ключами
 
 ```php
 <?php
-// File: apps/backend/src/Security/ApiKeyAuthenticator.php
+// Файл: apps/backend/src/Security/ApiKeyAuthenticator.php
 
 namespace App\Security;
 
@@ -367,7 +367,7 @@ class ApiKeyAuthenticator extends AbstractAuthenticator
             throw new AuthenticationException('No API key provided');
         }
 
-        // Rate limiting per API key
+        // Ограничение частоты для каждого API ключа
         $limiter = $this->apiLimiter->create($apiKey);
         $limit = $limiter->consume(1);
 
@@ -375,12 +375,12 @@ class ApiKeyAuthenticator extends AbstractAuthenticator
             throw new AuthenticationException('Rate limit exceeded');
         }
 
-        // Validate API key format
+        // Валидация формата API ключа
         if (!preg_match('/^[a-f0-9]{64}$/i', $apiKey)) {
             throw new AuthenticationException('Invalid API key format');
         }
 
-        // Hash the API key for storage comparison
+        // Хешируем API ключ для сравнения с хранилищем
         $hashedKey = hash('sha256', $apiKey);
 
         $apiKeyEntity = $this->apiKeyRepository->findOneBy([
@@ -392,12 +392,12 @@ class ApiKeyAuthenticator extends AbstractAuthenticator
             throw new AuthenticationException('Invalid API key');
         }
 
-        // Check expiration
+        // Проверка истечения срока
         if ($apiKeyEntity->getExpiresAt() && $apiKeyEntity->getExpiresAt() < new \DateTime()) {
             throw new AuthenticationException('API key expired');
         }
 
-        // Update last used
+        // Обновление времени последнего использования
         $apiKeyEntity->setLastUsedAt(new \DateTime());
         $this->apiKeyRepository->save($apiKeyEntity, true);
 
@@ -420,13 +420,13 @@ class ApiKeyAuthenticator extends AbstractAuthenticator
 
 ---
 
-## 🔒 Data Encryption
+## 🔒 Шифрование Данных
 
-### Encryption Service
+### Сервис Шифрования
 
 ```php
 <?php
-// File: apps/backend/src/Security/EncryptionService.php
+// Файл: apps/backend/src/Security/EncryptionService.php
 
 namespace App\Security;
 
@@ -442,7 +442,7 @@ class EncryptionService
 
     public function __construct(ParameterBagInterface $params)
     {
-        // Load or generate encryption key
+        // Загрузка или генерация ключа шифрования
         $keyPath = $params->get('encryption.key_path');
 
         if (file_exists($keyPath)) {
@@ -462,7 +462,7 @@ class EncryptionService
     }
 
     /**
-     * Encrypt sensitive data
+     * Шифрование чувствительных данных
      */
     public function encrypt(string $data): string
     {
@@ -470,7 +470,7 @@ class EncryptionService
     }
 
     /**
-     * Decrypt sensitive data
+     * Расшифровка чувствительных данных
      */
     public function decrypt(string $encryptedData): string
     {
@@ -478,7 +478,7 @@ class EncryptionService
     }
 
     /**
-     * Encrypt file
+     * Шифрование файла
      */
     public function encryptFile(string $inputPath, string $outputPath): void
     {
@@ -486,7 +486,7 @@ class EncryptionService
     }
 
     /**
-     * Decrypt file
+     * Расшифровка файла
      */
     public function decryptFile(string $inputPath, string $outputPath): void
     {
@@ -494,21 +494,21 @@ class EncryptionService
     }
 
     /**
-     * Encrypt voice recording
+     * Шифрование голосовой записи
      */
     public function encryptVoiceRecording(string $audioPath): string
     {
         $encryptedPath = $audioPath . '.encrypted';
         $this->encryptFile($audioPath, $encryptedPath);
 
-        // Delete original
+        // Удаление оригинала
         unlink($audioPath);
 
         return $encryptedPath;
     }
 
     /**
-     * Generate secure random token
+     * Генерация безопасного случайного токена
      */
     public function generateSecureToken(int $length = 32): string
     {
@@ -516,7 +516,7 @@ class EncryptionService
     }
 
     /**
-     * Hash password with Argon2id
+     * Хеширование пароля с Argon2id
      */
     public function hashPassword(string $password): string
     {
@@ -528,7 +528,7 @@ class EncryptionService
     }
 
     /**
-     * Verify password
+     * Проверка пароля
      */
     public function verifyPassword(string $password, string $hash): bool
     {
@@ -536,33 +536,33 @@ class EncryptionService
     }
 
     /**
-     * Rotate encryption keys
+     * Ротация ключей шифрования
      */
     public function rotateKeys(): void
     {
         $newKey = Key::createNewRandomKey();
 
-        // Re-encrypt all sensitive data with new key
-        // This would be done in batches in production
+        // Перешифровать все чувствительные данные новым ключом
+        // В production это делается пакетами
 
         $this->encryptionKey = $newKey;
 
-        // Store new key securely
-        // In production, use AWS KMS, HashiCorp Vault, etc.
+        // Безопасное хранение нового ключа
+        // В production используйте AWS KMS, HashiCorp Vault, и т.д.
     }
 }
 ```
 
-### Database Encryption
+### Шифрование Базы Данных
 
 ```yaml
-# File: apps/backend/config/packages/doctrine.yaml
+# Файл: apps/backend/config/packages/doctrine.yaml
 
 doctrine:
     dbal:
         url: '%env(resolve:DATABASE_URL)%'
 
-        # Transparent encryption
+        # Прозрачное шифрование
         options:
             sslmode: require
             sslcert: '%kernel.project_dir%/config/ssl/client-cert.pem'
@@ -570,7 +570,7 @@ doctrine:
             sslrootcert: '%kernel.project_dir%/config/ssl/ca-cert.pem'
 
     orm:
-        # Entity listeners for encryption
+        # Слушатели сущностей для шифрования
         entity_listeners:
             App\Entity\VoiceCommand:
                 - App\EventListener\EncryptionListener
@@ -580,45 +580,45 @@ doctrine:
 
 ---
 
-## 🛡️ API Security
+## 🛡️ Безопасность API
 
-### Rate Limiting Configuration
+### Настройка Ограничения Частоты Запросов
 
 ```yaml
-# File: apps/backend/config/packages/rate_limiter.yaml
+# Файл: apps/backend/config/packages/rate_limiter.yaml
 
 framework:
     rate_limiter:
-        # Global API rate limit
+        # Глобальное ограничение API
         api:
             policy: sliding_window
             limit: 1000
             interval: '1 hour'
 
-        # Voice command rate limit
+        # Ограничение для голосовых команд
         voice_command:
             policy: token_bucket
             limit: 100
             rate: { interval: '1 minute', amount: 10 }
 
-        # Authentication attempts
+        # Попытки аутентификации
         login:
             policy: fixed_window
             limit: 5
             interval: '5 minutes'
 
-        # LLM requests (expensive)
+        # LLM запросы (дорогие)
         llm_request:
             policy: token_bucket
             limit: 50
             rate: { interval: '1 minute', amount: 2 }
 ```
 
-### Input Validation & Sanitization
+### Валидация и Санитизация Ввода
 
 ```php
 <?php
-// File: apps/backend/src/Security/InputSanitizer.php
+// Файл: apps/backend/src/Security/InputSanitizer.php
 
 namespace App\Security;
 
@@ -633,8 +633,8 @@ class InputSanitizer
         '/(<iframe[\s\S]*?<\/iframe>)/i',
         '/(eval\s*\()/i',
         '/(exec\s*\()/i',
-        '/(\$\{.*?\})/i',  // Template injection
-        '/({{.*?}})/i',     // Template injection
+        '/(\$\{.*?\})/i',  // Инъекция шаблонов
+        '/({{.*?}})/i',     // Инъекция шаблонов
     ];
 
     private array $sqlInjectionPatterns = [
@@ -643,7 +643,7 @@ class InputSanitizer
         '/(\bINSERT\b[\s\S]*?\bINTO\b)/i',
         '/(\bDELETE\b[\s\S]*?\bFROM\b)/i',
         '/(\bUPDATE\b[\s\S]*?\bSET\b)/i',
-        '/(--|\#|\/\*)/i',  // SQL comments
+        '/(--|\#|\/\*)/i',  // SQL комментарии
     ];
 
     private array $commandInjectionPatterns = [
@@ -655,7 +655,7 @@ class InputSanitizer
     public function __construct(private ValidatorInterface $validator) {}
 
     /**
-     * Sanitize user input
+     * Санитизация пользовательского ввода
      */
     public function sanitize(mixed $input, string $type = 'general'): mixed
     {
@@ -679,13 +679,13 @@ class InputSanitizer
 
     private function sanitizeGeneral(string $input): string
     {
-        // Remove null bytes
+        // Удаление нулевых байтов
         $input = str_replace(chr(0), '', $input);
 
-        // Strip tags
+        // Удаление тегов
         $input = strip_tags($input);
 
-        // Check dangerous patterns
+        // Проверка опасных паттернов
         foreach ($this->dangerousPatterns as $pattern) {
             if (preg_match($pattern, $input)) {
                 throw new \InvalidArgumentException('Potentially dangerous input detected');
@@ -697,7 +697,7 @@ class InputSanitizer
 
     private function sanitizeHtml(string $input): string
     {
-        // Use HTMLPurifier for robust HTML sanitization
+        // Использование HTMLPurifier для надежной санитизации HTML
         $config = \HTMLPurifier_Config::createDefault();
         $config->set('HTML.Allowed', 'p,b,i,u,a[href],ul,ol,li');
         $config->set('URI.DisableExternalResources', true);
@@ -714,7 +714,7 @@ class InputSanitizer
             }
         }
 
-        // Escape special characters
+        // Экранирование специальных символов
         return addslashes($input);
     }
 
@@ -731,21 +731,21 @@ class InputSanitizer
 
     private function sanitizeFilename(string $input): string
     {
-        // Remove directory traversal attempts
+        // Удаление попыток обхода каталогов
         $input = str_replace(['..', '/', '\\'], '', $input);
 
-        // Allow only safe characters
+        // Разрешены только безопасные символы
         $input = preg_replace('/[^a-zA-Z0-9_\-\.]/', '', $input);
 
-        // Limit length
+        // Ограничение длины
         return substr($input, 0, 255);
     }
 
     private function sanitizeVoiceCommand(string $input): string
     {
-        // Specific sanitization for voice commands
+        // Специфическая санитизация для голосовых команд
 
-        // Remove potential prompt injection attempts
+        // Удаление потенциальных попыток инъекции промптов
         $promptInjectionPatterns = [
             '/ignore previous instructions/i',
             '/disregard all prior commands/i',
@@ -760,21 +760,21 @@ class InputSanitizer
             }
         }
 
-        // Limit length to prevent context overflow
+        // Ограничение длины для предотвращения переполнения контекста
         $input = mb_substr($input, 0, 1000);
 
-        // Basic sanitization
+        // Базовая санитизация
         return $this->sanitizeGeneral($input);
     }
 
     /**
-     * Validate and sanitize voice command for LLM
+     * Валидация и санитизация голосовой команды для LLM
      */
     public function validateVoiceCommand(string $command): array
     {
         $sanitized = $this->sanitizeVoiceCommand($command);
 
-        // Additional validation
+        // Дополнительная валидация
         $errors = [];
 
         if (strlen($sanitized) < 3) {
@@ -785,7 +785,7 @@ class InputSanitizer
             $errors[] = 'Command too long';
         }
 
-        // Check for suspicious patterns
+        // Проверка подозрительных паттернов
         if (preg_match('/\b(hack|exploit|injection|bypass)\b/i', $sanitized)) {
             $errors[] = 'Suspicious content detected';
         }
@@ -799,11 +799,11 @@ class InputSanitizer
 }
 ```
 
-### CORS Configuration
+### Настройка CORS
 
 ```php
 <?php
-// File: apps/backend/src/EventListener/CorsListener.php
+// Файл: apps/backend/src/EventListener/CorsListener.php
 
 namespace App\EventListener;
 
@@ -833,7 +833,7 @@ class CorsListener
     {
         $request = $event->getRequest();
 
-        // Handle preflight requests
+        // Обработка preflight запросов
         if ($request->getMethod() === 'OPTIONS') {
             $response = new Response();
             $this->addCorsHeaders($response, $request->headers->get('Origin'));
@@ -869,29 +869,29 @@ class CorsListener
 
 ---
 
-## 🐳 Container Security
+## 🐳 Безопасность Контейнеров
 
-### Dockerfile Security Best Practices
+### Лучшие Практики Безопасности Dockerfile
 
 ```dockerfile
-# File: infrastructure/ai-services/configs/secure/Dockerfile.secure
+# Файл: infrastructure/ai-services/configs/secure/Dockerfile.secure
 
-# Use specific version, not latest
+# Использовать конкретную версию, не latest
 FROM python:3.11.6-slim-bookworm
 
-# Set security labels
+# Установить метки безопасности
 LABEL security.scan="enabled" \
       security.updates="auto" \
       maintainer="security@voiceai.com"
 
-# Create non-root user
+# Создать пользователя без root
 RUN groupadd -r voiceai && \
     useradd -r -g voiceai -u 1000 \
     -d /home/voiceai \
     -s /sbin/nologin \
     -c "Voice AI User" voiceai
 
-# Install security updates only
+# Установить только обновления безопасности
 RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y --no-install-recommends \
@@ -900,48 +900,48 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* && \
     rm -rf /tmp/*
 
-# Copy and set ownership
+# Копировать и установить владельца
 WORKDIR /app
 COPY --chown=voiceai:voiceai requirements.txt .
 
-# Install Python packages as user
+# Установить Python пакеты от пользователя
 USER voiceai
 RUN pip install --user --no-cache-dir \
     --no-compile \
     --disable-pip-version-check \
     -r requirements.txt
 
-# Copy application files
+# Копировать файлы приложения
 COPY --chown=voiceai:voiceai . .
 
-# Remove unnecessary files
+# Удалить ненужные файлы
 RUN find . -name "*.pyc" -delete && \
     find . -name "__pycache__" -delete && \
     find . -name ".git" -delete
 
-# Security hardening
+# Усиление безопасности
 USER root
 RUN chmod -R 755 /app && \
     chown -R voiceai:voiceai /app
 
-# Use dumb-init to handle signals properly
+# Использовать dumb-init для правильной обработки сигналов
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 
-# Run as non-root user
+# Запуск от имени пользователя без root
 USER voiceai
 
-# Health check
+# Проверка здоровья
 HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
     CMD python -c "import requests; requests.get('http://localhost:8090/health')"
 
-# Run application
+# Запуск приложения
 CMD ["python", "-m", "uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8090"]
 ```
 
-### Container Runtime Security
+### Безопасность Времени Выполнения Контейнера
 
 ```yaml
-# File: infrastructure/ai-services/docker-compose.secure.yml
+# Файл: infrastructure/ai-services/docker-compose.secure.yml
 
 version: '3.8'
 
@@ -950,30 +950,30 @@ services:
     image: voice-ai/whisper:secure
     container_name: secure-whisper
 
-    # Security options
+    # Опции безопасности
     security_opt:
       - no-new-privileges:true
       - apparmor:docker-default
       - seccomp:default.json
 
-    # Capabilities
+    # Возможности
     cap_drop:
       - ALL
     cap_add:
       - NET_BIND_SERVICE
 
-    # Read-only root filesystem
+    # Корневая файловая система только для чтения
     read_only: true
 
-    # Temporary filesystems for writable areas
+    # Временные файловые системы для записываемых областей
     tmpfs:
       - /tmp:noexec,nosuid,size=100M
       - /var/run:noexec,nosuid,size=10M
 
-    # User
+    # Пользователь
     user: "1000:1000"
 
-    # Resource limits
+    # Лимиты ресурсов
     deploy:
       resources:
         limits:
@@ -984,12 +984,12 @@ services:
           cpus: '0.5'
           memory: 512M
 
-    # Environment
+    # Окружение
     environment:
       - PYTHONDONTWRITEBYTECODE=1
       - PYTHONUNBUFFERED=1
 
-    # Volumes (minimal, read-only where possible)
+    # Тома (минимальные, только для чтения где возможно)
     volumes:
       - whisper-models:/models:ro
       - type: tmpfs
@@ -998,59 +998,59 @@ services:
           size: 100M
 ```
 
-### Security Scanning
+### Сканирование Безопасности
 
 ```bash
 #!/bin/bash
-# File: infrastructure/ai-services/scripts/security_scan.sh
+# Файл: infrastructure/ai-services/scripts/security_scan.sh
 
 set -e
 
-echo "🔍 Running Security Scans..."
+echo "🔍 Запуск Сканирования Безопасности..."
 
-# Scan Docker images for vulnerabilities
-echo "1. Scanning Docker images with Trivy..."
+# Сканирование Docker образов на уязвимости
+echo "1. Сканирование Docker образов с Trivy..."
 for image in $(docker-compose images -q); do
-    echo "Scanning $image..."
+    echo "Сканирование $image..."
     docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
         aquasec/trivy image --severity HIGH,CRITICAL $image
 done
 
-# Check for secrets in code
+# Проверка секретов в коде
 echo ""
-echo "2. Checking for secrets with GitLeaks..."
+echo "2. Проверка секретов с GitLeaks..."
 docker run --rm -v $(pwd):/path ghcr.io/gitleaks/gitleaks:latest \
     detect --source="/path" --verbose
 
-# SAST scanning
+# SAST сканирование
 echo ""
-echo "3. Static analysis with Semgrep..."
+echo "3. Статический анализ с Semgrep..."
 docker run --rm -v $(pwd):/src \
     returntocorp/semgrep:latest \
     --config=auto /src
 
-# Dependency check
+# Проверка зависимостей
 echo ""
-echo "4. Checking dependencies..."
+echo "4. Проверка зависимостей..."
 pip-audit --fix --desc
 
-# Container runtime security
+# Безопасность времени выполнения контейнера
 echo ""
-echo "5. Runtime security check with Falco..."
+echo "5. Проверка безопасности времени выполнения с Falco..."
 sudo falco -r /etc/falco/rules.d
 
-echo "✅ Security scans completed"
+echo "✅ Сканирование безопасности завершено"
 ```
 
 ---
 
-## 📊 Monitoring & Auditing
+## 📊 Мониторинг и Аудит
 
-### Security Event Logging
+### Логирование Событий Безопасности
 
 ```php
 <?php
-// File: apps/backend/src/Security/SecurityAuditLogger.php
+// Файл: apps/backend/src/Security/SecurityAuditLogger.php
 
 namespace App\Security;
 
@@ -1089,13 +1089,13 @@ class SecurityAuditLogger
             'context' => $context
         ];
 
-        // Log to security channel
+        // Логирование в канал безопасности
         $this->logger->info('Security event', $auditEntry);
 
-        // Also write to audit file
+        // Также запись в файл аудита
         $this->writeAuditLog($auditEntry);
 
-        // Send alerts for critical events
+        // Отправка алертов для критических событий
         if ($this->isCriticalEvent($eventType)) {
             $this->sendSecurityAlert($auditEntry);
         }
@@ -1123,8 +1123,8 @@ class SecurityAuditLogger
 
     private function sendSecurityAlert(array $auditEntry): void
     {
-        // Send to monitoring system
-        // Implementation depends on monitoring stack (Datadog, NewRelic, etc.)
+        // Отправка в систему мониторинга
+        // Реализация зависит от стека мониторинга (Datadog, NewRelic, и т.д.)
     }
 
     public function logAuthenticationSuccess(UserInterface $user, Request $request): void
@@ -1147,7 +1147,7 @@ class SecurityAuditLogger
         bool $success
     ): void {
         $this->logSecurityEvent('voice_command_execution', $user, $request, [
-            'command' => substr($command, 0, 100), // Log first 100 chars only
+            'command' => substr($command, 0, 100), // Логируем только первые 100 символов
             'success' => $success
         ]);
     }
@@ -1164,17 +1164,17 @@ class SecurityAuditLogger
 }
 ```
 
-### Monitoring Dashboard Configuration
+### Настройка Дашборда Мониторинга
 
 ```yaml
-# File: infrastructure/ai-services/configs/monitoring/security-dashboard.yml
+# Файл: infrastructure/ai-services/configs/monitoring/security-dashboard.yml
 
 dashboard:
   title: "Voice AI Security Dashboard"
   refresh: 30s
 
   panels:
-    - title: "Authentication Metrics"
+    - title: "Метрики Аутентификации"
       type: graph
       metrics:
         - auth_success_rate
@@ -1182,14 +1182,14 @@ dashboard:
         - jwt_token_issued
         - refresh_token_used
 
-    - title: "API Security"
+    - title: "Безопасность API"
       type: graph
       metrics:
         - api_rate_limit_exceeded
         - api_invalid_requests
         - api_response_time_p99
 
-    - title: "Threat Detection"
+    - title: "Обнаружение Угроз"
       type: table
       metrics:
         - sql_injection_attempts
@@ -1197,7 +1197,7 @@ dashboard:
         - prompt_injection_attempts
         - suspicious_patterns
 
-    - title: "Container Security"
+    - title: "Безопасность Контейнеров"
       type: graph
       metrics:
         - container_privilege_escalation
@@ -1205,94 +1205,94 @@ dashboard:
         - container_network_anomaly
 
   alerts:
-    - name: "High Authentication Failure Rate"
+    - name: "Высокий Уровень Ошибок Аутентификации"
       condition: "auth_failure_rate > 0.1"
       severity: warning
 
-    - name: "Potential DDoS Attack"
+    - name: "Возможная DDoS Атака"
       condition: "request_rate > 10000"
       severity: critical
 
-    - name: "SQL Injection Detected"
+    - name: "Обнаружена SQL Инъекция"
       condition: "sql_injection_attempts > 0"
       severity: critical
 ```
 
 ---
 
-## 🚨 Incident Response
+## 🚨 Реагирование на Инциденты
 
-### Incident Response Plan
+### План Реагирования на Инциденты
 
 ```yaml
-# File: infrastructure/ai-services/INCIDENT_RESPONSE.yml
+# Файл: infrastructure/ai-services/INCIDENT_RESPONSE.yml
 
 incident_response_plan:
 
   detection:
     sources:
-      - Security monitoring dashboards
-      - Log analysis
-      - User reports
-      - Automated alerts
+      - Дашборды мониторинга безопасности
+      - Анализ логов
+      - Сообщения пользователей
+      - Автоматические алерты
 
   classification:
     severity_levels:
-      - P1: Critical (data breach, system compromise)
-      - P2: High (service disruption, attempted breach)
-      - P3: Medium (policy violation, suspicious activity)
-      - P4: Low (minor security event)
+      - P1: Критический (утечка данных, компрометация системы)
+      - P2: Высокий (нарушение работы сервиса, попытка взлома)
+      - P3: Средний (нарушение политики, подозрительная активность)
+      - P4: Низкий (незначительное событие безопасности)
 
   response_team:
     roles:
-      - Incident Commander
-      - Security Lead
-      - DevOps Engineer
-      - Communications Lead
+      - Командир инцидента
+      - Лидер безопасности
+      - DevOps инженер
+      - Лидер коммуникаций
 
   response_phases:
     1_identification:
-      - Verify the incident
-      - Determine scope
-      - Classify severity
+      - Верификация инцидента
+      - Определение масштаба
+      - Классификация серьезности
 
     2_containment:
-      - Isolate affected systems
-      - Preserve evidence
-      - Prevent escalation
+      - Изоляция затронутых систем
+      - Сохранение доказательств
+      - Предотвращение эскалации
 
     3_eradication:
-      - Remove threat
-      - Patch vulnerabilities
-      - Update security controls
+      - Удаление угрозы
+      - Закрытие уязвимостей
+      - Обновление мер контроля
 
     4_recovery:
-      - Restore services
-      - Monitor for recurrence
-      - Validate security
+      - Восстановление сервисов
+      - Мониторинг на повторение
+      - Валидация безопасности
 
     5_lessons_learned:
-      - Document incident
-      - Update procedures
-      - Implement improvements
+      - Документирование инцидента
+      - Обновление процедур
+      - Реализация улучшений
 
   communication:
     internal:
-      - Incident team: Immediately
-      - Management: Within 1 hour
-      - All staff: As needed
+      - Команда инцидента: Немедленно
+      - Менеджмент: В течение 1 часа
+      - Весь персонал: По необходимости
 
     external:
-      - Users: Within 24 hours if affected
-      - Authorities: As required by law
-      - Media: Through PR team only
+      - Пользователи: В течение 24 часов если затронуты
+      - Власти: Как требуется по закону
+      - Медиа: Только через PR команду
 ```
 
-### Automated Response Scripts
+### Автоматизированные Скрипты Реагирования
 
 ```bash
 #!/bin/bash
-# File: infrastructure/ai-services/scripts/incident_response.sh
+# Файл: infrastructure/ai-services/scripts/incident_response.sh
 
 set -e
 
@@ -1301,39 +1301,39 @@ SEVERITY=$2
 
 case $INCIDENT_TYPE in
     "breach")
-        echo "🚨 SECURITY BREACH DETECTED"
+        echo "🚨 ОБНАРУЖЕНА УТЕЧКА БЕЗОПАСНОСТИ"
 
-        # 1. Isolate affected containers
+        # 1. Изолировать затронутые контейнеры
         docker-compose stop
 
-        # 2. Backup current state for forensics
+        # 2. Сделать бекап текущего состояния для криминалистики
         docker commit $(docker ps -aq) breach-snapshot-$(date +%s)
 
-        # 3. Block all external traffic
+        # 3. Заблокировать весь внешний трафик
         sudo iptables -I INPUT -j DROP
         sudo iptables -I OUTPUT -j DROP
 
-        # 4. Preserve logs
+        # 4. Сохранить логи
         tar czf /secure/incident-logs-$(date +%s).tar.gz /var/log/
 
-        # 5. Notify team
+        # 5. Уведомить команду
         curl -X POST https://hooks.slack.com/services/YOUR/WEBHOOK/URL \
             -H 'Content-Type: application/json' \
-            -d '{"text":"🚨 CRITICAL: Security breach detected. Incident response activated."}'
+            -d '{"text":"🚨 КРИТИЧНО: Обнаружена утечка безопасности. Активировано реагирование на инцидент."}'
         ;;
 
     "ddos")
-        echo "🔥 DDoS ATTACK DETECTED"
+        echo "🔥 ОБНАРУЖЕНА DDoS АТАКА"
 
-        # Enable DDoS protection
+        # Включить защиту от DDoS
         sudo iptables -N DDOS_PROTECT
         sudo iptables -A DDOS_PROTECT -m limit --limit 25/minute --limit-burst 100 -j ACCEPT
         sudo iptables -A DDOS_PROTECT -j DROP
 
-        # Scale up rate limiting
+        # Усилить ограничение частоты запросов
         docker exec backend-php83 php bin/console app:rate-limit:emergency
 
-        # Enable CloudFlare protection (if configured)
+        # Включить защиту CloudFlare (если настроено)
         curl -X PATCH "https://api.cloudflare.com/client/v4/zones/YOUR_ZONE/settings/security_level" \
             -H "Authorization: Bearer YOUR_TOKEN" \
             -H "Content-Type: application/json" \
@@ -1341,68 +1341,68 @@ case $INCIDENT_TYPE in
         ;;
 
     "injection")
-        echo "⚠️ INJECTION ATTEMPT DETECTED"
+        echo "⚠️ ОБНАРУЖЕНА ПОПЫТКА ИНЪЕКЦИИ"
 
-        # Block offending IP
+        # Заблокировать атакующий IP
         ATTACKER_IP=$(grep "injection_attempt" /var/log/voice-ai/security.log | tail -1 | grep -oP '\d+\.\d+\.\d+\.\d+')
         sudo iptables -A INPUT -s $ATTACKER_IP -j DROP
 
-        # Increase security level
+        # Увеличить уровень безопасности
         docker exec backend-php83 php bin/console app:security:level high
 
-        # Review and patch
+        # Проверить и залатать
         ./scripts/security_scan.sh
         ;;
 
     *)
-        echo "Unknown incident type: $INCIDENT_TYPE"
+        echo "Неизвестный тип инцидента: $INCIDENT_TYPE"
         exit 1
         ;;
 esac
 
-echo "✅ Incident response completed for $INCIDENT_TYPE"
+echo "✅ Реагирование на инцидент завершено для $INCIDENT_TYPE"
 ```
 
 ---
 
-## ✅ Security Checklist
+## ✅ Чеклист Безопасности
 
-### Pre-Deployment
+### Перед Развертыванием
 
-- [ ] All secrets in environment variables or secret manager
-- [ ] SSL/TLS certificates installed and valid
-- [ ] Firewall rules configured and tested
-- [ ] Container images scanned for vulnerabilities
-- [ ] Dependencies updated to latest secure versions
-- [ ] Security headers configured (CSP, HSTS, etc.)
-- [ ] Rate limiting configured and tested
-- [ ] Input validation implemented on all endpoints
-- [ ] Encryption keys generated and secured
-- [ ] Audit logging enabled
+- [ ] Все секреты в переменных окружения или менеджере секретов
+- [ ] SSL/TLS сертификаты установлены и валидны
+- [ ] Правила файрвола настроены и протестированы
+- [ ] Образы контейнеров просканированы на уязвимости
+- [ ] Зависимости обновлены до последних безопасных версий
+- [ ] Настроены заголовки безопасности (CSP, HSTS, и т.д.)
+- [ ] Настроено и протестировано ограничение частоты запросов
+- [ ] Реализована валидация ввода на всех endpoints
+- [ ] Сгенерированы и защищены ключи шифрования
+- [ ] Включено логирование аудита
 
-### Post-Deployment
+### После Развертывания
 
-- [ ] Security monitoring dashboard active
-- [ ] Alerts configured and tested
-- [ ] Incident response plan communicated
-- [ ] Backup and recovery tested
-- [ ] Penetration testing completed
-- [ ] Security training provided to team
-- [ ] Documentation updated
-- [ ] Compliance requirements met
-
----
-
-## 📚 Next Steps
-
-1. ✅ Security configuration complete
-2. → Proceed to [Backend Domain Model](../02_BACKEND/01_DOMAIN_MODEL.md)
-3. → Implement [Service Layer](../02_BACKEND/02_SERVICES.md)
-4. → Configure [API Endpoints](../02_BACKEND/04_API_ENDPOINTS.md)
+- [ ] Активен дашборд мониторинга безопасности
+- [ ] Настроены и протестированы алерты
+- [ ] Доведен план реагирования на инциденты
+- [ ] Протестированы бекап и восстановление
+- [ ] Завершено тестирование на проникновение
+- [ ] Проведено обучение команды по безопасности
+- [ ] Обновлена документация
+- [ ] Соблюдены требования комплаенса
 
 ---
 
-**Document Status**: Complete
-**Security Review**: Required before production
-**Last Audit**: 2025-11-08
-**Author**: Security Team
+## 📚 Следующие Шаги
+
+1. ✅ Настройка безопасности завершена
+2. → Перейти к [Доменной Модели Бэкенда](../02_BACKEND/01_DOMAIN_MODEL.md)
+3. → Реализовать [Слой Сервисов](../02_BACKEND/02_SERVICES.md)
+4. → Настроить [API Endpoints](../02_BACKEND/04_API_ENDPOINTS.md)
+
+---
+
+**Статус Документа**: Завершен
+**Проверка Безопасности**: Требуется перед production
+**Последний Аудит**: 2025-11-08
+**Автор**: Команда Безопасности
