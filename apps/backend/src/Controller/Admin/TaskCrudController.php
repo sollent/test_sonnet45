@@ -146,11 +146,8 @@ class TaskCrudController extends AbstractCrudController
             yield AssociationField::new('parentTask', 'Parent Task')
                 ->autocomplete()
                 ->setHelp('Optional: set parent task for subtask relationship')
-                ->setFormTypeOption('query_builder', function ($repository) {
-                    return $repository->createQueryBuilder('t')
-                        ->where('t.isRecurringTemplate = false')
-                        ->orderBy('t.title', 'ASC');
-                })
+                // Note: query_builder not supported in CrudAutocompleteType
+                // Filtering will be done on backend side if needed
                 ->hideOnIndex()
                 ->setColumns('col-md-6');
         }
@@ -285,10 +282,9 @@ class TaskCrudController extends AbstractCrudController
     public function configureFilters(Filters $filters): Filters
     {
         return $filters
-            // Entity filters
+            // Entity filters - ONLY for User (small table)
+            // REMOVED parentTask and tags filters - they cause N+1 queries on 213K tasks!
             ->add(EntityFilter::new('user', 'User'))
-            ->add(EntityFilter::new('parentTask', 'Parent Task'))
-            ->add(EntityFilter::new('tags', 'Tags'))
 
             // Choice filters for enums
             ->add(ChoiceFilter::new('status', 'Status')

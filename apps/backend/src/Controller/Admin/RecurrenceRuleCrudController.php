@@ -154,34 +154,28 @@ class RecurrenceRuleCrudController extends AbstractCrudController
             ->setColumns('col-md-4');
 
         // Days of Week - for weekly type (JSON array)
-        if (Crud::PAGE_DETAIL === $pageName || Crud::PAGE_INDEX === $pageName) {
-            yield Field::new('daysOfWeek', 'Days of Week')
-                ->formatValue(function ($value, RecurrenceRule $rule) {
-                    $days = $rule->getDaysOfWeek();
-                    if (!$days || empty($days)) {
-                        return '<span class="badge badge-secondary">Not set</span>';
-                    }
+        // IMPORTANT: JSON fields cannot be TextField on forms - hide on form, show on detail/index only
+        yield Field::new('daysOfWeek', 'Days of Week')
+            ->formatValue(function ($value, RecurrenceRule $rule) {
+                $days = $rule->getDaysOfWeek();
+                if (!$days || empty($days)) {
+                    return '<span class="badge badge-secondary">Not set</span>';
+                }
 
-                    $dayNames = [
-                        1 => 'Mon', 2 => 'Tue', 3 => 'Wed',
-                        4 => 'Thu', 5 => 'Fri', 6 => 'Sat', 7 => 'Sun',
-                    ];
+                $dayNames = [
+                    1 => 'Mon', 2 => 'Tue', 3 => 'Wed',
+                    4 => 'Thu', 5 => 'Fri', 6 => 'Sat', 7 => 'Sun',
+                ];
 
-                    $formatted = array_map(fn($d) => $dayNames[$d] ?? $d, $days);
+                $formatted = array_map(fn($d) => $dayNames[$d] ?? $d, $days);
 
-                    return sprintf(
-                        '<span class="badge badge-success">%s</span>',
-                        implode(', ', $formatted)
-                    );
-                })
-                ->hideOnForm();
-        } else {
-            // On form, show as text field with help
-            yield Field::new('daysOfWeek', 'Days of Week')
-                ->setHelp('For weekly type: JSON array [1,2,3,4,5] = Mon-Fri, [6,7] = Weekend')
-                ->hideOnIndex()
-                ->setColumns('col-md-6');
-        }
+                return sprintf(
+                    '<span class="badge badge-success">%s</span>',
+                    implode(', ', $formatted)
+                );
+            })
+            ->setHelp('For weekly type: [1,2,3,4,5] = Mon-Fri. Edit via API or directly in database.')
+            ->hideOnForm(); // Hide on NEW/EDIT - JSON array cannot be TextField!
 
         // Day of Month - for monthly type
         yield IntegerField::new('dayOfMonth', 'Day of Month')

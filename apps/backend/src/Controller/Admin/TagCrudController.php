@@ -18,6 +18,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\EntityDto;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\SearchDto;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\CollectionField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ColorField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\Field;
@@ -141,8 +142,9 @@ class TagCrudController extends AbstractCrudController
             ->hideOnForm();
 
         // Associated tasks - only on detail (simplified for performance)
+        // IMPORTANT: Use CollectionField, not Field, for collections (Doctrine type 8)
         if (Crud::PAGE_DETAIL === $pageName) {
-            yield Field::new('tasks', 'Associated Tasks')
+            yield CollectionField::new('tasks', 'Associated Tasks')
                 ->formatValue(function ($value, Tag $tag) {
                     $tasks = $tag->getTasks();
 
