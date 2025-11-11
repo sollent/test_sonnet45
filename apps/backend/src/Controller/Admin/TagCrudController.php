@@ -94,21 +94,38 @@ class TagCrudController extends AbstractCrudController
             ->setHelp('Tag name (max 50 characters, unique per user)')
             ->setColumns('col-md-4');
 
-        // Color - hex color picker
-        yield ColorField::new('color', 'Color')
-            ->setRequired(true)
-            ->setHelp('Tag color in hex format (#RRGGBB)')
-            ->formatValue(function ($value, Tag $tag) {
-                return sprintf(
-                    '<span class="badge" style="background-color: %s; color: white; padding: 5px 10px;">
-                        %s %s
-                    </span>',
-                    $tag->getColor(),
-                    $tag->getName(),
-                    $tag->getColor()
-                );
-            })
-            ->setColumns('col-md-4');
+        // Color - show as color dot with hex code on index, ColorField on forms
+        if (Crud::PAGE_INDEX === $pageName) {
+            yield TextField::new('color', 'Color')
+                ->renderAsHtml()
+                ->formatValue(function ($value, Tag $tag) {
+                    return sprintf(
+                        '<div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="
+                                display: inline-block;
+                                width: 24px;
+                                height: 24px;
+                                border-radius: 50%%;
+                                background-color: %s;
+                                border: 2px solid #e5e7eb;
+                            "></span>
+                            <code style="
+                                font-family: monospace;
+                                font-size: 0.875rem;
+                                color: #6b7280;
+                            ">%s</code>
+                        </div>',
+                        $tag->getColor(),
+                        strtoupper($tag->getColor())
+                    );
+                })
+                ->setColumns('col-md-4');
+        } else {
+            yield ColorField::new('color', 'Color')
+                ->setRequired(true)
+                ->setHelp('Tag color in hex format (#RRGGBB)')
+                ->setColumns('col-md-4');
+        }
 
         // Icon - optional
         if (Crud::PAGE_INDEX !== $pageName) {

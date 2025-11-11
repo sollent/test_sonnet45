@@ -14,6 +14,7 @@ use App\Entity\TaskAttachment;
 use App\Entity\User;
 use App\Enum\TaskStatus;
 use Doctrine\ORM\EntityManagerInterface;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Assets;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Dashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractDashboardController;
@@ -244,5 +245,14 @@ class DashboardController extends AbstractDashboardController
             ->setLinkTarget('_blank');
 
         yield MenuItem::linkToRoute('Logout', 'fa fa-sign-out-alt', 'admin_logout');
+    }
+
+    public function configureAssets(): Assets
+    {
+        return Assets::new()
+            // Add modern theme CSS
+            ->addCssFile('css/admin-modern.css')
+            // Add modern theme JS
+            ->addJsFile('js/admin-modern.js');
     }
 }
