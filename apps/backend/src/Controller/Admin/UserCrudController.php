@@ -107,12 +107,16 @@ class UserCrudController extends AbstractCrudController
         yield IntegerField::new('totalTasks', 'Total Tasks')
             ->formatValue(function ($value, User $user) {
                 try {
-                    $tasks = $user->getTasks();
-                    if (!$tasks) {
-                        return '<span class="text-muted">-</span>';
-                    }
-                    $count = $tasks->count();
-                    if ($count === 0) {
+                    // Use direct query to avoid lazy loading issues
+                    $count = $this->entityManager->createQueryBuilder()
+                        ->select('COUNT(t.id)')
+                        ->from('App\Entity\Task', 't')
+                        ->where('t.user = :user')
+                        ->setParameter('user', $user)
+                        ->getQuery()
+                        ->getSingleScalarResult();
+
+                    if ($count == 0) {
                         return '<span class="text-muted">-</span>';
                     }
                     return sprintf('<span class="badge badge-primary">%d</span>', $count);
@@ -126,23 +130,21 @@ class UserCrudController extends AbstractCrudController
         yield IntegerField::new('completedTasks', 'Completed')
             ->formatValue(function ($value, User $user) {
                 try {
-                    $tasks = $user->getTasks();
-                    if (!$tasks) {
+                    // Use direct query to avoid lazy loading issues
+                    $count = $this->entityManager->createQueryBuilder()
+                        ->select('COUNT(t.id)')
+                        ->from('App\Entity\Task', 't')
+                        ->where('t.user = :user')
+                        ->andWhere('t.status = :status')
+                        ->setParameter('user', $user)
+                        ->setParameter('status', TaskStatus::COMPLETED)
+                        ->getQuery()
+                        ->getSingleScalarResult();
+
+                    if ($count == 0) {
                         return '<span class="text-muted">-</span>';
                     }
-
-                    $completed = 0;
-                    foreach ($tasks as $task) {
-                        if ($task->getStatus() === TaskStatus::COMPLETED) {
-                            $completed++;
-                        }
-                    }
-
-                    if ($completed === 0) {
-                        return '<span class="text-muted">-</span>';
-                    }
-
-                    return sprintf('<span class="badge badge-success">%d</span>', $completed);
+                    return sprintf('<span class="badge badge-success">%d</span>', $count);
                 } catch (\Exception $e) {
                     return '<span class="text-danger">Error</span>';
                 }
@@ -153,25 +155,23 @@ class UserCrudController extends AbstractCrudController
         yield IntegerField::new('activeTasks', 'Active')
             ->formatValue(function ($value, User $user) {
                 try {
-                    $tasks = $user->getTasks();
-                    if (!$tasks) {
+                    // Use direct query to avoid lazy loading issues
+                    $count = $this->entityManager->createQueryBuilder()
+                        ->select('COUNT(t.id)')
+                        ->from('App\Entity\Task', 't')
+                        ->where('t.user = :user')
+                        ->andWhere('t.status NOT IN (:excludedStatuses)')
+                        ->setParameter('user', $user)
+                        ->setParameter('excludedStatuses', [TaskStatus::COMPLETED, TaskStatus::CANCELLED])
+                        ->getQuery()
+                        ->getSingleScalarResult();
+
+                    if ($count == 0) {
                         return '<span class="text-muted">-</span>';
                     }
 
-                    $active = 0;
-                    foreach ($tasks as $task) {
-                        if ($task->getStatus() !== TaskStatus::COMPLETED &&
-                            $task->getStatus() !== TaskStatus::CANCELLED) {
-                            $active++;
-                        }
-                    }
-
-                    if ($active === 0) {
-                        return '<span class="text-muted">-</span>';
-                    }
-
-                    $badgeClass = $active > 10 ? 'warning' : 'info';
-                    return sprintf('<span class="badge badge-%s">%d</span>', $badgeClass, $active);
+                    $badgeClass = $count > 10 ? 'warning' : 'info';
+                    return sprintf('<span class="badge badge-%s">%d</span>', $badgeClass, $count);
                 } catch (\Exception $e) {
                     return '<span class="text-danger">Error</span>';
                 }
@@ -418,7 +418,7 @@ class UserCrudController extends AbstractCrudController
     }
 
     /**
-     * Optimize query with eager loading to prevent N+1 problems
+     * No need for eager loading - statistics use direct DQL queries
      */
     public function createIndexQueryBuilder(
         SearchDto $searchDto,
@@ -426,14 +426,8 @@ class UserCrudController extends AbstractCrudController
         FieldCollection $fields,
         FilterCollection $filters
     ): QueryBuilder {
-        $qb = parent::createIndexQueryBuilder($searchDto, $entityDto, $fields, $filters);
-
-        // Eager load tasks for statistics (needed for totalTasks, completedTasks, activeTasks)
-        // This prevents N+1 queries when showing statistics on INDEX page
-        $qb->leftJoin('entity.tasks', 't')
-           ->addSelect('t');
-
-        return $qb;
+        // No eager loading needed - all statistics use direct queries
+        return parent::createIndexQueryBuilder($searchDto, $entityDto, $fields, $filters);
     }
 
     /**
