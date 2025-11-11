@@ -104,7 +104,7 @@ class UserCrudController extends AbstractCrudController
         // === STATISTICS SECTION (INDEX) ===
 
         // Total Tasks
-        yield IntegerField::new('totalTasks', 'Total Tasks')
+        yield Field::new('totalTasks', 'Total Tasks')
             ->formatValue(function ($value, User $user) {
                 try {
                     // Use direct query to avoid lazy loading issues
@@ -127,7 +127,7 @@ class UserCrudController extends AbstractCrudController
             ->onlyOnIndex();
 
         // Completed Tasks
-        yield IntegerField::new('completedTasks', 'Completed')
+        yield Field::new('completedTasks', 'Completed')
             ->formatValue(function ($value, User $user) {
                 try {
                     // Use direct query to avoid lazy loading issues
@@ -152,7 +152,7 @@ class UserCrudController extends AbstractCrudController
             ->onlyOnIndex();
 
         // Active Tasks (not completed, not cancelled)
-        yield IntegerField::new('activeTasks', 'Active')
+        yield Field::new('activeTasks', 'Active')
             ->formatValue(function ($value, User $user) {
                 try {
                     // Use direct query to avoid lazy loading issues
@@ -179,7 +179,7 @@ class UserCrudController extends AbstractCrudController
             ->onlyOnIndex();
 
         // Total Tags
-        yield IntegerField::new('totalTags', 'Tags')
+        yield Field::new('totalTags', 'Tags')
             ->formatValue(function ($value, User $user) {
                 try {
                     // Get tags count via query to avoid loading all tags
