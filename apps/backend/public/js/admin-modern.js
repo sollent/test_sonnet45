@@ -246,23 +246,31 @@
         const sidebar = document.querySelector('.main-sidebar, .sidebar, aside.main-sidebar');
         const content = document.querySelector('.main-content, .content-wrapper, #main');
 
-        if (sidebar && content) {
-            const sidebarWidth = sidebar.offsetWidth;
+        function updateLayout() {
+            if (!content) return;
+
             if (window.innerWidth > 768) {
-                content.style.marginLeft = sidebarWidth + 'px';
+                // Desktop: sidebar visible, add margin
+                if (sidebar) {
+                    content.style.marginLeft = sidebar.offsetWidth + 'px';
+                    content.style.paddingTop = '';
+                }
             } else {
+                // Mobile: sidebar hidden, no margin, add top padding
                 content.style.marginLeft = '0';
+                content.style.paddingTop = '60px';
+                content.style.width = '100%';
+
+                // Close sidebar if open
+                document.body.classList.remove('sidebar-open');
             }
         }
 
+        // Initial layout
+        updateLayout();
+
         // Adjust on window resize
-        window.addEventListener('resize', debounce(function() {
-            if (window.innerWidth > 768 && sidebar && content) {
-                content.style.marginLeft = sidebar.offsetWidth + 'px';
-            } else if (content) {
-                content.style.marginLeft = '0';
-            }
-        }, 250));
+        window.addEventListener('resize', debounce(updateLayout, 250));
     }
 
     /**
