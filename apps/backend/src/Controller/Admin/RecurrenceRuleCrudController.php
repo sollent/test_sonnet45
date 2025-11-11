@@ -154,8 +154,9 @@ class RecurrenceRuleCrudController extends AbstractCrudController
             ->setColumns('col-md-4');
 
         // Days of Week - for weekly type (JSON array)
-        // IMPORTANT: JSON fields cannot be TextField on forms - hide on form, show on detail/index only
-        yield Field::new('daysOfWeek', 'Days of Week')
+        // IMPORTANT: Use virtual field name to avoid TextConfigurator trying to convert JSON array
+        // Cannot use Field::new('daysOfWeek') because it maps to entity property (JSON type)
+        yield Field::new('daysOfWeekDisplay', 'Days of Week')
             ->formatValue(function ($value, RecurrenceRule $rule) {
                 $days = $rule->getDaysOfWeek();
                 if (!$days || empty($days)) {
@@ -175,7 +176,7 @@ class RecurrenceRuleCrudController extends AbstractCrudController
                 );
             })
             ->setHelp('For weekly type: [1,2,3,4,5] = Mon-Fri. Edit via API or directly in database.')
-            ->hideOnForm(); // Hide on NEW/EDIT - JSON array cannot be TextField!
+            ->hideOnForm(); // Virtual field - hide on NEW/EDIT forms
 
         // Day of Month - for monthly type
         yield IntegerField::new('dayOfMonth', 'Day of Month')
