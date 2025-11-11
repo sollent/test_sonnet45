@@ -1,29 +1,29 @@
-# 📦 Phase 1.1: Infrastructure Setup Guide
+# 📦 Фаза 1.1: Руководство по Настройке Инфраструктуры
 
-> **Document Version**: 1.0.0
-> **Last Updated**: 2025-11-08
-> **Estimated Time**: 2 days
-> **Complexity**: HIGH
-> **Prerequisites**: Linux administration knowledge, Docker experience
+> **Версия Документа**: 1.0.0
+> **Последнее Обновление**: 2025-11-08
+> **Предполагаемое Время**: 2 дня
+> **Сложность**: ВЫСОКАЯ
+> **Предварительные Требования**: Знание администрирования Linux, опыт работы с Docker
 
-## 📋 Table of Contents
+## 📋 Содержание
 
-1. [System Requirements](#system-requirements)
-2. [Directory Structure](#directory-structure)
-3. [Step-by-Step Installation](#step-by-step-installation)
-4. [Configuration Files](#configuration-files)
-5. [Verification & Testing](#verification--testing)
-6. [Troubleshooting](#troubleshooting)
+1. [Системные Требования](#системные-требования)
+2. [Структура Директорий](#структура-директорий)
+3. [Пошаговая Установка](#пошаговая-установка)
+4. [Файлы Конфигурации](#файлы-конфигурации)
+5. [Проверка и Тестирование](#проверка-и-тестирование)
+6. [Устранение Неполадок](#устранение-неполадок)
 
 ---
 
-## 🖥️ System Requirements
+## 🖥️ Системные Требования
 
-### Minimum Requirements (Development)
+### Минимальные Требования (Разработка)
 
 ```yaml
 Hardware:
-  CPU: 4 cores @ 2.4GHz
+  CPU: 4 ядра @ 2.4GHz
   RAM: 8GB
   Storage: 60GB SSD
   Network: 100 Mbps
@@ -48,80 +48,80 @@ Ports (must be free):
   - 6379: Redis
 ```
 
-### Production Requirements (VPS)
+### Требования для Продакшна (VPS)
 
 ```yaml
 Hardware:
-  CPU: 2 cores @ 5.0GHz (as specified)
+  CPU: 2 ядра @ 5.0GHz (как указано)
   RAM: 4GB
   Storage: 40GB SSD
   Network: 100 Mbps
 
 Optimizations for low resources:
-  - Use Llama 3.2 1B instead of 3B
-  - Whisper tiny model instead of base
-  - Disable unnecessary services
-  - Swap file configuration
+  - Используйте Llama 3.2 1B вместо 3B
+  - Whisper tiny модель вместо base
+  - Отключите ненужные сервисы
+  - Настройка swap файла
 ```
 
 ---
 
-## 📁 Directory Structure
+## 📁 Структура Директорий
 
-### Complete Project Structure
+### Полная Структура Проекта
 
 ```bash
-# Project structure (MONOREPO)
-task-manager/                        # Project root
-├── apps/                            # Application code
-│   ├── backend/                     # Symfony application
-│   │   ├── src/                     # PHP source code
-│   │   ├── config/                  # Configuration files
-│   │   ├── migrations/              # Database migrations
-│   │   ├── tests/                   # PHPUnit tests
+# Структура проекта (MONOREPO)
+task-manager/                        # Корень проекта
+├── apps/                            # Код приложений
+│   ├── backend/                     # Symfony приложение
+│   │   ├── src/                     # PHP исходный код
+│   │   ├── config/                  # Файлы конфигурации
+│   │   ├── migrations/              # Миграции базы данных
+│   │   ├── tests/                   # PHPUnit тесты
 │   │   └── ...
-│   └── frontend/                    # Vue.js application
-│       ├── src/                     # TypeScript source code
-│       ├── e2e/                     # E2E tests (Playwright)
-│       ├── public/                  # Static assets
+│   └── frontend/                    # Vue.js приложение
+│       ├── src/                     # TypeScript исходный код
+│       ├── e2e/                     # E2E тесты (Playwright)
+│       ├── public/                  # Статические ассеты
 │       └── ...
-├── infrastructure/                  # Infrastructure configs
-│   ├── docker/                      # Docker configurations
-│   │   ├── docker-compose.app.yml   # App services
-│   │   ├── docker-compose.ai.yml    # AI services (placeholder)
+├── infrastructure/                  # Конфигурации инфраструктуры
+│   ├── docker/                      # Docker конфигурации
+│   │   ├── docker-compose.app.yml   # Сервисы приложения
+│   │   ├── docker-compose.ai.yml    # AI сервисы (placeholder)
 │   │   ├── docker-compose.dev.yml   # Dev overrides
 │   │   ├── dev/                     # Dev configs
 │   │   │   ├── nginx/               # Nginx configs
 │   │   │   └── php/                 # PHP-FPM configs
 │   │   └── cron/                    # Cron jobs
-│   └── ai-services/                 # AI infrastructure (future)
-│       ├── configs/                 # AI service configs (placeholders)
+│   └── ai-services/                 # AI инфраструктура (будущее)
+│       ├── configs/                 # Конфигурации AI сервисов (placeholders)
 │       │   ├── ollama/              # LLM configs
 │       │   ├── whisper/             # STT configs
 │       │   └── centrifugo/          # WebSocket configs
-│       └── scripts/                 # AI setup scripts (placeholders)
-├── scripts/                         # Utility scripts (project-wide)
-│   ├── setup-dev.sh                 # Development setup
-│   ├── reset-db.sh                  # Database reset
-│   └── health-check.sh              # Health check
-├── docs/                            # Documentation
-│   ├── ai/                          # Voice AI docs
+│       └── scripts/                 # Скрипты настройки AI (placeholders)
+├── scripts/                         # Утилиты (общие для проекта)
+│   ├── setup-dev.sh                 # Настройка разработки
+│   ├── reset-db.sh                  # Сброс базы данных
+│   └── health-check.sh              # Проверка здоровья
+├── docs/                            # Документация
+│   ├── ai/                          # Voice AI документация
 │   │   ├── 01_INFRASTRUCTURE/
 │   │   ├── 02_BACKEND/
 │   │   ├── 03_FRONTEND/
 │   │   └── REFERENCE/
-│   ├── backend/                     # Backend docs
-│   ├── frontend/                    # Frontend docs
-│   └── guides/                      # Development guides
-├── docker-compose.yml               # Main compose (includes all)
-├── Makefile                         # Common commands
-├── CLAUDE.md                        # Quick reference for AI
-└── RESTRUCTURE_PROJECT.md           # Restructuring plan
+│   ├── backend/                     # Backend документация
+│   ├── frontend/                    # Frontend документация
+│   └── guides/                      # Руководства по разработке
+├── docker-compose.yml               # Главный compose (включает все)
+├── Makefile                         # Общие команды
+├── CLAUDE.md                        # Краткий справочник для AI
+└── RESTRUCTURE_PROJECT.md           # План реструктуризации
 ```
 
-**Note**: All infrastructure (including future AI services) is contained within this monorepo. The `infrastructure/ai-services/` directory contains placeholders and will be implemented during Voice AI development phase.
+**Примечание**: Вся инфраструктура (включая будущие AI сервисы) содержится в этом монорепозитории. Директория `infrastructure/ai-services/` содержит placeholders и будет реализована во время фазы разработки Voice AI.
 
-### Create Directory Structure Script
+### Скрипт Создания Структуры Директорий
 
 ```bash
 #!/bin/bash
@@ -142,10 +142,10 @@ echo "✅ Directory structure created at $BASE_DIR"
 
 ---
 
-## 🚀 Step-by-Step Installation
+## 🚀 Пошаговая Установка
 
-### Step 1: System Preparation
-### ВАЖНО!!! - МОЖНО ПРОПУСТИТЬ И НЕ ДЕЛАТЬ ЭТОТ СТЕП (Так как у меня Macos и мне скорее всего эти локальные пакеты не нужны - главное что у меня есть DOCKER)
+### Шаг 1: Подготовка Системы
+### ВАЖНО!!! - МОЖНО ПРОПУСТИТЬ И НЕ ДЕЛАТЬ ЭТОТ ШАГ (Так как у меня Macos и мне скорее всего эти локальные пакеты не нужны - главное что у меня есть DOCKER)
 ```bash
 #!/bin/bash
 # Step 1.1: Update system
@@ -191,9 +191,9 @@ echo "vm.vfs_cache_pressure=50" | sudo tee -a /etc/sysctl.conf
 sudo sysctl -p
 ```
 
-### Step 2: Create Configuration Files
+### Шаг 2: Создание Файлов Конфигурации
 
-#### 2.1 Main Environment File
+#### 2.1 Главный Файл Окружения
 ```bash
 # File: infrastructure/ai-services/.env
 
@@ -246,7 +246,7 @@ CONFIGS_PATH=./configs
 NETWORK_NAME=voice-ai-network
 ```
 
-#### 2.2 Docker Compose Configuration
+#### 2.2 Docker Compose Конфигурация
 ```yaml
 # File: infrastructure/ai-services/docker-compose.yml
 
@@ -425,7 +425,7 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=60s \
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8090", "--workers", "2"]
 ```
 
-#### 2.4 Whisper API Application
+#### 2.4 Whisper API Приложение
 ```python
 # File: infrastructure/ai-services/configs/whisper/app.py
 
@@ -601,7 +601,7 @@ if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8090)
 ```
 
-#### 2.5 Centrifugo Configuration
+#### 2.5 Centrifugo Конфигурация
 ```json
 // File: infrastructure/ai-services/configs/centrifugo/config.json
 {
@@ -676,9 +676,9 @@ if __name__ == "__main__":
 }
 ```
 
-### Step 3: Installation Scripts
+### Шаг 3: Скрипты Установки
 
-#### 3.1 Main Installation Script
+#### 3.1 Главный Скрипт Установки
 ```bash
 #!/bin/bash
 # File: infrastructure/ai-services/scripts/install.sh
@@ -800,7 +800,7 @@ main() {
 main "$@"
 ```
 
-#### 3.2 Health Check Script
+#### 3.2 Скрипт Проверки Здоровья
 ```bash
 #!/bin/bash
 # File: infrastructure/ai-services/scripts/health-check.sh
@@ -878,12 +878,12 @@ echo "=== Health check completed ==="
 
 ---
 
-## ✅ Verification & Testing
+## ✅ Проверка и Тестирование
 
-### Verification Checklist
+### Чеклист Проверки
 
 ```bash
-# 1. Check all containers are running
+# 1. Проверить что все контейнеры запущены
 docker-compose ps
 
 # Expected output:
@@ -893,22 +893,22 @@ docker-compose ps
 # voice-ai-centrifugo  running (healthy)   0.0.0.0:8000->8000/tcp
 # voice-ai-redis       running (healthy)   0.0.0.0:6379->6379/tcp
 
-# 2. Test Ollama API
+# 2. Тест Ollama API
 curl http://localhost:11434/api/tags
 
-# 3. Test Whisper API
+# 3. Тест Whisper API
 curl http://localhost:8090/health
 
-# 4. Test Centrifugo
+# 4. Тест Centrifugo
 curl http://localhost:8000/health
 
-# 5. Test Redis
+# 5. Тест Redis
 docker exec voice-ai-redis redis-cli -a your-redis-password ping
 
-# 6. Check logs for errors
+# 6. Проверить логи на ошибки
 docker-compose logs --tail=50
 
-# 7. Test model inference
+# 7. Тест инференса модели
 curl -X POST http://localhost:11434/api/generate \
   -H "Content-Type: application/json" \
   -d '{
@@ -920,118 +920,118 @@ curl -X POST http://localhost:11434/api/generate \
 
 ---
 
-## 🔧 Troubleshooting
+## 🔧 Устранение Неполадок
 
-### Common Issues and Solutions
+### Общие Проблемы и Решения
 
-#### Issue 1: Out of Memory
+#### Проблема 1: Нехватка Памяти
 ```bash
-# Symptom: Container keeps restarting
-# Solution: Reduce model size or add swap
+# Симптом: Контейнер постоянно перезапускается
+# Решение: Уменьшить размер модели или добавить swap
 
-# Check memory usage
+# Проверить использование памяти
 free -h
 docker stats
 
-# Increase swap
+# Увеличить swap
 sudo fallocate -l 8G /swapfile
 sudo chmod 600 /swapfile
 sudo mkswap /swapfile
 sudo swapon /swapfile
 
-# Use smaller model
-# Change in .env: OLLAMA_MODEL=llama3.2:1b
+# Использовать меньшую модель
+# Изменить в .env: OLLAMA_MODEL=llama3.2:1b
 ```
 
-#### Issue 2: Port Already in Use
+#### Проблема 2: Порт Уже Занят
 ```bash
-# Find process using port
+# Найти процесс использующий порт
 sudo lsof -i :11434
 
 # Kill process
 sudo kill -9 <PID>
 
-# Or change port in .env
+# Или изменить порт в .env
 ```
 
-#### Issue 3: Model Download Fails
+#### Проблема 3: Загрузка Модели Не Удалась
 ```bash
-# Manual download
+# Ручная загрузка
 docker exec -it voice-ai-ollama bash
 ollama pull llama3.2:3b
 
-# Check disk space
+# Проверить место на диске
 df -h
 
-# Clear Docker cache
+# Очистить кеш Docker
 docker system prune -a
 ```
 
-#### Issue 4: Whisper Build Fails
+#### Проблема 4: Сборка Whisper Не Удалась
 ```bash
-# Build with no cache
+# Сборка без кеша
 docker build --no-cache -t voice-ai/whisper:1.5.4 configs/whisper/
 
-# Check build logs
+# Проверить логи сборки
 docker build -t voice-ai/whisper:1.5.4 configs/whisper/ 2>&1 | tee build.log
 ```
 
 ---
 
-## 📊 Performance Monitoring
+## 📊 Мониторинг Производительности
 
 ```bash
-# Real-time monitoring
+# Мониторинг в реальном времени
 htop
 
-# Docker resource usage
+# Использование ресурсов Docker
 docker stats
 
-# Service logs
+# Логи сервисов
 tail -f logs/ollama/ollama.log
 tail -f logs/whisper/whisper.log
 tail -f logs/centrifugo/centrifugo.log
 
-# Network monitoring
+# Мониторинг сети
 netstat -tulpn | grep LISTEN
 
-# Disk usage
+# Использование диска
 du -sh volumes/*
 ```
 
 ---
 
-## 🔐 Security Hardening
+## 🔐 Укрепление Безопасности
 
 ```bash
-# 1. Firewall setup
+# 1. Настройка firewall
 sudo ufw allow 22/tcp  # SSH
 sudo ufw allow 80/tcp  # HTTP
 sudo ufw allow 443/tcp # HTTPS
 sudo ufw enable
 
-# 2. Secure environment file
+# 2. Защита файла окружения
 chmod 600 .env
 
-# 3. Regular updates
+# 3. Регулярные обновления
 sudo apt-get update && sudo apt-get upgrade -y
 docker-compose pull
 
-# 4. Backup configuration
+# 4. Резервное копирование конфигурации
 ./scripts/backup.sh
 ```
 
 ---
 
-## ✅ Next Steps
+## ✅ Следующие Шаги
 
-1. ✅ Infrastructure is set up and running
-2. → Proceed to [Docker Configuration](02_DOCKER.md)
-3. → Then [AI Services Installation](03_AI_SERVICES.md)
-4. → Finally [Security & Networking](04_SECURITY.md)
+1. ✅ Инфраструктура настроена и работает
+2. → Перейти к [Docker Конфигурации](02_DOCKER.md)
+3. → Затем [Установка AI Сервисов](03_AI_SERVICES.md)
+4. → Наконец [Безопасность и Сеть](04_SECURITY.md)
 
 ---
 
-**Document Status**: Complete
-**Last Tested**: 2025-11-08
-**Author**: AI Architecture Team
+**Статус Документа**: Завершен
+**Последнее Тестирование**: 2025-11-08
+**Автор**: AI Architecture Team
