@@ -49,22 +49,11 @@ test.describe('Task Completion', () => {
     // Wait for dialog and mask to disappear completely
     await waitForDialogToClose(page)
 
-    // CRITICAL: Wait for task to be saved and UI to update
-    await page.waitForTimeout(2000)
-
     // Navigate to "Today" view to ensure task is visible
     const todayButton = page.getByRole('button', { name: /сегодня|today/i }).first()
     if (await todayButton.isVisible().catch(() => false)) {
       await todayButton.click()
-      // Wait for view to change and tasks to reload
-      await page.waitForTimeout(2000)
-    } else {
-      // If "Today" button not found, try sidebar navigation
-      const sidebarTodayButton = page.locator('nav, aside').getByRole('button', { name: /сегодня|today/i }).first()
-      if (await sidebarTodayButton.isVisible().catch(() => false)) {
-        await sidebarTodayButton.click()
-        await page.waitForTimeout(2000)
-      }
+      await page.waitForTimeout(1500)
     }
 
     // Find the created task
@@ -126,20 +115,11 @@ test.describe('Task Completion', () => {
     // Wait for dialog and mask to disappear completely
     await waitForDialogToClose(page)
 
-    // CRITICAL: Wait for task to be saved and UI to update
-    await page.waitForTimeout(2000)
-
     // Navigate to "Today" view
     const todayButton = page.getByRole('button', { name: /сегодня|today/i }).first()
     if (await todayButton.isVisible().catch(() => false)) {
       await todayButton.click()
-      await page.waitForTimeout(2000)
-    } else {
-      const sidebarTodayButton = page.locator('nav, aside').getByRole('button', { name: /сегодня|today/i }).first()
-      if (await sidebarTodayButton.isVisible().catch(() => false)) {
-        await sidebarTodayButton.click()
-        await page.waitForTimeout(2000)
-      }
+      await page.waitForTimeout(1500)
     }
 
     // Find and complete the task
@@ -195,20 +175,11 @@ test.describe('Task Completion', () => {
     // Wait for dialog and mask to disappear completely
     await waitForDialogToClose(page)
 
-    // CRITICAL: Wait for task to be saved and UI to update
-    await page.waitForTimeout(2000)
-
     // Navigate to "Today" view
     const todayButton = page.getByRole('button', { name: /сегодня|today/i }).first()
     if (await todayButton.isVisible().catch(() => false)) {
       await todayButton.click()
-      await page.waitForTimeout(2000)
-    } else {
-      const sidebarTodayButton = page.locator('nav, aside').getByRole('button', { name: /сегодня|today/i }).first()
-      if (await sidebarTodayButton.isVisible().catch(() => false)) {
-        await sidebarTodayButton.click()
-        await page.waitForTimeout(2000)
-      }
+      await page.waitForTimeout(1500)
     }
 
     // Find the parent task and click to open details
@@ -269,20 +240,11 @@ test.describe('Task Completion', () => {
     // Wait for dialog and mask to disappear completely
     await waitForDialogToClose(page)
 
-    // CRITICAL: Wait for task to be saved and UI to update
-    await page.waitForTimeout(2000)
-
     // Navigate to "Today" view
     const todayButton = page.getByRole('button', { name: /сегодня|today/i }).first()
     if (await todayButton.isVisible().catch(() => false)) {
       await todayButton.click()
-      await page.waitForTimeout(2000)
-    } else {
-      const sidebarTodayButton = page.locator('nav, aside').getByRole('button', { name: /сегодня|today/i }).first()
-      if (await sidebarTodayButton.isVisible().catch(() => false)) {
-        await sidebarTodayButton.click()
-        await page.waitForTimeout(2000)
-      }
+      await page.waitForTimeout(1500)
     }
 
     // Find and open the task

@@ -58,22 +58,18 @@ test.describe('Filters', () => {
     // Step 4: Reload dashboard to show newly created tasks
     await page.reload()
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(3000) // Increased wait for full load
+    await page.waitForTimeout(2000)
 
     // Navigate to "All tasks" view - CRITICAL: filter buttons only exist in certain views
     // Wait for the dashboard to fully load first
     await page.waitForSelector('main', { state: 'visible', timeout: 10000 })
     await page.waitForTimeout(1000)
 
-    // Now click "All tasks" button in sidebar to ensure we see all tasks
+    // Now click "All tasks" button in sidebar
     const allTasksButton = page.getByRole('button', { name: /все задачи/i }).first()
     await expect(allTasksButton).toBeVisible({ timeout: 10000 })
     await allTasksButton.click()
-    await page.waitForTimeout(2000) // Increased wait for tasks to load
-
-    // Verify tasks are actually loaded
-    const initialTaskCount = await dashboardPage.getTaskCount()
-    console.log(`Loaded ${initialTaskCount} tasks after API creation`)
+    await page.waitForTimeout(1500)
   })
 
   test.describe('6.1 Quick Filters', () => {
@@ -86,12 +82,11 @@ test.describe('Filters', () => {
       const todayFilterButton = page.getByRole('button', { name: /На сегодня/i }).first()
       await expect(todayFilterButton).toBeVisible({ timeout: 5000 })
       await todayFilterButton.click()
-      // Wait for filter to apply and tasks to reload
-      await page.waitForTimeout(2000)
+      await page.waitForTimeout(1500)
 
       // Verify "Очистить фильтры" button appears
       const clearButton = page.getByRole('button', { name: /очистить фильтры/i })
-      await expect(clearButton).toBeVisible({ timeout: 5000 })
+      await expect(clearButton).toBeVisible({ timeout: 3000 })
 
       // Verify filtered task count (should show today's tasks)
       const filteredCount = await dashboardPage.getTaskCount()
@@ -108,11 +103,11 @@ test.describe('Filters', () => {
       const urgentFilterButton = page.getByRole('button', { name: /Срочные/i }).first()
       await expect(urgentFilterButton).toBeVisible({ timeout: 5000 })
       await urgentFilterButton.click()
-      await page.waitForTimeout(2000) // Wait for filter to apply
+      await page.waitForTimeout(1500)
 
       // Verify "Очистить фильтры" button appears
       const clearButton = page.getByRole('button', { name: /очистить фильтры/i })
-      await expect(clearButton).toBeVisible({ timeout: 5000 })
+      await expect(clearButton).toBeVisible({ timeout: 3000 })
 
       // With simple test data (no urgent tasks), we expect empty state or 0 tasks
       const taskCount = await dashboardPage.getTaskCount()
@@ -125,10 +120,11 @@ test.describe('Filters', () => {
       const overdueFilterButton = page.getByRole('button', { name: /Просроченные/i }).first()
       await expect(overdueFilterButton).toBeVisible({ timeout: 5000 })
       await overdueFilterButton.click()
-      await page.waitForTimeout(2000) // Wait for filter to apply
+      await page.waitForTimeout(1500)
 
-      // Verify "Очистить фильтры" button appears (might not show if no results)
-      await page.waitForTimeout(1000)
+      // Verify "Очистить фильтры" button appears
+      const clearButton = page.getByRole('button', { name: /очистить фильтры/i })
+      await expect(clearButton).toBeVisible({ timeout: 3000 })
 
       // With simple test data (no overdue tasks), we expect empty state or 0 tasks
       const taskCount = await dashboardPage.getTaskCount()
@@ -141,10 +137,11 @@ test.describe('Filters', () => {
       const inProgressFilterButton = page.getByRole('button', { name: /В процессе/i }).first()
       await expect(inProgressFilterButton).toBeVisible({ timeout: 5000 })
       await inProgressFilterButton.click()
-      await page.waitForTimeout(2000) // Wait for filter to apply
+      await page.waitForTimeout(1500)
 
-      // Wait for results to load
-      await page.waitForTimeout(1000)
+      // Verify "Очистить фильтры" button appears
+      const clearButton = page.getByRole('button', { name: /очистить фильтры/i })
+      await expect(clearButton).toBeVisible({ timeout: 3000 })
 
       // With simple test data (default status is 'pending'), we expect empty state
       const taskCount = await dashboardPage.getTaskCount()

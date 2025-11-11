@@ -99,19 +99,13 @@ test.describe('Calendar View', () => {
       // Switch to week view
       await calendarPage.switchToWeekView()
 
-      // CRITICAL: Wait for view to change and re-render
-      await page.waitForTimeout(2000)
-
-      // Verify 7 days are displayed
-      const dayCount = await calendarPage.getDayCount()
-      console.log(`Day count after switching to week view: ${dayCount}`)
-
-      // Week view should show exactly 7 days
-      expect(dayCount).toBe(7)
-
       // Verify week calendar is displayed
       const isWeekView = await calendarPage.isWeekView()
       expect(isWeekView).toBe(true)
+
+      // Verify 7 days are displayed
+      const dayCount = await calendarPage.getDayCount()
+      expect(dayCount).toBe(7)
     })
 
     test('TC-CAL-004: Navigate to previous month/week', async ({ page }) => {
