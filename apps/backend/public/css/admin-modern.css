@@ -742,11 +742,11 @@ tbody tr:hover {
         justify-content: center !important;
     }
 
-    /* HIDE local search input on each page - use only global search */
-    .page-header .form-widget,
-    .content-header .form-widget,
-    form[name="filters"] input[type="search"],
-    .ea-search {
+    /* HIDE local search fields "Search... (Cmd+K)" on each page */
+    input[placeholder*="Cmd+K"],
+    input[placeholder*="Search..."][placeholder*="Cmd"],
+    .ea-search-widget input,
+    form.ea-search input[type="search"] {
         display: none !important;
     }
 
@@ -758,15 +758,23 @@ tbody tr:hover {
         width: 100% !important;
         max-width: 100vw !important;
         overflow-x: hidden !important;
+        box-sizing: border-box !important;
     }
 
-    /* Prevent horizontal scroll */
+    /* CRITICAL: Prevent horizontal scroll everywhere */
+    *,
+    *::before,
+    *::after {
+        box-sizing: border-box !important;
+    }
+
     body,
     html,
     .wrapper,
     .content-wrapper {
         overflow-x: hidden !important;
         max-width: 100vw !important;
+        width: 100vw !important;
         background: var(--gray-50) !important;
     }
 
@@ -785,14 +793,40 @@ tbody tr:hover {
         pointer-events: auto !important;
     }
 
+    /* CRITICAL: Force all elements to fit screen width */
+    .container,
+    .container-fluid,
+    .row,
+    .row.mb-4,
+    div[class*="col-"],
+    .card,
+    .card-body,
+    .table-responsive,
+    table,
+    .form-control,
+    input,
+    select,
+    textarea,
+    button,
+    .btn,
+    canvas,
+    img {
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
     /* Responsive cards - CRITICAL FIX */
     .row.mb-4,
     .row {
+        display: flex !important;
         flex-direction: column !important;
-        gap: var(--space-sm) !important;
+        gap: var(--space-md) !important;
         width: 100% !important;
+        max-width: 100% !important;
         margin-left: 0 !important;
         margin-right: 0 !important;
+        padding-left: var(--space-sm) !important;
+        padding-right: var(--space-sm) !important;
     }
 
     .row.mb-4 > [class*="col-"],
@@ -802,6 +836,7 @@ tbody tr:hover {
         flex: none !important;
         padding-left: 0 !important;
         padding-right: 0 !important;
+        margin-bottom: var(--space-sm) !important;
     }
 
     /* Dashboard cards - fit to mobile screen */
@@ -810,6 +845,13 @@ tbody tr:hover {
         max-width: 100% !important;
         margin-left: 0 !important;
         margin-right: 0 !important;
+        margin-bottom: var(--space-md) !important;
+    }
+
+    .card-body {
+        padding: var(--space-sm) !important;
+        width: 100% !important;
+        max-width: 100% !important;
     }
 
     /* Chart container */
@@ -820,11 +862,18 @@ tbody tr:hover {
         height: auto !important;
     }
 
-    /* Tables on mobile - make scrollable */
-    .table-responsive,
-    table {
-        overflow-x: auto;
+    /* Tables on mobile - make scrollable but within bounds */
+    .table-responsive {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: auto !important;
         -webkit-overflow-scrolling: touch;
+        margin-top: var(--space-sm) !important;
+    }
+
+    table {
+        width: 100% !important;
+        max-width: 100% !important;
     }
 
     /* Forms on mobile */
@@ -842,30 +891,56 @@ tbody tr:hover {
         padding: var(--space-sm) var(--space-md);
     }
 
-    /* Global search on mobile - HIDE IT */
+    /* Global search on mobile - KEEP IT, make it compact */
     .global-search {
-        display: none !important;
+        display: flex !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: var(--space-xs) var(--space-sm) !important;
+        margin-bottom: var(--space-sm) !important;
+        box-sizing: border-box !important;
     }
 
-    /* Top search bar - keep visible but compact */
-    .content-top-header .form-widget,
-    nav .form-widget {
+    .global-search input,
+    .global-search-input {
         width: 100% !important;
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-
-    nav .form-widget input,
-    .content-top-header input[type="search"] {
-        width: 100% !important;
+        max-width: 100% !important;
         font-size: 16px !important;
+        padding: var(--space-xs) var(--space-sm) !important;
+        box-sizing: border-box !important;
     }
 
-    /* Hide some elements on mobile */
+    /* Filters block - proper spacing */
+    .filters,
+    .filter-container,
+    .ea-filters {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-top: var(--space-md) !important;
+        margin-bottom: var(--space-md) !important;
+        padding: var(--space-sm) !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Page actions (Filters button, Create button) - proper spacing */
+    .page-actions,
+    .global-actions,
     .ea-content-header-actions,
     .content-header-actions {
-        flex-wrap: wrap;
-        gap: var(--space-xs);
+        display: flex !important;
+        flex-direction: column !important;
+        gap: var(--space-sm) !important;
+        width: 100% !important;
+        margin-top: var(--space-sm) !important;
+        margin-bottom: var(--space-md) !important;
+    }
+
+    /* Individual action buttons */
+    .page-actions .btn,
+    .global-actions .btn,
+    .content-header-actions .btn {
+        width: 100% !important;
+        margin-bottom: var(--space-xs) !important;
     }
 
     /* Form fields on mobile - full width */
@@ -905,11 +980,16 @@ tbody tr:hover {
     .content-header h1,
     .page-header h1 {
         font-size: 1.25rem !important;
+        margin-bottom: var(--space-sm) !important;
     }
 
-    /* Reduce card padding on mobile */
-    .card-body {
-        padding: var(--space-sm) !important;
+    /* Content spacing on mobile */
+    .content,
+    .content-body,
+    article,
+    main {
+        padding-left: var(--space-sm) !important;
+        padding-right: var(--space-sm) !important;
     }
 }
 
