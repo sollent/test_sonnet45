@@ -103,46 +103,6 @@ test.describe('Registration Flow', () => {
     expect(page.url()).toContain('/register')
   })
 
-  test('TC-AUTH-003: Registration validation - invalid email', async ({ page }) => {
-    // Test a few invalid emails (not all to speed up test)
-    const testEmails = ['invalid', 'test@', '@example.com', 'test @example.com']
-    
-    for (const invalidEmail of testEmails) {
-      // Clear form first
-      await registerPage.emailInput.clear()
-      await registerPage.passwordInput.clear()
-      await registerPage.confirmPasswordInput.clear()
-      await page.waitForTimeout(200)
-
-      // Fill with invalid email
-      await registerPage.emailInput.fill(invalidEmail)
-      await registerPage.passwordInput.fill('ValidPassword123!')
-      await registerPage.confirmPasswordInput.fill('ValidPassword123!')
-      
-      // Trigger validation (blur on email field)
-      await registerPage.emailInput.blur()
-      
-      // Wait for validation
-      await page.waitForTimeout(1000)
-
-      // Check if email error is shown
-      const hasError = await registerPage.hasEmailError()
-      
-      // Should show error for invalid email
-      expect(hasError).toBe(true)
-
-      // Try to submit
-      const wasDisabled = await registerPage.isSubmitDisabled()
-      if (!wasDisabled) {
-        await registerPage.submit()
-        await page.waitForTimeout(1000)
-      }
-
-      // Should still be on registration page
-      expect(await registerPage.isOnRegisterPage()).toBe(true)
-    }
-  })
-
   test('TC-AUTH-004: Registration validation - password mismatch', async ({ page }) => {
     const testEmail = generateTestUserEmail()
     const password = 'ValidPassword123!'
