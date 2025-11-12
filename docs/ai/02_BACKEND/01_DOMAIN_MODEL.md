@@ -79,7 +79,7 @@
 
 ```php
 <?php
-// File: apps/backend/src/Entity/VoiceCommand.php
+// Файл: apps/backend/src/Entity/VoiceCommand.php
 
 namespace App\Entity;
 
@@ -117,7 +117,7 @@ class VoiceCommand
     private ?string $audioFilePath = null;
 
     #[ORM\Column(type: 'integer', nullable: true)]
-    private ?int $audioDuration = null; // in milliseconds
+    private ?int $audioDuration = null; // в миллисекундах
 
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $rawText = null;
@@ -132,7 +132,7 @@ class VoiceCommand
     private ?array $commandResult = null;
 
     #[ORM\Column(type: 'string', length: 50)]
-    private string $source; // 'web', 'telegram', 'api', etc.
+    private string $source; // 'web', 'telegram', 'api', и т.д.
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private ?string $sessionId = null;
@@ -172,7 +172,7 @@ class VoiceCommand
         $this->metadata = [];
     }
 
-    // Domain logic methods
+    // Методы доменной логики
 
     public function startProcessing(): void
     {
@@ -279,7 +279,7 @@ class VoiceCommand
         $this->metadata['last_retry_at'] = (new \DateTimeImmutable())->format('c');
     }
 
-    // Getters
+    // Геттеры
 
     public function getId(): Uuid
     {
@@ -360,17 +360,17 @@ class VoiceCommand
     #[ORM\PreUpdate]
     public function validateInvariants(): void
     {
-        // Business rule: Audio commands must have audio file
+        // Бизнес-правило: Аудио команды должны иметь аудио файл
         if ($this->type === CommandType::AUDIO && !$this->audioFilePath) {
             throw new \DomainException('Audio commands must have an audio file');
         }
 
-        // Business rule: Completed commands must have result
+        // Бизнес-правило: Завершенные команды должны иметь результат
         if ($this->status === CommandStatus::COMPLETED && !$this->commandResult) {
             throw new \DomainException('Completed commands must have a result');
         }
 
-        // Business rule: Failed commands must have error message
+        // Бизнес-правило: Неудачные команды должны иметь сообщение об ошибке
         if ($this->status === CommandStatus::FAILED && !$this->errorMessage) {
             throw new \DomainException('Failed commands must have an error message');
         }
@@ -382,7 +382,7 @@ class VoiceCommand
 
 ```php
 <?php
-// File: apps/backend/src/ValueObject/CommandType.php
+// Файл: apps/backend/src/ValueObject/CommandType.php
 
 namespace App\ValueObject;
 
@@ -390,8 +390,8 @@ enum CommandType: string
 {
     case AUDIO = 'audio';
     case TEXT = 'text';
-    case GESTURE = 'gesture';  // Future: gesture-based commands
-    case SCHEDULED = 'scheduled';  // Scheduled voice commands
+    case GESTURE = 'gesture';  // Будущее: команды на основе жестов
+    case SCHEDULED = 'scheduled';  // Запланированные голосовые команды
 
     public function requiresTranscription(): bool
     {
@@ -407,7 +407,7 @@ enum CommandType: string
 
 ```php
 <?php
-// File: apps/backend/src/ValueObject/CommandStatus.php
+// Файл: apps/backend/src/ValueObject/CommandStatus.php
 
 namespace App\ValueObject;
 
@@ -471,7 +471,7 @@ enum CommandStatus: string
             self::PARSED->value => [self::EXECUTING, self::FAILED],
             self::EXECUTING->value => [self::COMPLETED, self::FAILED],
             self::COMPLETED->value => [],
-            self::FAILED->value => [self::PENDING], // Allow retry
+            self::FAILED->value => [self::PENDING], // Разрешить повтор
             self::CANCELLED->value => [],
         ];
 
@@ -482,7 +482,7 @@ enum CommandStatus: string
 
 ```php
 <?php
-// File: apps/backend/src/ValueObject/TranscriptionResult.php
+// Файл: apps/backend/src/ValueObject/TranscriptionResult.php
 
 namespace App\ValueObject;
 
@@ -567,7 +567,7 @@ final class TranscriptionResult
 
 ```php
 <?php
-// File: apps/backend/src/ValueObject/ParsedCommand.php
+// Файл: apps/backend/src/ValueObject/ParsedCommand.php
 
 namespace App\ValueObject;
 
@@ -655,7 +655,7 @@ final class ParsedCommand
 
     public function isValid(): bool
     {
-        // Validate based on action type
+        // Валидация на основе типа действия
         $requiredParams = $this->getRequiredParametersForAction();
 
         foreach ($requiredParams as $param) {
@@ -685,7 +685,7 @@ final class ParsedCommand
 
 ```php
 <?php
-// File: apps/backend/src/Entity/UserTelegramLink.php
+// Файл: apps/backend/src/Entity/UserTelegramLink.php
 
 namespace App\Entity;
 
@@ -790,7 +790,7 @@ class UserTelegramLink
         $this->linkToken = bin2hex(random_bytes(32));
     }
 
-    // Getters...
+    // Геттеры...
 
     public function getId(): Uuid
     {
@@ -848,7 +848,7 @@ class UserTelegramLink
 
 ```php
 <?php
-// File: apps/backend/src/Entity/VoiceSession.php
+// Файл: apps/backend/src/Entity/VoiceSession.php
 
 namespace App\Entity;
 
@@ -924,13 +924,13 @@ class VoiceSession
         $command->setSessionId($this->sessionId);
         $this->commandCount++;
 
-        // Update context based on command
+        // Обновить контекст на основе команды
         $this->updateContext($command);
     }
 
     private function updateContext(VoiceCommand $command): void
     {
-        // Store relevant context from the command
+        // Сохранить соответствующий контекст из команды
         if ($command->getParsedCommand()) {
             $this->context['last_action'] = $command->getParsedCommand()->getAction();
             $this->context['last_entities'] = $command->getParsedCommand()->getEntities();
@@ -1052,7 +1052,7 @@ class VoiceSession
 
 ```php
 <?php
-// File: apps/backend/src/Repository/VoiceCommandRepository.php
+// Файл: apps/backend/src/Repository/VoiceCommandRepository.php
 
 namespace App\Repository;
 
@@ -1096,7 +1096,7 @@ class VoiceCommandRepository extends ServiceEntityRepository
     }
 
     /**
-     * Find pending commands for processing
+     * Найти ожидающие команды для обработки
      * @return VoiceCommand[]
      */
     public function findPendingCommands(int $limit = 10): array
@@ -1111,7 +1111,7 @@ class VoiceCommandRepository extends ServiceEntityRepository
     }
 
     /**
-     * Find failed commands for retry
+     * Найти неудачные команды для повтора
      * @return VoiceCommand[]
      */
     public function findRetryableCommands(int $limit = 5): array
@@ -1133,7 +1133,7 @@ class VoiceCommandRepository extends ServiceEntityRepository
     }
 
     /**
-     * Find user's recent commands
+     * Найти недавние команды пользователя
      * @return VoiceCommand[]
      */
     public function findUserRecentCommands(User $user, int $days = 7, int $limit = 100): array
@@ -1152,7 +1152,7 @@ class VoiceCommandRepository extends ServiceEntityRepository
     }
 
     /**
-     * Get user command statistics
+     * Получить статистику команд пользователя
      */
     public function getUserStatistics(User $user): array
     {
@@ -1173,7 +1173,7 @@ class VoiceCommandRepository extends ServiceEntityRepository
             ->getQuery()
             ->getSingleResult();
 
-        // Get command type distribution
+        // Получить распределение типов команд
         $typeDistribution = $this->createQueryBuilder('vc')
             ->select('vc.type, COUNT(vc.id) as count')
             ->where('vc.user = :user')
@@ -1184,7 +1184,7 @@ class VoiceCommandRepository extends ServiceEntityRepository
 
         $stats['type_distribution'] = $typeDistribution;
 
-        // Get action distribution
+        // Получить распределение действий
         $actionDistribution = $this->createQueryBuilder('vc')
             ->select("JSON_EXTRACT(vc.parsed_action, '$.action') as action, COUNT(vc.id) as count")
             ->where('vc.user = :user')
@@ -1200,7 +1200,7 @@ class VoiceCommandRepository extends ServiceEntityRepository
     }
 
     /**
-     * Find commands by session
+     * Найти команды по сессии
      * @return VoiceCommand[]
      */
     public function findBySessionId(string $sessionId): array
@@ -1214,12 +1214,12 @@ class VoiceCommandRepository extends ServiceEntityRepository
     }
 
     /**
-     * Find similar commands for context
+     * Найти похожие команды для контекста
      * @return VoiceCommand[]
      */
     public function findSimilarCommands(User $user, string $text, int $limit = 5): array
     {
-        // Use PostgreSQL full-text search
+        // Использовать полнотекстовый поиск PostgreSQL
         $sql = "
             SELECT vc.*
             FROM voice_commands vc
@@ -1244,7 +1244,7 @@ class VoiceCommandRepository extends ServiceEntityRepository
     }
 
     /**
-     * Clean up old commands
+     * Очистка старых команд
      */
     public function cleanupOldCommands(int $daysToKeep = 30): int
     {
@@ -1266,7 +1266,7 @@ class VoiceCommandRepository extends ServiceEntityRepository
     }
 
     /**
-     * Create query builder for complex searches
+     * Создать query builder для сложных поисков
      */
     public function createSearchQueryBuilder(array $criteria): QueryBuilder
     {
@@ -1321,7 +1321,7 @@ class VoiceCommandRepository extends ServiceEntityRepository
 
 ```php
 <?php
-// File: apps/backend/src/Domain/Event/VoiceCommandEvent.php
+// Файл: apps/backend/src/Domain/Event/VoiceCommandEvent.php
 
 namespace App\Domain\Event;
 
@@ -1403,7 +1403,7 @@ class VoiceCommandFailedEvent extends VoiceCommandEvent
 
 ```php
 <?php
-// File: apps/backend/migrations/Version20250108_VoiceCommandTables.php
+// Файл: apps/backend/migrations/Version20250108_VoiceCommandTables.php
 
 namespace DoctrineMigrations;
 
@@ -1419,7 +1419,7 @@ final class Version20250108VoiceCommandTables extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        // Voice commands table
+        // Таблица голосовых команд
         $this->addSql('
             CREATE TABLE voice_commands (
                 id UUID NOT NULL DEFAULT gen_random_uuid(),
@@ -1454,21 +1454,21 @@ final class Version20250108VoiceCommandTables extends AbstractMigration
             )
         ');
 
-        // Indexes
+        // Индексы
         $this->addSql('CREATE INDEX idx_voice_command_user ON voice_commands(user_id)');
         $this->addSql('CREATE INDEX idx_voice_command_status ON voice_commands(status)');
         $this->addSql('CREATE INDEX idx_voice_command_created ON voice_commands(created_at DESC)');
         $this->addSql('CREATE INDEX idx_voice_command_session ON voice_commands(session_id)');
         $this->addSql('CREATE INDEX idx_voice_command_source ON voice_commands(source)');
 
-        // Foreign key
+        // Внешний ключ
         $this->addSql('
             ALTER TABLE voice_commands
             ADD CONSTRAINT fk_voice_command_user
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         ');
 
-        // User Telegram links table
+        // Таблица связей пользователей с Telegram
         $this->addSql('
             CREATE TABLE user_telegram_links (
                 id UUID NOT NULL DEFAULT gen_random_uuid(),
@@ -1493,14 +1493,14 @@ final class Version20250108VoiceCommandTables extends AbstractMigration
         $this->addSql('CREATE INDEX idx_telegram_link_user ON user_telegram_links(user_id)');
         $this->addSql('CREATE INDEX idx_telegram_link_token ON user_telegram_links(link_token)');
 
-        // Foreign key
+        // Внешний ключ
         $this->addSql('
             ALTER TABLE user_telegram_links
             ADD CONSTRAINT fk_telegram_link_user
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         ');
 
-        // Voice sessions table
+        // Таблица голосовых сессий
         $this->addSql('
             CREATE TABLE voice_sessions (
                 id UUID NOT NULL DEFAULT gen_random_uuid(),
@@ -1520,14 +1520,14 @@ final class Version20250108VoiceCommandTables extends AbstractMigration
         $this->addSql('CREATE INDEX idx_voice_session_user ON voice_sessions(user_id)');
         $this->addSql('CREATE INDEX idx_voice_session_status ON voice_sessions(status)');
 
-        // Foreign key
+        // Внешний ключ
         $this->addSql('
             ALTER TABLE voice_sessions
             ADD CONSTRAINT fk_voice_session_user
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         ');
 
-        // Add trigram extension for fuzzy text search
+        // Добавить расширение trigram для нечеткого текстового поиска
         $this->addSql('CREATE EXTENSION IF NOT EXISTS pg_trgm');
         $this->addSql('CREATE INDEX idx_voice_command_text_trgm ON voice_commands USING gin (raw_text gin_trgm_ops)');
     }
@@ -1549,7 +1549,7 @@ final class Version20250108VoiceCommandTables extends AbstractMigration
 ### Настройка Doctrine
 
 ```yaml
-# File: apps/backend/config/packages/doctrine.yaml
+# Файл: apps/backend/config/packages/doctrine.yaml
 
 doctrine:
     dbal:
@@ -1584,7 +1584,7 @@ doctrine:
 
 ```php
 <?php
-// File: apps/backend/src/DBAL/Types/CommandTypeType.php
+// Файл: apps/backend/src/DBAL/Types/CommandTypeType.php
 
 namespace App\DBAL\Types;
 
@@ -1626,7 +1626,7 @@ class CommandTypeType extends Type
 
 ```php
 <?php
-// File: apps/backend/src/Domain/Rules/VoiceCommandRules.php
+// Файл: apps/backend/src/Domain/Rules/VoiceCommandRules.php
 
 namespace App\Domain\Rules;
 
@@ -1677,17 +1677,17 @@ class VoiceCommandRules
 
     public static function canUserSubmitCommand(User $user, int $recentCommandCount): bool
     {
-        // Check rate limit
+        // Проверить лимит запросов
         if ($recentCommandCount >= self::MAX_COMMANDS_PER_HOUR) {
             return false;
         }
 
-        // Check user status
+        // Проверить статус пользователя
         if (!$user->isActive()) {
             return false;
         }
 
-        // Check user subscription limits (if applicable)
+        // Проверить лимиты подписки пользователя (если применимо)
         // ...
 
         return true;
