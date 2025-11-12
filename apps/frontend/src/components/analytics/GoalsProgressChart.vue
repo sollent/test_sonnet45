@@ -95,13 +95,16 @@ const props = defineProps<{
 
 const circumference = 2 * Math.PI * 40
 
-const weeklyPercent = computed(() => 
-  Math.round((props.weeklyCompleted / props.weeklyGoal) * 100)
-)
+// Безопасное вычисление процентов с защитой от деления на ноль
+const weeklyPercent = computed(() => {
+  if (!props.weeklyGoal || props.weeklyGoal === 0) return 0
+  return Math.round((props.weeklyCompleted / props.weeklyGoal) * 100)
+})
 
-const monthlyPercent = computed(() => 
-  Math.round((props.monthlyCompleted / props.monthlyGoal) * 100)
-)
+const monthlyPercent = computed(() => {
+  if (!props.monthlyGoal || props.monthlyGoal === 0) return 0
+  return Math.round((props.monthlyCompleted / props.monthlyGoal) * 100)
+})
 
 const weeklyOffset = computed(() => 
   circumference - (weeklyPercent.value / 100) * circumference

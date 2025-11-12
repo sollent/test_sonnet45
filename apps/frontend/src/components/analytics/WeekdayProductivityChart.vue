@@ -39,8 +39,11 @@ const props = defineProps<{
   data: Record<string, number>
 }>()
 
+// Безопасные fallback значения для предотвращения ошибок при undefined данных
+const safeData = computed(() => props.data ?? {})
+
 const bestDay = computed(() => {
-  const entries = Object.entries(props.data)
+  const entries = Object.entries(safeData.value)
   if (entries.length === 0) return null
   const sorted = entries.sort((a, b) => b[1] - a[1])
   return sorted[0][0]
@@ -49,7 +52,7 @@ const bestDay = computed(() => {
 const chartOption = computed(() => {
   const dayOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
   const days = dayOrder.map(day => t(`analytics.days.${day.toLowerCase()}`))
-  const values = dayOrder.map(day => props.data[day] || 0)
+  const values = dayOrder.map(day => safeData.value[day] || 0)
   
   // Generate colors based on value (gradient from low to high)
   const maxValue = Math.max(...values)
