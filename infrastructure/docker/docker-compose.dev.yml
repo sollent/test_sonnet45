@@ -1,4 +1,6 @@
 # Development Environment Overrides
+# This file is automatically loaded with docker-compose.yml
+# Contains development-specific configurations
 
 version: '3.8'
 
@@ -9,8 +11,9 @@ services:
 
   php83-fpm:
     environment:
+      # Override Symfony environment for development
       - APP_ENV=dev
       - APP_DEBUG=true
     volumes:
-      # Enable hot reload for development
+      # Enable hot reload for development (cached for better performance on macOS)
       - ../../apps/backend:/var/www/backend-app:cached

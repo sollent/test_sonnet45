@@ -1,0 +1,53 @@
+# Production Environment Configuration
+# Usage: docker-compose -f docker-compose.yml -f infrastructure/docker/docker-compose-prod.yml up -d
+# IMPORTANT: Set environment variables via .env.docker.prod and apps/backend/.env.prod
+# OR override them in your CI/CD pipeline or hosting environment
+
+version: '3.8'
+
+services:
+  nginx:
+    restart: always
+    environment:
+      - NGINX_DEBUG=false
+    # Production: Use specific version instead of :latest
+    image: nginx:1.25-alpine
+
+  php83-fpm:
+    restart: always
+    environment:
+      # Override Symfony environment for production
+      - APP_ENV=prod
+      - APP_DEBUG=false
+    volumes:
+      # Production: Mount only necessary files (no cached, read-only where possible)
+      - ../../apps/backend:/var/www/backend-app:ro
+      - ./prod/php/php.ini-production:/usr/local/etc/php/php.ini:ro
+
+  psql16:
+    restart: always
+    environment:
+      # Production credentials MUST be overridden via environment variables!
+      # Never use default values in production!
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      # Production: Use named volume with backup strategy
+      - pgdata_prod:/var/lib/postgresql/data
+
+  rabbitmq:
+    restart: always
+    environment:
+      # Production credentials MUST be overridden via environment variables!
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}
+
+  cron:
+    restart: always
+    environment:
+      - APP_ENV=prod
+
+volumes:
+  pgdata_prod:
+    driver: local

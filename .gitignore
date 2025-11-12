@@ -1,7 +1,47 @@
+# IDE
 .idea
+.vscode
+
+# Docker environment files (SENSITIVE - contains credentials!)
+# Keep only .example files in git
+.env.docker
+.env.docker.prod
+.env.docker.test
+# Allow: .env.docker.example
+
+# Symfony/Backend environment files
+/apps/backend/.env.local
+/apps/backend/.env.local.php
+/apps/backend/.env.*.local
+/apps/backend/.env.prod.local
+# Note: .env, .env.dev, .env.prod, .env.test, .env.example are tracked
+
+# Docker volumes and data
 /docker/dev/psql/
+/infrastructure/docker/dev/psql/
+
+# Frontend testing
+/apps/frontend/playwright-report/
+/apps/frontend/test-results/
+/apps/frontend/e2e/test-results.json
 /frontend/playwright-report/
 /frontend/test-results/
 frontend/e2e/test-results.json
-/screenshots_for_claude/
+
+# Uploads and temporary files
+/apps/backend/public/uploads/
 /backend/public/uploads/
+/screenshots_for_claude/
+
+# JWT keys (if not using passphrases)
+/apps/backend/config/jwt/*.pem
+# Keep only .gitkeep
+
+# Logs
+/apps/backend/var/log/*.log
+/apps/backend/var/cache/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db

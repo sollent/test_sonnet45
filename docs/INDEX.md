@@ -214,6 +214,19 @@ Pinia stores и паттерны состояния
 - Детали конфигурации и кастомизация
 - Решение проблем с инструментами качества
 
+#### [`guides/ENVIRONMENT_CONFIGURATION.md`](guides/ENVIRONMENT_CONFIGURATION.md)
+**🔐 НОВОЕ** - Управление переменными окружения для Docker и Symfony
+
+**Ключевые Темы:**
+- Двухуровневая система environment файлов (Docker + Symfony)
+- Структура `.env.docker*` файлов для инфраструктуры
+- Структура `apps/backend/.env*` файлов для приложения
+- Конфигурация для dev, prod, test окружений
+- Интеграция с GitHub Actions / CI/CD
+- Best practices безопасности (что коммитить, что нет)
+- Runtime переопределение переменных в production
+- Troubleshooting частых проблем с credentials
+
 #### [`guides/TROUBLESHOOTING.md`](guides/TROUBLESHOOTING.md)
 Частые проблемы и их решения
 
