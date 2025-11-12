@@ -1,44 +1,44 @@
-# 🧪 E2E Testing Plan - Task Manager Application
+# 🧪 План E2E тестирования - Приложение Task Manager
 
-> **Comprehensive End-to-End Testing Strategy**  
-> Complete plan for browser-based E2E tests covering all critical user flows
-
----
-
-## 📋 Table of Contents
-
-1. [Technology Stack](#technology-stack)
-2. [Test Architecture](#test-architecture)
-3. [Test Scenarios by Feature](#test-scenarios-by-feature)
-4. [Implementation Phases](#implementation-phases)
-5. [CI/CD Integration](#cicd-integration)
+> **Комплексная стратегия End-to-End тестирования**
+> Полный план браузерных E2E тестов, покрывающих все критические пользовательские сценарии
 
 ---
 
-## 🛠️ Technology Stack
+## 📋 Содержание
 
-### Recommended: **Playwright** (Primary Choice)
+1. [Технологический стек](#технологический-стек)
+2. [Архитектура тестов](#архитектура-тестов)
+3. [Тестовые сценарии по функциям](#тестовые-сценарии-по-функциям)
+4. [Этапы реализации](#этапы-реализации)
+5. [Интеграция с CI/CD](#интеграция-с-cicd)
 
-**Why Playwright?**
-- ✅ **Multi-browser support**: Chromium, Firefox, WebKit
-- ✅ **Auto-waiting**: Built-in smart waiting for elements
-- ✅ **Network interception**: Mock API responses, test offline scenarios
-- ✅ **Screenshots & videos**: Automatic on failure
-- ✅ **TypeScript support**: Native TypeScript support
-- ✅ **Fast execution**: Parallel test execution
-- ✅ **Great debugging**: Trace viewer, step-by-step debugging
-- ✅ **Mobile emulation**: Test mobile views easily
-- ✅ **Active development**: Microsoft-backed, actively maintained
+---
 
-**Alternative: Cypress**
-- Good for Vue.js apps
-- Real browser testing
-- Time-travel debugging
-- But: Single browser (Chromium), slower, less flexible
+## 🛠️ Технологический стек
 
-**Decision: Playwright** ✅
+### Рекомендуется: **Playwright** (основной выбор)
 
-### Test Framework Structure
+**Почему Playwright?**
+- ✅ **Поддержка нескольких браузеров**: Chromium, Firefox, WebKit
+- ✅ **Авто-ожидание**: Встроенное умное ожидание элементов
+- ✅ **Перехват сети**: Мокирование API-ответов, тестирование оффлайн-сценариев
+- ✅ **Скриншоты и видео**: Автоматически при ошибке
+- ✅ **Поддержка TypeScript**: Нативная поддержка TypeScript
+- ✅ **Быстрое выполнение**: Параллельное выполнение тестов
+- ✅ **Отличная отладка**: Trace viewer, пошаговая отладка
+- ✅ **Эмуляция мобильных**: Легкое тестирование мобильных видов
+- ✅ **Активная разработка**: Поддерживается Microsoft, активно развивается
+
+**Альтернатива: Cypress**
+- Хорош для Vue.js приложений
+- Тестирование в реальном браузере
+- Отладка с перемещением во времени
+- Но: Один браузер (Chromium), медленнее, менее гибкий
+
+**Решение: Playwright** ✅
+
+### Структура тестового фреймворка
 
 ```
 frontend/
@@ -85,22 +85,22 @@ frontend/
 
 ---
 
-## 🏗️ Test Architecture
+## 🏗️ Архитектура тестов
 
-### Page Object Model (POM) Pattern
+### Паттерн Page Object Model (POM)
 
-**Benefits:**
-- Reusable page interactions
-- Easy maintenance when UI changes
-- Clear separation of concerns
-- Type-safe selectors
+**Преимущества:**
+- Переиспользуемые взаимодействия со страницами
+- Легкое обслуживание при изменениях UI
+- Четкое разделение ответственности
+- Типобезопасные селекторы
 
-**Example Structure:**
+**Пример структуры:**
 ```typescript
 // page-objects/DashboardPage.ts
 export class DashboardPage {
   constructor(private page: Page) {}
-  
+
   async clickCreateTask() { ... }
   async openFilters() { ... }
   async selectView(view: 'all' | 'today' | 'upcoming' | 'overdue' | 'unscheduled') { ... }
@@ -109,9 +109,9 @@ export class DashboardPage {
 }
 ```
 
-### Test Fixtures
+### Тестовые фикстуры
 
-**Purpose:** Reusable test setup (authentication, test data)
+**Назначение:** Переиспользуемая настройка тестов (аутентификация, тестовые данные)
 
 ```typescript
 // fixtures/auth.fixture.ts
@@ -123,1072 +123,1072 @@ export const testUser = {
 
 ---
 
-## 📝 Test Scenarios by Feature
+## 📝 Тестовые сценарии по функциям
 
-### 1. Authentication Flow
+### 1. Поток аутентификации
 
-#### 1.1 Registration
-**Priority: HIGH**
+#### 1.1 Регистрация
+**Приоритет: ВЫСОКИЙ**
 
-**Test Cases:**
-1. **TC-AUTH-001**: Successful registration with valid data
-   - Navigate to `/register`
-   - Fill email, password, confirm password
-   - Submit form
-   - Verify redirect to `/dashboard`
-   - Verify success toast message
-   - Verify user is authenticated
+**Тест-кейсы:**
+1. **TC-AUTH-001**: Успешная регистрация с валидными данными
+   - Перейти на `/register`
+   - Заполнить email, пароль, подтверждение пароля
+   - Отправить форму
+   - Проверить редирект на `/dashboard`
+   - Проверить сообщение об успехе
+   - Проверить, что пользователь аутентифицирован
 
-2. **TC-AUTH-002**: Registration validation - empty fields
-   - Try to submit empty form
-   - Verify error messages for all required fields
-   - Verify form is not submitted
+2. **TC-AUTH-002**: Валидация регистрации - пустые поля
+   - Попытаться отправить пустую форму
+   - Проверить сообщения об ошибках для всех обязательных полей
+   - Проверить, что форма не отправлена
 
-3. **TC-AUTH-003**: Registration validation - invalid email
-   - Enter invalid email formats (no @, no domain, etc.)
-   - Verify email validation error
-   - Verify form is not submitted
+3. **TC-AUTH-003**: Валидация регистрации - невалидный email
+   - Ввести невалидные форматы email (без @, без домена и т.д.)
+   - Проверить ошибку валидации email
+   - Проверить, что форма не отправлена
 
-4. **TC-AUTH-004**: Registration validation - password mismatch
-   - Enter different passwords in password and confirm password
-   - Verify password mismatch error
-   - Verify form is not submitted
+4. **TC-AUTH-004**: Валидация регистрации - несовпадение паролей
+   - Ввести разные пароли в поля пароля и подтверждения
+   - Проверить ошибку несовпадения паролей
+   - Проверить, что форма не отправлена
 
-5. **TC-AUTH-005**: Registration validation - weak password
-   - Enter password < 6 characters
-   - Verify password length validation
-   - Verify form is not submitted
+5. **TC-AUTH-005**: Валидация регистрации - слабый пароль
+   - Ввести пароль < 6 символов
+   - Проверить валидацию длины пароля
+   - Проверить, что форма не отправлена
 
-6. **TC-AUTH-006**: Registration - duplicate email
-   - Try to register with existing email
-   - Verify error message from backend
-   - Verify form is not submitted
+6. **TC-AUTH-006**: Регистрация - дублирующийся email
+   - Попытаться зарегистрироваться с существующим email
+   - Проверить сообщение об ошибке от бэкенда
+   - Проверить, что форма не отправлена
 
-7. **TC-AUTH-007**: Registration - Google OAuth button presence
-   - Verify Google login button is visible
-   - Verify button is clickable (actual OAuth flow can be mocked)
+7. **TC-AUTH-007**: Регистрация - наличие кнопки Google OAuth
+   - Проверить, что кнопка входа через Google видима
+   - Проверить, что кнопка кликабельна (реальный OAuth флоу может быть замокирован)
 
-#### 1.2 Login
-**Priority: HIGH**
+#### 1.2 Вход
+**Приоритет: ВЫСОКИЙ**
 
-**Test Cases:**
-1. **TC-AUTH-008**: Successful login with valid credentials
-   - Navigate to `/login`
-   - Fill email and password
-   - Submit form
-   - Verify redirect to `/dashboard`
-   - Verify success toast message
-   - Verify user is authenticated
+**Тест-кейсы:**
+1. **TC-AUTH-008**: Успешный вход с валидными учетными данными
+   - Перейти на `/login`
+   - Заполнить email и пароль
+   - Отправить форму
+   - Проверить редирект на `/dashboard`
+   - Проверить сообщение об успехе
+   - Проверить, что пользователь аутентифицирован
 
-2. **TC-AUTH-009**: Login validation - empty fields
-   - Try to submit empty form
-   - Verify error messages for email and password
-   - Verify form is not submitted
+2. **TC-AUTH-009**: Валидация входа - пустые поля
+   - Попытаться отправить пустую форму
+   - Проверить сообщения об ошибках для email и пароля
+   - Проверить, что форма не отправлена
 
-3. **TC-AUTH-010**: Login validation - invalid email format
-   - Enter invalid email
-   - Verify email validation error
-   - Verify form is not submitted
+3. **TC-AUTH-010**: Валидация входа - невалидный формат email
+   - Ввести невалидный email
+   - Проверить ошибку валидации email
+   - Проверить, что форма не отправлена
 
-4. **TC-AUTH-011**: Login - incorrect credentials
-   - Enter wrong email or password
-   - Verify error message from backend
-   - Verify form is not submitted
-   - Verify user is not authenticated
+4. **TC-AUTH-011**: Вход - неверные учетные данные
+   - Ввести неправильный email или пароль
+   - Проверить сообщение об ошибке от бэкенда
+   - Проверить, что форма не отправлена
+   - Проверить, что пользователь не аутентифицирован
 
-5. **TC-AUTH-012**: Login - Google OAuth button
-   - Verify Google login button is visible and clickable
+5. **TC-AUTH-012**: Вход - кнопка Google OAuth
+   - Проверить, что кнопка входа через Google видима и кликабельна
 
-#### 1.3 Logout
-**Priority: MEDIUM**
+#### 1.3 Выход
+**Приоритет: СРЕДНИЙ**
 
-**Test Cases:**
-1. **TC-AUTH-013**: Successful logout
-   - Login as test user
-   - Click logout button
-   - Verify redirect to landing page
-   - Verify user is not authenticated
-   - Verify tokens are cleared
-
----
-
-### 2. Dashboard - Task List
-
-#### 2.1 Initial Load
-**Priority: HIGH**
-
-**Test Cases:**
-1. **TC-DASH-001**: Dashboard loads successfully
-   - Login and navigate to `/dashboard`
-   - Verify page title is correct
-   - Verify no console errors
-   - Verify no network errors (401, 500, etc.)
-
-2. **TC-DASH-002**: Default view "Все задачи" loads tasks
-   - Verify "Все задачи" is selected by default
-   - Verify tasks are loaded and displayed
-   - Verify task count matches API response
-   - Verify no loading skeletons after load
-   - Verify no error messages
-
-3. **TC-DASH-003**: Tasks are grouped by date
-   - Verify tasks are grouped correctly
-   - Verify date headers are displayed
-   - Verify progress bars are shown for each day
-
-4. **TC-DASH-004**: Empty state when no tasks
-   - Use test account with no tasks
-   - Verify empty state message is displayed
-   - Verify "Create task" button is visible
-
-#### 2.2 View Navigation
-**Priority: HIGH**
-
-**Test Cases:**
-1. **TC-DASH-005**: Navigate to "Сегодня" view
-   - Click "Сегодня" in sidebar
-   - Verify only today's tasks are displayed
-   - Verify correct API request is made
-   - Verify no errors
-
-2. **TC-DASH-006**: Navigate to "Предстоящие" view
-   - Click "Предстоящие"
-   - Verify only upcoming tasks are displayed
-   - Verify correct API request
-   - Verify no errors
-
-3. **TC-DASH-007**: Navigate to "Просроченные" view
-   - Click "Просроченные"
-   - Verify only overdue tasks are displayed
-   - Verify correct API request
-   - Verify no errors
-
-4. **TC-DASH-008**: Navigate to "Без срока" view
-   - Click "Без срока"
-   - Verify only tasks without dates are displayed
-   - Verify correct API request
-   - Verify no errors
-
-5. **TC-DASH-009**: Switch between views multiple times
-   - Switch between all views multiple times
-   - Verify no errors accumulate
-   - Verify correct data is displayed each time
-
-#### 2.3 Display Modes
-**Priority: MEDIUM**
-
-**Test Cases:**
-1. **TC-DASH-010**: Switch to cards view
-   - Click cards view button
-   - Verify tasks are displayed as cards
-   - Verify all task information is visible
-
-2. **TC-DASH-011**: Switch to list view
-   - Click list view button
-   - Verify tasks are displayed as list items
-   - Verify all task information is visible
-
-3. **TC-DASH-012**: View mode persists
-   - Switch to list view
-   - Refresh page
-   - Verify list view is still selected (if persisted)
+**Тест-кейсы:**
+1. **TC-AUTH-013**: Успешный выход
+   - Войти как тестовый пользователь
+   - Нажать кнопку выхода
+   - Проверить редирект на главную страницу
+   - Проверить, что пользователь не аутентифицирован
+   - Проверить, что токены очищены
 
 ---
 
-### 3. Task Creation
+### 2. Панель управления - Список задач
 
-#### 3.1 Basic Task Creation
-**Priority: CRITICAL**
+#### 2.1 Начальная загрузка
+**Приоритет: ВЫСОКИЙ**
 
-**Test Cases:**
-1. **TC-CREATE-001**: Create task with minimal data (title only)
-   - Click "Создать задачу" button
-   - Enter task title
-   - Click "Сохранить"
-   - Verify task appears in list
-   - Verify success toast
-   - Verify task has default values (status: pending, priority: medium)
+**Тест-кейсы:**
+1. **TC-DASH-001**: Панель управления загружается успешно
+   - Войти и перейти на `/dashboard`
+   - Проверить, что заголовок страницы корректен
+   - Проверить отсутствие ошибок в консоли
+   - Проверить отсутствие сетевых ошибок (401, 500 и т.д.)
 
-2. **TC-CREATE-002**: Create task with all fields
-   - Open create dialog
-   - Fill title, description
-   - Select status (In Progress)
-   - Select priority (High)
-   - Select tags (multiple)
-   - Set start date and due date
-   - Click "Сохранить"
-   - Verify task appears with all data
-   - Verify all fields are displayed correctly
+2. **TC-DASH-002**: Вид по умолчанию "Все задачи" загружает задачи
+   - Проверить, что "Все задачи" выбрано по умолчанию
+   - Проверить, что задачи загружены и отображены
+   - Проверить, что количество задач соответствует ответу API
+   - Проверить отсутствие скелетонов загрузки после загрузки
+   - Проверить отсутствие сообщений об ошибках
 
-3. **TC-CREATE-003**: Create task validation - empty title
-   - Try to submit without title
-   - Verify validation error
-   - Verify form is not submitted
-   - Verify dialog stays open
+3. **TC-DASH-003**: Задачи группируются по датам
+   - Проверить, что задачи сгруппированы корректно
+   - Проверить, что заголовки дат отображены
+   - Проверить, что прогресс-бары показаны для каждого дня
 
-4. **TC-CREATE-004**: Create task validation - title too long
-   - Enter title > 255 characters
-   - Verify validation error
-   - Verify form is not submitted
+4. **TC-DASH-004**: Пустое состояние при отсутствии задач
+   - Использовать тестовый аккаунт без задач
+   - Проверить, что отображено сообщение о пустом состоянии
+   - Проверить, что кнопка "Создать задачу" видима
 
-5. **TC-CREATE-005**: Create task - cancel button
-   - Fill form partially
-   - Click "Отмена"
-   - Verify dialog closes
-   - Verify task is not created
-   - Verify form is reset on next open
+#### 2.2 Навигация по видам
+**Приоритет: ВЫСОКИЙ**
 
-#### 3.2 Quick Date Selection
-**Priority: HIGH**
+**Тест-кейсы:**
+1. **TC-DASH-005**: Перейти в вид "Сегодня"
+   - Нажать "Сегодня" в боковой панели
+   - Проверить, что отображаются только сегодняшние задачи
+   - Проверить, что выполнен корректный API запрос
+   - Проверить отсутствие ошибок
 
-**Test Cases:**
-1. **TC-CREATE-006**: Create task with "Сегодня" quick date
-   - Open create dialog
-   - Click "Сегодня" button
-   - Fill title and save
-   - Verify task has today's date
-   - Verify task appears in "Сегодня" view
+2. **TC-DASH-006**: Перейти в вид "Предстоящие"
+   - Нажать "Предстоящие"
+   - Проверить, что отображаются только предстоящие задачи
+   - Проверить корректный API запрос
+   - Проверить отсутствие ошибок
 
-2. **TC-CREATE-007**: Create task with "Завтра" quick date
-   - Click "Завтра" button
-   - Fill title and save
-   - Verify task has tomorrow's date
-   - Verify task appears in "Предстоящие" view
+3. **TC-DASH-007**: Перейти в вид "Просроченные"
+   - Нажать "Просроченные"
+   - Проверить, что отображаются только просроченные задачи
+   - Проверить корректный API запрос
+   - Проверить отсутствие ошибок
 
-3. **TC-CREATE-008**: Create task with "Послезавтра" quick date
-   - Click "Послезавтра" button
-   - Fill title and save
-   - Verify task has day after tomorrow's date
+4. **TC-DASH-008**: Перейти в вид "Без срока"
+   - Нажать "Без срока"
+   - Проверить, что отображаются только задачи без дат
+   - Проверить корректный API запрос
+   - Проверить отсутствие ошибок
 
-#### 3.3 Advanced Date Selection
-**Priority: HIGH**
+5. **TC-DASH-009**: Переключение между видами несколько раз
+   - Переключиться между всеми видами несколько раз
+   - Проверить, что ошибки не накапливаются
+   - Проверить, что каждый раз отображаются корректные данные
 
-**Test Cases:**
-1. **TC-CREATE-009**: Create task with custom date range
-   - Click "Показать расширенные настройки"
-   - Select start date and due date from calendar
-   - Fill title and save
-   - Verify task has correct dates
-   - Verify dates are displayed correctly in task card
+#### 2.3 Режимы отображения
+**Приоритет: СРЕДНИЙ**
 
-2. **TC-CREATE-010**: Create task - date validation (due before start)
-   - Set due date before start date
-   - Try to save
-   - Verify validation error
-   - Verify form is not submitted
+**Тест-кейсы:**
+1. **TC-DASH-010**: Переключиться на вид карточек
+   - Нажать кнопку вида карточек
+   - Проверить, что задачи отображаются как карточки
+   - Проверить, что вся информация о задачах видима
 
-#### 3.4 Tag Management
-**Priority: HIGH**
+2. **TC-DASH-011**: Переключиться на вид списка
+   - Нажать кнопку вида списка
+   - Проверить, что задачи отображаются как элементы списка
+   - Проверить, что вся информация о задачах видима
 
-**Test Cases:**
-1. **TC-CREATE-011**: Add tags from popular tags
-   - Open create dialog
-   - Click on popular tags (Work, Personal, etc.)
-   - Verify tags are added to form
-   - Save task
-   - Verify tags are displayed on task card
-
-2. **TC-CREATE-012**: Add tags by typing
-   - Type tag name in tag input
-   - Press Enter
-   - Verify tag is added
-   - Save task
-   - Verify tag is created and displayed
-
-3. **TC-CREATE-013**: Add multiple tags
-   - Add 3-4 tags (mix of popular and new)
-   - Save task
-   - Verify all tags are displayed
-   - Verify tags are clickable
-
-4. **TC-CREATE-014**: Remove tag before saving
-   - Add tag
-   - Click X on tag chip
-   - Verify tag is removed
-   - Save task
-   - Verify removed tag is not in task
-
-5. **TC-CREATE-015**: Search tags functionality
-   - Type in tag search field
-   - Verify search results appear
-   - Click on search result
-   - Verify tag is added
-
-#### 3.5 Recurring Tasks
-**Priority: MEDIUM**
-
-**Test Cases:**
-1. **TC-CREATE-016**: Create daily recurring task
-   - Enable "Повторяющаяся задача" switch
-   - Select "Ежедневно"
-   - Fill title and save
-   - Verify task is created
-   - Verify recurrence rule is set
-
-2. **TC-CREATE-017**: Create weekly recurring task
-   - Enable recurrence
-   - Select "Еженедельно"
-   - Select days of week
-   - Fill title and save
-   - Verify recurrence rule is set correctly
-
-3. **TC-CREATE-018**: Create monthly recurring task
-   - Enable recurrence
-   - Select "Ежемесячно"
-   - Fill title and save
-   - Verify recurrence rule is set
-
-4. **TC-CREATE-019**: Create yearly recurring task
-   - Enable recurrence
-   - Select "Ежегодно"
-   - Fill title and save
-   - Verify recurrence rule is set
-
-5. **TC-CREATE-020**: Create custom recurring task
-   - Enable recurrence
-   - Select "Произвольный"
-   - Set custom interval
-   - Fill title and save
-   - Verify custom recurrence rule is set
-
-#### 3.6 File Attachments
-**Priority: MEDIUM**
-
-**Test Cases:**
-1. **TC-CREATE-021**: Upload single file
-   - Open create dialog
-   - Upload file via drag & drop
-   - Verify file appears in attachments list
-   - Save task
-   - Verify file is attached to task
-
-2. **TC-CREATE-022**: Upload multiple files
-   - Upload 2-3 files
-   - Verify all files appear
-   - Save task
-   - Verify all files are attached
-
-3. **TC-CREATE-023**: File upload validation - file too large
-   - Try to upload file > 10MB
-   - Verify error message
-   - Verify file is not uploaded
-
-4. **TC-CREATE-024**: Remove file before saving
-   - Upload file
-   - Remove file
-   - Save task
-   - Verify file is not attached
+3. **TC-DASH-012**: Режим отображения сохраняется
+   - Переключиться на вид списка
+   - Обновить страницу
+   - Проверить, что вид списка всё ещё выбран (если сохраняется)
 
 ---
 
-### 4. Task Editing
+### 3. Создание задач
 
-#### 4.1 Open Task Details
-**Priority: HIGH**
+#### 3.1 Базовое создание задачи
+**Приоритет: КРИТИЧЕСКИЙ**
 
-**Test Cases:**
-1. **TC-EDIT-001**: Open task details sidebar
-   - Click on task card in list
-   - Verify sidebar opens from right
-   - Verify task data is loaded correctly
-   - Verify all fields are displayed
+**Тест-кейсы:**
+1. **TC-CREATE-001**: Создать задачу с минимальными данными (только название)
+   - Нажать кнопку "Создать задачу"
+   - Ввести название задачи
+   - Нажать "Сохранить"
+   - Проверить, что задача появилась в списке
+   - Проверить уведомление об успехе
+   - Проверить, что задача имеет значения по умолчанию (статус: в ожидании, приоритет: средний)
 
-2. **TC-EDIT-002**: Close task details sidebar
-   - Open task details
-   - Click close button (X)
-   - Verify sidebar closes
-   - Verify no errors
+2. **TC-CREATE-002**: Создать задачу со всеми полями
+   - Открыть диалог создания
+   - Заполнить название, описание
+   - Выбрать статус (В процессе)
+   - Выбрать приоритет (Высокий)
+   - Выбрать теги (несколько)
+   - Установить дату начала и дату окончания
+   - Нажать "Сохранить"
+   - Проверить, что задача появилась со всеми данными
+   - Проверить, что все поля отображаются корректно
 
-3. **TC-EDIT-003**: Close sidebar by clicking outside
-   - Open task details
-   - Click outside sidebar
-   - Verify sidebar closes
+3. **TC-CREATE-003**: Валидация создания задачи - пустое название
+   - Попытаться отправить без названия
+   - Проверить ошибку валидации
+   - Проверить, что форма не отправлена
+   - Проверить, что диалог остается открытым
 
-#### 4.2 Edit Task Fields
-**Priority: CRITICAL**
+4. **TC-CREATE-004**: Валидация создания задачи - слишком длинное название
+   - Ввести название > 255 символов
+   - Проверить ошибку валидации
+   - Проверить, что форма не отправлена
 
-**Test Cases:**
-1. **TC-EDIT-004**: Edit task title
-   - Open task details
-   - Click edit button
-   - Change title
-   - Save changes
-   - Verify title is updated in list
-   - Verify title is updated in sidebar
-   - Verify optimistic update (immediate UI change)
+5. **TC-CREATE-005**: Создание задачи - кнопка отмены
+   - Частично заполнить форму
+   - Нажать "Отмена"
+   - Проверить, что диалог закрывается
+   - Проверить, что задача не создана
+   - Проверить, что форма сброшена при следующем открытии
 
-2. **TC-EDIT-005**: Edit task description
-   - Edit description
-   - Save changes
-   - Verify description is updated
-   - Verify description is displayed correctly
+#### 3.2 Быстрый выбор даты
+**Приоритет: ВЫСОКИЙ**
 
-3. **TC-EDIT-006**: Change task status
-   - Change status from "В ожидании" to "В процессе"
-   - Save changes
-   - Verify status is updated
-   - Verify task appears in correct filter view
+**Тест-кейсы:**
+1. **TC-CREATE-006**: Создать задачу с быстрой датой "Сегодня"
+   - Открыть диалог создания
+   - Нажать кнопку "Сегодня"
+   - Заполнить название и сохранить
+   - Проверить, что задача имеет сегодняшнюю дату
+   - Проверить, что задача появляется в виде "Сегодня"
 
-4. **TC-EDIT-007**: Change task priority
-   - Change priority from "Средний" to "Срочный"
-   - Save changes
-   - Verify priority is updated
-   - Verify priority indicator is updated in task card
+2. **TC-CREATE-007**: Создать задачу с быстрой датой "Завтра"
+   - Нажать кнопку "Завтра"
+   - Заполнить название и сохранить
+   - Проверить, что задача имеет завтрашнюю дату
+   - Проверить, что задача появляется в виде "Предстоящие"
 
-5. **TC-EDIT-008**: Change task dates
-   - Change start date and due date
-   - Save changes
-   - Verify dates are updated
-   - Verify task appears in correct date group
+3. **TC-CREATE-008**: Создать задачу с быстрой датой "Послезавтра"
+   - Нажать кнопку "Послезавтра"
+   - Заполнить название и сохранить
+   - Проверить, что задача имеет дату послезавтра
 
-6. **TC-EDIT-009**: Add tags to existing task
-   - Open task details
-   - Add new tags
-   - Save changes
-   - Verify tags are added
-   - Verify tags appear on task card
+#### 3.3 Расширенный выбор даты
+**Приоритет: ВЫСОКИЙ**
 
-7. **TC-EDIT-010**: Remove tags from task
-   - Remove existing tags
-   - Save changes
-   - Verify tags are removed
-   - Verify tags are removed from task card
+**Тест-кейсы:**
+1. **TC-CREATE-009**: Создать задачу с пользовательским диапазоном дат
+   - Нажать "Показать расширенные настройки"
+   - Выбрать дату начала и дату окончания из календаря
+   - Заполнить название и сохранить
+   - Проверить, что задача имеет корректные даты
+   - Проверить, что даты корректно отображаются в карточке задачи
 
-8. **TC-EDIT-011**: Edit task - cancel changes
-   - Make changes to task
-   - Click cancel
-   - Verify changes are not saved
-   - Verify original data is still displayed
+2. **TC-CREATE-010**: Создание задачи - валидация даты (окончание до начала)
+   - Установить дату окончания до даты начала
+   - Попытаться сохранить
+   - Проверить ошибку валидации
+   - Проверить, что форма не отправлена
 
-#### 4.3 Subtasks Management
-**Priority: HIGH**
+#### 3.4 Управление тегами
+**Приоритет: ВЫСОКИЙ**
 
-**Test Cases:**
-1. **TC-EDIT-012**: Add subtask
-   - Open task details
-   - Enter subtask title
-   - Press Enter or click add button
-   - Verify subtask is added
-   - Verify subtask count is updated
-   - Verify parent task progress is recalculated
+**Тест-кейсы:**
+1. **TC-CREATE-011**: Добавить теги из популярных тегов
+   - Открыть диалог создания
+   - Нажать на популярные теги (Работа, Личное и т.д.)
+   - Проверить, что теги добавлены в форму
+   - Сохранить задачу
+   - Проверить, что теги отображаются на карточке задачи
 
-2. **TC-EDIT-013**: Complete subtask
-   - Add subtask
-   - Check subtask checkbox
-   - Verify subtask is marked as completed
-   - Verify parent task progress increases
-   - Verify completed subtask count updates
+2. **TC-CREATE-012**: Добавить теги путем ввода
+   - Ввести название тега в поле ввода тегов
+   - Нажать Enter
+   - Проверить, что тег добавлен
+   - Сохранить задачу
+   - Проверить, что тег создан и отображается
 
-3. **TC-EDIT-014**: Uncomplete subtask
-   - Complete subtask
-   - Uncheck subtask checkbox
-   - Verify subtask is uncompleted
-   - Verify parent task progress decreases
+3. **TC-CREATE-013**: Добавить несколько тегов
+   - Добавить 3-4 тега (смесь популярных и новых)
+   - Сохранить задачу
+   - Проверить, что все теги отображаются
+   - Проверить, что теги кликабельны
 
-4. **TC-EDIT-015**: Edit subtask title
-   - Add subtask
-   - Click edit on subtask
-   - Change title
-   - Save
-   - Verify subtask title is updated
+4. **TC-CREATE-014**: Удалить тег перед сохранением
+   - Добавить тег
+   - Нажать X на чипе тега
+   - Проверить, что тег удален
+   - Сохранить задачу
+   - Проверить, что удаленный тег отсутствует в задаче
 
-5. **TC-EDIT-016**: Delete subtask
-   - Add subtask
-   - Delete subtask
-   - Verify subtask is removed
-   - Verify subtask count decreases
-   - Verify parent progress is recalculated
+5. **TC-CREATE-015**: Функциональность поиска тегов
+   - Ввести текст в поле поиска тегов
+   - Проверить, что появляются результаты поиска
+   - Нажать на результат поиска
+   - Проверить, что тег добавлен
 
-6. **TC-EDIT-017**: Add nested subtask (subtask of subtask)
-   - Add subtask
-   - Open subtask details
-   - Add subtask to subtask
-   - Verify nested structure is created
-   - Verify counts are correct
+#### 3.5 Повторяющиеся задачи
+**Приоритет: СРЕДНИЙ**
 
-#### 4.4 Task Attachments in Edit Mode
-**Priority: MEDIUM**
+**Тест-кейсы:**
+1. **TC-CREATE-016**: Создать ежедневную повторяющуюся задачу
+   - Включить переключатель "Повторяющаяся задача"
+   - Выбрать "Ежедневно"
+   - Заполнить название и сохранить
+   - Проверить, что задача создана
+   - Проверить, что правило повторения установлено
 
-**Test Cases:**
-1. **TC-EDIT-018**: Add file to existing task
-   - Open task details
-   - Upload file
-   - Save changes
-   - Verify file is attached
-   - Verify file is downloadable
+2. **TC-CREATE-017**: Создать еженедельную повторяющуюся задачу
+   - Включить повторение
+   - Выбрать "Еженедельно"
+   - Выбрать дни недели
+   - Заполнить название и сохранить
+   - Проверить, что правило повторения установлено корректно
 
-2. **TC-EDIT-019**: Remove file from task
-   - Remove attached file
-   - Save changes
-   - Verify file is removed
+3. **TC-CREATE-018**: Создать ежемесячную повторяющуюся задачу
+   - Включить повторение
+   - Выбрать "Ежемесячно"
+   - Заполнить название и сохранить
+   - Проверить, что правило повторения установлено
 
-3. **TC-EDIT-020**: Download attached file
-   - Click on attached file
-   - Verify file download starts
-   - Verify file is correct
+4. **TC-CREATE-019**: Создать ежегодную повторяющуюся задачу
+   - Включить повторение
+   - Выбрать "Ежегодно"
+   - Заполнить название и сохранить
+   - Проверить, что правило повторения установлено
 
-#### 4.5 Delete Task
-**Priority: HIGH**
+5. **TC-CREATE-020**: Создать произвольную повторяющуюся задачу
+   - Включить повторение
+   - Выбрать "Произвольный"
+   - Установить пользовательский интервал
+   - Заполнить название и сохранить
+   - Проверить, что установлено пользовательское правило повторения
 
-**Test Cases:**
-1. **TC-EDIT-021**: Delete task with confirmation
-   - Open task details
-   - Click delete button
-   - Confirm deletion in dialog
-   - Verify task is removed from list
-   - Verify sidebar closes
-   - Verify success message
+#### 3.6 Вложения файлов
+**Приоритет: СРЕДНИЙ**
 
-2. **TC-EDIT-022**: Cancel task deletion
-   - Click delete button
-   - Cancel in confirmation dialog
-   - Verify task is not deleted
-   - Verify sidebar stays open
+**Тест-кейсы:**
+1. **TC-CREATE-021**: Загрузить один файл
+   - Открыть диалог создания
+   - Загрузить файл через перетаскивание
+   - Проверить, что файл появился в списке вложений
+   - Сохранить задачу
+   - Проверить, что файл прикреплен к задаче
 
-3. **TC-EDIT-023**: Delete task with subtasks
-   - Create task with subtasks
-   - Delete parent task
-   - Verify task and all subtasks are deleted
+2. **TC-CREATE-022**: Загрузить несколько файлов
+   - Загрузить 2-3 файла
+   - Проверить, что все файлы появились
+   - Сохранить задачу
+   - Проверить, что все файлы прикреплены
 
----
+3. **TC-CREATE-023**: Валидация загрузки файла - файл слишком большой
+   - Попытаться загрузить файл > 10MB
+   - Проверить сообщение об ошибке
+   - Проверить, что файл не загружен
 
-### 5. Task Completion
-
-#### 5.1 Complete Task via Checkbox
-**Priority: CRITICAL**
-
-**Test Cases:**
-1. **TC-COMPLETE-001**: Complete task from task card checkbox
-   - Check checkbox on task card
-   - Verify task is marked as completed immediately (optimistic update)
-   - Verify task moves to completed section
-   - Verify progress bar updates
-   - Verify API call succeeds
-
-2. **TC-COMPLETE-002**: Uncomplete task from checkbox
-   - Uncheck completed task checkbox
-   - Verify task is uncompleted immediately
-   - Verify task moves back to active section
-   - Verify progress bar updates
-
-3. **TC-COMPLETE-003**: Complete task with subtasks
-   - Complete parent task
-   - Verify all subtasks are also completed
-   - Verify progress shows 100%
-
-#### 5.2 Complete Task via Sidebar
-**Priority: HIGH**
-
-**Test Cases:**
-1. **TC-COMPLETE-004**: Complete task from sidebar button
-   - Open task details
-   - Click "Отметить как завершенную" button
-   - Verify task is completed
-   - Verify sidebar updates
-   - Verify task card updates
-
-2. **TC-COMPLETE-005**: Uncomplete task from sidebar
-   - Open completed task
-   - Click "Вернуть в невыполненные"
-   - Verify task is uncompleted
-   - Verify updates in UI
+4. **TC-CREATE-024**: Удалить файл перед сохранением
+   - Загрузить файл
+   - Удалить файл
+   - Сохранить задачу
+   - Проверить, что файл не прикреплен
 
 ---
 
-### 6. Filters
+### 4. Редактирование задач
 
-#### 6.1 Quick Filters
-**Priority: HIGH**
+#### 4.1 Открыть детали задачи
+**Приоритет: ВЫСОКИЙ**
 
-**Test Cases:**
-1. **TC-FILTER-001**: Apply "На сегодня" quick filter
-   - Click "На сегодня" button
-   - Verify only today's tasks are displayed
-   - Verify button is highlighted
-   - Verify correct API request
+**Тест-кейсы:**
+1. **TC-EDIT-001**: Открыть боковую панель деталей задачи
+   - Нажать на карточку задачи в списке
+   - Проверить, что боковая панель открывается справа
+   - Проверить, что данные задачи загружены корректно
+   - Проверить, что все поля отображены
 
-2. **TC-FILTER-002**: Apply "Срочные" quick filter
-   - Click "Срочные" button
-   - Verify only high/urgent priority tasks are displayed
-   - Verify button is highlighted
+2. **TC-EDIT-002**: Закрыть боковую панель деталей задачи
+   - Открыть детали задачи
+   - Нажать кнопку закрытия (X)
+   - Проверить, что боковая панель закрывается
+   - Проверить отсутствие ошибок
 
-3. **TC-FILTER-003**: Apply "Просроченные" quick filter
-   - Click "Просроченные" button
-   - Verify only overdue tasks are displayed
+3. **TC-EDIT-003**: Закрыть боковую панель кликом вне ее
+   - Открыть детали задачи
+   - Нажать вне боковой панели
+   - Проверить, что боковая панель закрывается
 
-4. **TC-FILTER-004**: Apply "В процессе" quick filter
-   - Click "В процессе" button
-   - Verify only in-progress tasks are displayed
+#### 4.2 Редактировать поля задачи
+**Приоритет: КРИТИЧЕСКИЙ**
 
-5. **TC-FILTER-005**: Apply multiple quick filters
-   - Click multiple quick filter buttons
-   - Verify combined filter is applied
-   - Verify correct tasks are displayed
+**Тест-кейсы:**
+1. **TC-EDIT-004**: Редактировать название задачи
+   - Открыть детали задачи
+   - Нажать кнопку редактирования
+   - Изменить название
+   - Сохранить изменения
+   - Проверить, что название обновлено в списке
+   - Проверить, что название обновлено в боковой панели
+   - Проверить оптимистичное обновление (немедленное изменение UI)
 
-6. **TC-FILTER-006**: Clear quick filters
-   - Apply filters
-   - Click "Очистить фильтры" button
-   - Verify all filters are cleared
-   - Verify all tasks are displayed
+2. **TC-EDIT-005**: Редактировать описание задачи
+   - Редактировать описание
+   - Сохранить изменения
+   - Проверить, что описание обновлено
+   - Проверить, что описание отображается корректно
 
-#### 6.2 Advanced Filters Modal
-**Priority: HIGH**
+3. **TC-EDIT-006**: Изменить статус задачи
+   - Изменить статус с "В ожидании" на "В процессе"
+   - Сохранить изменения
+   - Проверить, что статус обновлен
+   - Проверить, что задача появляется в корректном виде фильтра
 
-**Test Cases:**
-1. **TC-FILTER-007**: Open filters modal
-   - Click "Фильтры" button
-   - Verify modal opens
-   - Verify all filter sections are visible
+4. **TC-EDIT-007**: Изменить приоритет задачи
+   - Изменить приоритет со "Среднего" на "Срочный"
+   - Сохранить изменения
+   - Проверить, что приоритет обновлен
+   - Проверить, что индикатор приоритета обновлен в карточке задачи
 
-2. **TC-FILTER-008**: Filter by task type - "Активные"
-   - Select "Активные" in task type
-   - Apply filters
-   - Verify only active tasks are displayed
-   - Verify completed tasks are hidden
+5. **TC-EDIT-008**: Изменить даты задачи
+   - Изменить дату начала и дату окончания
+   - Сохранить изменения
+   - Проверить, что даты обновлены
+   - Проверить, что задача появляется в корректной группе дат
 
-3. **TC-FILTER-009**: Filter by task type - "Завершенные"
-   - Select "Завершенные" in task type
-   - Apply filters
-   - Verify only completed tasks are displayed
+6. **TC-EDIT-009**: Добавить теги к существующей задаче
+   - Открыть детали задачи
+   - Добавить новые теги
+   - Сохранить изменения
+   - Проверить, что теги добавлены
+   - Проверить, что теги появляются на карточке задачи
 
-4. **TC-FILTER-010**: Filter by priority - single
-   - Select "Высокий" priority
-   - Apply filters
-   - Verify only high priority tasks are displayed
+7. **TC-EDIT-010**: Удалить теги из задачи
+   - Удалить существующие теги
+   - Сохранить изменения
+   - Проверить, что теги удалены
+   - Проверить, что теги удалены из карточки задачи
 
-5. **TC-FILTER-011**: Filter by priority - multiple
-   - Select multiple priorities (High, Urgent)
-   - Apply filters
-   - Verify tasks with selected priorities are displayed
+8. **TC-EDIT-011**: Редактирование задачи - отменить изменения
+   - Внести изменения в задачу
+   - Нажать отмену
+   - Проверить, что изменения не сохранены
+   - Проверить, что исходные данные всё ещё отображаются
 
-6. **TC-FILTER-012**: Filter by status - single
-   - Select "В процессе" status
-   - Apply filters
-   - Verify only in-progress tasks are displayed
+#### 4.3 Управление подзадачами
+**Приоритет: ВЫСОКИЙ**
 
-7. **TC-FILTER-013**: Filter by status - multiple
-   - Select multiple statuses
-   - Apply filters
-   - Verify tasks with selected statuses are displayed
+**Тест-кейсы:**
+1. **TC-EDIT-012**: Добавить подзадачу
+   - Открыть детали задачи
+   - Ввести название подзадачи
+   - Нажать Enter или кнопку добавления
+   - Проверить, что подзадача добавлена
+   - Проверить, что счетчик подзадач обновлен
+   - Проверить, что прогресс родительской задачи пересчитан
 
-8. **TC-FILTER-014**: Filter by tags - single
-   - Select tag "Work"
-   - Apply filters
-   - Verify only tasks with "Work" tag are displayed
+2. **TC-EDIT-013**: Завершить подзадачу
+   - Добавить подзадачу
+   - Отметить чекбокс подзадачи
+   - Проверить, что подзадача отмечена как завершенная
+   - Проверить, что прогресс родительской задачи увеличился
+   - Проверить, что счетчик завершенных подзадач обновлен
 
-9. **TC-FILTER-015**: Filter by tags - multiple
-   - Select multiple tags
-   - Apply filters
-   - Verify tasks with any of selected tags are displayed
+3. **TC-EDIT-014**: Снять завершение подзадачи
+   - Завершить подзадачу
+   - Снять отметку с чекбокса подзадачи
+   - Проверить, что подзадача снова незавершена
+   - Проверить, что прогресс родительской задачи уменьшился
 
-10. **TC-FILTER-016**: Filter by date range
-    - Select date range (dateFrom, dateTo)
-    - Apply filters
-    - Verify only tasks within date range are displayed
-    - Verify date range filtering works correctly (boundaries)
+4. **TC-EDIT-015**: Редактировать название подзадачи
+   - Добавить подзадачу
+   - Нажать редактирование подзадачи
+   - Изменить название
+   - Сохранить
+   - Проверить, что название подзадачи обновлено
 
-11. **TC-FILTER-017**: Combined filters (priority + status + tags)
-    - Select priority, status, and tags
-    - Apply filters
-    - Verify tasks match all criteria
-    - Verify correct API request with all parameters
+5. **TC-EDIT-016**: Удалить подзадачу
+   - Добавить подзадачу
+   - Удалить подзадачу
+   - Проверить, что подзадача удалена
+   - Проверить, что счетчик подзадач уменьшился
+   - Проверить, что прогресс родителя пересчитан
 
-12. **TC-FILTER-018**: Clear all filters
-    - Apply multiple filters
-    - Click "Очистить" button
-    - Verify all filters are cleared
-    - Verify modal closes
-    - Verify all tasks are displayed
+6. **TC-EDIT-017**: Добавить вложенную подзадачу (подзадача подзадачи)
+   - Добавить подзадачу
+   - Открыть детали подзадачи
+   - Добавить подзадачу к подзадаче
+   - Проверить, что создана вложенная структура
+   - Проверить, что счетчики корректны
 
-#### 6.3 Filter Presets
-**Priority: HIGH**
+#### 4.4 Вложения задач в режиме редактирования
+**Приоритет: СРЕДНИЙ**
 
-**Test Cases:**
-1. **TC-FILTER-019**: Apply "Все задачи" preset
-   - Click "Все задачи" preset
-   - Verify all filters are cleared
-   - Verify all tasks are displayed
+**Тест-кейсы:**
+1. **TC-EDIT-018**: Добавить файл к существующей задаче
+   - Открыть детали задачи
+   - Загрузить файл
+   - Сохранить изменения
+   - Проверить, что файл прикреплен
+   - Проверить, что файл доступен для скачивания
 
-2. **TC-FILTER-020**: Apply "Важные" preset
-   - Click "Важные" preset
-   - Verify "Высокий" and "Срочный" priorities are selected
-   - Verify correct tasks are displayed
-   - Verify preset button is highlighted
+2. **TC-EDIT-019**: Удалить файл из задачи
+   - Удалить прикрепленный файл
+   - Сохранить изменения
+   - Проверить, что файл удален
 
-3. **TC-FILTER-021**: Apply "На этой неделе" preset
-   - Click "На этой неделе" preset
-   - Verify date range is set to current week
-   - Verify correct tasks are displayed
-   - Verify preset button is highlighted
+3. **TC-EDIT-020**: Скачать прикрепленный файл
+   - Нажать на прикрепленный файл
+   - Проверить, что начинается скачивание файла
+   - Проверить, что файл корректен
 
-4. **TC-FILTER-022**: Preset synchronization - "Важные"
-   - Apply "Важные" preset
-   - Manually select "Низкий" priority
-   - Verify "Важные" preset is deselected
-   - Verify filters are updated
+#### 4.5 Удалить задачу
+**Приоритет: ВЫСОКИЙ**
 
-5. **TC-FILTER-023**: Preset synchronization - "На этой неделе"
-   - Apply "На этой неделе" preset
-   - Manually change date range
-   - Verify "На этой неделе" preset is deselected
+**Тест-кейсы:**
+1. **TC-EDIT-021**: Удалить задачу с подтверждением
+   - Открыть детали задачи
+   - Нажать кнопку удаления
+   - Подтвердить удаление в диалоге
+   - Проверить, что задача удалена из списка
+   - Проверить, что боковая панель закрывается
+   - Проверить сообщение об успехе
 
-6. **TC-FILTER-024**: Preset synchronization - "Все задачи"
-   - Apply "Все задачи" preset
-   - Manually select any filter
-   - Verify "Все задачи" preset is deselected
+2. **TC-EDIT-022**: Отменить удаление задачи
+   - Нажать кнопку удаления
+   - Отменить в диалоге подтверждения
+   - Проверить, что задача не удалена
+   - Проверить, что боковая панель остается открытой
 
-#### 6.4 Tag Filtering from Sidebar
-**Priority: MEDIUM**
-
-**Test Cases:**
-1. **TC-FILTER-025**: Filter by tag from sidebar
-   - Click tag in "Часто используемые" section
-   - Verify tasks are filtered by tag
-   - Verify tag is highlighted
-
-2. **TC-FILTER-026**: Multiple tag filters from sidebar
-   - Click multiple tags
-   - Verify combined filter is applied
-
----
-
-### 7. Search
-
-**Priority: HIGH**
-
-**Test Cases:**
-1. **TC-SEARCH-001**: Search tasks by title
-   - Enter search query in search box
-   - Verify tasks are filtered by title
-   - Verify search is case-insensitive
-
-2. **TC-SEARCH-002**: Search tasks by description
-   - Enter text that matches task description
-   - Verify matching tasks are displayed
-
-3. **TC-SEARCH-003**: Search tasks by tag name
-   - Enter tag name in search
-   - Verify tasks with that tag are displayed
-
-4. **TC-SEARCH-004**: Clear search
-   - Enter search query
-   - Clear search
-   - Verify all tasks are displayed again
-
-5. **TC-SEARCH-005**: Search with no results
-   - Enter query that matches no tasks
-   - Verify "No results" message is displayed
+3. **TC-EDIT-023**: Удалить задачу с подзадачами
+   - Создать задачу с подзадачами
+   - Удалить родительскую задачу
+   - Проверить, что задача и все подзадачи удалены
 
 ---
 
-### 8. Calendar View
+### 5. Завершение задач
 
-#### 8.1 Calendar Navigation
-**Priority: HIGH**
+#### 5.1 Завершить задачу через чекбокс
+**Приоритет: КРИТИЧЕСКИЙ**
 
-**Test Cases:**
-1. **TC-CAL-001**: Navigate to calendar page
-   - Click "Календарь" in navigation
-   - Verify calendar page loads
-   - Verify no errors
+**Тест-кейсы:**
+1. **TC-COMPLETE-001**: Завершить задачу из чекбокса карточки задачи
+   - Отметить чекбокс на карточке задачи
+   - Проверить, что задача отмечена как завершенная немедленно (оптимистичное обновление)
+   - Проверить, что задача перемещается в секцию завершенных
+   - Проверить, что прогресс-бар обновляется
+   - Проверить, что API вызов успешен
 
-2. **TC-CAL-002**: Switch to month view
-   - Click "Месяц" button
-   - Verify month calendar is displayed
-   - Verify tasks are displayed on correct dates
+2. **TC-COMPLETE-002**: Снять завершение задачи через чекбокс
+   - Снять отметку с чекбокса завершенной задачи
+   - Проверить, что задача снова незавершена немедленно
+   - Проверить, что задача перемещается обратно в активную секцию
+   - Проверить, что прогресс-бар обновляется
 
-3. **TC-CAL-003**: Switch to week view
-   - Click "Неделя" button
-   - Verify week calendar is displayed
-   - Verify tasks are displayed correctly
+3. **TC-COMPLETE-003**: Завершить задачу с подзадачами
+   - Завершить родительскую задачу
+   - Проверить, что все подзадачи также завершены
+   - Проверить, что прогресс показывает 100%
 
-4. **TC-CAL-004**: Navigate to previous month/week
-   - Click previous button
-   - Verify calendar navigates correctly
-   - Verify tasks for that period are loaded
+#### 5.2 Завершить задачу через боковую панель
+**Приоритет: ВЫСОКИЙ**
 
-5. **TC-CAL-005**: Navigate to next month/week
-   - Click next button
-   - Verify calendar navigates correctly
+**Тест-кейсы:**
+1. **TC-COMPLETE-004**: Завершить задачу из кнопки боковой панели
+   - Открыть детали задачи
+   - Нажать кнопку "Отметить как завершенную"
+   - Проверить, что задача завершена
+   - Проверить, что боковая панель обновляется
+   - Проверить, что карточка задачи обновляется
 
-6. **TC-CAL-006**: Navigate to today
-   - Navigate to different period
-   - Click "Сегодня" button
-   - Verify calendar returns to current date
-
-#### 8.2 Calendar Task Display
-**Priority: HIGH**
-
-**Test Cases:**
-1. **TC-CAL-007**: Tasks are displayed on correct dates
-   - Verify tasks appear on their due dates
-   - Verify tasks with date ranges span correctly
-
-2. **TC-CAL-008**: Click task on calendar
-   - Click task in calendar
-   - Verify task details sidebar opens
-   - Verify correct task data is displayed
-
-3. **TC-CAL-009**: Create task from calendar date
-   - Click on date in calendar
-   - Verify create dialog opens with pre-filled date
-   - Create task
-   - Verify task appears on that date
+2. **TC-COMPLETE-005**: Снять завершение задачи из боковой панели
+   - Открыть завершенную задачу
+   - Нажать "Вернуть в невыполненные"
+   - Проверить, что задача снова незавершена
+   - Проверить обновления в UI
 
 ---
 
-### 9. Analytics View
+### 6. Фильтры
 
-#### 9.1 Analytics Page Load
-**Priority: MEDIUM**
+#### 6.1 Быстрые фильтры
+**Приоритет: ВЫСОКИЙ**
 
-**Test Cases:**
-1. **TC-ANAL-001**: Navigate to analytics page
-   - Click "Графики" in navigation
-   - Verify analytics page loads
-   - Verify no errors
+**Тест-кейсы:**
+1. **TC-FILTER-001**: Применить быстрый фильтр "На сегодня"
+   - Нажать кнопку "На сегодня"
+   - Проверить, что отображаются только сегодняшние задачи
+   - Проверить, что кнопка подсвечена
+   - Проверить корректный API запрос
 
-2. **TC-ANAL-002**: Analytics charts load successfully
-   - Verify all charts are rendered
-   - Verify no chart errors
-   - Verify data is displayed correctly
+2. **TC-FILTER-002**: Применить быстрый фильтр "Срочные"
+   - Нажать кнопку "Срочные"
+   - Проверить, что отображаются только задачи с высоким/срочным приоритетом
+   - Проверить, что кнопка подсвечена
 
-#### 9.2 Period Selection
-**Priority: MEDIUM**
+3. **TC-FILTER-003**: Применить быстрый фильтр "Просроченные"
+   - Нажать кнопку "Просроченные"
+   - Проверить, что отображаются только просроченные задачи
 
-**Test Cases:**
-1. **TC-ANAL-003**: Select "Последние 7 дней"
-   - Select period
-   - Verify charts update
-   - Verify correct data is displayed
+4. **TC-FILTER-004**: Применить быстрый фильтр "В процессе"
+   - Нажать кнопку "В процессе"
+   - Проверить, что отображаются только задачи в процессе
 
-2. **TC-ANAL-004**: Select "Последние 30 дней"
-   - Select period
-   - Verify charts update
+5. **TC-FILTER-005**: Применить несколько быстрых фильтров
+   - Нажать несколько кнопок быстрых фильтров
+   - Проверить, что применен комбинированный фильтр
+   - Проверить, что отображаются корректные задачи
 
-3. **TC-ANAL-005**: Select custom date range
-   - Click custom range button
-   - Select date range
-   - Verify charts update with correct data
+6. **TC-FILTER-006**: Очистить быстрые фильтры
+   - Применить фильтры
+   - Нажать кнопку "Очистить фильтры"
+   - Проверить, что все фильтры очищены
+   - Проверить, что отображаются все задачи
 
-#### 9.3 Chart Interactions
-**Priority: LOW**
+#### 6.2 Модальное окно расширенных фильтров
+**Приоритет: ВЫСОКИЙ**
 
-**Test Cases:**
-1. **TC-ANAL-006**: Chart tooltips work
-   - Hover over chart elements
-   - Verify tooltips are displayed
-   - Verify tooltip data is correct
+**Тест-кейсы:**
+1. **TC-FILTER-007**: Открыть модальное окно фильтров
+   - Нажать кнопку "Фильтры"
+   - Проверить, что модальное окно открывается
+   - Проверить, что все секции фильтров видимы
 
-2. **TC-ANAL-007**: Chart legends are clickable
-   - Click on chart legend items
-   - Verify chart updates (if interactive)
+2. **TC-FILTER-008**: Фильтр по типу задачи - "Активные"
+   - Выбрать "Активные" в типе задачи
+   - Применить фильтры
+   - Проверить, что отображаются только активные задачи
+   - Проверить, что завершенные задачи скрыты
 
----
+3. **TC-FILTER-009**: Фильтр по типу задачи - "Завершенные"
+   - Выбрать "Завершенные" в типе задачи
+   - Применить фильтры
+   - Проверить, что отображаются только завершенные задачи
 
-### 10. Profile View
+4. **TC-FILTER-010**: Фильтр по приоритету - один
+   - Выбрать приоритет "Высокий"
+   - Применить фильтры
+   - Проверить, что отображаются только задачи с высоким приоритетом
 
-#### 10.1 Profile Navigation
-**Priority: MEDIUM**
+5. **TC-FILTER-011**: Фильтр по приоритету - несколько
+   - Выбрать несколько приоритетов (Высокий, Срочный)
+   - Применить фильтры
+   - Проверить, что отображаются задачи с выбранными приоритетами
 
-**Test Cases:**
-1. **TC-PROF-001**: Navigate to profile page
-   - Click profile button/email
-   - Verify profile page loads
-   - Verify user data is displayed
+6. **TC-FILTER-012**: Фильтр по статусу - один
+   - Выбрать статус "В процессе"
+   - Применить фильтры
+   - Проверить, что отображаются только задачи в процессе
 
-2. **TC-PROF-002**: Switch between profile tabs
-   - Click "Общие" tab
-   - Verify general settings are displayed
-   - Click "Безопасность" tab
-   - Verify security settings are displayed
-   - Click "Уведомления" tab
-   - Verify notification settings are displayed
+7. **TC-FILTER-013**: Фильтр по статусу - несколько
+   - Выбрать несколько статусов
+   - Применить фильтры
+   - Проверить, что отображаются задачи с выбранными статусами
 
-#### 10.2 Edit Profile
-**Priority: MEDIUM**
+8. **TC-FILTER-014**: Фильтр по тегам - один
+   - Выбрать тег "Работа"
+   - Применить фильтры
+   - Проверить, что отображаются только задачи с тегом "Работа"
 
-**Test Cases:**
-1. **TC-PROF-003**: Update profile name
-   - Edit name field
-   - Save changes
-   - Verify name is updated
-   - Verify success message
+9. **TC-FILTER-015**: Фильтр по тегам - несколько
+   - Выбрать несколько тегов
+   - Применить фильтры
+   - Проверить, что отображаются задачи с любым из выбранных тегов
 
-2. **TC-PROF-004**: Update email (if allowed)
-   - Edit email field
-   - Save changes
-   - Verify email is updated (if feature exists)
+10. **TC-FILTER-016**: Фильтр по диапазону дат
+    - Выбрать диапазон дат (dateFrom, dateTo)
+    - Применить фильтры
+    - Проверить, что отображаются только задачи в диапазоне дат
+    - Проверить, что фильтрация по диапазону работает корректно (границы)
 
-3. **TC-PROF-005**: Cancel profile changes
-   - Make changes
-   - Click cancel
-   - Verify changes are not saved
+11. **TC-FILTER-017**: Комбинированные фильтры (приоритет + статус + теги)
+    - Выбрать приоритет, статус и теги
+    - Применить фильтры
+    - Проверить, что задачи соответствуют всем критериям
+    - Проверить корректный API запрос со всеми параметрами
 
-#### 10.3 Change Password
-**Priority: MEDIUM**
+12. **TC-FILTER-018**: Очистить все фильтры
+    - Применить несколько фильтров
+    - Нажать кнопку "Очистить"
+    - Проверить, что все фильтры очищены
+    - Проверить, что модальное окно закрывается
+    - Проверить, что отображаются все задачи
 
-**Test Cases:**
-1. **TC-PROF-006**: Change password successfully
-   - Enter current password
-   - Enter new password
-   - Confirm new password
-   - Save changes
-   - Verify success message
-   - Verify can login with new password
+#### 6.3 Пресеты фильтров
+**Приоритет: ВЫСОКИЙ**
 
-2. **TC-PROF-007**: Change password - validation
-   - Try to change with wrong current password
-   - Verify error message
-   - Try with mismatched new passwords
-   - Verify validation error
+**Тест-кейсы:**
+1. **TC-FILTER-019**: Применить пресет "Все задачи"
+   - Нажать пресет "Все задачи"
+   - Проверить, что все фильтры очищены
+   - Проверить, что отображаются все задачи
 
-#### 10.4 Notification Settings
-**Priority: LOW**
+2. **TC-FILTER-020**: Применить пресет "Важные"
+   - Нажать пресет "Важные"
+   - Проверить, что выбраны приоритеты "Высокий" и "Срочный"
+   - Проверить, что отображаются корректные задачи
+   - Проверить, что кнопка пресета подсвечена
 
-**Test Cases:**
-1. **TC-PROF-008**: Toggle notification settings
-   - Toggle various notification switches
-   - Save changes
-   - Verify settings are saved
-   - Verify settings persist after reload
+3. **TC-FILTER-021**: Применить пресет "На этой неделе"
+   - Нажать пресет "На этой неделе"
+   - Проверить, что диапазон дат установлен на текущую неделю
+   - Проверить, что отображаются корректные задачи
+   - Проверить, что кнопка пресета подсвечена
 
----
+4. **TC-FILTER-022**: Синхронизация пресета - "Важные"
+   - Применить пресет "Важные"
+   - Вручную выбрать приоритет "Низкий"
+   - Проверить, что пресет "Важные" снят
+   - Проверить, что фильтры обновлены
 
-### 11. Error Handling
+5. **TC-FILTER-023**: Синхронизация пресета - "На этой неделе"
+   - Применить пресет "На этой неделе"
+   - Вручную изменить диапазон дат
+   - Проверить, что пресет "На этой неделе" снят
 
-**Priority: HIGH**
+6. **TC-FILTER-024**: Синхронизация пресета - "Все задачи"
+   - Применить пресет "Все задачи"
+   - Вручную выбрать любой фильтр
+   - Проверить, что пресет "Все задачи" снят
 
-**Test Cases:**
-1. **TC-ERROR-001**: Handle 401 Unauthorized
-   - Expire token or logout
-   - Try to perform action
-   - Verify redirect to login
-   - Verify error message
+#### 6.4 Фильтрация по тегам из боковой панели
+**Приоритет: СРЕДНИЙ**
 
-2. **TC-ERROR-002**: Handle 500 Server Error
-   - Mock server error
-   - Perform action
-   - Verify error message is displayed
-   - Verify app doesn't crash
+**Тест-кейсы:**
+1. **TC-FILTER-025**: Фильтр по тегу из боковой панели
+   - Нажать тег в секции "Часто используемые"
+   - Проверить, что задачи отфильтрованы по тегу
+   - Проверить, что тег подсвечен
 
-3. **TC-ERROR-003**: Handle network timeout
-   - Simulate slow network
-   - Perform action
-   - Verify timeout handling
-   - Verify retry mechanism (if exists)
-
-4. **TC-ERROR-004**: Handle validation errors
-   - Submit invalid data
-   - Verify validation errors are displayed
-   - Verify form is not submitted
-
----
-
-### 12. Mobile Responsiveness
-
-**Priority: MEDIUM**
-
-**Test Cases:**
-1. **TC-MOBILE-001**: Dashboard on mobile
-   - Resize to mobile viewport
-   - Verify layout adapts
-   - Verify all features are accessible
-
-2. **TC-MOBILE-002**: Filters modal on mobile
-   - Open filters on mobile
-   - Verify modal is fullscreen
-   - Verify all controls are accessible
-
-3. **TC-MOBILE-003**: Task creation on mobile
-   - Create task on mobile
-   - Verify form is usable
-   - Verify date picker works (touch UI)
+2. **TC-FILTER-026**: Фильтры по нескольким тегам из боковой панели
+   - Нажать несколько тегов
+   - Проверить, что применен комбинированный фильтр
 
 ---
 
-## 🚀 Implementation Phases
+### 7. Поиск
 
-### Phase 1: Foundation (Week 1)
-**Goal:** Set up testing infrastructure and basic auth tests
+**Приоритет: ВЫСОКИЙ**
 
-**Tasks:**
-1. Install Playwright
-2. Configure Playwright (browsers, base URL, timeouts)
-3. Set up Page Object Model structure
-4. Create test fixtures (auth helpers)
-5. Implement authentication tests (login, register, logout)
-6. Set up CI/CD basic integration
+**Тест-кейсы:**
+1. **TC-SEARCH-001**: Поиск задач по названию
+   - Ввести поисковый запрос в поле поиска
+   - Проверить, что задачи отфильтрованы по названию
+   - Проверить, что поиск регистронезависимый
 
-**Deliverables:**
-- ✅ Playwright configured
-- ✅ 7 authentication test cases passing
-- ✅ Basic CI/CD pipeline
+2. **TC-SEARCH-002**: Поиск задач по описанию
+   - Ввести текст, который совпадает с описанием задачи
+   - Проверить, что отображаются соответствующие задачи
 
-### Phase 2: Core Task Management (Week 2)
-**Goal:** Test task CRUD operations
+3. **TC-SEARCH-003**: Поиск задач по названию тега
+   - Ввести название тега в поиск
+   - Проверить, что отображаются задачи с этим тегом
 
-**Tasks:**
-1. Create DashboardPage page object
-2. Create TaskDialog page object
-3. Create TaskDetailsSidebar page object
-4. Implement task creation tests (all scenarios)
-5. Implement task editing tests
-6. Implement task completion tests
-7. Implement task deletion tests
+4. **TC-SEARCH-004**: Очистить поиск
+   - Ввести поисковый запрос
+   - Очистить поиск
+   - Проверить, что снова отображаются все задачи
 
-**Deliverables:**
-- ✅ 25+ task management test cases passing
-- ✅ Page objects for task components
-
-### Phase 3: Filters & Search (Week 3)
-**Goal:** Test all filtering and search functionality
-
-**Tasks:**
-1. Create FiltersModal page object
-2. Implement quick filter tests
-3. Implement advanced filter tests
-4. Implement filter preset tests
-5. Implement search tests
-
-**Deliverables:**
-- ✅ 25+ filter/search test cases passing
-
-### Phase 4: Views & Navigation (Week 4)
-**Goal:** Test all views and navigation
-
-**Tasks:**
-1. Implement dashboard view navigation tests
-2. Create CalendarPage page object
-3. Implement calendar tests
-4. Create AnalyticsPage page object
-5. Implement analytics tests
-6. Create ProfilePage page object
-7. Implement profile tests
-
-**Deliverables:**
-- ✅ 20+ view/navigation test cases passing
-
-### Phase 5: Edge Cases & Polish (Week 5)
-**Goal:** Test edge cases and error handling
-
-**Tasks:**
-1. Implement error handling tests
-2. Implement mobile responsiveness tests
-3. Add test data cleanup
-4. Optimize test execution time
-5. Add test reporting
-
-**Deliverables:**
-- ✅ All edge case tests passing
-- ✅ Test suite runs in < 10 minutes
-- ✅ Comprehensive test reports
+5. **TC-SEARCH-005**: Поиск без результатов
+   - Ввести запрос, который не совпадает ни с одной задачей
+   - Проверить, что отображается сообщение "Нет результатов"
 
 ---
 
-## 🔧 CI/CD Integration
+### 8. Вид календаря
 
-### GitHub Actions Example
+#### 8.1 Навигация в календаре
+**Приоритет: ВЫСОКИЙ**
+
+**Тест-кейсы:**
+1. **TC-CAL-001**: Перейти на страницу календаря
+   - Нажать "Календарь" в навигации
+   - Проверить, что страница календаря загружается
+   - Проверить отсутствие ошибок
+
+2. **TC-CAL-002**: Переключиться на вид месяца
+   - Нажать кнопку "Месяц"
+   - Проверить, что отображается календарь месяца
+   - Проверить, что задачи отображаются на корректных датах
+
+3. **TC-CAL-003**: Переключиться на вид недели
+   - Нажать кнопку "Неделя"
+   - Проверить, что отображается календарь недели
+   - Проверить, что задачи отображаются корректно
+
+4. **TC-CAL-004**: Перейти к предыдущему месяцу/неделе
+   - Нажать кнопку назад
+   - Проверить, что календарь переключается корректно
+   - Проверить, что загружены задачи для этого периода
+
+5. **TC-CAL-005**: Перейти к следующему месяцу/неделе
+   - Нажать кнопку вперед
+   - Проверить, что календарь переключается корректно
+
+6. **TC-CAL-006**: Перейти к сегодняшнему дню
+   - Перейти к другому периоду
+   - Нажать кнопку "Сегодня"
+   - Проверить, что календарь возвращается к текущей дате
+
+#### 8.2 Отображение задач в календаре
+**Приоритет: ВЫСОКИЙ**
+
+**Тест-кейсы:**
+1. **TC-CAL-007**: Задачи отображаются на корректных датах
+   - Проверить, что задачи появляются на своих сроках выполнения
+   - Проверить, что задачи с диапазонами дат охватывают корректный промежуток
+
+2. **TC-CAL-008**: Нажать задачу в календаре
+   - Нажать задачу в календаре
+   - Проверить, что открывается боковая панель деталей задачи
+   - Проверить, что отображаются корректные данные задачи
+
+3. **TC-CAL-009**: Создать задачу из даты календаря
+   - Нажать на дату в календаре
+   - Проверить, что открывается диалог создания с предзаполненной датой
+   - Создать задачу
+   - Проверить, что задача появляется на этой дате
+
+---
+
+### 9. Вид аналитики
+
+#### 9.1 Загрузка страницы аналитики
+**Приоритет: СРЕДНИЙ**
+
+**Тест-кейсы:**
+1. **TC-ANAL-001**: Перейти на страницу аналитики
+   - Нажать "Графики" в навигации
+   - Проверить, что страница аналитики загружается
+   - Проверить отсутствие ошибок
+
+2. **TC-ANAL-002**: Графики аналитики загружаются успешно
+   - Проверить, что все графики отрисованы
+   - Проверить отсутствие ошибок графиков
+   - Проверить, что данные отображаются корректно
+
+#### 9.2 Выбор периода
+**Приоритет: СРЕДНИЙ**
+
+**Тест-кейсы:**
+1. **TC-ANAL-003**: Выбрать "Последние 7 дней"
+   - Выбрать период
+   - Проверить, что графики обновляются
+   - Проверить, что отображаются корректные данные
+
+2. **TC-ANAL-004**: Выбрать "Последние 30 дней"
+   - Выбрать период
+   - Проверить, что графики обновляются
+
+3. **TC-ANAL-005**: Выбрать пользовательский диапазон дат
+   - Нажать кнопку пользовательского диапазона
+   - Выбрать диапазон дат
+   - Проверить, что графики обновляются с корректными данными
+
+#### 9.3 Взаимодействия с графиками
+**Приоритет: НИЗКИЙ**
+
+**Тест-кейсы:**
+1. **TC-ANAL-006**: Подсказки графиков работают
+   - Навести на элементы графиков
+   - Проверить, что отображаются подсказки
+   - Проверить, что данные подсказок корректны
+
+2. **TC-ANAL-007**: Легенды графиков кликабельны
+   - Нажать на элементы легенды графика
+   - Проверить, что график обновляется (если интерактивен)
+
+---
+
+### 10. Вид профиля
+
+#### 10.1 Навигация в профиле
+**Приоритет: СРЕДНИЙ**
+
+**Тест-кейсы:**
+1. **TC-PROF-001**: Перейти на страницу профиля
+   - Нажать кнопку профиля/email
+   - Проверить, что страница профиля загружается
+   - Проверить, что данные пользователя отображаются
+
+2. **TC-PROF-002**: Переключиться между вкладками профиля
+   - Нажать вкладку "Общие"
+   - Проверить, что отображаются общие настройки
+   - Нажать вкладку "Безопасность"
+   - Проверить, что отображаются настройки безопасности
+   - Нажать вкладку "Уведомления"
+   - Проверить, что отображаются настройки уведомлений
+
+#### 10.2 Редактировать профиль
+**Приоритет: СРЕДНИЙ**
+
+**Тест-кейсы:**
+1. **TC-PROF-003**: Обновить имя профиля
+   - Редактировать поле имени
+   - Сохранить изменения
+   - Проверить, что имя обновлено
+   - Проверить сообщение об успехе
+
+2. **TC-PROF-004**: Обновить email (если разрешено)
+   - Редактировать поле email
+   - Сохранить изменения
+   - Проверить, что email обновлен (если функция существует)
+
+3. **TC-PROF-005**: Отменить изменения профиля
+   - Внести изменения
+   - Нажать отмену
+   - Проверить, что изменения не сохранены
+
+#### 10.3 Изменить пароль
+**Приоритет: СРЕДНИЙ**
+
+**Тест-кейсы:**
+1. **TC-PROF-006**: Успешно изменить пароль
+   - Ввести текущий пароль
+   - Ввести новый пароль
+   - Подтвердить новый пароль
+   - Сохранить изменения
+   - Проверить сообщение об успехе
+   - Проверить, что можно войти с новым паролем
+
+2. **TC-PROF-007**: Изменение пароля - валидация
+   - Попытаться изменить с неправильным текущим паролем
+   - Проверить сообщение об ошибке
+   - Попытаться с несовпадающими новыми паролями
+   - Проверить ошибку валидации
+
+#### 10.4 Настройки уведомлений
+**Приоритет: НИЗКИЙ**
+
+**Тест-кейсы:**
+1. **TC-PROF-008**: Переключить настройки уведомлений
+   - Переключить различные переключатели уведомлений
+   - Сохранить изменения
+   - Проверить, что настройки сохранены
+   - Проверить, что настройки сохраняются после перезагрузки
+
+---
+
+### 11. Обработка ошибок
+
+**Приоритет: ВЫСОКИЙ**
+
+**Тест-кейсы:**
+1. **TC-ERROR-001**: Обработка 401 Unauthorized
+   - Истечь токен или выйти
+   - Попытаться выполнить действие
+   - Проверить редирект на вход
+   - Проверить сообщение об ошибке
+
+2. **TC-ERROR-002**: Обработка 500 Server Error
+   - Замокировать ошибку сервера
+   - Выполнить действие
+   - Проверить, что отображается сообщение об ошибке
+   - Проверить, что приложение не падает
+
+3. **TC-ERROR-003**: Обработка таймаута сети
+   - Симулировать медленную сеть
+   - Выполнить действие
+   - Проверить обработку таймаута
+   - Проверить механизм повтора (если существует)
+
+4. **TC-ERROR-004**: Обработка ошибок валидации
+   - Отправить невалидные данные
+   - Проверить, что отображаются ошибки валидации
+   - Проверить, что форма не отправлена
+
+---
+
+### 12. Мобильная адаптивность
+
+**Приоритет: СРЕДНИЙ**
+
+**Тест-кейсы:**
+1. **TC-MOBILE-001**: Панель управления на мобильном
+   - Изменить размер на мобильный viewport
+   - Проверить, что макет адаптируется
+   - Проверить, что все функции доступны
+
+2. **TC-MOBILE-002**: Модальное окно фильтров на мобильном
+   - Открыть фильтры на мобильном
+   - Проверить, что модальное окно полноэкранное
+   - Проверить, что все элементы управления доступны
+
+3. **TC-MOBILE-003**: Создание задачи на мобильном
+   - Создать задачу на мобильном
+   - Проверить, что форма используется удобно
+   - Проверить, что выбор даты работает (сенсорный UI)
+
+---
+
+## 🚀 Этапы реализации
+
+### Этап 1: Фундамент (Неделя 1)
+**Цель:** Настроить инфраструктуру тестирования и базовые тесты аутентификации
+
+**Задачи:**
+1. Установить Playwright
+2. Настроить Playwright (браузеры, базовый URL, таймауты)
+3. Настроить структуру Page Object Model
+4. Создать тестовые фикстуры (помощники аутентификации)
+5. Реализовать тесты аутентификации (вход, регистрация, выход)
+6. Настроить базовую интеграцию с CI/CD
+
+**Результаты:**
+- ✅ Playwright настроен
+- ✅ 7 тест-кейсов аутентификации проходят
+- ✅ Базовый CI/CD пайплайн
+
+### Этап 2: Основное управление задачами (Неделя 2)
+**Цель:** Протестировать CRUD операции с задачами
+
+**Задачи:**
+1. Создать page object DashboardPage
+2. Создать page object TaskDialog
+3. Создать page object TaskDetailsSidebar
+4. Реализовать тесты создания задач (все сценарии)
+5. Реализовать тесты редактирования задач
+6. Реализовать тесты завершения задач
+7. Реализовать тесты удаления задач
+
+**Результаты:**
+- ✅ 25+ тест-кейсов управления задачами проходят
+- ✅ Page objects для компонентов задач
+
+### Этап 3: Фильтры и поиск (Неделя 3)
+**Цель:** Протестировать всю функциональность фильтрации и поиска
+
+**Задачи:**
+1. Создать page object FiltersModal
+2. Реализовать тесты быстрых фильтров
+3. Реализовать тесты расширенных фильтров
+4. Реализовать тесты пресетов фильтров
+5. Реализовать тесты поиска
+
+**Результаты:**
+- ✅ 25+ тест-кейсов фильтров/поиска проходят
+
+### Этап 4: Виды и навигация (Неделя 4)
+**Цель:** Протестировать все виды и навигацию
+
+**Задачи:**
+1. Реализовать тесты навигации по видам панели управления
+2. Создать page object CalendarPage
+3. Реализовать тесты календаря
+4. Создать page object AnalyticsPage
+5. Реализовать тесты аналитики
+6. Создать page object ProfilePage
+7. Реализовать тесты профиля
+
+**Результаты:**
+- ✅ 20+ тест-кейсов видов/навигации проходят
+
+### Этап 5: Граничные случаи и доработка (Неделя 5)
+**Цель:** Протестировать граничные случаи и обработку ошибок
+
+**Задачи:**
+1. Реализовать тесты обработки ошибок
+2. Реализовать тесты мобильной адаптивности
+3. Добавить очистку тестовых данных
+4. Оптимизировать время выполнения тестов
+5. Добавить отчетность по тестам
+
+**Результаты:**
+- ✅ Все тесты граничных случаев проходят
+- ✅ Набор тестов выполняется менее чем за 10 минут
+- ✅ Комплексные отчеты по тестам
+
+---
+
+## 🔧 Интеграция с CI/CD
+
+### Пример GitHub Actions
 
 ```yaml
 name: E2E Tests
@@ -1204,41 +1204,41 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
-      
+
       - name: Install dependencies
         run: |
           cd frontend
           npm ci
-      
+
       - name: Install Playwright
         run: npx playwright install --with-deps
-      
+
       - name: Start backend
         run: |
           cd docker
           docker-compose up -d
-      
+
       - name: Start frontend
         run: |
           cd frontend
           npm run dev &
         env:
           VITE_API_URL: http://localhost:8089
-      
+
       - name: Wait for services
         run: |
           npx wait-on http://localhost:3000 http://localhost:8089/api/health
-      
+
       - name: Run E2E tests
         run: |
           cd frontend
           npm run test:e2e
-      
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v3
@@ -1249,68 +1249,67 @@ jobs:
 
 ---
 
-## 📊 Test Coverage Goals
+## 📊 Цели покрытия тестами
 
-### Critical Paths (Must Have - 100%)
-- ✅ Authentication (login, register)
-- ✅ Task creation (basic + with all fields)
-- ✅ Task editing (all fields)
-- ✅ Task completion
-- ✅ Task deletion
-- ✅ Filtering (all types)
-- ✅ View navigation
+### Критические пути (Обязательно - 100%)
+- ✅ Аутентификация (вход, регистрация)
+- ✅ Создание задачи (базовое + со всеми полями)
+- ✅ Редактирование задачи (все поля)
+- ✅ Завершение задачи
+- ✅ Удаление задачи
+- ✅ Фильтрация (все типы)
+- ✅ Навигация по видам
 
-### Important Features (Should Have - 80%)
-- ✅ Recurring tasks
-- ✅ File attachments
-- ✅ Subtasks management
-- ✅ Calendar view
-- ✅ Analytics view
-- ✅ Profile editing
+### Важные функции (Желательно - 80%)
+- ✅ Повторяющиеся задачи
+- ✅ Вложения файлов
+- ✅ Управление подзадачами
+- ✅ Вид календаря
+- ✅ Вид аналитики
+- ✅ Редактирование профиля
 
-### Nice to Have (Could Have - 50%)
-- ✅ Mobile responsiveness
-- ✅ Error handling edge cases
-- ✅ Performance testing
-- ✅ Accessibility testing
-
----
-
-## 📈 Success Metrics
-
-1. **Test Coverage**: 80%+ of critical user flows
-2. **Execution Time**: < 10 minutes for full suite
-3. **Reliability**: 95%+ pass rate on CI/CD
-4. **Maintenance**: Tests updated within 1 day of UI changes
+### Дополнительные функции (Опционально - 50%)
+- ✅ Мобильная адаптивность
+- ✅ Граничные случаи обработки ошибок
+- ✅ Тестирование производительности
+- ✅ Тестирование доступности
 
 ---
 
-## 🎯 Next Steps
+## 📈 Метрики успеха
 
-1. **Install Playwright**
+1. **Покрытие тестами**: 80%+ критических пользовательских сценариев
+2. **Время выполнения**: < 10 минут для полного набора
+3. **Надежность**: 95%+ успешных прохождений на CI/CD
+4. **Обслуживание**: Тесты обновляются в течение 1 дня после изменений UI
+
+---
+
+## 🎯 Следующие шаги
+
+1. **Установить Playwright**
    ```bash
    cd frontend
    npm install -D @playwright/test
    npx playwright install
    ```
 
-2. **Create initial test structure**
-   - Set up `e2e/` directory
-   - Create `playwright.config.ts`
-   - Create first page objects
+2. **Создать начальную структуру тестов**
+   - Настроить директорию `e2e/`
+   - Создать `playwright.config.ts`
+   - Создать первые page objects
 
-3. **Start with Phase 1**
-   - Implement authentication tests
-   - Set up CI/CD basic pipeline
+3. **Начать с Этапа 1**
+   - Реализовать тесты аутентификации
+   - Настроить базовый CI/CD пайплайн
 
-4. **Iterate and expand**
-   - Add tests incrementally
-   - Refine page objects
-   - Optimize execution time
+4. **Итерировать и расширять**
+   - Добавлять тесты инкрементально
+   - Улучшать page objects
+   - Оптимизировать время выполнения
 
 ---
 
-**Total Test Cases: ~100+**  
-**Estimated Implementation Time: 4-5 weeks**  
-**Priority: HIGH - Critical for production readiness**
-
+**Всего тест-кейсов: ~100+**
+**Приблизительное время реализации: 4-5 недель**
+**Приоритет: ВЫСОКИЙ - Критично для готовности к производству**
