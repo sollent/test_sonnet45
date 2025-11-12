@@ -19,10 +19,10 @@ class MonthlyRecurrenceStrategy implements RecurrenceStrategyInterface
         // Move to next month
         if ($next instanceof DateTime) {
             $next->modify('first day of next month');
-            $next->setDate($next->format('Y'), $next->format('n'), min($dayOfMonth, $next->format('t')));
+            $next->setDate((int) $next->format('Y'), (int) $next->format('n'), min($dayOfMonth, (int) $next->format('t')));
         } else {
             $next = $next->modify('first day of next month');
-            $next = $next->setDate($next->format('Y'), $next->format('n'), min($dayOfMonth, $next->format('t')));
+            $next = $next->setDate((int) $next->format('Y'), (int) $next->format('n'), min($dayOfMonth, (int) $next->format('t')));
         }
 
         // Apply time of day if set
