@@ -34,7 +34,7 @@ Software:
   Docker Compose: 2.20.0+
   Git: 2.34+
 
-Ports (must be free):
+Ports (должны быть свободны):
   - 80, 443: Nginx
   - 3000: Frontend dev server
   - 8089: Backend API
@@ -57,7 +57,7 @@ Hardware:
   Storage: 40GB SSD
   Network: 100 Mbps
 
-Optimizations for low resources:
+Оптимизация для низких ресурсов:
   - Используйте Llama 3.2 1B вместо 3B
   - Whisper tiny модель вместо base
   - Отключите ненужные сервисы
@@ -125,19 +125,19 @@ task-manager/                        # Корень проекта
 
 ```bash
 #!/bin/bash
-# File: create-structure.sh
+# Файл: create-structure.sh
 
-# Set base directory
+# Установить базовую директорию
 BASE_DIR="$HOME/voice-ai-services"
 
-# Create directory structure
+# Создать структуру директорий
 mkdir -p "$BASE_DIR"/{scripts,configs/{ollama,whisper,centrifugo,nginx},volumes/{ollama-data,whisper-models,audio-uploads},logs/{ollama,whisper,centrifugo}}
 
-# Set permissions
+# Установить разрешения
 chmod 755 "$BASE_DIR"/scripts
 chmod 755 "$BASE_DIR"/volumes/*
 
-echo "✅ Directory structure created at $BASE_DIR"
+echo "✅ Структура директорий создана в $BASE_DIR"
 ```
 
 ---
@@ -148,10 +148,10 @@ echo "✅ Directory structure created at $BASE_DIR"
 ### ВАЖНО!!! - МОЖНО ПРОПУСТИТЬ И НЕ ДЕЛАТЬ ЭТОТ ШАГ (Так как у меня Macos и мне скорее всего эти локальные пакеты не нужны - главное что у меня есть DOCKER)
 ```bash
 #!/bin/bash
-# Step 1.1: Update system
+# Шаг 1.1: Обновить систему
 sudo apt-get update && sudo apt-get upgrade -y
 
-# Step 1.2: Install dependencies
+# Шаг 1.2: Установить зависимости
 sudo apt-get install -y \
     curl \
     wget \
@@ -164,7 +164,7 @@ sudo apt-get install -y \
     python3-pip \
     ffmpeg
 
-# Step 1.3: Install Docker (if not installed)
+# Шаг 1.3: Установить Docker (если не установлен)
 if ! command -v docker &> /dev/null; then
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
@@ -172,11 +172,11 @@ if ! command -v docker &> /dev/null; then
     sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
 fi
 
-# Step 1.4: Add user to docker group
+# Шаг 1.4: Добавить пользователя в группу docker
 sudo usermod -aG docker $USER
-echo "⚠️  Please log out and back in for docker group changes to take effect"
+echo "⚠️  Пожалуйста, выйдите и войдите снова, чтобы изменения группы docker вступили в силу"
 
-# Step 1.5: Configure swap (for low memory VPS)
+# Шаг 1.5: Настроить swap (для VPS с низкой памятью)
 if [ ! -f /swapfile ]; then
     sudo fallocate -l 4G /swapfile
     sudo chmod 600 /swapfile
@@ -185,7 +185,7 @@ if [ ! -f /swapfile ]; then
     echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 fi
 
-# Step 1.6: Optimize system for AI workloads
+# Шаг 1.6: Оптимизировать систему для AI рабочих нагрузок
 echo "vm.swappiness=10" | sudo tee -a /etc/sysctl.conf
 echo "vm.vfs_cache_pressure=50" | sudo tee -a /etc/sysctl.conf
 sudo sysctl -p
@@ -195,24 +195,24 @@ sudo sysctl -p
 
 #### 2.1 Главный Файл Окружения
 ```bash
-# File: infrastructure/ai-services/.env
+# Файл: infrastructure/ai-services/.env
 
-# Environment Configuration
+# Конфигурация Окружения
 ENVIRONMENT=development
 
-# Service Versions
+# Версии Сервисов
 OLLAMA_VERSION=latest
 WHISPER_VERSION=1.5.4
 CENTRIFUGO_VERSION=v5
 
-# Service Ports
+# Порты Сервисов
 OLLAMA_PORT=11434
 WHISPER_PORT=8090
 CENTRIFUGO_PORT=8000
 CENTRIFUGO_ADMIN_PORT=8001
 REDIS_PORT=6379
 
-# Ollama Configuration
+# Конфигурация Ollama
 OLLAMA_MODEL=llama3.2:3b
 OLLAMA_HOST=0.0.0.0
 OLLAMA_KEEP_ALIVE=5m
@@ -220,35 +220,35 @@ OLLAMA_NUM_PARALLEL=2
 OLLAMA_MAX_LOADED_MODELS=1
 OLLAMA_MEMORY_LIMIT=3G
 
-# Whisper Configuration
+# Конфигурация Whisper
 WHISPER_MODEL=base
 WHISPER_LANGUAGE=ru
 WHISPER_THREADS=4
 WHISPER_MAX_DURATION=30
 WHISPER_MEMORY_LIMIT=1G
 
-# Centrifugo Configuration
+# Конфигурация Centrifugo
 CENTRIFUGO_TOKEN_HMAC_SECRET=your-secret-key-min-32-chars-long
 CENTRIFUGO_API_KEY=your-api-key-min-32-chars-long
 CENTRIFUGO_ADMIN_PASSWORD=your-admin-password
 CENTRIFUGO_ADMIN_SECRET=your-admin-secret
 
-# Redis Configuration
+# Конфигурация Redis
 REDIS_PASSWORD=your-redis-password
 REDIS_MAX_MEMORY=512mb
 
-# Paths
+# Пути
 DATA_PATH=./volumes
 LOGS_PATH=./logs
 CONFIGS_PATH=./configs
 
-# Network
+# Сеть
 NETWORK_NAME=voice-ai-network
 ```
 
 #### 2.2 Docker Compose Конфигурация
 ```yaml
-# File: infrastructure/ai-services/docker-compose.yml
+# Файл: infrastructure/ai-services/docker-compose.yml
 
 version: '3.8'
 
@@ -266,7 +266,7 @@ volumes:
   redis-data:
 
 services:
-  # Ollama LLM Service
+  # Сервис Ollama LLM
   ollama:
     image: ollama/ollama:${OLLAMA_VERSION}
     container_name: voice-ai-ollama
@@ -298,7 +298,7 @@ services:
       retries: 3
       start_period: 60s
 
-  # Whisper Speech-to-Text Service
+  # Сервис Whisper Speech-to-Text
   whisper:
     build:
       context: ${CONFIGS_PATH}/whisper
@@ -335,7 +335,7 @@ services:
       timeout: 5s
       retries: 3
 
-  # Redis for Centrifugo
+  # Redis для Centrifugo
   redis:
     image: redis:7.2-alpine
     container_name: voice-ai-redis
@@ -356,7 +356,7 @@ services:
       timeout: 3s
       retries: 3
 
-  # Centrifugo WebSocket Server
+  # Сервер Centrifugo WebSocket
   centrifugo:
     image: centrifugo/centrifugo:${CENTRIFUGO_VERSION}
     container_name: voice-ai-centrifugo
@@ -382,14 +382,14 @@ services:
 
 #### 2.3 Whisper Dockerfile
 ```dockerfile
-# File: infrastructure/ai-services/configs/whisper/Dockerfile
+# Файл: infrastructure/ai-services/configs/whisper/Dockerfile
 
 FROM python:3.11-slim
 
 ARG WHISPER_VERSION=1.5.4
 ARG MODEL_SIZE=base
 
-# Install system dependencies
+# Установить системные зависимости
 RUN apt-get update && apt-get install -y \
     ffmpeg \
     git \
@@ -397,7 +397,7 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Whisper and dependencies
+# Установить Whisper и зависимости
 RUN pip install --no-cache-dir \
     openai-whisper==${WHISPER_VERSION} \
     fastapi \
@@ -406,28 +406,28 @@ RUN pip install --no-cache-dir \
     aiofiles \
     prometheus-client
 
-# Create directories
+# Создать директории
 RUN mkdir -p /app /models /uploads /logs
 
-# Copy application code
+# Скопировать код приложения
 COPY app.py /app/app.py
 
-# Download model at build time
+# Загрузить модель во время сборки
 RUN python -c "import whisper; whisper.load_model('${MODEL_SIZE}', download_root='/models')"
 
 WORKDIR /app
 
-# Health check endpoint
+# Проверка здоровья
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s \
     CMD curl -f http://localhost:8090/health || exit 1
 
-# Run the application
+# Запустить приложение
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8090", "--workers", "2"]
 ```
 
 #### 2.4 Whisper API Приложение
 ```python
-# File: infrastructure/ai-services/configs/whisper/app.py
+# Файл: infrastructure/ai-services/configs/whisper/app.py
 
 import os
 import time
@@ -444,7 +444,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from prometheus_client import Counter, Histogram, generate_latest
 
-# Configure logging
+# Настроить логирование
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -455,22 +455,22 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Metrics
-transcription_counter = Counter('whisper_transcriptions_total', 'Total transcriptions')
-transcription_duration = Histogram('whisper_transcription_duration_seconds', 'Transcription duration')
-transcription_errors = Counter('whisper_transcription_errors_total', 'Transcription errors')
+# Метрики
+transcription_counter = Counter('whisper_transcriptions_total', 'Всего транскрипций')
+transcription_duration = Histogram('whisper_transcription_duration_seconds', 'Длительность транскрипции')
+transcription_errors = Counter('whisper_transcription_errors_total', 'Ошибки транскрипции')
 
-# Initialize FastAPI
+# Инициализировать FastAPI
 app = FastAPI(title="Whisper STT API", version="1.0.0")
 
-# Load Whisper model
+# Загрузить модель Whisper
 MODEL_SIZE = os.getenv("MODEL_SIZE", "base")
 LANGUAGE = os.getenv("LANGUAGE", "ru")
 MAX_DURATION = int(os.getenv("MAX_DURATION", "30"))
 
-logger.info(f"Loading Whisper model: {MODEL_SIZE}")
+logger.info(f"Загрузка модели Whisper: {MODEL_SIZE}")
 model = whisper.load_model(MODEL_SIZE, download_root="/models")
-logger.info("Model loaded successfully")
+logger.info("Модель загружена успешно")
 
 class TranscriptionRequest(BaseModel):
     language: Optional[str] = LANGUAGE
@@ -486,7 +486,7 @@ class TranscriptionResponse(BaseModel):
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint"""
+    """Конечная точка проверки здоровья"""
     return {
         "status": "healthy",
         "model": MODEL_SIZE,
@@ -496,7 +496,7 @@ async def health_check():
 
 @app.get("/metrics")
 async def metrics():
-    """Prometheus metrics endpoint"""
+    """Конечная точка метрик Prometheus"""
     return generate_latest()
 
 @app.post("/transcribe", response_model=TranscriptionResponse)
@@ -506,46 +506,46 @@ async def transcribe_audio(
     include_segments: bool = False
 ):
     """
-    Transcribe audio file to text
+    Транскрибировать аудио файл в текст
 
     Args:
-        file: Audio file (WAV, MP3, M4A, etc.)
-        language: Language code (default: ru)
-        include_segments: Include word-level segments
+        file: Аудио файл (WAV, MP3, M4A, и т.д.)
+        language: Код языка (по умолчанию: ru)
+        include_segments: Включить сегменты на уровне слов
 
     Returns:
-        Transcription result with text and metadata
+        Результат транскрипции с текстом и метаданными
     """
     start_time = time.time()
 
     try:
-        # Validate file
+        # Валидация файла
         if not file.filename:
-            raise HTTPException(status_code=400, detail="No file provided")
+            raise HTTPException(status_code=400, detail="Файл не предоставлен")
 
-        # Check file size (max 10MB)
+        # Проверить размер файла (максимум 10MB)
         contents = await file.read()
         if len(contents) > 10 * 1024 * 1024:
-            raise HTTPException(status_code=413, detail="File too large (max 10MB)")
+            raise HTTPException(status_code=413, detail="Файл слишком большой (максимум 10MB)")
 
-        # Save to temporary file
+        # Сохранить во временный файл
         with tempfile.NamedTemporaryFile(delete=False, suffix=Path(file.filename).suffix) as tmp_file:
             tmp_file.write(contents)
             tmp_path = tmp_file.name
 
         try:
-            # Load audio and check duration
+            # Загрузить аудио и проверить длительность
             audio = whisper.load_audio(tmp_path)
             duration = len(audio) / whisper.audio.SAMPLE_RATE
 
             if duration > MAX_DURATION:
                 raise HTTPException(
                     status_code=400,
-                    detail=f"Audio too long ({duration:.1f}s). Maximum {MAX_DURATION}s"
+                    detail=f"Аудио слишком длинное ({duration:.1f}с). Максимум {MAX_DURATION}с"
                 )
 
-            # Transcribe
-            logger.info(f"Transcribing {file.filename} ({duration:.1f}s)")
+            # Транскрибировать
+            logger.info(f"Транскрибируется {file.filename} ({duration:.1f}с)")
 
             with transcription_duration.time():
                 result = model.transcribe(
@@ -562,7 +562,7 @@ async def transcribe_audio(
             transcription_counter.inc()
             processing_time = time.time() - start_time
 
-            logger.info(f"Transcription completed in {processing_time:.2f}s")
+            logger.info(f"Транскрипция завершена за {processing_time:.2f}с")
 
             response = TranscriptionResponse(
                 text=result["text"].strip(),
@@ -577,15 +577,15 @@ async def transcribe_audio(
             return response
 
         finally:
-            # Clean up temp file
+            # Очистить временный файл
             os.unlink(tmp_path)
 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Transcription error: {str(e)}")
+        logger.error(f"Ошибка транскрипции: {str(e)}")
         transcription_errors.inc()
-        raise HTTPException(status_code=500, detail=f"Transcription failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Транскрипция не удалась: {str(e)}")
 
 @app.post("/transcribe/batch")
 async def transcribe_batch(
@@ -593,8 +593,8 @@ async def transcribe_batch(
     language: Optional[str] = LANGUAGE,
     background_tasks: BackgroundTasks = BackgroundTasks()
 ):
-    """Batch transcription endpoint"""
-    # Implementation for batch processing
+    """Конечная точка пакетной транскрипции"""
+    # Реализация пакетной обработки
     pass
 
 if __name__ == "__main__":
@@ -603,7 +603,7 @@ if __name__ == "__main__":
 
 #### 2.5 Centrifugo Конфигурация
 ```json
-// File: infrastructure/ai-services/configs/centrifugo/config.json
+// Файл: infrastructure/ai-services/configs/centrifugo/config.json
 {
   "token_hmac_secret_key": "${CENTRIFUGO_TOKEN_HMAC_SECRET}",
   "api_key": "${CENTRIFUGO_API_KEY}",
@@ -681,17 +681,17 @@ if __name__ == "__main__":
 #### 3.1 Главный Скрипт Установки
 ```bash
 #!/bin/bash
-# File: infrastructure/ai-services/scripts/install.sh
+# Файл: infrastructure/ai-services/scripts/install.sh
 
 set -e
 
-# Colors for output
+# Цвета для вывода
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+NC='\033[0m' # Без цвета
 
-# Functions
+# Функции
 log_info() {
     echo -e "${GREEN}[INFO]${NC} $1"
 }
@@ -704,83 +704,83 @@ log_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
-# Check prerequisites
+# Проверка предварительных требований
 check_prerequisites() {
-    log_info "Checking prerequisites..."
+    log_info "Проверка предварительных требований..."
 
-    # Check Docker
+    # Проверка Docker
     if ! command -v docker &> /dev/null; then
-        log_error "Docker is not installed"
+        log_error "Docker не установлен"
         exit 1
     fi
 
-    # Check Docker Compose
+    # Проверка Docker Compose
     if ! command -v docker-compose &> /dev/null; then
-        log_error "Docker Compose is not installed"
+        log_error "Docker Compose не установлен"
         exit 1
     fi
 
-    # Check ports
+    # Проверка портов
     for port in 11434 8090 8000 8001 6379; do
         if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null ; then
-            log_warn "Port $port is already in use"
+            log_warn "Порт $port уже используется"
         fi
     done
 
-    log_info "Prerequisites check completed"
+    log_info "Проверка предварительных требований завершена"
 }
 
-# Load environment
+# Загрузка окружения
 load_environment() {
     if [ -f .env ]; then
         export $(cat .env | grep -v '^#' | xargs)
-        log_info "Environment loaded"
+        log_info "Окружение загружено"
     else
-        log_error ".env file not found"
+        log_error "Файл .env не найден"
         exit 1
     fi
 }
 
-# Build Whisper image
+# Сборка образа Whisper
 build_whisper() {
-    log_info "Building Whisper Docker image..."
+    log_info "Сборка Docker образа Whisper..."
     docker build -t voice-ai/whisper:${WHISPER_VERSION} \
         --build-arg WHISPER_VERSION=${WHISPER_VERSION} \
         --build-arg MODEL_SIZE=${WHISPER_MODEL} \
         ${CONFIGS_PATH}/whisper
 }
 
-# Start services
+# Запуск сервисов
 start_services() {
-    log_info "Starting AI services..."
+    log_info "Запуск AI сервисов..."
     docker-compose up -d
 
-    log_info "Waiting for services to be healthy..."
+    log_info "Ожидание готовности сервисов..."
     sleep 10
 
-    # Check health
+    # Проверка здоровья
     docker-compose ps
 }
 
-# Load Ollama model
+# Загрузка модели Ollama
 load_ollama_model() {
-    log_info "Loading Ollama model: ${OLLAMA_MODEL}..."
+    log_info "Загрузка модели Ollama: ${OLLAMA_MODEL}..."
 
-    # Wait for Ollama to be ready
+    # Ожидание готовности Ollama
     while ! curl -s http://localhost:${OLLAMA_PORT}/api/tags > /dev/null 2>&1; do
-        log_info "Waiting for Ollama to start..."
+        log_info "Ожидание запуска Ollama..."
         sleep 5
     done
 
-    # Pull the model
+    # Загрузка модели
     docker exec voice-ai-ollama ollama pull ${OLLAMA_MODEL}
 
-    log_info "Model loaded successfully"
+    log_info "Модель загружена успешно"
 }
 
-# Main installation
+# Главная установка
 main() {
-    log_info "Starting Voice AI Services installation..."
+    log_info "Начало установки Voice AI Services..."
 
     check_prerequisites
     load_environment
@@ -788,79 +788,79 @@ main() {
     start_services
     load_ollama_model
 
-    log_info "Installation completed successfully!"
-    log_info "Access points:"
+    log_info "Установка завершена успешно!"
+    log_info "Точки доступа:"
     log_info "  - Ollama API: http://localhost:${OLLAMA_PORT}"
     log_info "  - Whisper API: http://localhost:${WHISPER_PORT}"
     log_info "  - Centrifugo: http://localhost:${CENTRIFUGO_PORT}"
     log_info "  - Centrifugo Admin: http://localhost:${CENTRIFUGO_ADMIN_PORT}"
 }
 
-# Run main function
+# Запуск главной функции
 main "$@"
 ```
 
 #### 3.2 Скрипт Проверки Здоровья
 ```bash
 #!/bin/bash
-# File: infrastructure/ai-services/scripts/health-check.sh
+# Файл: infrastructure/ai-services/scripts/health-check.sh
 
 set -e
 
-# Load environment
+# Загрузка окружения
 source .env
 
-# Colors
+# Цвета
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
-# Health check function
+# Функция проверки здоровья
 check_service() {
     local service_name=$1
     local url=$2
 
     if curl -s -o /dev/null -w "%{http_code}" "$url" | grep -q "200\|204"; then
-        echo -e "${GREEN}✓${NC} $service_name is healthy"
+        echo -e "${GREEN}✓${NC} $service_name здоров"
         return 0
     else
-        echo -e "${RED}✗${NC} $service_name is not responding"
+        echo -e "${RED}✗${NC} $service_name не отвечает"
         return 1
     fi
 }
 
-# Main checks
-echo "=== Voice AI Services Health Check ==="
+# Главные проверки
+echo "=== Проверка Здоровья Voice AI Services ==="
 echo ""
 
-# Check Docker containers
-echo "Docker Containers:"
+# Проверка контейнеров Docker
+echo "Контейнеры Docker:"
 docker-compose ps
 
 echo ""
-echo "Service Health:"
+echo "Здоровье Сервисов:"
 
-# Check each service
+# Проверка каждого сервиса
 check_service "Ollama" "http://localhost:${OLLAMA_PORT}/api/tags"
 check_service "Whisper" "http://localhost:${WHISPER_PORT}/health"
 check_service "Centrifugo" "http://localhost:${CENTRIFUGO_PORT}/health"
 
-# Check Redis
+# Проверка Redis
 if docker exec voice-ai-redis redis-cli -a ${REDIS_PASSWORD} ping > /dev/null 2>&1; then
-    echo -e "${GREEN}✓${NC} Redis is healthy"
+    echo -e "${GREEN}✓${NC} Redis здоров"
 else
-    echo -e "${RED}✗${NC} Redis is not responding"
+    echo -e "${RED}✗${NC} Redis не отвечает"
 fi
 
-# Check resources
+# Проверка ресурсов
 echo ""
-echo "Resource Usage:"
+echo "Использование Ресурсов:"
 docker stats --no-stream voice-ai-ollama voice-ai-whisper voice-ai-centrifugo voice-ai-redis
 
-# Test Ollama
+# Тест Ollama
 echo ""
-echo "Testing Ollama..."
+echo "Тестирование Ollama..."
 curl -s -X POST http://localhost:${OLLAMA_PORT}/api/generate \
     -H "Content-Type: application/json" \
     -d '{
@@ -870,10 +870,10 @@ curl -s -X POST http://localhost:${OLLAMA_PORT}/api/generate \
         "options": {
             "num_predict": 10
         }
-    }' | jq -r '.response' || echo "Ollama test failed"
+    }' | jq -r '.response' || echo "Тест Ollama не удался"
 
 echo ""
-echo "=== Health check completed ==="
+echo "=== Проверка здоровья завершена ==="
 ```
 
 ---
@@ -886,7 +886,7 @@ echo "=== Health check completed ==="
 # 1. Проверить что все контейнеры запущены
 docker-compose ps
 
-# Expected output:
+# Ожидаемый вывод:
 # NAME                 STATUS              PORTS
 # voice-ai-ollama      running (healthy)   0.0.0.0:11434->11434/tcp
 # voice-ai-whisper     running (healthy)   0.0.0.0:8090->8090/tcp
@@ -948,7 +948,7 @@ sudo swapon /swapfile
 # Найти процесс использующий порт
 sudo lsof -i :11434
 
-# Kill process
+# Убить процесс
 sudo kill -9 <PID>
 
 # Или изменить порт в .env
