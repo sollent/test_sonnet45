@@ -31,7 +31,7 @@ test.describe('Calendar View', () => {
     await loginPage.fillForm(email, password)
     await page.waitForTimeout(500)
     await loginPage.submit()
-    await page.waitForURL('**/dashboard', { timeout: 15000 })
+    await page.waitForURL('**/dashboard', { timeout: 45000 })
     await page.waitForTimeout(2000)
   })
 

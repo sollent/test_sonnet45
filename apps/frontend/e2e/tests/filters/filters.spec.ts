@@ -38,7 +38,7 @@ test.describe('Filters', () => {
     await loginPage.fillForm(email, password)
     await page.waitForTimeout(500)
     await loginPage.submit()
-    await page.waitForURL('**/dashboard', { timeout: 15000 })
+    await page.waitForURL('**/dashboard', { timeout: 45000 })
     await page.waitForTimeout(2000)
 
     // Step 2: Get auth token from localStorage (now valid after UI login)

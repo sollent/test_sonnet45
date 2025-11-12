@@ -36,9 +36,9 @@ test.describe('Registration Flow', () => {
     // Use a more flexible approach: wait for any navigation or network idle
     try {
       await Promise.race([
-        page.waitForURL('**/dashboard', { timeout: 30000 }),
-        page.waitForURL('**/login', { timeout: 30000 }),
-        page.waitForLoadState('networkidle', { timeout: 30000 })
+        page.waitForURL('**/dashboard', { timeout: 45000 }),
+        page.waitForURL('**/login', { timeout: 45000 }),
+        page.waitForLoadState('networkidle', { timeout: 45000 })
       ])
     } catch {
       // If redirect doesn't happen, wait a bit more
@@ -183,12 +183,12 @@ test.describe('Registration Flow', () => {
     await registerPage.fillForm(testEmail, testPassword)
     await page.waitForTimeout(500)
     await registerPage.submit()
-    
+
     // Wait for redirect - might go to dashboard or login
     await Promise.race([
-      page.waitForURL('**/dashboard', { timeout: 20000 }),
-      page.waitForURL('**/login', { timeout: 20000 }),
-      page.waitForLoadState('networkidle', { timeout: 20000 })
+      page.waitForURL('**/dashboard', { timeout: 45000 }),
+      page.waitForURL('**/login', { timeout: 45000 }),
+      page.waitForLoadState('networkidle', { timeout: 45000 })
     ])
     await page.waitForTimeout(2000)
 

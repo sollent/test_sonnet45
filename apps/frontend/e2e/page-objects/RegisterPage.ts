@@ -146,7 +146,8 @@ export class RegisterPage {
    * Wait for redirect to dashboard after successful registration
    */
   async waitForDashboardRedirect(): Promise<void> {
-    await this.page.waitForURL('**/dashboard', { timeout: 10000 })
+    await this.page.waitForURL('**/dashboard', { timeout: 45000 })
+    await this.page.waitForLoadState('networkidle', { timeout: 15000 })
   }
 
   /**

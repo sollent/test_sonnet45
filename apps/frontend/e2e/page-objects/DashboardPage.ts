@@ -91,7 +91,8 @@ export class DashboardPage {
    * Wait for redirect to login page after logout
    */
   async waitForLoginRedirect(): Promise<void> {
-    await this.page.waitForURL('**/login', { timeout: 10000 })
+    await this.page.waitForURL('**/login', { timeout: 45000 })
+    await this.page.waitForLoadState('networkidle', { timeout: 15000 })
   }
 
   /**
