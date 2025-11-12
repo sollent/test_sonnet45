@@ -22,13 +22,28 @@ async function globalSetup(config: FullConfig) {
     console.log('⏳ Ожидание готовности сервисов...')
     await execAsync('sleep 15')
 
-    console.log('🗄️  Создание схемы базы данных...')
-    // Используем doctrine:schema:create вместо миграций (безопаснее для test БД)
+    console.log('🗄️  Создание базы данных (если не существует)...')
     await execAsync('docker exec test-backend-php83 php bin/console doctrine:database:create --if-not-exists --env=test')
-    await execAsync('docker exec test-backend-php83 php bin/console doctrine:schema:create --env=test')
   }
 
-  // 2. Заполнение базы данных тестовыми данными через Symfony команду
+  // 2. Очистка и пересоздание схемы БД (для свежих данных каждый раз)
+  console.log('🧹 Очистка тестовой базы данных...')
+
+  try {
+    // Удаляем схему БД (все таблицы и данные)
+    await execAsync('docker exec test-backend-php83 php bin/console doctrine:schema:drop --force --full-database --env=test')
+    console.log('✅ Старые данные удалены')
+
+    // Создаем схему заново
+    console.log('🗄️  Создание свежей схемы базы данных...')
+    await execAsync('docker exec test-backend-php83 php bin/console doctrine:schema:create --env=test')
+    console.log('✅ Схема БД создана')
+  } catch (error) {
+    console.error('❌ Не удалось пересоздать схему БД:', error)
+    throw error
+  }
+
+  // 3. Заполнение базы данных тестовыми данными через Symfony команду
   console.log('🌱 Заполнение базы данных тестовыми данными...')
 
   try {
