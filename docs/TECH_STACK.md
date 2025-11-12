@@ -698,7 +698,7 @@ services:
 - **Согласованность**: Одинаковое окружение для dev, staging, prod
 - **Изоляция**: Каждый сервис в своем контейнере
 - **Переносимость**: Работает везде, где работает Docker
-- **Простая настройка**: `docker-compose up` и все работает
+- **Простая настройка**: `docker-compose -f docker-compose.yml -f infrastructure/docker/docker-compose.dev.yml up -d` (dev режим)
 - **Контроль версий**: Инфраструктура как код
 
 ---
