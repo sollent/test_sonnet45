@@ -1,28 +1,29 @@
-# 📊 Database Schema - PostgreSQL Design
+# 📊 Схема базы данных - Дизайн PostgreSQL
 
-> **TL;DR**: PostgreSQL 15 database with 5 main entities (User, Task, Tag, RefreshToken, Media). Task entity supports unlimited nesting via self-referencing relationship. Optimized with 13 composite indexes for query performance.
-
----
-
-## Table of Contents
-
-- [Entity Relationship Diagram](#entity-relationship-diagram)
-- [Core Entities](#core-entities)
-- [Relationships](#relationships)
-- [Indexing Strategy](#indexing-strategy)
-- [Migrations Workflow](#migrations-workflow)
-- [Query Optimization](#query-optimization)
+> **TL;DR**: База данных PostgreSQL 15 с 5 основными сущностями (User, Task, Tag, RefreshToken, Media). Сущность Task поддерживает неограниченную вложенность через самореферентную связь. Оптимизирована 13 составными индексами для производительности запросов.
 
 ---
 
-## Entity Relationship Diagram
+## Содержание
+
+- [Диаграмма связей сущностей](#диаграмма-связей-сущностей)
+- [Основные сущности](#основные-сущности)
+- [Связи](#связи)
+- [Стратегия индексирования](#стратегия-индексирования)
+- [Рабочий процесс с миграциями](#рабочий-процесс-с-миграциями)
+- [Оптимизация запросов](#оптимизация-запросов)
+
+---
+
+## Диаграмма связей сущностей
 
 ```
 ┌──────────────────────┐
-│       User           │
+│    Пользователь      │
+│       (User)         │
 │──────────────────────│
 │ id (PK)              │
-│ email (unique)       │
+│ email (уникальный)   │
 │ password (nullable)  │
 │ googleId (nullable)  │
 │ name                 │
@@ -39,8 +40,9 @@
            │ 1:N
            ▼
 ┌──────────────────────┐          ┌──────────────────────┐
-│       Task           │◄────────►│        Tag           │
-│──────────────────────│   N:M    │──────────────────────│
+│       Задача         │◄────────►│         Тег          │
+│       (Task)         │   N:M    │        (Tag)         │
+│──────────────────────│          │──────────────────────│
 │ id (PK)              │          │ id (PK)              │
 │ user_id (FK)         │          │ name                 │
 │ parent_task_id (FK)  │◄─┐       │ color                │
@@ -50,19 +52,21 @@
 │ priority (enum)      │  │       └──────────────────────┘
 │ startDate            │  │
 │ dueDate              │  │       ┌──────────────────────┐
-│ completedAt          │  │       │    MediaObject       │
-│ sortOrder            │  │       │──────────────────────│
-│ isArchived           │  │       │ id (PK)              │
-│ isRecurringTemplate  │  │       │ filePath             │
-│ createdAt            │  │       │ fileName             │
-│ updatedAt            │  │       │ mimeType             │
-└──────────────────────┘  │       │ size                 │
-           │              │       │ uploadedBy (FK)      │
-           │ Self-ref 1:N │       │ createdAt            │
-           └──────────────┘       └──────────────────────┘
+│ completedAt          │  │       │   Медиафайл          │
+│ sortOrder            │  │       │   (MediaObject)      │
+│ isArchived           │  │       │──────────────────────│
+│ isRecurringTemplate  │  │       │ id (PK)              │
+│ createdAt            │  │       │ filePath             │
+│ updatedAt            │  │       │ fileName             │
+└──────────────────────┘  │       │ mimeType             │
+           │              │       │ size                 │
+           │ Самоссылка 1:N       │ uploadedBy (FK)      │
+           └──────────────┘       │ createdAt            │
+                                  └──────────────────────┘
 
 ┌──────────────────────┐
-│   RefreshToken       │
+│  Токен обновления    │
+│   (RefreshToken)     │
 │──────────────────────│
 │ id (PK)              │
 │ refresh_token (text) │
@@ -71,7 +75,8 @@
 └──────────────────────┘
 
 ┌──────────────────────┐
-│  RecurrenceRule      │
+│  Правило повторения  │
+│  (RecurrenceRule)    │
 │──────────────────────│
 │ id (PK)              │
 │ template_task_id(FK) │
@@ -86,13 +91,13 @@
 
 ---
 
-## Core Entities
+## Основные сущности
 
-### 1. User Entity
+### 1. Сущность User (Пользователь)
 
-**Purpose:** Authentication & user data
+**Назначение:** Аутентификация и данные пользователя
 
-**Location:** `/backend/src/Entity/User.php`
+**Расположение:** `/backend/src/Entity/User.php`
 
 ```php
 #[ORM\Entity(repositoryClass: UserRepository::class)]
@@ -104,7 +109,7 @@ class User extends AbstractEntity implements UserInterface
     protected string $email;
 
     #[ORM\Column(type: 'string', nullable: true)]
-    protected ?string $password = null;    // Nullable for OAuth users
+    protected ?string $password = null;    // Nullable для OAuth пользователей
 
     #[ORM\Column(type: 'json')]
     protected array $roles = [];           // ['ROLE_USER', 'ROLE_ADMIN']
@@ -121,7 +126,7 @@ class User extends AbstractEntity implements UserInterface
     #[ORM\Column(type: 'string', nullable: true)]
     protected ?string $avatar = null;
 
-    // User preferences
+    // Настройки пользователя
     #[ORM\Column(type: 'string', length: 20, options: ['default' => 'light'])]
     protected string $theme = 'light';     // light/dark
 
@@ -141,7 +146,7 @@ class User extends AbstractEntity implements UserInterface
         'weeklyDigest' => false,
     ];
 
-    // Relationships
+    // Связи
     #[ORM\OneToMany(targetEntity: Task::class, mappedBy: 'user', cascade: ['remove'])]
     private Collection $tasks;
 
@@ -150,29 +155,29 @@ class User extends AbstractEntity implements UserInterface
 }
 ```
 
-**Fields:**
-- `id`: Primary key (auto-increment)
-- `email`: Unique, required for all users
-- `password`: Hashed password (nullable for Google OAuth users)
-- `googleId`: Google OAuth identifier
-- `roles`: JSON array of roles (ROLE_USER, ROLE_ADMIN)
-- `theme`: UI theme preference (light/dark)
-- `language`: App language (ru/en)
-- `timezone`: User timezone for date display
-- `notificationSettings`: JSON of notification preferences
+**Поля:**
+- `id`: Первичный ключ (автоинкремент)
+- `email`: Уникальный, обязательный для всех пользователей
+- `password`: Хешированный пароль (nullable для пользователей Google OAuth)
+- `googleId`: Идентификатор Google OAuth
+- `roles`: JSON массив ролей (ROLE_USER, ROLE_ADMIN)
+- `theme`: Предпочтение темы UI (light/dark)
+- `language`: Язык приложения (ru/en)
+- `timezone`: Часовой пояс пользователя для отображения дат
+- `notificationSettings`: JSON с настройками уведомлений
 
 ---
 
-### 2. Task Entity
+### 2. Сущность Task (Задача)
 
-**Purpose:** Core task management with unlimited nesting
+**Назначение:** Основное управление задачами с неограниченной вложенностью
 
-**Location:** `/backend/src/Entity/Task.php`
+**Расположение:** `/backend/src/Entity/Task.php`
 
 ```php
 #[ORM\Entity(repositoryClass: TaskRepository::class)]
 #[ORM\Table(name: '`task`', indexes: [
-    // 13 composite indexes for performance
+    // 13 составных индексов для производительности
     new ORM\Index(name: 'idx_task_user_parent', columns: ['user_id', 'parent_task_id']),
     new ORM\Index(name: 'idx_task_user_status', columns: ['user_id', 'status']),
     new ORM\Index(name: 'idx_task_user_created_at', columns: ['user_id', 'created_at']),
@@ -217,12 +222,12 @@ class Task extends AbstractEntity
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
     private ?\DateTimeImmutable $completedAt = null;
 
-    // Relationships
+    // Связи
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'tasks')]
     #[ORM\JoinColumn(nullable: false)]
     private ?User $user = null;
 
-    // Self-referencing for unlimited nesting
+    // Самореферентная связь для неограниченной вложенности
     #[ORM\ManyToOne(targetEntity: self::class, inversedBy: 'subtasks')]
     private ?self $parentTask = null;
 
@@ -251,10 +256,10 @@ class Task extends AbstractEntity
 }
 ```
 
-**Enums:**
+**Перечисления (Enums):**
 
 ```php
-// TaskStatus enum
+// Перечисление TaskStatus
 enum TaskStatus: string
 {
     case PENDING = 'pending';
@@ -263,7 +268,7 @@ enum TaskStatus: string
     case CANCELLED = 'cancelled';
 }
 
-// TaskPriority enum
+// Перечисление TaskPriority
 enum TaskPriority: string
 {
     case LOW = 'low';
@@ -273,38 +278,38 @@ enum TaskPriority: string
 }
 ```
 
-**Unlimited Nesting Example:**
+**Пример неограниченной вложенности:**
 
 ```php
-// Parent Task
+// Родительская задача
 $project = new Task();
-$project->setTitle('Launch Website');
+$project->setTitle('Запуск веб-сайта');
 
-// Level 1 Subtask
+// Подзадача уровня 1
 $design = new Task();
-$design->setTitle('Design');
+$design->setTitle('Дизайн');
 $design->setParentTask($project);
 
-// Level 2 Subtask
+// Подзадача уровня 2
 $wireframes = new Task();
-$wireframes->setTitle('Create Wireframes');
+$wireframes->setTitle('Создать вайрфреймы');
 $wireframes->setParentTask($design);
 
-// Level 3 Subtask (and so on...)
+// Подзадача уровня 3 (и так далее...)
 $homepage = new Task();
-$homepage->setTitle('Homepage Wireframe');
+$homepage->setTitle('Вайрфрейм главной страницы');
 $homepage->setParentTask($wireframes);
 
-// No depth limit!
+// Нет ограничения по глубине!
 ```
 
 ---
 
-### 3. Tag Entity
+### 3. Сущность Tag (Тег)
 
-**Purpose:** Categorize tasks with colored tags
+**Назначение:** Категоризация задач с цветными тегами
 
-**Location:** `/backend/src/Entity/Tag.php`
+**Расположение:** `/backend/src/Entity/Tag.php`
 
 ```php
 #[ORM\Entity(repositoryClass: TagRepository::class)]
@@ -333,32 +338,32 @@ class Tag extends AbstractEntity
 }
 ```
 
-**Fields:**
-- `name`: Tag name (max 50 chars)
-- `color`: Hex color code (#3b82f6)
-- `user`: Owner of the tag
-- `tasks`: Tasks associated with this tag (many-to-many)
+**Поля:**
+- `name`: Название тега (макс. 50 символов)
+- `color`: Hex код цвета (#3b82f6)
+- `user`: Владелец тега
+- `tasks`: Задачи, связанные с этим тегом (многие-ко-многим)
 
-**Usage Pattern:**
+**Паттерн использования:**
 
 ```php
-// Create tag
+// Создать тег
 $tag = new Tag();
-$tag->setName('Work');
+$tag->setName('Работа');
 $tag->setColor('#3b82f6');
 $tag->setUser($user);
 
-// Associate with task
+// Связать с задачей
 $task->addTag($tag);
 ```
 
 ---
 
-### 4. RefreshToken Entity
+### 4. Сущность RefreshToken (Токен обновления)
 
-**Purpose:** Store JWT refresh tokens
+**Назначение:** Хранение JWT токенов обновления
 
-**Location:** `/backend/src/Entity/RefreshToken.php`
+**Расположение:** `/backend/src/Entity/RefreshToken.php`
 
 ```php
 #[ORM\Entity]
@@ -381,18 +386,18 @@ class RefreshToken
 }
 ```
 
-**Fields:**
-- `refreshToken`: Hashed token string
-- `username`: User email
-- `valid`: Expiration datetime (7 days from creation)
+**Поля:**
+- `refreshToken`: Хешированная строка токена
+- `username`: Email пользователя
+- `valid`: Дата истечения срока действия (7 дней с момента создания)
 
 ---
 
-### 5. MediaObject Entity
+### 5. Сущность MediaObject (Медиафайл)
 
-**Purpose:** File uploads and attachments
+**Назначение:** Загрузка файлов и вложений
 
-**Location:** `/backend/src/Entity/MediaObject.php`
+**Расположение:** `/backend/src/Entity/MediaObject.php`
 
 ```php
 #[ORM\Entity(repositoryClass: MediaObjectRepository::class)]
@@ -423,9 +428,9 @@ class MediaObject extends AbstractEntity
 
 ---
 
-## Relationships
+## Связи
 
-### 1. User ↔ Task (One-to-Many)
+### 1. User ↔ Task (Один-ко-многим)
 
 ```php
 // User.php
@@ -446,21 +451,21 @@ FOREIGN KEY (user_id) REFERENCES users(id)
 ON DELETE CASCADE;
 ```
 
-**Behavior:**
-- User can have many tasks
-- Task belongs to ONE user (required)
-- When user deleted → all their tasks deleted
+**Поведение:**
+- Пользователь может иметь много задач
+- Задача принадлежит ОДНОМУ пользователю (обязательно)
+- При удалении пользователя → все его задачи удаляются
 
 ---
 
-### 2. Task ↔ Task (Self-Referencing, Unlimited Nesting)
+### 2. Task ↔ Task (Самореферентная связь, неограниченная вложенность)
 
 ```php
-// Parent relationship
+// Связь с родителем
 #[ORM\ManyToOne(targetEntity: self::class, inversedBy: 'subtasks')]
 private ?self $parentTask = null;
 
-// Children relationship
+// Связь с потомками
 #[ORM\OneToMany(targetEntity: self::class, mappedBy: 'parentTask', cascade: ['persist', 'remove'])]
 private Collection $subtasks;
 ```
@@ -473,22 +478,22 @@ FOREIGN KEY (parent_task_id) REFERENCES task(id)
 ON DELETE CASCADE;
 ```
 
-**Behavior:**
-- Task can have ONE parent (nullable)
-- Task can have MANY children
-- When parent deleted → children deleted
-- No depth limit!
+**Поведение:**
+- Задача может иметь ОДНОГО родителя (nullable)
+- Задача может иметь МНОГО потомков
+- При удалении родителя → потомки удаляются
+- Нет ограничения по глубине!
 
-**Recursive Query (PostgreSQL CTE):**
+**Рекурсивный запрос (PostgreSQL CTE):**
 
 ```sql
 WITH RECURSIVE subtasks AS (
-    -- Base case: Start with parent task
+    -- Базовый случай: Начать с родительской задачи
     SELECT * FROM task WHERE id = 123
 
     UNION ALL
 
-    -- Recursive case: Get all children
+    -- Рекурсивный случай: Получить всех потомков
     SELECT t.*
     FROM task t
     INNER JOIN subtasks s ON t.parent_task_id = s.id
@@ -498,7 +503,7 @@ SELECT * FROM subtasks;
 
 ---
 
-### 3. Task ↔ Tag (Many-to-Many)
+### 3. Task ↔ Tag (Многие-ко-многим)
 
 ```php
 // Task.php
@@ -522,60 +527,60 @@ CREATE TABLE task_tags (
 );
 ```
 
-**Behavior:**
-- Task can have MANY tags
-- Tag can be on MANY tasks
-- Junction table: `task_tags`
+**Поведение:**
+- Задача может иметь МНОГО тегов
+- Тег может быть на МНОГИХ задачах
+- Связующая таблица: `task_tags`
 
 ---
 
-## Indexing Strategy
+## Стратегия индексирования
 
-### Why 13 Indexes on Task Table?
+### Зачем 13 индексов на таблице Task?
 
-Task table is the most queried table. Indexes optimize common query patterns.
+Таблица Task - самая часто запрашиваемая таблица. Индексы оптимизируют типичные паттерны запросов.
 
 ```php
-// Index 1: User + Parent (most common query)
+// Индекс 1: Пользователь + Родитель (самый частый запрос)
 new ORM\Index(name: 'idx_task_user_parent', columns: ['user_id', 'parent_task_id'])
 
-// Index 2: User + Status (filtering by status)
+// Индекс 2: Пользователь + Статус (фильтрация по статусу)
 new ORM\Index(name: 'idx_task_user_status', columns: ['user_id', 'status'])
 
-// Index 3: User + Created At (timeline queries)
+// Индекс 3: Пользователь + Дата создания (запросы временной линии)
 new ORM\Index(name: 'idx_task_user_created_at', columns: ['user_id', 'created_at'])
 
-// Index 4: User + Completed At (analytics)
+// Индекс 4: Пользователь + Дата завершения (аналитика)
 new ORM\Index(name: 'idx_task_user_completed_at', columns: ['user_id', 'completed_at'])
 
-// Index 5: User + Due Date (deadline filtering)
+// Индекс 5: Пользователь + Срок выполнения (фильтрация по дедлайну)
 new ORM\Index(name: 'idx_task_user_due_date', columns: ['user_id', 'due_date'])
 
-// Index 6: User + Priority (sorting by priority)
+// Индекс 6: Пользователь + Приоритет (сортировка по приоритету)
 new ORM\Index(name: 'idx_task_user_priority', columns: ['user_id', 'priority'])
 
-// Index 7: User + Archived (exclude archived tasks)
+// Индекс 7: Пользователь + Архивирован (исключить архивные задачи)
 new ORM\Index(name: 'idx_task_user_archived', columns: ['user_id', 'is_archived'])
 
-// Index 8: User + Parent + Archived (task list query)
+// Индекс 8: Пользователь + Родитель + Архивирован (запрос списка задач)
 new ORM\Index(name: 'idx_task_user_parent_archived', columns: ['user_id', 'parent_task_id', 'is_archived'])
 
-// Index 9: User + Parent + Status (filtered task list)
+// Индекс 9: Пользователь + Родитель + Статус (отфильтрованный список задач)
 new ORM\Index(name: 'idx_task_user_parent_status', columns: ['user_id', 'parent_task_id', 'status'])
 
-// Index 10: User + Parent + Created (sorted task list)
+// Индекс 10: Пользователь + Родитель + Создан (отсортированный список задач)
 new ORM\Index(name: 'idx_task_user_parent_created', columns: ['user_id', 'parent_task_id', 'created_at'])
 
-// Index 11: User + Parent + Completed (analytics)
+// Индекс 11: Пользователь + Родитель + Завершен (аналитика)
 new ORM\Index(name: 'idx_task_user_parent_completed', columns: ['user_id', 'parent_task_id', 'completed_at'])
 
-// Index 12: User + Sort Order (manual ordering)
+// Индекс 12: Пользователь + Порядок сортировки (ручное упорядочивание)
 new ORM\Index(name: 'idx_task_user_sort_order', columns: ['user_id', 'sort_order'])
 ```
 
-### Index Benefits
+### Преимущества индексов
 
-**Before Indexes:**
+**До индексов:**
 ```sql
 EXPLAIN ANALYZE
 SELECT * FROM task WHERE user_id = 5 AND parent_task_id IS NULL;
@@ -584,7 +589,7 @@ SELECT * FROM task WHERE user_id = 5 AND parent_task_id IS NULL;
 → Execution time: 45ms
 ```
 
-**After Indexes:**
+**После индексов:**
 ```sql
 EXPLAIN ANALYZE
 SELECT * FROM task WHERE user_id = 5 AND parent_task_id IS NULL;
@@ -593,23 +598,23 @@ SELECT * FROM task WHERE user_id = 5 AND parent_task_id IS NULL;
 → Execution time: 0.8ms
 ```
 
-**56x faster!** (45ms → 0.8ms)
+**В 56 раз быстрее!** (45ms → 0.8ms)
 
 ---
 
-## Migrations Workflow
+## Рабочий процесс с миграциями
 
-### Create Migration
+### Создать миграцию
 
 ```bash
-# Auto-generate migration from entity changes
+# Автоматически сгенерировать миграцию из изменений сущностей
 docker exec backend-php83 php bin/console make:migration
 
-# Review the generated migration file
-# Location: /backend/migrations/VersionYYYYMMDDHHMMSS.php
+# Просмотреть сгенерированный файл миграции
+# Расположение: /backend/migrations/VersionYYYYMMDDHHMMSS.php
 ```
 
-### Example Migration
+### Пример миграции
 
 ```php
 <?php
@@ -636,10 +641,10 @@ public function up(Schema $schema): void
         CONSTRAINT fk_task_parent FOREIGN KEY (parent_task_id) REFERENCES task(id) ON DELETE CASCADE
     )');
 
-    // Create indexes
+    // Создать индексы
     $this->addSql('CREATE INDEX idx_task_user_parent ON task (user_id, parent_task_id)');
     $this->addSql('CREATE INDEX idx_task_user_status ON task (user_id, status)');
-    // ... more indexes
+    // ... больше индексов
 }
 
 public function down(Schema $schema): void
@@ -648,30 +653,30 @@ public function down(Schema $schema): void
 }
 ```
 
-### Run Migration
+### Выполнить миграцию
 
 ```bash
-# Execute migrations
+# Выполнить миграции
 docker exec backend-php83 php bin/console doctrine:migrations:migrate
 
-# Rollback last migration
+# Откатить последнюю миграцию
 docker exec backend-php83 php bin/console doctrine:migrations:migrate prev
 ```
 
 ---
 
-## Query Optimization
+## Оптимизация запросов
 
-### Eager Loading
+### Жадная загрузка (Eager Loading)
 
 ```php
-// ❌ BAD: N+1 query problem
+// ❌ ПЛОХО: Проблема N+1 запросов
 $tasks = $taskRepository->findAll();
 foreach ($tasks as $task) {
-    echo $task->getUser()->getEmail();  // Separate query per task!
+    echo $task->getUser()->getEmail();  // Отдельный запрос на каждую задачу!
 }
 
-// ✅ GOOD: Eager load with JOIN
+// ✅ ХОРОШО: Жадная загрузка с JOIN
 $tasks = $taskRepository->createQueryBuilder('t')
     ->leftJoin('t.user', 'u')
     ->addSelect('u')
@@ -680,16 +685,16 @@ $tasks = $taskRepository->createQueryBuilder('t')
     ->getQuery()
     ->getResult();
 
-// Now $task->getUser() is already loaded (no additional query)
+// Теперь $task->getUser() уже загружен (нет дополнительного запроса)
 ```
 
-### Partial Selects
+### Частичные выборки
 
 ```php
-// ❌ BAD: Fetch all fields when you only need a few
-$tasks = $taskRepository->findAll();  // Fetches description (5000 chars)
+// ❌ ПЛОХО: Получить все поля, когда нужны только некоторые
+$tasks = $taskRepository->findAll();  // Получает description (5000 символов)
 
-// ✅ GOOD: Fetch only needed fields
+// ✅ ХОРОШО: Получить только нужные поля
 $tasks = $taskRepository->createQueryBuilder('t')
     ->select('t.id, t.title, t.status')
     ->getQuery()
@@ -698,15 +703,15 @@ $tasks = $taskRepository->createQueryBuilder('t')
 
 ---
 
-## Related Documents
+## Связанные документы
 
-### Must Read Next
-- **[Architecture](ARCHITECTURE.md)** - How to use these entities
+### Обязательно прочитать далее
+- **[Архитектура](ARCHITECTURE.md)** - Как использовать эти сущности
 
-### For Reference
-- **[API Reference](API_REFERENCE.md)** - Endpoints using these entities
+### Для справки
+- **[API Reference](API_REFERENCE.md)** - Эндпоинты, использующие эти сущности
 
 ---
 
-*Last updated: 2025-01-05*
-*Database schema version: 1.0*
+*Последнее обновление: 2025-01-05*
+*Версия схемы базы данных: 1.0*
