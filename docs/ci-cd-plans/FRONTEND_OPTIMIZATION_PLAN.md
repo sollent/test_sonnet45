@@ -369,31 +369,6 @@ plugins: [
 ]
 ```
 
-**Настройка nginx (infrastructure/docker/nginx/default.conf):**
-```nginx
-# Enable Gzip
-gzip on;
-gzip_vary on;
-gzip_proxied any;
-gzip_comp_level 6;
-gzip_types text/plain text/css text/xml text/javascript
-           application/json application/javascript application/xml+rss
-           application/rss+xml font/truetype font/opentype
-           application/vnd.ms-fontobject image/svg+xml;
-
-# Enable Brotli (если доступно)
-brotli on;
-brotli_comp_level 6;
-brotli_types text/plain text/css text/xml text/javascript
-             application/json application/javascript application/xml+rss;
-
-# Serve pre-compressed files
-location ~* \.(js|css|svg|json)$ {
-  gzip_static on;
-  brotli_static on;
-}
-```
-
 **Ожидаемый результат**:
 - Уменьшение размера передачи на ~60-70%
 - Быстрая загрузка на медленных соединениях
