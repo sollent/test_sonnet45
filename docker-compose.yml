@@ -1,11 +1,12 @@
-# Main Docker Compose - Includes all sub-compose files
+# Main Docker Compose - Includes base config only
 # Location: /test_sonnet45/docker-compose.yml
 
 version: '3.8'
 
-# Include all infrastructure compose files
+# Include only base infrastructure (БЕЗ fallback - Fail-Fast принцип!)
 include:
   # Main application services (backend, database, queue)
+  # БЕЗ fallback - Fail-Fast принцип!
   - path: ./infrastructure/docker/docker-compose.app.yml
     env_file:
       - ./.env.docker  # Docker infrastructure variables
@@ -17,8 +18,10 @@ include:
 # No services defined here - all in included files
 
 # Environment-specific usage:
-# Development (default): docker-compose up -d
-#   - Loads docker-compose.override.yml automatically (if exists)
-#   - Or use: docker-compose -f docker-compose.yml -f infrastructure/docker/docker-compose.dev.yml up -d
+# Development: docker-compose -f docker-compose.yml -f infrastructure/docker/docker-compose.dev.yml up -d
+#   - Загружает base (БЕЗ fallback) + dev overrides (С fallback)
+#   - Fallback разрешены ТОЛЬКО для dev!
 # Production: docker-compose -f docker-compose.yml -f infrastructure/docker/docker-compose-prod.yml up -d
+#   - Загружает base (БЕЗ fallback) + prod overrides (БЕЗ fallback)
+#   - Fallback запрещены - Fail-Fast работает!
 #   - Set proper .env.docker.prod and apps/backend/.env.prod files first

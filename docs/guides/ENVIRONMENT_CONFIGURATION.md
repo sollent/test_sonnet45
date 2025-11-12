@@ -1,7 +1,7 @@
 # 🔐 Конфигурация Окружения (Environment Configuration)
 
 > **Документация по управлению переменными окружения для Docker и Symfony**
-> **Версия**: 1.0
+> **Версия**: 1.1
 > **Дата**: 2025-11-12
 
 ---
@@ -9,13 +9,14 @@
 ## 📋 Содержание
 
 1. [Обзор](#обзор)
-2. [Структура Файлов](#структура-файлов)
-3. [Docker Environment Файлы](#docker-environment-файлы)
-4. [Symfony/Backend Environment Файлы](#symfonybacked-environment-файлы)
-5. [Использование по Окружениям](#использование-по-окружениям)
-6. [GitHub Actions / CI/CD](#github-actions--cicd)
-7. [Best Practices Безопасности](#best-practices-безопасности)
-8. [Troubleshooting](#troubleshooting)
+2. [⚠️ Fail-Fast Принцип (ВАЖНО!)](#fail-fast-принцип-важно)
+3. [Структура Файлов](#структура-файлов)
+4. [Docker Environment Файлы](#docker-environment-файлы)
+5. [Symfony/Backend Environment Файлы](#symfonybacked-environment-файлы)
+6. [Использование по Окружениям](#использование-по-окружениям)
+7. [GitHub Actions / CI/CD](#github-actions--cicd)
+8. [Best Practices Безопасности](#best-practices-безопасности)
+9. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -53,9 +54,11 @@ Symfony Application
 ```
 
 **Ключевой механизм:**
-- `.env.docker` задает credentials (например `POSTGRES_USER=user`)
-- `docker-compose.app.yml` передает эти переменные в PHP контейнер через `environment:`
-- `apps/backend/.env` использует синтаксис `${POSTGRES_USER:-fallback}` для чтения из окружения
+- `.env.docker` задает credentials (например `POSTGRES_USER=sollent`)
+- `docker-compose.yml` включает базовый конфиг (`docker-compose.app.yml`) и dev overrides (`docker-compose.dev.yml`)
+- Базовый конфиг использует `${POSTGRES_USER}` БЕЗ fallback (Fail-Fast!)
+- Dev конфиг добавляет fallback `${POSTGRES_USER:-user}` для удобства разработки
+- `apps/backend/.env` использует синтаксис `${POSTGRES_USER:-user}` для чтения из окружения
 - Symfony видит финальный DATABASE_URL с правильными credentials
 
 ### Преимущества
@@ -65,6 +68,166 @@ Symfony Application
 ✅ **CI/CD Ready**: Переменные можно переопределить в GitHub Actions
 ✅ **Документированность**: `.example` файлы служат документацией
 ✅ **Единый источник истины**: `.env.docker` контролирует все credentials
+✅ **Fail-Fast**: Production падает с ошибкой, если credentials не заданы
+
+---
+
+## ⚠️ Fail-Fast Принцип (ВАЖНО!)
+
+### Что Это Такое?
+
+**Fail-Fast** - это принцип безопасности, который гарантирует, что приложение **сразу упадет с ошибкой** при запуске, если критически важные переменные окружения (credentials) не заданы.
+
+**Проблема с fallback значениями:**
+
+```yaml
+# ❌ ОПАСНО для production!
+environment:
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}  # Использует "password" если не задано!
+```
+
+Если администратор забудет задать `POSTGRES_PASSWORD`, приложение **молча запустится** с дефолтным паролем `password`, создавая **критическую уязвимость безопасности**.
+
+**Примеры реальных инцидентов:**
+- MongoDB instances с паролем "admin" взломаны в течение часов
+- Redis серверы с дефолтными credentials взломаны массово
+- PostgreSQL с паролем "password" - первая цель ботов-сканеров
+
+### Наша Реализация
+
+**Базовый конфиг (docker-compose.app.yml) - БЕЗ fallback:**
+
+```yaml
+# infrastructure/docker/docker-compose.app.yml
+services:
+  psql16:
+    environment:
+      # БЕЗ fallback - если не задано, Docker Compose упадет с ошибкой!
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+  php83-fpm:
+    environment:
+      # БЕЗ fallback - Fail-Fast принцип!
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+```
+
+**Dev overrides (docker-compose.dev.yml) - С fallback для удобства:**
+
+```yaml
+# infrastructure/docker/docker-compose.dev.yml
+# ⚠️ ВАЖНО: Fallback значения разрешены ТОЛЬКО для dev окружения!
+# В production fallback ЗАПРЕЩЕНЫ (Fail-Fast принцип)
+
+services:
+  psql16:
+    environment:
+      # Fallback только для локальной разработки
+      - POSTGRES_DB=${POSTGRES_DB:-backend-app}
+      - POSTGRES_USER=${POSTGRES_USER:-user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
+
+  php83-fpm:
+    environment:
+      - APP_ENV=dev
+      - APP_DEBUG=true
+      # Fallback credentials для удобства локальной разработки
+      - POSTGRES_DB=${POSTGRES_DB:-backend-app}
+      - POSTGRES_USER=${POSTGRES_USER:-user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
+```
+
+**Production конфиг (docker-compose-prod.yml) - БЕЗ fallback:**
+
+```yaml
+# infrastructure/docker/docker-compose-prod.yml
+services:
+  psql16:
+    environment:
+      # Production credentials MUST be overridden via environment variables!
+      # Never use default values in production!
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+```
+
+### Как Это Работает?
+
+**Development (с удобством):**
+```bash
+docker-compose up -d
+# Автоматически загружает:
+# - docker-compose.app.yml (базовый, БЕЗ fallback)
+# - docker-compose.dev.yml (dev overrides, С fallback)
+# Результат: Если .env.docker отсутствует, используются fallback значения
+```
+
+**Production (строго!):**
+```bash
+docker-compose -f docker-compose.yml -f infrastructure/docker/docker-compose-prod.yml up -d
+# Загружает:
+# - docker-compose.app.yml (базовый, БЕЗ fallback)
+# - docker-compose-prod.yml (production, БЕЗ fallback)
+# - НЕ загружает docker-compose.dev.yml!
+# Результат: Если credentials не заданы → ОШИБКА ✅
+```
+
+### Почему Это Важно?
+
+**✅ С Fail-Fast (наш подход):**
+```bash
+$ docker-compose -f docker-compose.yml -f infrastructure/docker/docker-compose-prod.yml up -d
+ERROR: The POSTGRES_PASSWORD variable is not set. Defaulting to a blank string.
+FATAL: password authentication failed for user "postgres"
+```
+**Разработчик сразу видит проблему и ИСПРАВЛЯЕТ ее перед запуском!**
+
+**❌ Без Fail-Fast (с fallback):**
+```bash
+$ docker-compose up -d
+Creating backend-psql16 ... done
+Creating backend-php83 ... done
+# Все "работает" с password="password"
+# Приложение запущено в production с ДЕФОЛТНЫМ ПАРОЛЕМ!
+# 🔓 Уязвимость КРИТИЧЕСКАЯ!
+```
+
+### Правила для Разработчиков
+
+**✅ РАЗРЕШЕНО (Development):**
+- Использовать fallback в `docker-compose.dev.yml`
+- Не создавать `.env.docker` (fallback сработают)
+- Использовать слабые пароли локально
+
+**❌ ЗАПРЕЩЕНО (Production):**
+- Использовать fallback в `docker-compose.app.yml` или `docker-compose-prod.yml`
+- Деплоить без проверки наличия `.env.docker.prod`
+- Использовать дефолтные credentials (password, admin, user)
+
+### Проверка Конфигурации
+
+**Перед деплоем в production проверьте:**
+
+```bash
+# 1. Проверить что credentials заданы
+cat .env.docker.prod
+# Должны быть ВСЕ переменные без CHANGE_ME_*
+
+# 2. Проверить что docker-compose НЕ использует fallback
+docker-compose -f docker-compose.yml -f infrastructure/docker/docker-compose-prod.yml config | grep -i "password"
+# НЕ должно быть ":-password" или других fallback!
+
+# 3. Тест Fail-Fast: Удалить .env.docker и проверить что падает
+mv .env.docker.prod .env.docker.prod.backup
+docker-compose -f docker-compose.yml -f infrastructure/docker/docker-compose-prod.yml up -d
+# Должна быть ОШИБКА! Если запустилось - ПРОБЛЕМА!
+mv .env.docker.prod.backup .env.docker.prod
+```
 
 ---
 
@@ -163,34 +326,97 @@ RABBITMQ_PASSWORD=test_password
 
 ### Как Используются в docker-compose.yml
 
+**⚠️ ВНИМАНИЕ**: Мы используем **трехуровневую** структуру docker-compose:
+
+1. **docker-compose.yml** (корневой) - включает другие файлы
+2. **docker-compose.app.yml** (базовый) - **БЕЗ fallback** (Fail-Fast!)
+3. **docker-compose.dev.yml** (dev overrides) - **С fallback** (удобство)
+4. **docker-compose-prod.yml** (prod overrides) - **БЕЗ fallback** (Fail-Fast!)
+
+**Базовый конфиг (docker-compose.app.yml) - БЕЗ fallback:**
+
 ```yaml
 # infrastructure/docker/docker-compose.app.yml
 services:
-  # PostgreSQL контейнер - использует credentials из .env.docker
   psql16:
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-backend-app}
-      POSTGRES_USER: ${POSTGRES_USER:-user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      # БЕЗ fallback - Fail-Fast принцип!
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - "${POSTGRES_PORT:-15432}:5432"
+      - "${POSTGRES_PORT}:5432"
 
-  # PHP контейнер - получает те же credentials для передачи в Symfony
   php83-fpm:
     environment:
-      # Передаем credentials из .env.docker в PHP окружение
-      POSTGRES_DB: ${POSTGRES_DB:-backend-app}
-      POSTGRES_USER: ${POSTGRES_USER:-user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
-      RABBITMQ_USER: ${RABBITMQ_USER:-user}
-      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-password}
+      # БЕЗ fallback - Fail-Fast принцип!
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+    ports:
+      - "${PHP_FPM_PORT}:9000"
 ```
 
-**Синтаксис**: `${VAR:-default}` - использует `VAR` из `.env.docker` или default значение
+**Dev overrides (docker-compose.dev.yml) - С fallback для удобства:**
 
-**Ключевой момент**: Переменные из `.env.docker` передаются в **оба** контейнера:
-- PostgreSQL использует их для создания user/database
-- PHP контейнер получает те же переменные для использования в Symfony
+```yaml
+# infrastructure/docker/docker-compose.dev.yml
+# ⚠️ Fallback разрешены ТОЛЬКО в dev!
+services:
+  psql16:
+    ports:
+      - "${POSTGRES_PORT:-15432}:5432"  # Fallback для удобства
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-backend-app}
+      - POSTGRES_USER=${POSTGRES_USER:-user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
+
+  php83-fpm:
+    ports:
+      - "${PHP_FPM_PORT:-9009}:9000"
+    environment:
+      - APP_ENV=dev
+      - APP_DEBUG=true
+      # Fallback credentials для локальной разработки
+      - POSTGRES_DB=${POSTGRES_DB:-backend-app}
+      - POSTGRES_USER=${POSTGRES_USER:-user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
+      - RABBITMQ_USER=${RABBITMQ_USER:-user}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-password}
+```
+
+**Корневой конфиг (docker-compose.yml) включает оба:**
+
+```yaml
+# docker-compose.yml
+include:
+  # Базовый конфиг (БЕЗ fallback)
+  - path: ./infrastructure/docker/docker-compose.app.yml
+    env_file:
+      - ./.env.docker
+      - ./apps/backend/.env
+
+  # Dev overrides (С fallback) - автоматически для dev!
+  - path: ./infrastructure/docker/docker-compose.dev.yml
+    env_file:
+      - ./.env.docker
+
+# Production: docker-compose -f docker-compose.yml -f infrastructure/docker/docker-compose-prod.yml up -d
+# НЕ использует docker-compose.dev.yml - fallback запрещены!
+```
+
+**Синтаксис**:
+- `${VAR}` - БЕЗ fallback (Fail-Fast)
+- `${VAR:-default}` - С fallback (только dev!)
+
+**Ключевой момент**:
+- **Development**: Использует оба конфига (base + dev) = fallback работают
+- **Production**: Использует только base + prod = fallback НЕТ, Fail-Fast работает!
+- Переменные из `.env.docker` передаются в **оба** контейнера:
+  - PostgreSQL использует их для создания user/database
+  - PHP контейнер получает те же переменные для использования в Symfony
 
 ---
 
@@ -552,5 +778,13 @@ docker exec backend-php83 php -r "echo getenv('DATABASE_URL');"
 ---
 
 **Последнее обновление**: 2025-11-12
-**Версия документа**: 1.0
+**Версия документа**: 1.1
 **Автор**: Claude Code AI
+
+**Изменения v1.1**:
+- ✅ Добавлен раздел о Fail-Fast принципе безопасности
+- ✅ Обновлена структура docker-compose (base + dev/prod overrides)
+- ✅ Убраны fallback из базового конфига (docker-compose.app.yml)
+- ✅ Fallback добавлены только в dev конфиг (docker-compose.dev.yml)
+- ✅ Обновлены все примеры кода с новой структурой
+- ✅ Добавлены инструкции по проверке Fail-Fast перед деплоем

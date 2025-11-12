@@ -1,19 +1,52 @@
 # Development Environment Overrides
 # This file is automatically loaded with docker-compose.yml
 # Contains development-specific configurations
+#
+# ⚠️ ВАЖНО: Fallback значения разрешены ТОЛЬКО для dev окружения!
+# В production fallback ЗАПРЕЩЕНЫ (Fail-Fast принцип)
 
 version: '3.8'
 
 services:
   nginx:
+    ports:
+      # Fallback для удобства локальной разработки
+      - "${NGINX_PORT:-8089}:80"
     environment:
       - NGINX_DEBUG=true
 
   php83-fpm:
+    ports:
+      # Fallback для удобства
+      - "${PHP_FPM_PORT:-9009}:9000"
     environment:
       # Override Symfony environment for development
       - APP_ENV=dev
       - APP_DEBUG=true
+      # Fallback credentials для удобства локальной разработки
+      - POSTGRES_DB=${POSTGRES_DB:-backend-app}
+      - POSTGRES_USER=${POSTGRES_USER:-user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
+      - RABBITMQ_USER=${RABBITMQ_USER:-user}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-password}
     volumes:
       # Enable hot reload for development (cached for better performance on macOS)
       - ../../apps/backend:/var/www/backend-app:cached
+
+  psql16:
+    ports:
+      - "${POSTGRES_PORT:-15432}:5432"
+    environment:
+      # Fallback credentials для локальной разработки
+      - POSTGRES_DB=${POSTGRES_DB:-backend-app}
+      - POSTGRES_USER=${POSTGRES_USER:-user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
+
+  rabbitmq:
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+    environment:
+      # Fallback credentials для локальной разработки
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER:-user}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD:-password}

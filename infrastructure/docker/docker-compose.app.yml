@@ -5,7 +5,7 @@ services:
     container_name: backend-nginx
     image: nginx:stable-alpine
     ports:
-      - "${NGINX_PORT:-8089}:80"
+      - "${NGINX_PORT}:80"
     volumes:
       - ../../apps/backend:/var/www/backend-app
       - ./dev/nginx/default.conf:/etc/nginx/conf.d/default.conf
@@ -19,20 +19,20 @@ services:
       context: .
       dockerfile: ./dev/php/Dockerfile
     ports:
-      - "${PHP_FPM_PORT:-9009}:9000"
+      - "${PHP_FPM_PORT}:9000"
     volumes:
       - ../../apps/backend:/var/www/backend-app
       - ./dev/php/php.ini-development:/usr/local/etc/php/php.ini
       - ./dev/php/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
     environment:
       PHP_IDE_CONFIG: "serverName=docker.backend-app"
-      # Database credentials from .env.docker (для использования в Symfony)
-      POSTGRES_DB: ${POSTGRES_DB:-backend-app}
-      POSTGRES_USER: ${POSTGRES_USER:-user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
-      # RabbitMQ credentials from .env.docker
-      RABBITMQ_USER: ${RABBITMQ_USER:-user}
-      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-password}
+      # Database credentials from .env.docker (БЕЗ fallback - Fail-Fast!)
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      # RabbitMQ credentials from .env.docker (БЕЗ fallback - Fail-Fast!)
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     dns:
@@ -45,11 +45,12 @@ services:
     container_name: backend-psql16
     image: postgres:16.0-alpine
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-backend-app}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
-      POSTGRES_USER: ${POSTGRES_USER:-user}
+      # БЕЗ fallback - если credentials не заданы, контейнер НЕ запустится!
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER}
     ports:
-      - "${POSTGRES_PORT:-15432}:5432"
+      - "${POSTGRES_PORT}:5432"
     networks:
       - nginx-php83-psql16
     volumes:
@@ -58,11 +59,12 @@ services:
     image: rabbitmq:management
     container_name: backend-rabbitmq
     ports:
-      - "${RABBITMQ_PORT:-5672}:5672"   # порт для AMQP
-      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672" # порт для веб-интерфейса (management plugin)
+      - "${RABBITMQ_PORT}:5672"   # порт для AMQP
+      - "${RABBITMQ_MANAGEMENT_PORT}:15672" # порт для веб-интерфейса (management plugin)
     environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-user}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-password}
+      # БЕЗ fallback - Fail-Fast!
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
     networks:
       - nginx-php83-psql16
   
