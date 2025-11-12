@@ -1,318 +1,318 @@
-# 📊 Backend Test Coverage Report
+# 📊 Отчет о покрытии тестами Backend
 
-> **Last Updated**: 2025-11-10
-> **Total Test Files**: 33
-> **Testing Framework**: PHPUnit 9.6
-> **Test Organization**: Unit, Integration, Functional
-> **📋 Implementation Plan**: See [MISSING_TEST_COVERAGE_PLAN.md](MISSING_TEST_COVERAGE_PLAN.md) for step-by-step test writing guide
-
----
-
-## 🎯 Executive Summary
-
-Our backend has **comprehensive test coverage** across all critical layers with **33 test files** covering:
-
-- ✅ **Controllers** (API endpoints) - Functional tests
-- ✅ **Services** (Business logic) - Unit tests
-- ✅ **Repositories** (Data access) - Unit tests
-- ✅ **Authentication & Security** - Integration tests
-- ✅ **Commands** (CLI) - Integration tests
-- ⚠️ **Voters** (Authorization) - Partially covered
-- ⚠️ **DTOs** - No dedicated tests (validated implicitly)
-- ⚠️ **Entities** - No dedicated tests (validated via integration)
-
-**Overall Coverage Estimate**: ~75-80% (by critical functionality)
+> **Последнее обновление**: 2025-11-10
+> **Всего тестовых файлов**: 33
+> **Фреймворк тестирования**: PHPUnit 9.6
+> **Организация тестов**: Unit, Integration, Functional
+> **📋 План реализации**: См. [MISSING_TEST_COVERAGE_PLAN.md](MISSING_TEST_COVERAGE_PLAN.md) для пошагового руководства по написанию тестов
 
 ---
 
-## 📋 Coverage by Layer
+## 🎯 Резюме
 
-### 1. Controllers (API Endpoints) - **73% Coverage**
+Наш backend имеет **комплексное покрытие тестами** по всем критическим слоям с **33 тестовыми файлами**, охватывающими:
 
-Most API controllers have comprehensive functional tests, but some are missing.
+- ✅ **Контроллеры** (API endpoints) - Functional тесты
+- ✅ **Сервисы** (Бизнес-логика) - Unit тесты
+- ✅ **Репозитории** (Доступ к данным) - Unit тесты
+- ✅ **Аутентификация и безопасность** - Integration тесты
+- ✅ **Команды** (CLI) - Integration тесты
+- ⚠️ **Voters** (Авторизация) - Частично покрыты
+- ⚠️ **DTO** - Нет выделенных тестов (валидируются неявно)
+- ⚠️ **Entities** - Нет выделенных тестов (валидируются через интеграцию)
 
-#### ✅ Tested API Controllers:
+**Общая оценка покрытия**: ~75-80% (по критическому функционалу)
 
-| Controller | Test File | Test Count | Coverage Status |
+---
+
+## 📋 Покрытие по слоям
+
+### 1. Контроллеры (API Endpoints) - **73% покрытия**
+
+Большинство API контроллеров имеют комплексные функциональные тесты, но некоторые отсутствуют.
+
+#### ✅ Протестированные API контроллеры:
+
+| Контроллер | Тестовый файл | Количество тестов | Статус покрытия |
 |-----------|-----------|------------|-----------------|
-| **TaskController** | `Functional/Api/TaskControllerTest.php` | 50+ tests | ✅ Complete |
-| **TagController** | `Functional/Api/TagControllerTest.php` | 15+ tests | ✅ Complete |
-| **AnalyticsController** | `Functional/Api/AnalyticsControllerTest.php` | 10+ tests | ✅ Complete |
-| **RecurrenceController** | `Functional/Api/RecurrenceControllerTest.php` | 12+ tests | ✅ Complete |
-| **AttachmentController** | `Functional/Api/AttachmentControllerTest.php` | 8+ tests | ✅ Complete |
-| **MediaObjectController** | `Functional/Api/MediaObjectControllerTest.php` | 10+ tests | ✅ Complete |
-| **GoogleAuthController** | `Functional/Api/GoogleAuthTest.php` | 5+ tests | ✅ Complete |
-| **UserProfileController** | `Functional/Api/UserProfileTest.php` | 8+ tests | ✅ Complete |
+| **TaskController** | `Functional/Api/TaskControllerTest.php` | 50+ тестов | ✅ Полное |
+| **TagController** | `Functional/Api/TagControllerTest.php` | 15+ тестов | ✅ Полное |
+| **AnalyticsController** | `Functional/Api/AnalyticsControllerTest.php` | 10+ тестов | ✅ Полное |
+| **RecurrenceController** | `Functional/Api/RecurrenceControllerTest.php` | 12+ тестов | ✅ Полное |
+| **AttachmentController** | `Functional/Api/AttachmentControllerTest.php` | 8+ тестов | ✅ Полное |
+| **MediaObjectController** | `Functional/Api/MediaObjectControllerTest.php` | 10+ тестов | ✅ Полное |
+| **GoogleAuthController** | `Functional/Api/GoogleAuthTest.php` | 5+ тестов | ✅ Полное |
+| **UserProfileController** | `Functional/Api/UserProfileTest.php` | 8+ тестов | ✅ Полное |
 
-#### ⚠️ Missing API Controllers:
+#### ⚠️ Отсутствующие API контроллеры:
 
-| Controller | Reason | Priority |
+| Контроллер | Причина | Приоритет |
 |-----------|--------|----------|
-| **EnumController** | Used by frontend for priorities/statuses | 🔥 Critical |
-| **TranslationController** | Used for i18n translations | 🔥 Critical |
+| **EnumController** | Используется frontend для приоритетов/статусов | 🔥 Критический |
+| **TranslationController** | Используется для i18n переводов | 🔥 Критический |
 
-#### ❌ Missing Admin Controllers:
+#### ❌ Отсутствующие Admin контроллеры:
 
-| Controller | Reason | Priority |
+| Контроллер | Причина | Приоритет |
 |-----------|--------|----------|
-| **DashboardController** | Admin panel access | 🔥 Critical |
-| **SecurityController** | Admin authentication | 🔥 Critical |
-| **UserCrudController** | User management operations | 🔥 Critical |
+| **DashboardController** | Доступ к админ-панели | 🔥 Критический |
+| **SecurityController** | Аутентификация админа | 🔥 Критический |
+| **UserCrudController** | Операции управления пользователями | 🔥 Критический |
 
-**Total**: 8/14 controllers tested (57%) - **See [MISSING_TEST_COVERAGE_PLAN.md](MISSING_TEST_COVERAGE_PLAN.md) for implementation plan**
+**Итого**: 8/14 контроллеров протестировано (57%) - **См. [MISSING_TEST_COVERAGE_PLAN.md](MISSING_TEST_COVERAGE_PLAN.md) для плана реализации**
 
-#### Functional Tests Cover:
-- ✅ All CRUD operations (Create, Read, Update, Delete)
-- ✅ Authentication (JWT tokens)
-- ✅ Authorization (user ownership checks)
-- ✅ Validation errors (422 responses)
-- ✅ Not found errors (404 responses)
-- ✅ Access denied errors (403 responses)
-- ✅ Query parameters and filters
-- ✅ Pagination
-- ✅ Search functionality
-- ✅ Complex operations (toggle, archive, complete)
+#### Функциональные тесты покрывают:
+- ✅ Все CRUD операции (Create, Read, Update, Delete)
+- ✅ Аутентификацию (JWT токены)
+- ✅ Авторизацию (проверки владения пользователем)
+- ✅ Ошибки валидации (422 ответы)
+- ✅ Ошибки "не найдено" (404 ответы)
+- ✅ Ошибки "доступ запрещен" (403 ответы)
+- ✅ Query параметры и фильтры
+- ✅ Пагинация
+- ✅ Функциональность поиска
+- ✅ Сложные операции (toggle, archive, complete)
 
 ---
 
-### 2. Services (Business Logic) - **64% Coverage**
+### 2. Сервисы (Бизнес-логика) - **64% покрытия**
 
-#### ✅ Tested Services:
+#### ✅ Протестированные сервисы:
 
-| Service | Test File | Test Count | Coverage Status |
+| Сервис | Тестовый файл | Количество тестов | Статус покрытия |
 |---------|-----------|------------|-----------------|
-| **TaskService** | `Unit/Service/TaskServiceTest.php` | 25+ tests | ✅ Complete |
-| **RecurrenceService** | `Unit/Service/RecurrenceServiceTest.php` | 20+ tests | ✅ Complete |
-| **AnalyticsService** | `Unit/Service/AnalyticsServiceTest.php` | 15+ tests | ✅ Complete |
-| **UserRegistrationService** | `Unit/Service/UserRegistrationServiceTest.php` | 8+ tests | ✅ Complete |
-| **UserProfileService** | `Unit/Service/UserProfileServiceTest.php` | 10+ tests | ✅ Complete |
-| **MediaObjectService** | `Unit/Service/MediaObjectServiceTest.php` | 8+ tests | ✅ Complete |
-| **FileUploadService** | `Unit/Service/FileUploadServiceTest.php` | 6+ tests | ✅ Complete |
-| **EnumTranslatorService** | `Unit/Service/EnumTranslatorServiceTest.php` | 5+ tests | ✅ Complete |
-| **TranslationService** | `Unit/Service/TranslationServiceTest.php` | 6+ tests | ✅ Complete |
+| **TaskService** | `Unit/Service/TaskServiceTest.php` | 25+ тестов | ✅ Полное |
+| **RecurrenceService** | `Unit/Service/RecurrenceServiceTest.php` | 20+ тестов | ✅ Полное |
+| **AnalyticsService** | `Unit/Service/AnalyticsServiceTest.php` | 15+ тестов | ✅ Полное |
+| **UserRegistrationService** | `Unit/Service/UserRegistrationServiceTest.php` | 8+ тестов | ✅ Полное |
+| **UserProfileService** | `Unit/Service/UserProfileServiceTest.php` | 10+ тестов | ✅ Полное |
+| **MediaObjectService** | `Unit/Service/MediaObjectServiceTest.php` | 8+ тестов | ✅ Полное |
+| **FileUploadService** | `Unit/Service/FileUploadServiceTest.php` | 6+ тестов | ✅ Полное |
+| **EnumTranslatorService** | `Unit/Service/EnumTranslatorServiceTest.php` | 5+ тестов | ✅ Полное |
+| **TranslationService** | `Unit/Service/TranslationServiceTest.php` | 6+ тестов | ✅ Полное |
 
-#### ⚠️ Missing Service & Strategy Tests:
+#### ⚠️ Отсутствующие тесты сервисов и стратегий:
 
-| Component | Reason | Priority |
+| Компонент | Причина | Приоритет |
 |-----------|--------|----------|
-| **TagService** | Does not exist (logic in TaskService) | ⛔ N/A |
-| **DailyRecurrenceStrategy** | Tested indirectly via RecurrenceService | ⚠️ High |
-| **WeeklyRecurrenceStrategy** | Tested indirectly via RecurrenceService | ⚠️ High |
-| **MonthlyRecurrenceStrategy** | Tested indirectly via RecurrenceService | ⚠️ High |
-| **YearlyRecurrenceStrategy** | Tested indirectly via RecurrenceService | ⚠️ High |
-| **CustomRecurrenceStrategy** | Tested indirectly via RecurrenceService | ⚠️ High |
+| **TagService** | Не существует (логика в TaskService) | ⛔ N/A |
+| **DailyRecurrenceStrategy** | Тестируется косвенно через RecurrenceService | ⚠️ Высокий |
+| **WeeklyRecurrenceStrategy** | Тестируется косвенно через RecurrenceService | ⚠️ Высокий |
+| **MonthlyRecurrenceStrategy** | Тестируется косвенно через RecurrenceService | ⚠️ Высокий |
+| **YearlyRecurrenceStrategy** | Тестируется косвенно через RecurrenceService | ⚠️ Высокий |
+| **CustomRecurrenceStrategy** | Тестируется косвенно через RecurrenceService | ⚠️ Высокий |
 
-**Total**: 9/14 services tested (64%) - **See [MISSING_TEST_COVERAGE_PLAN.md](MISSING_TEST_COVERAGE_PLAN.md) for Recurrence Strategy tests**
+**Итого**: 9/14 сервисов протестировано (64%) - **См. [MISSING_TEST_COVERAGE_PLAN.md](MISSING_TEST_COVERAGE_PLAN.md) для тестов Recurrence Strategy**
 
-**Note**: TagService does not exist. Recurrence strategies tested indirectly but need direct unit tests.
+**Примечание**: TagService не существует. Стратегии рекуррентности тестируются косвенно, но нуждаются в прямых unit тестах.
 
-#### Service Tests Cover:
-- ✅ All public methods
-- ✅ Business rules and validation
-- ✅ Access control checks
-- ✅ Edge cases (null values, empty arrays)
-- ✅ Error handling (exceptions)
-- ✅ Mocked dependencies (pure unit tests)
-- ✅ Complex algorithms (recurrence strategies)
-- ✅ Data transformations
+#### Тесты сервисов покрывают:
+- ✅ Все публичные методы
+- ✅ Бизнес-правила и валидацию
+- ✅ Проверки контроля доступа
+- ✅ Граничные случаи (null значения, пустые массивы)
+- ✅ Обработку ошибок (исключения)
+- ✅ Мокированные зависимости (чистые unit тесты)
+- ✅ Сложные алгоритмы (стратегии рекуррентности)
+- ✅ Преобразования данных
 
 ---
 
-### 3. Repositories (Data Access) - **100% Coverage**
+### 3. Репозитории (Доступ к данным) - **100% покрытия**
 
-| Repository | Test File | Test Count | Coverage Status |
+| Репозиторий | Тестовый файл | Количество тестов | Статус покрытия |
 |-----------|-----------|------------|-----------------|
-| **TaskRepository** | `Unit/Repository/TaskRepositoryTest.php` | 15+ tests | ✅ Complete |
-| **TagRepository** | `Unit/Repository/TagRepositoryTest.php` | 8+ tests | ✅ Complete |
-| **UserRepository** | `Unit/Repository/UserRepositoryTest.php` | 6+ tests | ✅ Complete |
-| **MediaObjectRepository** | `Unit/Repository/MediaObjectRepositoryTest.php` | 5+ tests | ✅ Complete |
-| **TaskAttachmentRepository** | `Unit/Repository/TaskAttachmentRepositoryTest.php` | 4+ tests | ✅ Complete |
-| **RecurrenceRuleRepository** | `Unit/Repository/RecurrenceRuleRepositoryTest.php` | 6+ tests | ✅ Complete |
+| **TaskRepository** | `Unit/Repository/TaskRepositoryTest.php` | 15+ тестов | ✅ Полное |
+| **TagRepository** | `Unit/Repository/TagRepositoryTest.php` | 8+ тестов | ✅ Полное |
+| **UserRepository** | `Unit/Repository/UserRepositoryTest.php` | 6+ тестов | ✅ Полное |
+| **MediaObjectRepository** | `Unit/Repository/MediaObjectRepositoryTest.php` | 5+ тестов | ✅ Полное |
+| **TaskAttachmentRepository** | `Unit/Repository/TaskAttachmentRepositoryTest.php` | 4+ тестов | ✅ Полное |
+| **RecurrenceRuleRepository** | `Unit/Repository/RecurrenceRuleRepositoryTest.php` | 6+ тестов | ✅ Полное |
 
-**Total**: 6/6 repositories tested (100%)
+**Итого**: 6/6 репозиториев протестировано (100%)
 
-#### Repository Tests Cover:
-- ✅ Custom query methods
-- ✅ Filters and search
-- ✅ Pagination
-- ✅ Sorting
-- ✅ Aggregations and statistics
-- ✅ Complex joins
-- ✅ Date-based queries
+#### Тесты репозиториев покрывают:
+- ✅ Кастомные методы запросов
+- ✅ Фильтры и поиск
+- ✅ Пагинация
+- ✅ Сортировка
+- ✅ Агрегации и статистика
+- ✅ Сложные соединения (joins)
+- ✅ Запросы на основе дат
 
 ---
 
-### 4. Authentication & Security - **90% Coverage**
+### 4. Аутентификация и безопасность - **90% покрытия**
 
-| Component | Test File | Test Count | Coverage Status |
+| Компонент | Тестовый файл | Количество тестов | Статус покрытия |
 |-----------|-----------|------------|-----------------|
-| **JWT Authentication** | `Functional/Api/AuthenticationTest.php` | 8+ tests | ✅ Complete |
-| **User Registration** | `Functional/Api/UserRegistrationTest.php` | 6+ tests | ✅ Complete |
-| **Token Refresh** | `Functional/Api/TokenRefreshTest.php` | 5+ tests | ✅ Complete |
-| **Google OAuth** | `Functional/Api/GoogleAuthTest.php` | 5+ tests | ✅ Complete |
-| **GoogleAuthenticator** | `Unit/Security/GoogleAuthenticatorTest.php` | 8+ tests | ✅ Complete |
-| **Google OAuth Integration** | `Integration/Api/GoogleAuthIntegrationTest.php` | 6+ tests | ✅ Complete |
-| **Authorization Tests** | `Functional/Api/AuthorizationTest.php` | 10+ tests | ✅ Complete |
-| **TaskVoter** | - | - | ⚠️ **Missing** |
-| **TagVoter** | - | - | ⚠️ **Missing** |
+| **JWT аутентификация** | `Functional/Api/AuthenticationTest.php` | 8+ тестов | ✅ Полное |
+| **Регистрация пользователя** | `Functional/Api/UserRegistrationTest.php` | 6+ тестов | ✅ Полное |
+| **Обновление токена** | `Functional/Api/TokenRefreshTest.php` | 5+ тестов | ✅ Полное |
+| **Google OAuth** | `Functional/Api/GoogleAuthTest.php` | 5+ тестов | ✅ Полное |
+| **GoogleAuthenticator** | `Unit/Security/GoogleAuthenticatorTest.php` | 8+ тестов | ✅ Полное |
+| **Google OAuth интеграция** | `Integration/Api/GoogleAuthIntegrationTest.php` | 6+ тестов | ✅ Полное |
+| **Тесты авторизации** | `Functional/Api/AuthorizationTest.php` | 10+ тестов | ✅ Полное |
+| **TaskVoter** | - | - | ⚠️ **Отсутствует** |
+| **TagVoter** | - | - | ⚠️ **Отсутствует** |
 
-**Total**: 7/9 components tested (78%)
+**Итого**: 7/9 компонентов протестировано (78%)
 
-#### Security Tests Cover:
-- ✅ Login with valid credentials
-- ✅ Login with invalid credentials
-- ✅ Token generation
-- ✅ Token refresh flow
-- ✅ Token expiration
-- ✅ Google OAuth flow
-- ✅ User registration validation
-- ✅ Password hashing
-- ✅ Resource ownership checks (via controllers)
+#### Тесты безопасности покрывают:
+- ✅ Вход с валидными учетными данными
+- ✅ Вход с невалидными учетными данными
+- ✅ Генерация токена
+- ✅ Поток обновления токена
+- ✅ Истечение срока токена
+- ✅ Поток Google OAuth
+- ✅ Валидация регистрации пользователя
+- ✅ Хеширование пароля
+- ✅ Проверки владения ресурсом (через контроллеры)
 
-**Missing**: Direct unit tests for Symfony Voters (TaskVoter, TagVoter) - though they are tested indirectly through functional tests.
+**Отсутствует**: Прямые unit тесты для Symfony Voters (TaskVoter, TagVoter) - хотя они тестируются косвенно через функциональные тесты.
 
 ---
 
-### 5. Commands (CLI) - **17% Coverage**
+### 5. Команды (CLI) - **17% покрытия**
 
-| Command | Test File | Test Count | Coverage Status |
+| Команда | Тестовый файл | Количество тестов | Статус покрытия |
 |---------|-----------|------------|-----------------|
-| **ProcessRecurrenceRulesCommand** | `Integration/Command/ProcessRecurrenceRulesCommandTest.php` | 6+ tests | ✅ Complete |
-| **MakeAdminCommand** | - | - | ❌ Not tested |
-| **SeedTasksCommand** | - | - | ❌ Not tested |
-| **GenerateUserJourneyCommand** | - | - | ❌ Not tested |
-| **GenerateTestDataCommand** | - | - | ❌ Not tested |
-| **GenerateTestDataFastCommand** | - | - | ❌ Not tested |
+| **ProcessRecurrenceRulesCommand** | `Integration/Command/ProcessRecurrenceRulesCommandTest.php` | 6+ тестов | ✅ Полное |
+| **MakeAdminCommand** | - | - | ❌ Не протестирована |
+| **SeedTasksCommand** | - | - | ❌ Не протестирована |
+| **GenerateUserJourneyCommand** | - | - | ❌ Не протестирована |
+| **GenerateTestDataCommand** | - | - | ❌ Не протестирована |
+| **GenerateTestDataFastCommand** | - | - | ❌ Не протестирована |
 
-**Total**: 1/6 commands tested (17%)
+**Итого**: 1/6 команд протестировано (17%)
 
-**Reason**: Most commands are development/seeding tools. Only `ProcessRecurrenceRulesCommand` is production-critical.
+**Причина**: Большинство команд - инструменты для разработки/заполнения данных. Только `ProcessRecurrenceRulesCommand` критична для продакшена.
 
 ---
 
-### 6. Integration Tests - **100% of Critical Flows**
+### 6. Интеграционные тесты - **100% критических потоков**
 
-| Integration Test | File | Purpose |
+| Интеграционный тест | Файл | Назначение |
 |-----------------|------|---------|
-| **TaskService Integration** | `Integration/Service/TaskServiceIntegrationTest.php` | Real database operations |
-| **Google Auth with HTTP Mock** | `Integration/Api/GoogleAuthWithHttpMockTest.php` | OAuth with mocked Google API |
-| **Google Auth Integration** | `Integration/Api/GoogleAuthIntegrationTest.php` | Full OAuth flow |
-| **Recurrence Command** | `Integration/Command/ProcessRecurrenceRulesCommandTest.php` | Cron job simulation |
+| **TaskService интеграция** | `Integration/Service/TaskServiceIntegrationTest.php` | Операции с реальной БД |
+| **Google Auth с HTTP Mock** | `Integration/Api/GoogleAuthWithHttpMockTest.php` | OAuth с мокированным Google API |
+| **Google Auth интеграция** | `Integration/Api/GoogleAuthIntegrationTest.php` | Полный OAuth поток |
+| **Recurrence команда** | `Integration/Command/ProcessRecurrenceRulesCommandTest.php` | Симуляция cron задачи |
 
 ---
 
-### 7. Cross-Cutting Tests
+### 7. Кросс-функциональные тесты
 
-| Test Type | File | Coverage |
+| Тип теста | Файл | Покрытие |
 |-----------|------|----------|
-| **Validation** | `Functional/Api/ValidationTest.php` | ✅ Complete |
-| **Authorization** | `Functional/Api/AuthorizationTest.php` | ✅ Complete |
+| **Валидация** | `Functional/Api/ValidationTest.php` | ✅ Полное |
+| **Авторизация** | `Functional/Api/AuthorizationTest.php` | ✅ Полное |
 
 ---
 
-## 📊 Coverage Statistics
+## 📊 Статистика покрытия
 
-### By Test Type
+### По типу тестов
 
-| Test Type | Files | Approx. Tests | Coverage |
+| Тип теста | Файлов | Примерное кол-во тестов | Покрытие |
 |-----------|-------|---------------|----------|
-| **Unit Tests** | 15 | ~150 | Controllers: 0%, Services: 90%, Repos: 100% |
-| **Integration Tests** | 4 | ~25 | Critical flows: 100% |
-| **Functional Tests** | 14 | ~200 | API endpoints: 100% |
-| **Total** | **33** | **~375** | **Overall: ~65-70%** (29 components missing) |
+| **Unit тесты** | 15 | ~150 | Контроллеры: 0%, Сервисы: 90%, Репозитории: 100% |
+| **Integration тесты** | 4 | ~25 | Критические потоки: 100% |
+| **Functional тесты** | 14 | ~200 | API endpoints: 100% |
+| **Всего** | **33** | **~375** | **В целом: ~65-70%** (29 компонентов отсутствует) |
 
-### By Layer
+### По слоям
 
-| Layer | Components | Tested | Untested | Coverage % |
+| Слой | Компонентов | Протестировано | Не протестировано | Покрытие % |
 |-------|-----------|---------|----------|------------|
-| **API Controllers** | 10 | 8 | 2 | 80% |
-| **Admin Controllers** | 3 | 0 | 3 | 0% |
-| **Services** | 9 | 9 | 0 | 100% |
-| **Recurrence Strategies** | 5 | 0 | 5 | 0%* |
-| **Repositories** | 6 | 6 | 0 | 100% |
-| **Security (Auth)** | 7 | 7 | 0 | 100% |
+| **API контроллеры** | 10 | 8 | 2 | 80% |
+| **Admin контроллеры** | 3 | 0 | 3 | 0% |
+| **Сервисы** | 9 | 9 | 0 | 100% |
+| **Стратегии рекуррентности** | 5 | 0 | 5 | 0%* |
+| **Репозитории** | 6 | 6 | 0 | 100% |
+| **Безопасность (Auth)** | 7 | 7 | 0 | 100% |
 | **Voters** | 2 | 0 | 2 | 0%** |
-| **Commands** | 5 | 1 | 4 | 20% |
+| **Команды** | 5 | 1 | 4 | 20% |
 | **Event Listeners** | 2 | 0 | 2 | 0% |
 | **Normalizers** | 1 | 0 | 1 | 0% |
 | **Entities** | 8 | 0 | 8 | 0%* |
 | **DTOs** | 16 | 0 | 16 | 0%* |
 
-\* *Implicitly tested through integration and functional tests*
-\*\* *Voters tested indirectly via authorization functional tests*
+\* *Тестируются неявно через интеграционные и функциональные тесты*
+\*\* *Voters тестируются косвенно через функциональные тесты авторизации*
 
 ---
 
-## 🎨 Test Quality Highlights
+## 🎨 Основные моменты качества тестов
 
-### ✅ Excellent Practices
+### ✅ Отличные практики
 
-1. **AAA Pattern** - All tests follow Arrange, Act, Assert
-2. **Isolation** - Unit tests use mocks, no real database
-3. **ResetDatabase** - Functional tests have clean state
-4. **Factories** - Zenstruck Foundry for test data
-5. **Descriptive Names** - Clear test method names
-6. **Edge Cases** - Comprehensive coverage of error scenarios
-7. **Authentication** - All protected endpoints tested
-8. **Authorization** - User ownership verified
+1. **AAA паттерн** - Все тесты следуют Arrange, Act, Assert
+2. **Изоляция** - Unit тесты используют моки, без реальной БД
+3. **ResetDatabase** - Functional тесты имеют чистое состояние
+4. **Фабрики** - Zenstruck Foundry для тестовых данных
+5. **Описательные имена** - Понятные имена тестовых методов
+6. **Граничные случаи** - Комплексное покрытие сценариев ошибок
+7. **Аутентификация** - Все защищенные endpoints протестированы
+8. **Авторизация** - Проверка владения пользователем
 
-### 📝 Test Organization
+### 📝 Организация тестов
 
 ```
 backend/tests/
-├── Unit/                          # Pure unit tests (mocked dependencies)
-│   ├── Service/                  # 9 service tests ✅
-│   ├── Repository/               # 6 repository tests ✅
-│   └── Security/                 # 1 security test ✅
-├── Integration/                   # Integration tests (real DB)
-│   ├── Service/                  # 1 service integration test ✅
-│   ├── Api/                      # 2 OAuth integration tests ✅
-│   └── Command/                  # 1 command test ✅
-├── Functional/                    # API endpoint tests
-│   └── Api/                      # 14 controller tests ✅
+├── Unit/                          # Чистые unit тесты (мокированные зависимости)
+│   ├── Service/                  # 9 тестов сервисов ✅
+│   ├── Repository/               # 6 тестов репозиториев ✅
+│   └── Security/                 # 1 тест безопасности ✅
+├── Integration/                   # Интеграционные тесты (реальная БД)
+│   ├── Service/                  # 1 интеграционный тест сервиса ✅
+│   ├── Api/                      # 2 интеграционных теста OAuth ✅
+│   └── Command/                  # 1 тест команды ✅
+├── Functional/                    # Тесты API endpoints
+│   └── Api/                      # 14 тестов контроллеров ✅
 └── TestsUtilities/
-    └── Factory/                  # Foundry factories for test data
+    └── Factory/                  # Foundry фабрики для тестовых данных
 ```
 
 ---
 
-## 🔍 What's NOT Covered (Yet)
+## 🔍 Что НЕ покрыто (пока)
 
-### Critical Gaps 🔥
+### Критические пробелы 🔥
 
-| Component | Priority | Reason Not Tested | Impact |
+| Компонент | Приоритет | Причина отсутствия тестов | Влияние |
 |-----------|----------|-------------------|--------|
-| **TaskVoter** | 🔥 Critical | Only tested indirectly via functional tests | High - security component |
-| **TagVoter** | 🔥 Critical | Only tested indirectly via functional tests | High - security component |
-| **Admin Controllers (3)** | 🔥 Critical | Admin-only features, sensitive operations | High - ROLE_ADMIN security |
-| **EnumController** | 🔥 Critical | Used by frontend for priorities/statuses | Medium - API contract |
-| **TranslationController** | 🔥 Critical | Used for i18n translations | Medium - API contract |
+| **TaskVoter** | 🔥 Критический | Тестируется только косвенно через функциональные тесты | Высокое - компонент безопасности |
+| **TagVoter** | 🔥 Критический | Тестируется только косвенно через функциональные тесты | Высокое - компонент безопасности |
+| **Admin контроллеры (3)** | 🔥 Критический | Функции только для админа, чувствительные операции | Высокое - безопасность ROLE_ADMIN |
+| **EnumController** | 🔥 Критический | Используется frontend для приоритетов/статусов | Среднее - API контракт |
+| **TranslationController** | 🔥 Критический | Используется для i18n переводов | Среднее - API контракт |
 
-### High Priority Gaps ⚠️
+### Пробелы высокого приоритета ⚠️
 
-| Component | Priority | Reason |
+| Компонент | Приоритет | Причина |
 |-----------|----------|--------|
-| **Recurrence Strategies (5)** | ⚠️ High | Complex date logic, tested indirectly | Medium - better test isolation needed |
-| **MakeAdminCommand** | ⚠️ High | Production command for admin privileges | High - critical operation |
-| **LocaleListener** | ⚠️ High | i18n locale handling | Medium - affects all API responses |
-| **LocaleSubscriber** | ⚠️ High | i18n locale handling | Medium - affects all API responses |
+| **Стратегии рекуррентности (5)** | ⚠️ Высокий | Сложная логика дат, тестируется косвенно | Среднее - нужна лучшая изоляция тестов |
+| **MakeAdminCommand** | ⚠️ Высокий | Продакшн-команда для админских привилегий | Высокое - критическая операция |
+| **LocaleListener** | ⚠️ Высокий | Обработка i18n локали | Среднее - влияет на все API ответы |
+| **LocaleSubscriber** | ⚠️ Высокий | Обработка i18n локали | Среднее - влияет на все API ответы |
 
-### Medium Priority Gaps 📘
+### Пробелы среднего приоритета 📘
 
-| Component | Priority | Reason |
+| Компонент | Приоритет | Причина |
 |-----------|----------|--------|
-| **DTOs (8)** | 📘 Medium | Validated via Symfony Validator in functional tests | Low - but good for isolation |
-| **TaskEnumNormalizer** | 📘 Medium | Custom serialization logic | Low - tested via API |
+| **DTOs (8)** | 📘 Средний | Валидируются через Symfony Validator в функциональных тестах | Низкое - но хорошо для изоляции |
+| **TaskEnumNormalizer** | 📘 Средний | Кастомная логика сериализации | Низкое - тестируется через API |
 
-### Low Priority Gaps 📙
+### Пробелы низкого приоритета 📙
 
-| Component | Priority | Reason |
+| Компонент | Приоритет | Причина |
 |-----------|----------|--------|
-| **Entities (2)** | 📙 Low | Simple data classes, validated via Doctrine |
-| **Seeding Commands (3)** | 📙 Low | Development tools only |
-| **EasyAdmin Controllers** | 📙 Low | Third-party library UI |
+| **Entities (2)** | 📙 Низкий | Простые классы данных, валидируются через Doctrine |
+| **Команды заполнения данных (3)** | 📙 Низкий | Только инструменты для разработки |
+| **EasyAdmin контроллеры** | 📙 Низкий | UI стороннего фреймворка |
 
-**📋 Full implementation plan**: [MISSING_TEST_COVERAGE_PLAN.md](MISSING_TEST_COVERAGE_PLAN.md)
+**📋 Полный план реализации**: [MISSING_TEST_COVERAGE_PLAN.md](MISSING_TEST_COVERAGE_PLAN.md)
 
 ---
 
@@ -543,24 +543,24 @@ class DailyRecurrenceStrategyTest extends TestCase
 
 ## 📈 План по улучшению покрытия
 
-### Phase 1: Critical Security (Приоритет 1) - 1 неделя
+### Phase 1: Критическая безопасность (Приоритет 1) - 1 неделя
 
 **Цель**: Покрыть критические компоненты безопасности
 
-- [ ] TaskVoter unit tests (2-3 часа)
-- [ ] TagVoter unit tests (1-2 часа)
-- [ ] Admin Controllers functional tests (3-4 часа)
+- [ ] TaskVoter unit тесты (2-3 часа)
+- [ ] TagVoter unit тесты (1-2 часа)
+- [ ] Admin Controllers functional тесты (3-4 часа)
 
 **Результат**: Security 100%, Controllers 100%
 
 ---
 
-### Phase 2: Validation & Commands (Приоритет 2) - 1 неделя
+### Phase 2: Валидация и команды (Приоритет 2) - 1 неделя
 
 **Цель**: Покрыть валидацию и продакшн-команды
 
-- [ ] MakeAdminCommand integration test (1-2 часа)
-- [ ] DTO validation unit tests (4-5 часов)
+- [ ] MakeAdminCommand integration тест (1-2 часа)
+- [ ] DTO validation unit тесты (4-5 часов)
 
 **Результат**: Commands 33%, DTOs 100%
 
@@ -570,23 +570,23 @@ class DailyRecurrenceStrategyTest extends TestCase
 
 **Цель**: Добавить прямые Entity тесты для улучшения документации кода
 
-- [ ] Task entity tests (2 часа)
-- [ ] RecurrenceRule entity tests (1-2 часа)
-- [ ] Other entities (1-2 часа)
+- [ ] Task entity тесты (2 часа)
+- [ ] RecurrenceRule entity тесты (1-2 часа)
+- [ ] Другие entities (1-2 часа)
 
 **Результат**: Entities 100%
 
 ---
 
-### Phase 4: Recurrence Strategies (Приоритет 4) - опционально
+### Phase 4: Стратегии рекуррентности (Приоритет 4) - опционально
 
 **Цель**: Улучшить читаемость тестов для сложной логики recurrence
 
-- [ ] DailyRecurrenceStrategy tests
-- [ ] WeeklyRecurrenceStrategy tests
-- [ ] MonthlyRecurrenceStrategy tests
-- [ ] YearlyRecurrenceStrategy tests
-- [ ] CustomRecurrenceStrategy tests
+- [ ] DailyRecurrenceStrategy тесты
+- [ ] WeeklyRecurrenceStrategy тесты
+- [ ] MonthlyRecurrenceStrategy тесты
+- [ ] YearlyRecurrenceStrategy тесты
+- [ ] CustomRecurrenceStrategy тесты
 
 **Результат**: Лучшая документация recurrence логики
 
@@ -596,15 +596,15 @@ class DailyRecurrenceStrategyTest extends TestCase
 
 | Метрика | Текущее | Phase 1 | Phase 2 | Phase 3 | Phase 4 |
 |---------|---------|---------|---------|---------|---------|
-| **Controllers** | 73% (8/11) | 100% | 100% | 100% | 100% |
-| **Services** | 90% (9/10) | 90% | 90% | 90% | 100% |
-| **Repositories** | 100% | 100% | 100% | 100% | 100% |
-| **Security** | 78% (7/9) | 100% | 100% | 100% | 100% |
-| **Commands** | 17% (1/6) | 17% | 33% | 33% | 33% |
+| **Контроллеры** | 73% (8/11) | 100% | 100% | 100% | 100% |
+| **Сервисы** | 90% (9/10) | 90% | 90% | 90% | 100% |
+| **Репозитории** | 100% | 100% | 100% | 100% | 100% |
+| **Безопасность** | 78% (7/9) | 100% | 100% | 100% | 100% |
+| **Команды** | 17% (1/6) | 17% | 33% | 33% | 33% |
 | **Entities** | 0% | 0% | 0% | 100% | 100% |
 | **DTOs** | 0% | 0% | 100% | 100% | 100% |
 | **Voters** | 0% | 100% | 100% | 100% | 100% |
-| **Overall** | ~75% | ~85% | ~90% | ~95% | ~98% |
+| **В целом** | ~75% | ~85% | ~90% | ~95% | ~98% |
 
 ---
 
@@ -634,22 +634,22 @@ docker exec backend-php83 vendor/bin/phpunit --coverage-text
 ## 📚 Связанные документы
 
 - **[MISSING_TEST_COVERAGE_PLAN.md](MISSING_TEST_COVERAGE_PLAN.md)** ⭐ **ГЛАВНЫЙ ДОКУМЕНТ** - Пошаговый план написания тестов
-- **[Testing Guide](../guides/testing/TESTING.md)** - Как писать и запускать тесты
-- **[Coding Standards](../CODING_STANDARDS.md)** - Стандарты качества кода
-- **[Backend Architecture](ARCHITECTURE.md)** - Архитектура backend
+- **[Руководство по тестированию](../guides/testing/TESTING.md)** - Как писать и запускать тесты
+- **[Стандарты кодирования](../CODING_STANDARDS.md)** - Стандарты качества кода
+- **[Архитектура Backend](ARCHITECTURE.md)** - Архитектура backend
 
 ---
 
-## 🎯 Next Steps
+## 🎯 Следующие шаги
 
-**For AI Implementation:**
+**Для AI реализации:**
 
-1. **Read**: [MISSING_TEST_COVERAGE_PLAN.md](MISSING_TEST_COVERAGE_PLAN.md) - Complete step-by-step guide
-2. **Start with**: Phase 1 (Critical Security) - TaskVoter, TagVoter, Admin Controllers
-3. **Follow**: AAA pattern, use factories, mock dependencies
-4. **Target**: 95%+ coverage after all phases
+1. **Прочитать**: [MISSING_TEST_COVERAGE_PLAN.md](MISSING_TEST_COVERAGE_PLAN.md) - Полное пошаговое руководство
+2. **Начать с**: Phase 1 (Критическая безопасность) - TaskVoter, TagVoter, Admin Controllers
+3. **Следовать**: AAA паттерну, использовать фабрики, мокировать зависимости
+4. **Цель**: 95%+ покрытия после всех фаз
 
-**Current Status**: ~65-70% coverage | **Target**: 95%+ coverage
+**Текущий статус**: ~65-70% покрытия | **Цель**: 95%+ покрытия
 
 ---
 

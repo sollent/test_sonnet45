@@ -1,62 +1,62 @@
-# 🎯 Backend Missing Test Coverage - Implementation Plan
+# 🎯 Backend - План реализации недостающих тестов
 
-> **Last Updated**: 2025-11-10
-> **Status**: Ready for Implementation
-> **Priority**: Critical → Medium → Low
-
----
-
-## 📊 Executive Summary
-
-This document provides a **step-by-step implementation plan** for writing missing backend tests. After deep analysis of the entire backend codebase, we identified **29 components** that need test coverage.
-
-**Coverage Status:**
-- ✅ **Already Tested**: 33 test files (Controllers: 8, Services: 9, Repositories: 6, Security: 1, Commands: 1)
-- ⚠️ **Missing Tests**: 29 components identified below
-- 🎯 **Target Coverage**: 95%+ (from current ~75-80%)
-
-**Time Estimate**: 25-30 hours (5-6 days for solo dev + AI)
+> **Последнее обновление**: 2025-11-10
+> **Статус**: Готово к реализации
+> **Приоритет**: Критический → Средний → Низкий
 
 ---
 
-## 🗂️ Complete List of Missing Tests
+## 📊 Краткое резюме
 
-### Summary by Priority
+Этот документ предоставляет **пошаговый план реализации** для написания недостающих backend тестов. После глубокого анализа всей кодовой базы backend мы выявили **29 компонентов**, которые нуждаются в тестовом покрытии.
 
-| Priority | Components | Estimated Time |
+**Статус покрытия:**
+- ✅ **Уже протестировано**: 33 тестовых файла (Контроллеры: 8, Сервисы: 9, Репозитории: 6, Безопасность: 1, Команды: 1)
+- ⚠️ **Отсутствуют тесты**: 29 компонентов (указаны ниже)
+- 🎯 **Целевое покрытие**: 95%+ (с текущих ~75-80%)
+
+**Оценка времени**: 25-30 часов (5-6 дней для solo dev + AI)
+
+---
+
+## 🗂️ Полный список недостающих тестов
+
+### Сводка по приоритетам
+
+| Приоритет | Компонентов | Примерное время |
 |----------|------------|----------------|
-| 🔥 **Critical** | 7 components | 8-10 hours |
-| ⚠️ **High** | 8 components | 10-12 hours |
-| 📘 **Medium** | 9 components | 6-8 hours |
-| 📙 **Low** | 5 components | 3-4 hours |
-| **TOTAL** | **29 components** | **27-34 hours** |
+| 🔥 **Критический** | 7 компонентов | 8-10 часов |
+| ⚠️ **Высокий** | 8 компонентов | 10-12 часов |
+| 📘 **Средний** | 9 компонентов | 6-8 часов |
+| 📙 **Низкий** | 5 компонентов | 3-4 часа |
+| **ВСЕГО** | **29 компонентов** | **27-34 часа** |
 
 ---
 
-## 🔥 PRIORITY 1 - CRITICAL (Must Have)
+## 🔥 ПРИОРИТЕТ 1 - КРИТИЧЕСКИЙ (Обязательно)
 
-### 1.1. Security Voters - Unit Tests
+### 1.1. Security Voters - Unit тесты
 
-**Priority**: 🔥 Critical
-**Estimated Time**: 3-4 hours
-**Test Type**: Unit Tests
+**Приоритет**: 🔥 Критический
+**Примерное время**: 3-4 часа
+**Тип тестов**: Unit Tests
 
-#### Components:
+#### Компоненты:
 - `src/Security/Voter/TaskVoter.php`
 - `src/Security/Voter/TagVoter.php`
 
-#### Why Critical:
-- Authorization logic is the security backbone
-- Currently tested only indirectly via Functional tests
-- Direct unit tests ensure voter logic is bulletproof
+#### Почему критический:
+- Логика авторизации - это основа безопасности
+- Сейчас тестируется только косвенно через Functional тесты
+- Прямые unit тесты гарантируют, что логика voter'ов пуленепробиваемая
 
-#### Test File Locations:
+#### Расположение тестовых файлов:
 ```
 tests/Unit/Security/Voter/TaskVoterTest.php
 tests/Unit/Security/Voter/TagVoterTest.php
 ```
 
-#### Test Cases for TaskVoter:
+#### Тест-кейсы для TaskVoter:
 
 ```php
 // tests/Unit/Security/Voter/TaskVoterTest.php
@@ -67,59 +67,68 @@ class TaskVoterTest extends TestCase
 
     /** @test */
     public function testOwnerCanViewTask(): void
+    // Владелец может просматривать задачу
 
     /** @test */
     public function testOwnerCanEditTask(): void
+    // Владелец может редактировать задачу
 
     /** @test */
     public function testOwnerCanDeleteTask(): void
+    // Владелец может удалить задачу
 
     /** @test */
     public function testNonOwnerCannotViewTask(): void
+    // Не-владелец не может просматривать задачу
 
     /** @test */
     public function testNonOwnerCannotEditTask(): void
+    // Не-владелец не может редактировать задачу
 
     /** @test */
     public function testNonOwnerCannotDeleteTask(): void
+    // Не-владелец не может удалить задачу
 
     /** @test */
     public function testUnauthenticatedUserDenied(): void
+    // Неаутентифицированный пользователь получает отказ
 
     /** @test */
     public function testVoterSupportsOnlyTaskEntity(): void
+    // Voter поддерживает только сущность Task
 
     /** @test */
     public function testVoterSupportsCorrectAttributes(): void
+    // Voter поддерживает корректные атрибуты
 }
 ```
 
-**Total Tests**: 9 tests for TaskVoter + 7 tests for TagVoter = **16 tests**
+**Всего тестов**: 9 тестов для TaskVoter + 7 тестов для TagVoter = **16 тестов**
 
 ---
 
-### 1.2. API Controllers - Functional Tests
+### 1.2. API Controllers - Functional тесты
 
-**Priority**: 🔥 Critical
-**Estimated Time**: 3-4 hours
-**Test Type**: Functional Tests
+**Приоритет**: 🔥 Критический
+**Примерное время**: 3-4 часа
+**Тип тестов**: Functional Tests
 
-#### Components:
+#### Компоненты:
 - `src/Controller/Api/EnumController.php`
 - `src/Controller/Api/TranslationController.php`
 
-#### Why Critical:
-- These are public API endpoints used by frontend
-- EnumController: serves priorities and statuses (critical for UI)
-- TranslationController: serves i18n translations (critical for i18n)
+#### Почему критический:
+- Это публичные API эндпоинты, используемые frontend'ом
+- EnumController: отдает приоритеты и статусы (критично для UI)
+- TranslationController: отдает i18n переводы (критично для интернационализации)
 
-#### Test File Locations:
+#### Расположение тестовых файлов:
 ```
 tests/Functional/Api/EnumControllerTest.php
 tests/Functional/Api/TranslationControllerTest.php
 ```
 
-#### Test Cases for EnumController:
+#### Тест-кейсы для EnumController:
 
 ```php
 // tests/Functional/Api/EnumControllerTest.php
@@ -128,127 +137,136 @@ class EnumControllerTest extends ApiTestCase
 {
     /** @test */
     public function testGetPrioritiesReturnsAllPriorities(): void
-    // Expected: 200, array with 4 priorities (low, medium, high, urgent)
+    // Ожидается: 200, массив с 4 приоритетами (low, medium, high, urgent)
 
     /** @test */
     public function testGetPrioritiesIncludesColorAndIcon(): void
-    // Expected: Each priority has value, label, color, icon
+    // Ожидается: Каждый приоритет имеет value, label, color, icon
 
     /** @test */
     public function testGetPrioritiesRespectsAcceptLanguageHeader(): void
-    // Expected: Russian labels when Accept-Language: ru
+    // Ожидается: Русские labels когда Accept-Language: ru
 
     /** @test */
     public function testGetStatusesReturnsAllStatuses(): void
-    // Expected: 200, array with 4 statuses
+    // Ожидается: 200, массив с 4 статусами
 
     /** @test */
     public function testGetStatusesIncludesColorAndIcon(): void
+    // Каждый статус содержит color и icon
 
     /** @test */
     public function testGetStatusesRespectsAcceptLanguageHeader(): void
+    // Учитывает заголовок Accept-Language
 
     /** @test */
     public function testUnauthorizedUserCannotAccessEnumEndpoints(): void
-    // Expected: 401 when no JWT token
+    // Ожидается: 401 когда нет JWT токена
 }
 ```
 
-**Total Tests**: 7 tests for EnumController + 8 tests for TranslationController = **15 tests**
+**Всего тестов**: 7 тестов для EnumController + 8 тестов для TranslationController = **15 тестов**
 
 ---
 
-### 1.3. Admin Controllers - Functional Tests
+### 1.3. Admin Controllers - Functional тесты
 
-**Priority**: 🔥 Critical
-**Estimated Time**: 4-5 hours
-**Test Type**: Functional Tests
+**Приоритет**: 🔥 Критический
+**Примерное время**: 4-5 часов
+**Тип тестов**: Functional Tests
 
-#### Components:
+#### Компоненты:
 - `src/Controller/Admin/DashboardController.php`
 - `src/Controller/Admin/SecurityController.php`
 - `src/Controller/Admin/UserCrudController.php`
 
-#### Why Critical:
-- Admin panel has access to sensitive operations
-- ROLE_ADMIN authorization must be tested
-- User management is critical functionality
+#### Почему критический:
+- Админ-панель имеет доступ к чувствительным операциям
+- Авторизация ROLE_ADMIN должна быть протестирована
+- Управление пользователями - критический функционал
 
-#### Test File Locations:
+#### Расположение тестовых файлов:
 ```
 tests/Functional/Admin/AdminDashboardTest.php
 tests/Functional/Admin/AdminSecurityTest.php
 tests/Functional/Admin/UserCrudTest.php
 ```
 
-#### Test Cases for Admin Controllers:
+#### Тест-кейсы для Admin Controllers:
 
 ```php
-// tests/Functional/Admin/AdminAccessTest.php (combined test)
+// tests/Functional/Admin/AdminAccessTest.php (объединенный тест)
 
 class AdminAccessTest extends WebTestCase
 {
     /** @test */
     public function testNonAdminCannotAccessDashboard(): void
-    // Expected: 403 when regular user tries to access /admin
+    // Ожидается: 403 когда обычный пользователь пытается попасть на /admin
 
     /** @test */
     public function testAdminCanAccessDashboard(): void
-    // Expected: 200 when ROLE_ADMIN user accesses /admin
+    // Ожидается: 200 когда пользователь с ROLE_ADMIN заходит на /admin
 
     /** @test */
     public function testUnauthenticatedUserRedirectedToLogin(): void
-    // Expected: 302 redirect to login page
+    // Ожидается: 302 редирект на страницу логина
 
     /** @test */
     public function testAdminCanViewUsersList(): void
+    // Админ может просмотреть список пользователей
 
     /** @test */
     public function testAdminCanCreateUser(): void
+    // Админ может создать пользователя
 
     /** @test */
     public function testAdminCanEditUser(): void
+    // Админ может редактировать пользователя
 
     /** @test */
     public function testAdminCanDeleteUser(): void
+    // Админ может удалить пользователя
 
     /** @test */
     public function testAdminCannotDeleteSelf(): void
+    // Админ не может удалить самого себя
 
     /** @test */
     public function testAdminCanGrantRoleAdmin(): void
+    // Админ может выдать роль ROLE_ADMIN
 
     /** @test */
     public function testNonAdminCannotAccessUserCrud(): void
+    // Не-админ не может получить доступ к CRUD пользователей
 }
 ```
 
-**Total Tests**: ~12-15 tests for Admin controllers
+**Всего тестов**: ~12-15 тестов для Admin контроллеров
 
 ---
 
-## ⚠️ PRIORITY 2 - HIGH (Should Have)
+## ⚠️ ПРИОРИТЕТ 2 - ВЫСОКИЙ (Должно быть)
 
-### 2.1. Recurrence Strategies - Unit Tests
+### 2.1. Recurrence Strategies - Unit тесты
 
-**Priority**: ⚠️ High
-**Estimated Time**: 6-8 hours
-**Test Type**: Unit Tests
+**Приоритет**: ⚠️ Высокий
+**Примерное время**: 6-8 часов
+**Тип тестов**: Unit Tests
 
-#### Components:
+#### Компоненты:
 - `src/Service/Recurrence/Strategy/DailyRecurrenceStrategy.php`
 - `src/Service/Recurrence/Strategy/WeeklyRecurrenceStrategy.php`
 - `src/Service/Recurrence/Strategy/MonthlyRecurrenceStrategy.php`
 - `src/Service/Recurrence/Strategy/YearlyRecurrenceStrategy.php`
 - `src/Service/Recurrence/Strategy/CustomRecurrenceStrategy.php`
 
-#### Why High Priority:
-- Complex business logic for date calculations
-- Currently tested only indirectly through RecurrenceServiceTest
-- Direct unit tests improve readability and maintainability
-- Critical for recurring tasks feature
+#### Почему высокий приоритет:
+- Сложная бизнес-логика для расчета дат
+- Сейчас тестируется только косвенно через RecurrenceServiceTest
+- Прямые unit тесты улучшают читаемость и поддерживаемость
+- Критично для функционала повторяющихся задач
 
-#### Test File Locations:
+#### Расположение тестовых файлов:
 ```
 tests/Unit/Service/Recurrence/Strategy/DailyRecurrenceStrategyTest.php
 tests/Unit/Service/Recurrence/Strategy/WeeklyRecurrenceStrategyTest.php
@@ -257,7 +275,7 @@ tests/Unit/Service/Recurrence/Strategy/YearlyRecurrenceStrategyTest.php
 tests/Unit/Service/Recurrence/Strategy/CustomRecurrenceStrategyTest.php
 ```
 
-#### Test Cases for DailyRecurrenceStrategy:
+#### Тест-кейсы для DailyRecurrenceStrategy:
 
 ```php
 // tests/Unit/Service/Recurrence/Strategy/DailyRecurrenceStrategyTest.php
@@ -268,75 +286,75 @@ class DailyRecurrenceStrategyTest extends TestCase
 
     /** @test */
     public function testCalculateNextOccurrenceAddsOneDay(): void
-    // Given: task due on 2025-01-10
-    // When: calculateNextOccurrence() called
-    // Then: returns 2025-01-11
+    // Дано: задача со сроком 2025-01-10
+    // Когда: вызывается calculateNextOccurrence()
+    // Тогда: возвращается 2025-01-11
 
     /** @test */
     public function testAppliesTimeOfDayIfSet(): void
-    // Given: rule with timeOfDay = 14:30
-    // When: calculateNextOccurrence()
-    // Then: next date has time 14:30:00
+    // Дано: правило с timeOfDay = 14:30
+    // Когда: calculateNextOccurrence()
+    // Тогда: следующая дата имеет время 14:30:00
 
     /** @test */
     public function testRespectsEndDate(): void
-    // Given: rule with endDate = 2025-01-15
-    // When: calculateNextOccurrence(2025-01-15)
-    // Then: returns null (no more occurrences)
+    // Дано: правило с endDate = 2025-01-15
+    // Когда: calculateNextOccurrence(2025-01-15)
+    // Тогда: возвращается null (больше нет повторений)
 
     /** @test */
     public function testRespectsMaxOccurrences(): void
-    // Given: rule with maxOccurrences = 5, currentOccurrences = 5
-    // When: calculateNextOccurrence()
-    // Then: returns null
+    // Дано: правило с maxOccurrences = 5, currentOccurrences = 5
+    // Когда: calculateNextOccurrence()
+    // Тогда: возвращается null
 
     /** @test */
     public function testSupportsOnlyDailyType(): void
-    // Given: strategy instance
-    // When: supports('daily') called
-    // Then: returns true
-    // When: supports('weekly') called
-    // Then: returns false
+    // Дано: экземпляр стратегии
+    // Когда: вызывается supports('daily')
+    // Тогда: возвращается true
+    // Когда: вызывается supports('weekly')
+    // Тогда: возвращается false
 
     /** @test */
     public function testGetPreviewDatesReturnsCorrectCount(): void
-    // Given: startDate = 2025-01-10, count = 5
-    // When: getPreviewDates() called
-    // Then: returns array with 5 dates
+    // Дано: startDate = 2025-01-10, count = 5
+    // Когда: вызывается getPreviewDates()
+    // Тогда: возвращается массив с 5 датами
 
     /** @test */
     public function testGetPreviewDatesStopsAtEndDate(): void
-    // Given: endDate = 2025-01-12, count = 10
-    // When: getPreviewDates() called
-    // Then: returns only 2 dates (until endDate)
+    // Дано: endDate = 2025-01-12, count = 10
+    // Когда: вызывается getPreviewDates()
+    // Тогда: возвращается только 2 даты (до endDate)
 }
 ```
 
-**Similar structure for other strategies (Weekly, Monthly, Yearly, Custom)**
+**Аналогичная структура для других стратегий (Weekly, Monthly, Yearly, Custom)**
 
-**Total Tests**: ~7 tests × 5 strategies = **35 tests**
+**Всего тестов**: ~7 тестов × 5 стратегий = **35 тестов**
 
 ---
 
-### 2.2. Commands - Integration Tests
+### 2.2. Commands - Integration тесты
 
-**Priority**: ⚠️ High
-**Estimated Time**: 2-3 hours
-**Test Type**: Integration Tests
+**Приоритет**: ⚠️ Высокий
+**Примерное время**: 2-3 часа
+**Тип тестов**: Integration Tests
 
-#### Components:
-- `src/Command/MakeAdminCommand.php` (CRITICAL - production command)
+#### Компоненты:
+- `src/Command/MakeAdminCommand.php` (КРИТИЧНО - production команда)
 
-#### Why High Priority:
-- Used in production to grant admin privileges
-- Must ensure it works correctly with real database
+#### Почему высокий приоритет:
+- Используется в production для выдачи админских привилегий
+- Должны убедиться, что корректно работает с реальной БД
 
-#### Test File Location:
+#### Расположение тестового файла:
 ```
 tests/Integration/Command/MakeAdminCommandTest.php
 ```
 
-#### Test Cases:
+#### Тест-кейсы:
 
 ```php
 // tests/Integration/Command/MakeAdminCommandTest.php
@@ -347,56 +365,57 @@ class MakeAdminCommandTest extends KernelTestCase
 
     /** @test */
     public function testMakeUserAdmin(): void
-    // Given: regular user exists
-    // When: command executed with user email
-    // Then: user has ROLE_ADMIN role
+    // Дано: существует обычный пользователь
+    // Когда: команда выполнена с email пользователя
+    // Тогда: пользователь имеет роль ROLE_ADMIN
 
     /** @test */
     public function testCannotMakeNonExistentUserAdmin(): void
-    // Given: user does not exist
-    // When: command executed
-    // Then: command fails with error message
+    // Дано: пользователь не существует
+    // Когда: команда выполнена
+    // Тогда: команда завершается с ошибкой
 
     /** @test */
     public function testUserAlreadyAdmin(): void
-    // Given: user already has ROLE_ADMIN
-    // When: command executed
-    // Then: command shows "already admin" message
+    // Дано: пользователь уже имеет ROLE_ADMIN
+    // Когда: команда выполнена
+    // Тогда: команда показывает сообщение "уже админ"
 
     /** @test */
     public function testCommandRequiresEmailArgument(): void
+    // Команда требует аргумент email
 
     /** @test */
     public function testCommandPersistsChangesToDatabase(): void
-    // Ensure changes are flushed to DB
+    // Убеждаемся, что изменения сохраняются в БД
 }
 ```
 
-**Total Tests**: 5 tests
+**Всего тестов**: 5 тестов
 
 ---
 
-### 2.3. Event Listeners - Unit Tests
+### 2.3. Event Listeners - Unit тесты
 
-**Priority**: ⚠️ High
-**Estimated Time**: 2-3 hours
-**Test Type**: Unit Tests
+**Приоритет**: ⚠️ Высокий
+**Примерное время**: 2-3 часа
+**Тип тестов**: Unit Tests
 
-#### Components:
+#### Компоненты:
 - `src/EventListener/LocaleListener.php`
 - `src/EventSubscriber/LocaleSubscriber.php`
 
-#### Why High Priority:
-- Locale handling affects all API responses
-- i18n is a key feature
+#### Почему высокий приоритет:
+- Обработка локали влияет на все API ответы
+- i18n - ключевая фича
 
-#### Test File Locations:
+#### Расположение тестовых файлов:
 ```
 tests/Unit/EventListener/LocaleListenerTest.php
 tests/Unit/EventSubscriber/LocaleSubscriberTest.php
 ```
 
-#### Test Cases for LocaleListener:
+#### Тест-кейсы для LocaleListener:
 
 ```php
 // tests/Unit/EventListener/LocaleListenerTest.php
@@ -405,44 +424,46 @@ class LocaleListenerTest extends TestCase
 {
     /** @test */
     public function testSetsLocaleFromAcceptLanguageHeader(): void
+    // Устанавливает локаль из заголовка Accept-Language
 
     /** @test */
     public function testFallsBackToDefaultLocale(): void
+    // Возвращается к дефолтной локали
 
     /** @test */
     public function testSupportsOnlyConfiguredLocales(): void
-    // Given: configured locales are [en, ru, uk]
-    // When: Accept-Language: fr
-    // Then: falls back to 'en'
+    // Дано: настроенные локали [en, ru, uk]
+    // Когда: Accept-Language: fr
+    // Тогда: возвращается к 'en'
 }
 ```
 
-**Total Tests**: 6 tests (3 + 3)
+**Всего тестов**: 6 тестов (3 + 3)
 
 ---
 
-## 📘 PRIORITY 3 - MEDIUM (Nice to Have)
+## 📘 ПРИОРИТЕТ 3 - СРЕДНИЙ (Желательно)
 
-### 3.1. Serializer Normalizer - Unit Tests
+### 3.1. Serializer Normalizer - Unit тесты
 
-**Priority**: 📘 Medium
-**Estimated Time**: 1-2 hours
-**Test Type**: Unit Tests
+**Приоритет**: 📘 Средний
+**Примерное время**: 1-2 часа
+**Тип тестов**: Unit Tests
 
-#### Component:
+#### Компонент:
 - `src/Serializer/Normalizer/TaskEnumNormalizer.php`
 
-#### Why Medium Priority:
-- Custom serialization logic for enums
-- Used in API responses
-- Currently tested indirectly via Functional tests
+#### Почему средний приоритет:
+- Кастомная логика сериализации для enum'ов
+- Используется в API ответах
+- Сейчас тестируется косвенно через Functional тесты
 
-#### Test File Location:
+#### Расположение тестового файла:
 ```
 tests/Unit/Serializer/Normalizer/TaskEnumNormalizerTest.php
 ```
 
-#### Test Cases:
+#### Тест-кейсы:
 
 ```php
 // tests/Unit/Serializer/Normalizer/TaskEnumNormalizerTest.php
@@ -451,29 +472,33 @@ class TaskEnumNormalizerTest extends TestCase
 {
     /** @test */
     public function testNormalizesTaskPriority(): void
+    // Нормализует приоритет задачи
 
     /** @test */
     public function testNormalizesTaskStatus(): void
+    // Нормализует статус задачи
 
     /** @test */
     public function testSupportsNormalizationForEnums(): void
+    // Поддерживает нормализацию для enum'ов
 
     /** @test */
     public function testDoesNotSupportOtherTypes(): void
+    // Не поддерживает другие типы
 }
 ```
 
-**Total Tests**: 4 tests
+**Всего тестов**: 4 теста
 
 ---
 
-### 3.2. DTO Validation - Unit Tests
+### 3.2. DTO Validation - Unit тесты
 
-**Priority**: 📘 Medium
-**Estimated Time**: 4-5 hours
-**Test Type**: Unit Tests
+**Приоритет**: 📘 Средний
+**Примерное время**: 4-5 часов
+**Тип тестов**: Unit Tests
 
-#### Components:
+#### Компоненты:
 - `src/Dto/Request/Task/CreateTaskDto.php`
 - `src/Dto/Request/Task/UpdateTaskDto.php`
 - `src/Dto/Request/User/UserRegistrationRequestDto.php`
@@ -483,20 +508,20 @@ class TaskEnumNormalizerTest extends TestCase
 - `src/Dto/Request/User/UpdateNotificationsDto.php`
 - `src/Dto/Request/Recurrence/CreateRecurrenceDto.php`
 
-#### Why Medium Priority:
-- Validation is currently tested only through API endpoints
-- Direct DTO tests isolate validation logic
-- Good for documentation purposes
+#### Почему средний приоритет:
+- Валидация сейчас тестируется только через API эндпоинты
+- Прямые тесты DTO изолируют логику валидации
+- Хорошо для целей документации
 
-#### Test File Locations:
+#### Расположение тестовых файлов:
 ```
 tests/Unit/Dto/Request/Task/CreateTaskDtoTest.php
 tests/Unit/Dto/Request/Task/UpdateTaskDtoTest.php
 tests/Unit/Dto/Request/User/UserRegistrationRequestDtoTest.php
-... (etc for other DTOs)
+... (и т.д. для других DTO)
 ```
 
-#### Test Cases for CreateTaskDto:
+#### Тест-кейсы для CreateTaskDto:
 
 ```php
 // tests/Unit/Dto/Request/Task/CreateTaskDtoTest.php
@@ -507,67 +532,72 @@ class CreateTaskDtoTest extends TestCase
 
     /** @test */
     public function testValidDtoPassesValidation(): void
+    // Валидный DTO проходит валидацию
 
     /** @test */
     public function testTitleIsRequired(): void
-    // Expected: validation error when title is null/empty
+    // Ожидается: ошибка валидации когда title null/пустой
 
     /** @test */
     public function testTitleMinLength(): void
-    // Expected: error when title < 3 characters
+    // Ожидается: ошибка когда title < 3 символов
 
     /** @test */
     public function testTitleMaxLength(): void
-    // Expected: error when title > 255 characters
+    // Ожидается: ошибка когда title > 255 символов
 
     /** @test */
     public function testInvalidStatus(): void
-    // Expected: error when status is not valid enum value
+    // Ожидается: ошибка когда status не является валидным значением enum
 
     /** @test */
     public function testInvalidPriority(): void
+    // Ожидается: ошибка для невалидного приоритета
 
     /** @test */
     public function testDueDateMustBeFutureDate(): void
+    // dueDate должна быть будущей датой
 
     /** @test */
     public function testDescriptionIsOptional(): void
+    // description необязательное поле
 
     /** @test */
     public function testParentIdMustBeInteger(): void
+    // parentId должно быть целым числом
 }
 ```
 
-**Total Tests**: ~50-60 tests (all DTOs combined)
+**Всего тестов**: ~50-60 тестов (все DTO вместе)
 
 ---
 
-## 📙 PRIORITY 4 - LOW (Optional)
+## 📙 ПРИОРИТЕТ 4 - НИЗКИЙ (Опционально)
 
-### 4.1. Development Commands - Integration Tests
+### 4.1. Development Commands - Integration тесты
 
-**Priority**: 📙 Low
-**Estimated Time**: 2-3 hours
-**Test Type**: Integration Tests
+**Приоритет**: 📙 Низкий
+**Примерное время**: 2-3 часа
+**Тип тестов**: Integration Tests
 
-#### Components:
+#### Компоненты:
 - `src/Command/SeedTasksCommand.php`
 - `src/Command/GenerateUserJourneyCommand.php`
 - `src/Command/GenerateTestDataFastCommand.php`
 
-#### Why Low Priority:
-- Development/seeding tools only
-- Not used in production
-- Manual QA sufficient
+#### Почему низкий приоритет:
+- Только инструменты для разработки/заполнения данных
+- Не используются в production
+- Достаточно ручного QA
 
-#### Test File Locations:
+#### Расположение тестовых файлов:
 ```
 tests/Integration/Command/SeedTasksCommandTest.php
 tests/Integration/Command/GenerateUserJourneyCommandTest.php
 tests/Integration/Command/GenerateTestDataFastCommandTest.php
 ```
 
-#### Test Cases (Example):
+#### Тест-кейсы (Пример):
 
 ```php
 // tests/Integration/Command/SeedTasksCommandTest.php
@@ -578,38 +608,40 @@ class SeedTasksCommandTest extends KernelTestCase
 
     /** @test */
     public function testCommandCreatesTasksInDatabase(): void
+    // Команда создает задачи в базе данных
 
     /** @test */
     public function testCommandCreatesCorrectNumberOfTasks(): void
+    // Команда создает корректное количество задач
 }
 ```
 
-**Total Tests**: ~9 tests (3 per command)
+**Всего тестов**: ~9 тестов (3 на команду)
 
 ---
 
-### 4.2. Entity Business Logic - Unit Tests
+### 4.2. Entity Business Logic - Unit тесты
 
-**Priority**: 📙 Low
-**Estimated Time**: 2-3 hours
-**Test Type**: Unit Tests
+**Приоритет**: 📙 Низкий
+**Примерное время**: 2-3 часа
+**Тип тестов**: Unit Tests
 
-#### Components:
-- `src/Entity/Task.php` (methods: `isCompleted()`, `isOverdue()`, etc.)
-- `src/Entity/RecurrenceRule.php` (validation methods)
+#### Компоненты:
+- `src/Entity/Task.php` (методы: `isCompleted()`, `isOverdue()`, и т.д.)
+- `src/Entity/RecurrenceRule.php` (методы валидации)
 
-#### Why Low Priority:
-- Most entity methods are simple getters/setters
-- Already tested via Integration tests
-- Only methods with business logic need direct tests
+#### Почему низкий приоритет:
+- Большинство методов сущностей - простые getters/setters
+- Уже тестируются через Integration тесты
+- Только методы с бизнес-логикой требуют прямых тестов
 
-#### Test File Locations:
+#### Расположение тестовых файлов:
 ```
 tests/Unit/Entity/TaskTest.php
 tests/Unit/Entity/RecurrenceRuleTest.php
 ```
 
-#### Test Cases for Task Entity:
+#### Тест-кейсы для Task Entity:
 
 ```php
 // tests/Unit/Entity/TaskTest.php
@@ -618,157 +650,165 @@ class TaskTest extends TestCase
 {
     /** @test */
     public function testIsOverdueReturnsTrueForPastDueDate(): void
+    // isOverdue() возвращает true для прошедшей даты
 
     /** @test */
     public function testIsOverdueReturnsFalseForFutureDueDate(): void
+    // isOverdue() возвращает false для будущей даты
 
     /** @test */
     public function testIsOverdueReturnsFalseWhenNoDueDate(): void
+    // isOverdue() возвращает false когда нет dueDate
 
     /** @test */
     public function testIsCompletedReturnsTrueWhenStatusCompleted(): void
+    // isCompleted() возвращает true когда статус completed
 
     /** @test */
     public function testIsCompletedReturnsFalseForOtherStatuses(): void
+    // isCompleted() возвращает false для других статусов
 
     /** @test */
     public function testAddSubtaskRelationship(): void
+    // Добавление подзадачи
 
     /** @test */
     public function testRemoveSubtaskRelationship(): void
+    // Удаление подзадачи
 
     /** @test */
     public function testAddTagRelationship(): void
+    // Добавление тега
 }
 ```
 
-**Total Tests**: ~12 tests
+**Всего тестов**: ~12 тестов
 
 ---
 
-## 📋 Implementation Roadmap
+## 📋 Дорожная карта реализации
 
-### Phase 1: Critical Security & Controllers (Week 1)
-**Goal**: Cover all security-critical components
-**Time**: 8-10 hours
+### Фаза 1: Критическая безопасность и контроллеры (Неделя 1)
+**Цель**: Покрыть все критические компоненты безопасности
+**Время**: 8-10 часов
 
-- [ ] TaskVoter unit tests (2 hours)
-- [ ] TagVoter unit tests (1 hour)
-- [ ] Admin Controllers functional tests (4 hours)
-- [ ] EnumController functional tests (1 hour)
-- [ ] TranslationController functional tests (1 hour)
+- [ ] TaskVoter unit тесты (2 часа)
+- [ ] TagVoter unit тесты (1 час)
+- [ ] Admin Controllers functional тесты (4 часа)
+- [ ] EnumController functional тесты (1 час)
+- [ ] TranslationController functional тесты (1 час)
 
-**Result**: Security 100%, API Controllers 100%
-
----
-
-### Phase 2: Recurrence Strategies (Week 2)
-**Goal**: Cover complex date calculation logic
-**Time**: 6-8 hours
-
-- [ ] DailyRecurrenceStrategy unit tests (1.5 hours)
-- [ ] WeeklyRecurrenceStrategy unit tests (1.5 hours)
-- [ ] MonthlyRecurrenceStrategy unit tests (2 hours)
-- [ ] YearlyRecurrenceStrategy unit tests (2 hours)
-- [ ] CustomRecurrenceStrategy unit tests (1 hour)
-
-**Result**: Recurrence logic 100% covered
+**Результат**: Безопасность 100%, API контроллеры 100%
 
 ---
 
-### Phase 3: Commands & Event Listeners (Week 3)
-**Goal**: Cover infrastructure components
-**Time**: 4-6 hours
+### Фаза 2: Recurrence стратегии (Неделя 2)
+**Цель**: Покрыть сложную логику расчета дат
+**Время**: 6-8 часов
 
-- [ ] MakeAdminCommand integration tests (2 hours)
-- [ ] LocaleListener unit tests (1.5 hours)
-- [ ] LocaleSubscriber unit tests (1.5 hours)
-- [ ] TaskEnumNormalizer unit tests (1 hour)
+- [ ] DailyRecurrenceStrategy unit тесты (1.5 часа)
+- [ ] WeeklyRecurrenceStrategy unit тесты (1.5 часа)
+- [ ] MonthlyRecurrenceStrategy unit тесты (2 часа)
+- [ ] YearlyRecurrenceStrategy unit тесты (2 часа)
+- [ ] CustomRecurrenceStrategy unit тесты (1 час)
 
-**Result**: Commands 33%, Event handling 100%
-
----
-
-### Phase 4: DTO Validation (Week 4)
-**Goal**: Isolate validation logic
-**Time**: 4-5 hours
-
-- [ ] CreateTaskDto validation tests (1 hour)
-- [ ] UpdateTaskDto validation tests (1 hour)
-- [ ] User DTOs validation tests (2 hours)
-- [ ] Recurrence DTO validation tests (1 hour)
-
-**Result**: DTOs 100% covered
+**Результат**: Логика повторений 100% покрыта
 
 ---
 
-### Phase 5: Optional - Entities & Dev Commands (Week 5)
-**Goal**: Complete 100% coverage
-**Time**: 4-6 hours
+### Фаза 3: Команды и Event Listeners (Неделя 3)
+**Цель**: Покрыть инфраструктурные компоненты
+**Время**: 4-6 часов
 
-- [ ] Task entity business logic tests (1 hour)
-- [ ] RecurrenceRule entity tests (1 hour)
-- [ ] GenerateTestDataFastCommand tests (1 hour)
+- [ ] MakeAdminCommand integration тесты (2 часа)
+- [ ] LocaleListener unit тесты (1.5 часа)
+- [ ] LocaleSubscriber unit тесты (1.5 часа)
+- [ ] TaskEnumNormalizer unit тесты (1 час)
 
-**Result**: Overall coverage 95%+
+**Результат**: Команды 33%, Обработка событий 100%
 
 ---
 
-## 📊 Expected Coverage After Each Phase
+### Фаза 4: DTO валидация (Неделя 4)
+**Цель**: Изолировать логику валидации
+**Время**: 4-5 часов
 
-| Phase | Controllers | Services | Repositories | Security | Commands | DTOs | Entities | Overall |
+- [ ] CreateTaskDto validation тесты (1 час)
+- [ ] UpdateTaskDto validation тесты (1 час)
+- [ ] User DTOs validation тесты (2 часа)
+- [ ] Recurrence DTO validation тесты (1 час)
+
+**Результат**: DTO 100% покрыты
+
+---
+
+### Фаза 5: Опционально - Сущности и Dev команды (Неделя 5)
+**Цель**: Достижение 100% покрытия
+**Время**: 4-6 часов
+
+- [ ] Task entity бизнес-логика тесты (1 час)
+- [ ] RecurrenceRule entity тесты (1 час)
+- [ ] GenerateTestDataFastCommand тесты (1 час)
+
+**Результат**: Общее покрытие 95%+
+
+---
+
+## 📊 Ожидаемое покрытие после каждой фазы
+
+| Фаза | Контроллеры | Сервисы | Репозитории | Безопасность | Команды | DTO | Сущности | Общее |
 |-------|-------------|----------|--------------|----------|----------|------|----------|---------|
-| **Current** | 73% (8/11) | 90% (9/10) | 100% | 78% (7/9) | 17% (1/6) | 0% | 0% | ~75% |
-| **Phase 1** | 100% | 90% | 100% | 100% | 17% | 0% | 0% | ~85% |
-| **Phase 2** | 100% | 100% | 100% | 100% | 17% | 0% | 0% | ~88% |
-| **Phase 3** | 100% | 100% | 100% | 100% | 33% | 0% | 0% | ~90% |
-| **Phase 4** | 100% | 100% | 100% | 100% | 33% | 100% | 0% | ~93% |
-| **Phase 5** | 100% | 100% | 100% | 100% | 67% | 100% | 50% | ~95% |
+| **Текущее** | 73% (8/11) | 90% (9/10) | 100% | 78% (7/9) | 17% (1/6) | 0% | 0% | ~75% |
+| **Фаза 1** | 100% | 90% | 100% | 100% | 17% | 0% | 0% | ~85% |
+| **Фаза 2** | 100% | 100% | 100% | 100% | 17% | 0% | 0% | ~88% |
+| **Фаза 3** | 100% | 100% | 100% | 100% | 33% | 0% | 0% | ~90% |
+| **Фаза 4** | 100% | 100% | 100% | 100% | 33% | 100% | 0% | ~93% |
+| **Фаза 5** | 100% | 100% | 100% | 100% | 67% | 100% | 50% | ~95% |
 
 ---
 
-## 🔧 Testing Tools & Commands
+## 🔧 Инструменты и команды для тестирования
 
-### Running Tests
+### Запуск тестов
 
 ```bash
-# All tests
+# Все тесты
 docker exec backend-php83 vendor/bin/phpunit
 
-# Specific test file
+# Конкретный тестовый файл
 docker exec backend-php83 vendor/bin/phpunit tests/Unit/Security/Voter/TaskVoterTest.php
 
-# Specific test method
+# Конкретный тестовый метод
 docker exec backend-php83 vendor/bin/phpunit --filter testOwnerCanViewTask
 
-# With coverage (requires Xdebug)
+# С покрытием (требуется Xdebug)
 docker exec backend-php83 php -dxdebug.mode=coverage vendor/bin/phpunit --coverage-html var/coverage
 ```
 
-### Code Coverage Report
+### Отчет о покрытии кода
 
 ```bash
-# Install Xdebug
+# Установка Xdebug
 docker exec backend-php83 pecl install xdebug
 
-# Generate HTML coverage report
+# Генерация HTML отчета о покрытии
 docker exec backend-php83 php -dxdebug.mode=coverage vendor/bin/phpunit --coverage-html var/coverage
 
-# Open report
+# Открыть отчет
 open var/coverage/index.html
 ```
 
 ---
 
-## 📝 Test Writing Guidelines
+## 📝 Руководство по написанию тестов
 
-### AAA Pattern (Arrange, Act, Assert)
+### AAA паттерн (Arrange, Act, Assert)
 
 ```php
 /** @test */
 public function testOwnerCanViewTask(): void
 {
-    // Arrange: Setup test data
+    // Arrange: Подготовка тестовых данных
     $user = new User();
     $user->setEmail('owner@test.com');
 
@@ -780,18 +820,18 @@ public function testOwnerCanViewTask(): void
 
     $voter = new TaskVoter();
 
-    // Act: Execute the code under test
+    // Act: Выполнение тестируемого кода
     $result = $voter->vote($token, $task, ['TASK_VIEW']);
 
-    // Assert: Verify the result
+    // Assert: Проверка результата
     $this->assertSame(VoterInterface::ACCESS_GRANTED, $result);
 }
 ```
 
-### Mocking Dependencies
+### Мокирование зависимостей
 
 ```php
-// Mock repository
+// Мок репозитория
 $taskRepository = $this->createMock(TaskRepository::class);
 $taskRepository
     ->expects($this->once())
@@ -799,11 +839,11 @@ $taskRepository
     ->with(123)
     ->willReturn($task);
 
-// Mock service
+// Мок сервиса
 $service = new TaskService($taskRepository, $entityManager);
 ```
 
-### Testing Exceptions
+### Тестирование исключений
 
 ```php
 /** @test */
@@ -818,61 +858,61 @@ public function testThrowsExceptionWhenTaskNotFound(): void
 
 ---
 
-## 🎯 Success Criteria
+## 🎯 Критерии успеха
 
-### Definition of Done for Each Test:
+### Definition of Done для каждого теста:
 
-- [ ] Test file created in correct location
-- [ ] All methods in component are tested
-- [ ] Happy path covered
-- [ ] Error cases covered
-- [ ] Edge cases covered
-- [ ] Mocks used correctly (for Unit tests)
-- [ ] ResetDatabase trait used (for Integration/Functional tests)
-- [ ] Test names are descriptive
-- [ ] AAA pattern followed
-- [ ] All tests pass green ✅
+- [ ] Тестовый файл создан в правильном месте
+- [ ] Все методы компонента протестированы
+- [ ] Happy path покрыт
+- [ ] Сценарии с ошибками покрыты
+- [ ] Граничные случаи покрыты
+- [ ] Моки используются корректно (для Unit тестов)
+- [ ] Используется трейт ResetDatabase (для Integration/Functional тестов)
+- [ ] Названия тестов описательные
+- [ ] Следование AAA паттерну
+- [ ] Все тесты проходят зеленым ✅
 
-### Coverage Goals:
+### Цели покрытия:
 
-- **Critical Priority**: Must reach 100%
-- **High Priority**: Should reach 100%
-- **Medium Priority**: Should reach 80%+
-- **Low Priority**: Optional, but nice to have
-
----
-
-## 📚 Related Documents
-
-- **[TEST_COVERAGE.md](TEST_COVERAGE.md)** - Current test coverage report
-- **[TESTING.md](../guides/testing/TESTING.md)** - Testing guidelines and best practices
-- **[CODING_STANDARDS.md](../CODING_STANDARDS.md)** - Code quality standards
-- **[ARCHITECTURE.md](ARCHITECTURE.md)** - Backend architecture overview
+- **Критический приоритет**: Должен достигнуть 100%
+- **Высокий приоритет**: Должен достигнуть 100%
+- **Средний приоритет**: Должен достигнуть 80%+
+- **Низкий приоритет**: Опционально, но желательно
 
 ---
 
-## 📌 Notes for AI Implementation
+## 📚 Связанные документы
 
-### When Writing Tests:
-
-1. **Always read existing similar tests first** - Follow established patterns
-2. **Use factories for test data** - TaskFactory, UserFactory, TagFactory
-3. **Mock external dependencies** - Don't test third-party code
-4. **Test one thing at a time** - Single responsibility per test
-5. **Use descriptive test names** - `testOwnerCanViewTask` not `testVoter`
-6. **Add comments for complex setup** - Help future developers understand
-
-### Common Pitfalls to Avoid:
-
-- ❌ Don't test getters/setters (they're trivial)
-- ❌ Don't test framework code (Symfony is already tested)
-- ❌ Don't test third-party libraries
-- ❌ Don't use real database for Unit tests (use mocks)
-- ❌ Don't forget to clean up (ResetDatabase trait)
-- ❌ Don't write tests that depend on other tests
+- **[TEST_COVERAGE.md](TEST_COVERAGE.md)** - Текущий отчет о тестовом покрытии
+- **[TESTING.md](../guides/testing/TESTING.md)** - Руководство и best practices по тестированию
+- **[CODING_STANDARDS.md](../CODING_STANDARDS.md)** - Стандарты качества кода
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** - Обзор backend архитектуры
 
 ---
 
-**Version**: 1.0.0
-**Last Updated**: 2025-11-10
-**Ready for Implementation**: ✅ Yes
+## 📌 Заметки для AI реализации
+
+### При написании тестов:
+
+1. **Всегда сначала читайте существующие похожие тесты** - Следуйте установленным паттернам
+2. **Используйте фабрики для тестовых данных** - TaskFactory, UserFactory, TagFactory
+3. **Мокируйте внешние зависимости** - Не тестируйте сторонний код
+4. **Тестируйте одну вещь за раз** - Единая ответственность на тест
+5. **Используйте описательные имена тестов** - `testOwnerCanViewTask`, а не `testVoter`
+6. **Добавляйте комментарии для сложной настройки** - Помогите будущим разработчикам понять
+
+### Распространенные ошибки, которых следует избегать:
+
+- ❌ Не тестируйте getters/setters (они тривиальны)
+- ❌ Не тестируйте код фреймворка (Symfony уже протестирован)
+- ❌ Не тестируйте сторонние библиотеки
+- ❌ Не используйте реальную БД для Unit тестов (используйте моки)
+- ❌ Не забывайте очищать (трейт ResetDatabase)
+- ❌ Не пишите тесты, зависящие от других тестов
+
+---
+
+**Версия**: 1.0.0
+**Последнее обновление**: 2025-11-10
+**Готово к реализации**: ✅ Да
