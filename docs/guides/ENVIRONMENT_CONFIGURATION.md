@@ -36,12 +36,35 @@
    - JWT secrets, Google OAuth
    - Message queue настройки
 
+### Как Это Работает?
+
+**Поток данных:**
+
+```
+.env.docker (корень проекта)
+    ↓ (читается docker-compose)
+Docker Compose
+    ↓ (передает как environment переменные)
+PHP Container (backend-php83)
+    ↓ (Symfony читает из окружения)
+apps/backend/.env (использует ${POSTGRES_USER:-fallback})
+    ↓ (подставляет в DATABASE_URL)
+Symfony Application
+```
+
+**Ключевой механизм:**
+- `.env.docker` задает credentials (например `POSTGRES_USER=user`)
+- `docker-compose.app.yml` передает эти переменные в PHP контейнер через `environment:`
+- `apps/backend/.env` использует синтаксис `${POSTGRES_USER:-fallback}` для чтения из окружения
+- Symfony видит финальный DATABASE_URL с правильными credentials
+
 ### Преимущества
 
 ✅ **Безопасность**: Sensitive данные не коммитятся в git
 ✅ **Гибкость**: Легко переключаться между окружениями
 ✅ **CI/CD Ready**: Переменные можно переопределить в GitHub Actions
 ✅ **Документированность**: `.example` файлы служат документацией
+✅ **Единый источник истины**: `.env.docker` контролирует все credentials
 
 ---
 
@@ -143,6 +166,7 @@ RABBITMQ_PASSWORD=test_password
 ```yaml
 # infrastructure/docker/docker-compose.app.yml
 services:
+  # PostgreSQL контейнер - использует credentials из .env.docker
   psql16:
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-backend-app}
@@ -150,9 +174,23 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
     ports:
       - "${POSTGRES_PORT:-15432}:5432"
+
+  # PHP контейнер - получает те же credentials для передачи в Symfony
+  php83-fpm:
+    environment:
+      # Передаем credentials из .env.docker в PHP окружение
+      POSTGRES_DB: ${POSTGRES_DB:-backend-app}
+      POSTGRES_USER: ${POSTGRES_USER:-user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      RABBITMQ_USER: ${RABBITMQ_USER:-user}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-password}
 ```
 
-**Синтаксис**: `${VAR:-default}` - использует `VAR` или default значение
+**Синтаксис**: `${VAR:-default}` - использует `VAR` из `.env.docker` или default значение
+
+**Ключевой момент**: Переменные из `.env.docker` передаются в **оба** контейнера:
+- PostgreSQL использует их для создания user/database
+- PHP контейнер получает те же переменные для использования в Symfony
 
 ---
 
@@ -169,10 +207,12 @@ APP_ENV=dev
 APP_SECRET=256fb1d32ad7bb1f1cdac90db6834621
 APP_DEBUG=true
 
-# ВАЖНО: Credentials должны совпадать с .env.docker!
-DATABASE_URL="postgresql://user:password@psql16:5432/backend-app?serverVersion=16&charset=utf8"
+# Database URL использует environment переменные из Docker контейнера
+# Переменные POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB передаются через docker-compose
+DATABASE_URL="postgresql://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@psql16:5432/${POSTGRES_DB:-backend-app}?serverVersion=16&charset=utf8"
 
-MESSENGER_TRANSPORT_DSN=amqp://user:password@rabbitmq:5672/%2f/messages
+# RabbitMQ DSN также использует environment переменные
+MESSENGER_TRANSPORT_DSN=amqp://${RABBITMQ_USER:-user}:${RABBITMQ_PASSWORD:-password}@rabbitmq:5672/%2f/messages
 
 JWT_PASSPHRASE=e79f40ab30b66599fe3ab08a3513543dba5c814bb228690366d4b1d79ad4d003
 
