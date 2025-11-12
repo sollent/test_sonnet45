@@ -192,9 +192,9 @@ Pinia stores и паттерны состояния
 Процесс ежедневной разработки
 
 **Ключевые Темы:**
-- **Настройка Docker** - `docker/docker-compose.yml` (ГЛАВНЫЙ КОНФИГ)
-- Запуск backend (Symfony через Docker)
-- Запуск frontend (Vite: `cd frontend && npm run dev`)
+- **Настройка Docker** - `docker-compose.yml` в корне + `infrastructure/docker/*.yml` конфиги
+- Запуск backend (Symfony через Docker с dev конфигурацией)
+- Запуск frontend (Vite: `cd apps/frontend && npm run dev`)
 - Команды полной пересборки проекта
 - Миграции базы данных и операции
 - Операции PostgreSQL
@@ -421,22 +421,19 @@ Frontend:
 
 ### Backend (Docker)
 
-**ВАЖНО**: Конфигурация Docker находится в `docker/docker-compose.yml`
+**ВАЖНО**: Конфигурация Docker в `docker-compose.yml` (корень) + `infrastructure/docker/*.yml`
 
 ```bash
-# Запустить сервисы (из docker/ директории или используя флаг -f)
-cd docker && docker-compose up -d
-# ИЛИ из любого места:
-docker-compose -f docker/docker-compose.yml up -d
+# Запустить сервисы в development режиме (из корня проекта)
+docker-compose -f docker-compose.yml -f infrastructure/docker/docker-compose.dev.yml up -d
 
 # Остановить сервисы
-cd docker && docker-compose down
+docker-compose down
 
 # Полностью пересобрать проект
-cd docker
-docker-compose down -v  # Удаляет volumes (базу данных!)
-docker-compose build --no-cache
-docker-compose up -d
+docker-compose -f docker-compose.yml -f infrastructure/docker/docker-compose.dev.yml down -v  # Удаляет volumes (данные БД!)
+docker-compose -f docker-compose.yml -f infrastructure/docker/docker-compose.dev.yml build --no-cache
+docker-compose -f docker-compose.yml -f infrastructure/docker/docker-compose.dev.yml up -d
 docker exec backend-php83 composer install
 docker exec backend-php83 php bin/console doctrine:database:create
 docker exec backend-php83 php bin/console doctrine:migrations:migrate --no-interaction
@@ -452,8 +449,9 @@ docker exec backend-php83 php bin/console doctrine:migrations:migrate
 docker exec backend-php83 php bin/console cache:clear
 
 # Операции PostgreSQL
-docker exec -it backend-psql16 psql -U user -d backend-app
-docker exec backend-psql16 psql -U user -d backend-app -c "SELECT COUNT(*) FROM tasks;"
+# ⚠️ Credentials из .env.docker (dev): sollent / task-manager
+docker exec -it backend-psql16 psql -U sollent -d task-manager
+docker exec backend-psql16 psql -U sollent -d task-manager -c "SELECT COUNT(*) FROM tasks;"
 
 # Логи контейнеров
 docker logs -f backend-php83
@@ -466,11 +464,11 @@ docker stats  # Использование ресурсов
 
 ### Frontend
 
-**Расположение**: `frontend/` директория
+**Расположение**: `apps/frontend/` директория
 
 ```bash
 # Перейти во frontend
-cd frontend
+cd apps/frontend
 
 # Установить зависимости
 npm install
@@ -555,10 +553,10 @@ npm run test:run
 
 ## 📅 Последнее Обновление
 
-**Версия:** 1.2.0
-**Дата:** 2025-11-10
+**Версия:** 1.3.0
+**Дата:** 2025-11-12
 **Сопровождающий:** Claude Code AI
-**Фаза Проекта:** Production-Ready + Улучшение Тестового Покрытия
+**Фаза Проекта:** Production-Ready + Fail-Fast Security Implementation
 
 ---
 

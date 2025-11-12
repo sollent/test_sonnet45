@@ -49,15 +49,19 @@ cd test_sonnet45
 ```bash
 cd apps/backend
 
-# Копируем файл окружения
-cp .env .env.local
+# Копируем файл окружения (опционально - .env уже содержит dev конфигурацию)
+# cp .env .env.local
 
-# Настраиваем .env.local
-DATABASE_URL="postgresql://user:password@psql16:5432/backend-app"
-JWT_SECRET_KEY=%kernel.project_dir%/config/jwt/private.pem
-JWT_PUBLIC_KEY=%kernel.project_dir%/config/jwt/public.pem
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
+# Настраиваем .env.local (если нужно переопределить)
+# ⚠️ Credentials берутся из .env.docker через Docker окружение!
+# DATABASE_URL использует переменные: ${POSTGRES_USER}, ${POSTGRES_PASSWORD}, ${POSTGRES_DB}
+# DATABASE_URL="postgresql://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@psql16:5432/${POSTGRES_DB:-backend-app}?serverVersion=16&charset=utf8"
+
+# Настройте другие переменные при необходимости:
+# JWT_SECRET_KEY=%kernel.project_dir%/config/jwt/private.pem
+# JWT_PUBLIC_KEY=%kernel.project_dir%/config/jwt/public.pem
+# GOOGLE_CLIENT_ID=your-google-client-id
+# GOOGLE_CLIENT_SECRET=your-google-client-secret
 
 # Генерируем JWT ключи
 mkdir -p config/jwt
@@ -66,7 +70,8 @@ openssl rsa -pubout -in config/jwt/private.pem -out config/jwt/public.pem
 
 # Запускаем Docker сервисы (из корня проекта)
 cd ../..
-docker-compose up -d
+# Development режим - явно указываем dev конфигурацию
+docker-compose -f docker-compose.yml -f infrastructure/docker/docker-compose.dev.yml up -d
 
 # Устанавливаем зависимости
 docker exec backend-php83 composer install
@@ -101,8 +106,8 @@ npm run dev
 
 - **Фронтенд:** http://localhost:3000 (Vite dev server)
 - **Backend API:** http://localhost:8089/api (Nginx)
-- **PostgreSQL:** localhost:15432 (внешний порт)
-- **RabbitMQ Management:** http://localhost:15672 (user/password)
+- **PostgreSQL:** localhost:15432 (credentials из `.env.docker`: `${POSTGRES_USER}/${POSTGRES_PASSWORD}`)
+- **RabbitMQ Management:** http://localhost:15672 (credentials из `.env.docker`: `${RABBITMQ_USER}/${RABBITMQ_PASSWORD}`)
 
 ### 5. Установка Git хуков (рекомендуется)
 
@@ -124,50 +129,43 @@ bash scripts/install-git-hooks.sh
 ### Запуск сервисов
 
 ```bash
-# Запуск бэкенда (из директории docker)
-cd docker
-docker-compose up -d
+# Запуск бэкенда в development режиме (из корня проекта)
+# ⚠️ Явно указываем dev конфигурацию с fallback для удобства
+docker-compose -f docker-compose.yml -f infrastructure/docker/docker-compose.dev.yml up -d
 
-# Или из любого места проекта:
-docker-compose -f docker/docker-compose.yml up -d
-
-# Запуск фронтенда (из директории frontend)
-cd frontend
+# Запуск фронтенда
+cd apps/frontend
 npm run dev
 ```
 
 ### Остановка сервисов
 
 ```bash
-# Остановка бэкенда (из директории docker)
-cd docker
+# Остановка бэкенда (из корня проекта)
 docker-compose down
 
-# Или из любого места:
-docker-compose -f docker/docker-compose.yml down
-
 # Остановка фронтенда
-Ctrl+C в терминале
+Ctrl+C в терминале (где запущен npm run dev)
 ```
 
 ### Пересборка Docker контейнеров
 
 ```bash
 # Пересборка всех контейнеров (при изменении Dockerfile)
-cd docker
-docker-compose down
-docker-compose build --no-cache
-docker-compose up -d
+# ⚠️ Из корня проекта
+docker-compose -f docker-compose.yml -f infrastructure/docker/docker-compose.dev.yml down
+docker-compose -f docker-compose.yml -f infrastructure/docker/docker-compose.dev.yml build --no-cache
+docker-compose -f docker-compose.yml -f infrastructure/docker/docker-compose.dev.yml up -d
 
 # Пересборка конкретного сервиса
-docker-compose build --no-cache php83-fpm
-docker-compose up -d php83-fpm
+docker-compose -f docker-compose.yml -f infrastructure/docker/docker-compose.dev.yml build --no-cache php83-fpm
+docker-compose -f docker-compose.yml -f infrastructure/docker/docker-compose.dev.yml up -d php83-fpm
 ```
 
 ### Просмотр логов Docker
 
 ```bash
-# Все сервисы
+# Все сервисы (из корня проекта)
 docker-compose logs -f
 
 # Конкретный сервис
@@ -250,7 +248,9 @@ docker exec -it backend-psql16 bash
 
 ```bash
 # Подключение к PostgreSQL
-docker exec -it backend-psql16 psql -U user -d backend-app
+# ⚠️ Credentials берутся из .env.docker: POSTGRES_USER и POSTGRES_DB
+# По умолчанию (dev): sollent / task-manager
+docker exec -it backend-psql16 psql -U sollent -d task-manager
 
 # Основные команды PostgreSQL (внутри psql)
 \dt              # Список таблиц
@@ -259,13 +259,13 @@ docker exec -it backend-psql16 psql -U user -d backend-app
 \q               # Выход
 
 # Выполнение SQL с хоста
-docker exec backend-psql16 psql -U user -d backend-app -c "SELECT COUNT(*) FROM tasks;"
+docker exec backend-psql16 psql -U sollent -d task-manager -c "SELECT COUNT(*) FROM tasks;"
 
 # Резервное копирование базы данных
-docker exec backend-psql16 pg_dump -U user backend-app > backup.sql
+docker exec backend-psql16 pg_dump -U sollent task-manager > backup.sql
 
 # Восстановление базы данных
-docker exec -i backend-psql16 psql -U user -d backend-app < backup.sql
+docker exec -i backend-psql16 psql -U sollent -d task-manager < backup.sql
 
 # Удаление и пересоздание базы данных (ОСТОРОЖНО!)
 docker exec backend-php83 php bin/console doctrine:database:drop --force
@@ -383,18 +383,17 @@ git commit --no-verify
 ```bash
 # ВНИМАНИЕ: Это удалит ВСЕ данные (база данных, кеш, логи)
 
-# 1. Остановка и удаление всех контейнеров
-cd docker
-docker-compose down -v  # -v удаляет volumes (данные базы!)
+# 1. Остановка и удаление всех контейнеров (из корня проекта)
+docker-compose -f docker-compose.yml -f infrastructure/docker/docker-compose.dev.yml down -v  # -v удаляет volumes (данные базы!)
 
 # 2. Удаление всех образов (опционально)
-docker rmi $(docker images -q 'docker_*')
+docker rmi $(docker images -q 'test_sonnet45*')
 
 # 3. Пересборка контейнеров с нуля
-docker-compose build --no-cache
+docker-compose -f docker-compose.yml -f infrastructure/docker/docker-compose.dev.yml build --no-cache
 
 # 4. Запуск контейнеров
-docker-compose up -d
+docker-compose -f docker-compose.yml -f infrastructure/docker/docker-compose.dev.yml up -d
 
 # 5. Переустановка зависимостей бэкенда
 docker exec backend-php83 composer install
@@ -476,10 +475,9 @@ docker logs backend-php83
 lsof -i :8089
 lsof -i :15432
 
-# Принудительное удаление и пересоздание
-cd docker
+# Принудительное удаление и пересоздание (из корня проекта)
 docker-compose down
-docker-compose up -d --force-recreate
+docker-compose -f docker-compose.yml -f infrastructure/docker/docker-compose.dev.yml up -d --force-recreate
 ```
 
 ### Проблемы с подключением к базе данных
@@ -489,9 +487,10 @@ docker-compose up -d --force-recreate
 docker ps | grep psql16
 
 # Тест подключения из PHP контейнера
+# ⚠️ Используйте credentials из .env.docker (по умолчанию: sollent / Pahan1998 / task-manager)
 docker exec backend-php83 php -r "
 try {
-    \$pdo = new PDO('pgsql:host=psql16;port=5432;dbname=backend-app', 'user', 'password');
+    \$pdo = new PDO('pgsql:host=psql16;port=5432;dbname=task-manager', 'sollent', 'Pahan1998');
     echo 'Database connected!';
 } catch (Exception \$e) {
     echo 'Database error: ' . \$e->getMessage();
@@ -508,8 +507,7 @@ docker stats
 # Очистка всех кешей
 docker exec backend-php83 php bin/console cache:clear
 
-# Перезапуск контейнеров
-cd docker
+# Перезапуск контейнеров (из корня проекта)
 docker-compose restart
 ```
 
@@ -542,4 +540,5 @@ git push -u origin feature/my-feature
 
 ---
 
-*Последнее обновление: 2025-01-05*
+*Последнее обновление: 2025-11-12*
+*Версия: 2.0 - Обновлено для новой структуры docker-compose и переменных окружения*
