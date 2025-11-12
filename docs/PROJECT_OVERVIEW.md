@@ -1,711 +1,711 @@
-# 🎯 Project Overview - Task Manager
+# 🎯 Обзор проекта - Task Manager
 
-> **TL;DR**: Modern SPA task management application with unlimited subtask nesting, calendar integration, and advanced analytics.
-
----
-
-## Table of Contents
-
-- [What is Task Manager?](#what-is-task-manager)
-- [Core Features](#core-features)
-- [Business Requirements](#business-requirements)
-- [User Workflows](#user-workflows)
-- [System Capabilities](#system-capabilities)
-- [Performance Goals](#performance-goals)
+> **TL;DR**: Современное SPA приложение для управления задачами с неограниченной вложенностью подзадач, интеграцией календаря и продвинутой аналитикой.
 
 ---
 
-## What is Task Manager?
+## Содержание
 
-**Task Manager** is a full-featured, production-ready Single Page Application (SPA) for personal and team productivity. It combines the simplicity of a to-do list with the power of project management tools.
-
-### Vision
-
-Create a lightning-fast task management system that:
-- **Feels instant** (optimistic UI updates)
-- **Scales infinitely** (unlimited subtask nesting)
-- **Provides insights** (analytics, productivity tracking)
-- **Works everywhere** (mobile-first responsive design)
-
-### Target Users
-
-- **Individual Users**: Personal task management, goal tracking
-- **Small Teams**: Collaborative project planning
-- **Power Users**: Complex workflows with nested tasks
-- **Analytics Enthusiasts**: Data-driven productivity insights
+- [Что такое Task Manager?](#что-такое-task-manager)
+- [Основные функции](#основные-функции)
+- [Бизнес-требования](#бизнес-требования)
+- [Пользовательские сценарии](#пользовательские-сценарии)
+- [Возможности системы](#возможности-системы)
+- [Цели производительности](#цели-производительности)
 
 ---
 
-## Core Features
+## Что такое Task Manager?
 
-### 1. Task Management
+**Task Manager** - это полнофункциональное, готовое к использованию Single Page Application (SPA) для личной и командной продуктивности. Оно сочетает простоту списка задач с мощью инструментов управления проектами.
 
-#### Create & Organize Tasks
-```
-Task Properties:
-├── Basic Info
-│   ├── Title (required)
-│   ├── Description (optional, rich text)
-│   ├── Status (Pending, In Progress, Completed, Cancelled)
-│   └── Priority (Low, Medium, High, Urgent)
-├── Timing
-│   ├── Start Date (optional)
-│   ├── Due Date (optional)
-│   └── Completion Date (auto-set)
-├── Organization
-│   ├── Tags (multiple, custom colors)
-│   ├── Parent Task (for nesting)
-│   └── Sort Order (drag & drop)
-└── Metadata
-    ├── Created At
-    ├── Updated At
-    ├── Completion Progress (%)
-    └── Overdue Status (boolean)
-```
+### Видение
 
-#### Unlimited Subtask Nesting
-```
-Project
-├── Phase 1
-│   ├── Task 1.1
-│   │   ├── Subtask 1.1.1
-│   │   │   └── Sub-subtask 1.1.1.1
-│   │   └── Subtask 1.1.2
-│   └── Task 1.2
-└── Phase 2
-    └── Task 2.1
-        ├── Subtask 2.1.1
-        └── Subtask 2.1.2
-```
+Создать молниеносно быструю систему управления задачами, которая:
+- **Ощущается мгновенной** (оптимистичные обновления UI)
+- **Масштабируется бесконечно** (неограниченная вложенность подзадач)
+- **Предоставляет инсайты** (аналитика, отслеживание продуктивности)
+- **Работает везде** (мобильный адаптивный дизайн)
 
-**Example Use Case:**
+### Целевая аудитория
+
+- **Индивидуальные пользователи**: Личное управление задачами, отслеживание целей
+- **Небольшие команды**: Совместное планирование проектов
+- **Продвинутые пользователи**: Сложные рабочие процессы с вложенными задачами
+- **Любители аналитики**: Инсайты продуктивности на основе данных
+
+---
+
+## Основные функции
+
+### 1. Управление задачами
+
+#### Создание и организация задач
 ```
-"Launch Website" (Parent Task)
-├── "Design" (Subtask Level 1)
-│   ├── "Create Wireframes" (Subtask Level 2)
-│   ├── "Design Mockups" (Subtask Level 2)
-│   └── "Get Client Approval" (Subtask Level 2)
-├── "Development" (Subtask Level 1)
-│   ├── "Frontend" (Subtask Level 2)
-│   │   ├── "Vue.js Setup" (Subtask Level 3)
-│   │   ├── "Components" (Subtask Level 3)
-│   │   └── "Styling" (Subtask Level 3)
-│   └── "Backend" (Subtask Level 2)
-│       ├── "API Setup" (Subtask Level 3)
-│       └── "Database" (Subtask Level 3)
-└── "Deployment" (Subtask Level 1)
-    ├── "Configure Server" (Subtask Level 2)
-    └── "DNS Setup" (Subtask Level 2)
+Свойства задачи:
+├── Основная информация
+│   ├── Заголовок (обязательно)
+│   ├── Описание (опционально, rich text)
+│   ├── Статус (В ожидании, В процессе, Завершена, Отменена)
+│   └── Приоритет (Низкий, Средний, Высокий, Срочный)
+├── Время
+│   ├── Дата начала (опционально)
+│   ├── Срок выполнения (опционально)
+│   └── Дата завершения (устанавливается автоматически)
+├── Организация
+│   ├── Теги (множественные, пользовательские цвета)
+│   ├── Родительская задача (для вложенности)
+│   └── Порядок сортировки (drag & drop)
+└── Метаданные
+    ├── Дата создания
+    ├── Дата обновления
+    ├── Прогресс выполнения (%)
+    └── Статус просрочки (boolean)
 ```
 
-### 2. Calendar Integration
+#### Неограниченная вложенность подзадач
+```
+Проект
+├── Фаза 1
+│   ├── Задача 1.1
+│   │   ├── Подзадача 1.1.1
+│   │   │   └── Под-подзадача 1.1.1.1
+│   │   └── Подзадача 1.1.2
+│   └── Задача 1.2
+└── Фаза 2
+    └── Задача 2.1
+        ├── Подзадача 2.1.1
+        └── Подзадача 2.1.2
+```
 
-#### Views Available
-- **Monthly View**: Full month grid with task indicators
-- **Weekly View**: 7-day detailed view
-- **Daily View**: Focused single-day task list
+**Пример использования:**
+```
+"Запустить сайт" (Родительская задача)
+├── "Дизайн" (Подзадача уровня 1)
+│   ├── "Создать макеты" (Подзадача уровня 2)
+│   ├── "Дизайн мокапов" (Подзадача уровня 2)
+│   └── "Получить одобрение клиента" (Подзадача уровня 2)
+├── "Разработка" (Подзадача уровня 1)
+│   ├── "Frontend" (Подзадача уровня 2)
+│   │   ├── "Настройка Vue.js" (Подзадача уровня 3)
+│   │   ├── "Компоненты" (Подзадача уровня 3)
+│   │   └── "Стилизация" (Подзадача уровня 3)
+│   └── "Backend" (Подзадача уровня 2)
+│       ├── "Настройка API" (Подзадача уровня 3)
+│       └── "База данных" (Подзадача уровня 3)
+└── "Развертывание" (Подзадача уровня 1)
+    ├── "Настроить сервер" (Подзадача уровня 2)
+    └── "Настроить DNS" (Подзадача уровня 2)
+```
 
-#### Calendar Features
+### 2. Интеграция с календарем
+
+#### Доступные виды
+- **Месячный вид**: Полная сетка месяца с индикаторами задач
+- **Недельный вид**: Детальный вид на 7 дней
+- **Дневной вид**: Сфокусированный список задач на один день
+
+#### Функции календаря
 ```typescript
-// Tasks are displayed on calendar:
-- Due date → Task appears on that day
-- Start date → Task highlighted from start
-- Overdue → Red background on past dates
-- Completed → Strikethrough text
-- Multi-day → Spanning indicator
+// Задачи отображаются в календаре:
+- Срок выполнения → Задача появляется в этот день
+- Дата начала → Задача выделена с даты начала
+- Просрочена → Красный фон на прошедших датах
+- Завершена → Зачеркнутый текст
+- Многодневная → Индикатор охватывающий несколько дней
 ```
 
-**Visual Indicators:**
+**Визуальные индикаторы:**
 ```
-[Jan 15] ● ● ●    (3 tasks due)
-[Jan 16] ●● ●● ●  (5 tasks: 2 high priority)
-[Jan 17] ✓ ✓      (2 completed)
-[Jan 18] ⚠        (1 overdue)
+[15 янв] ● ● ●    (3 задачи срок выполнения)
+[16 янв] ●● ●● ●  (5 задач: 2 высокого приоритета)
+[17 янв] ✓ ✓      (2 завершены)
+[18 янв] ⚠        (1 просрочена)
 ```
 
-### 3. Tag System
+### 3. Система тегов
 
-#### Custom Tags
+#### Пользовательские теги
 ```typescript
 Tag {
   id: number
-  name: string        // "Work", "Personal", "Urgent"
-  color: string       // Hex color: "#3b82f6"
-  usageCount: number  // Auto-calculated
-  userId: number      // Owner
+  name: string        // "Работа", "Личное", "Срочно"
+  color: string       // Hex цвет: "#3b82f6"
+  usageCount: number  // Рассчитывается автоматически
+  userId: number      // Владелец
 }
 ```
 
-#### Tag Features
-- **Unlimited tags per task**
-- **Custom colors** (color picker)
-- **Auto-suggestions** (based on usage frequency)
-- **Quick filters** (click tag to filter)
-- **Popular tags sidebar** (top 7 most used)
+#### Функции тегов
+- **Неограниченное количество тегов на задачу**
+- **Пользовательские цвета** (выбор цвета)
+- **Автоматические подсказки** (на основе частоты использования)
+- **Быстрые фильтры** (клик по тегу для фильтрации)
+- **Боковая панель популярных тегов** (топ 7 самых используемых)
 
-**Example Tags:**
+**Примеры тегов:**
 ```
-🔴 Urgent      (#dc2626)
-🔵 Work        (#3b82f6)
-🟢 Personal    (#10b981)
-🟡 Finance     (#f59e0b)
-🟣 Health      (#8b5cf6)
-📚 Study       (#6366f1)
+🔴 Срочно      (#dc2626)
+🔵 Работа      (#3b82f6)
+🟢 Личное      (#10b981)
+🟡 Финансы     (#f59e0b)
+🟣 Здоровье    (#8b5cf6)
+📚 Учеба       (#6366f1)
 ```
 
-### 4. Advanced Search & Filtering
+### 4. Расширенный поиск и фильтрация
 
-#### Filter Options
+#### Опции фильтров
 ```typescript
 Filters {
-  status?: TaskStatus            // Pending, In Progress, Completed
-  priority?: TaskPriority        // Low, Medium, High, Urgent
-  tags?: string[]                // ["Work", "Urgent"]
-  search?: string                // Searches title + description
+  status?: TaskStatus            // В ожидании, В процессе, Завершена
+  priority?: TaskPriority        // Низкий, Средний, Высокий, Срочный
+  tags?: string[]                // ["Работа", "Срочно"]
+  search?: string                // Поиск по заголовку + описанию
   dateRange?: {
     from: Date
     to: Date
   }
-  isOverdue?: boolean            // Only overdue tasks
-  hasSubtasks?: boolean          // Only parent tasks
+  isOverdue?: boolean            // Только просроченные задачи
+  hasSubtasks?: boolean          // Только родительские задачи
 }
 ```
 
-#### Quick Filters (Sidebar)
+#### Быстрые фильтры (Боковая панель)
 ```
-📋 All Tasks       (total count)
-📅 Today           (due today)
-📈 Upcoming        (next 7 days)
-⚠️ Overdue         (past due date)
-📭 No Due Date     (without deadline)
+📋 Все задачи      (общее количество)
+📅 Сегодня         (срок сегодня)
+📈 Предстоящие     (следующие 7 дней)
+⚠️ Просроченные    (прошедший срок)
+📭 Без срока       (без дедлайна)
 ```
 
-### 5. Statistics & Analytics
+### 5. Статистика и аналитика
 
-#### Overview Statistics
+#### Обзорная статистика
 ```typescript
 Statistics {
-  total: number                  // Total tasks
-  pending: number                // Awaiting completion
-  inProgress: number             // Currently working on
-  completed: number              // Finished tasks
-  cancelled: number              // Cancelled tasks
-  overdue: number                // Past due date
-  completionRate: number         // % completed (0-100)
-  averageCompletionTime: number  // In hours
+  total: number                  // Всего задач
+  pending: number                // Ожидают выполнения
+  inProgress: number             // В работе
+  completed: number              // Завершенные задачи
+  cancelled: number              // Отмененные задачи
+  overdue: number                // Прошедший срок
+  completionRate: number         // % завершенных (0-100)
+  averageCompletionTime: number  // В часах
 }
 ```
 
-#### Analytics Dashboard
+#### Панель аналитики
 
-**1. Overview Statistics**
-- Total tasks by status
-- Completion rate %
-- Average completion time
-- Tasks created vs completed
+**1. Обзорная статистика**
+- Всего задач по статусам
+- Процент завершения
+- Среднее время завершения
+- Создано vs завершено задач
 
-**2. Completion Timeline**
+**2. Временная шкала завершения**
 ```
-Graph showing tasks completed over time:
-[Day 1]  ████████ 8 tasks
-[Day 2]  ██████ 6 tasks
-[Day 3]  ████████████ 12 tasks
-[Day 4]  ██ 2 tasks
-```
-
-**3. Status Distribution**
-```
-Pie Chart:
-- Pending: 35%
-- In Progress: 25%
-- Completed: 30%
-- Cancelled: 10%
+График показывает завершенные задачи с течением времени:
+[День 1]  ████████ 8 задач
+[День 2]  ██████ 6 задач
+[День 3]  ████████████ 12 задач
+[День 4]  ██ 2 задачи
 ```
 
-**4. Priority Breakdown**
+**3. Распределение по статусам**
 ```
-Bar Chart:
-[Low]     ████████ 40%
-[Medium]  ████████████ 60%
-[High]    ████████ 40%
-[Urgent]  ████ 20%
-```
-
-**5. Productivity Heatmap**
-```
-Calendar heatmap showing completed tasks per day:
-[Jan 1]  ■■■□□ (3 completed)
-[Jan 2]  ■■■■■ (5 completed)
-[Jan 3]  ■□□□□ (1 completed)
+Круговая диаграмма:
+- В ожидании: 35%
+- В процессе: 25%
+- Завершена: 30%
+- Отменена: 10%
 ```
 
-**6. Weekday Productivity**
+**4. Разбивка по приоритетам**
 ```
-Which days you complete most tasks:
-Mon  ████████ 15%
-Tue  ████████████ 22%
-Wed  ██████ 10%
-Thu  ████████████ 20%
-Fri  ████████████████ 28%
-Sat  ██ 3%
-Sun  ██ 2%
+Столбчатая диаграмма:
+[Низкий]    ████████ 40%
+[Средний]   ████████████ 60%
+[Высокий]   ████████ 40%
+[Срочный]   ████ 20%
 ```
 
-**7. Top Tags**
+**5. Тепловая карта продуктивности**
 ```
-Most frequently used tags:
-1. Work        (245 tasks) ████████████████
-2. Personal    (189 tasks) ████████████
-3. Urgent      (156 tasks) ██████████
-4. Finance     (98 tasks)  ██████
-5. Study       (67 tasks)  ████
+Календарная тепловая карта показывает завершенные задачи за день:
+[1 янв]  ■■■□□ (3 завершены)
+[2 янв]  ■■■■■ (5 завершено)
+[3 янв]  ■□□□□ (1 завершена)
 ```
 
-**8. Insights (AI-like)**
+**6. Продуктивность по дням недели**
 ```
-"You're most productive on Tuesdays and Fridays!"
-"Your average completion time is 3.2 days"
-"You have 15 overdue tasks - consider prioritizing them"
-"Great job! You completed 85% of tasks this week"
-```
-
-**9. Streak Tracking**
-```
-Current Streak: 🔥 7 days
-Longest Streak: 🏆 21 days
-Total Completed This Month: 127 tasks
+В какие дни вы завершаете больше всего задач:
+Пн   ████████ 15%
+Вт   ████████████ 22%
+Ср   ██████ 10%
+Чт   ████████████ 20%
+Пт   ████████████████ 28%
+Сб   ██ 3%
+Вс   ██ 2%
 ```
 
-### 6. Multi-language Support
+**7. Топ тегов**
+```
+Наиболее часто используемые теги:
+1. Работа      (245 задач) ████████████████
+2. Личное      (189 задач) ████████████
+3. Срочно      (156 задач) ██████████
+4. Финансы     (98 задач)  ██████
+5. Учеба       (67 задач)  ████
+```
 
-#### Supported Languages
-- 🇷🇺 **Russian** (primary)
-- 🇬🇧 **English** (secondary)
+**8. Инсайты (AI-подобные)**
+```
+"Вы наиболее продуктивны по вторникам и пятницам!"
+"Ваше среднее время завершения - 3.2 дня"
+"У вас 15 просроченных задач - подумайте о приоритизации"
+"Отличная работа! Вы завершили 85% задач на этой неделе"
+```
 
-#### i18n Implementation
+**9. Отслеживание серий**
+```
+Текущая серия: 🔥 7 дней
+Самая длинная серия: 🏆 21 день
+Завершено за этот месяц: 127 задач
+```
+
+### 6. Многоязычная поддержка
+
+#### Поддерживаемые языки
+- 🇷🇺 **Русский** (основной)
+- 🇬🇧 **Английский** (дополнительный)
+
+#### Реализация i18n
 ```typescript
-// All UI text is translated:
+// Весь текст UI переведен:
 $t('task.createButton')      // "Создать задачу" / "Create Task"
 $t('task.status.pending')    // "В ожидании" / "Pending"
 $t('analytics.overview')     // "Обзор" / "Overview"
 
-// Date formatting respects locale
+// Форматирование дат учитывает локаль
 formatDate(date, locale)     // "15 января 2025" / "January 15, 2025"
 ```
 
-### 7. Mobile-First Design
+### 7. Mobile-First дизайн
 
-#### Responsive Breakpoints
+#### Адаптивные контрольные точки
 ```css
-Mobile:  < 768px   (single column, touch-optimized)
-Tablet:  768-1024px (2 columns, adapted UI)
-Desktop: > 1024px  (3 columns, full features)
+Мобильный: < 768px   (одна колонка, оптимизировано для касаний)
+Планшет:   768-1024px (2 колонки, адаптированный UI)
+Десктоп:   > 1024px  (3 колонки, все функции)
 ```
 
-#### Touch Gestures
-- **Swipe left** on task → Delete action
-- **Swipe right** on task → Complete action
-- **Long press** → Open context menu
-- **Pinch zoom** → Calendar month/week toggle
+#### Сенсорные жесты
+- **Свайп влево** на задаче → Действие удаления
+- **Свайп вправо** на задаче → Действие завершения
+- **Долгое нажатие** → Открыть контекстное меню
+- **Pinch zoom** → Переключение месяц/неделя в календаре
 
-### 8. Authentication & Security
+### 8. Аутентификация и безопасность
 
 #### Google OAuth2
 ```
-User clicks "Continue with Google"
-→ Google One Tap UI appears
-→ User selects account
-→ Google returns ID token (JWT)
-→ Backend validates with Google API
-→ Backend creates/finds user in database
-→ Backend returns JWT + Refresh token
-→ User is authenticated
+Пользователь кликает "Продолжить с Google"
+→ Появляется UI Google One Tap
+→ Пользователь выбирает аккаунт
+→ Google возвращает ID token (JWT)
+→ Backend проверяет через Google API
+→ Backend создает/находит пользователя в БД
+→ Backend возвращает JWT + Refresh token
+→ Пользователь аутентифицирован
 ```
 
-#### JWT Tokens
+#### JWT токены
 ```typescript
 Access Token:
-- Lifetime: 30 minutes
-- Usage: API authentication
-- Storage: localStorage
+- Время жизни: 30 минут
+- Использование: Аутентификация API
+- Хранение: localStorage
 
 Refresh Token:
-- Lifetime: 7 days
-- Usage: Get new access token
-- Storage: Database (secure)
+- Время жизни: 7 дней
+- Использование: Получение нового access token
+- Хранение: База данных (безопасно)
 ```
 
 ---
 
-## Business Requirements
+## Бизнес-требования
 
-### Functional Requirements
+### Функциональные требования
 
-#### Must Have (Implemented ✅)
-- [x] Create/Read/Update/Delete tasks
-- [x] Unlimited subtask nesting
-- [x] Tag system with custom colors
-- [x] Calendar views (month/week/day)
-- [x] Advanced filtering
-- [x] Statistics dashboard
-- [x] Google OAuth authentication
-- [x] Multi-language support (RU/EN)
-- [x] Mobile responsive design
-- [x] Optimistic UI updates
+#### Обязательно (Реализовано ✅)
+- [x] Создание/Чтение/Обновление/Удаление задач
+- [x] Неограниченная вложенность подзадач
+- [x] Система тегов с пользовательскими цветами
+- [x] Виды календаря (месяц/неделя/день)
+- [x] Расширенная фильтрация
+- [x] Панель статистики
+- [x] Аутентификация через Google OAuth
+- [x] Многоязычная поддержка (RU/EN)
+- [x] Адаптивный мобильный дизайн
+- [x] Оптимистичные обновления UI
 
-#### Should Have (Implemented ✅)
-- [x] Drag & drop task reordering
-- [x] Task search
-- [x] Productivity analytics (9 endpoints)
-- [x] Completion streak tracking
-- [x] Overdue task highlighting
-- [x] Tag auto-suggestions
-- [x] Toast notifications
+#### Желательно (Реализовано ✅)
+- [x] Перетаскивание для изменения порядка задач
+- [x] Поиск задач
+- [x] Аналитика продуктивности (9 эндпоинтов)
+- [x] Отслеживание серий завершений
+- [x] Подсветка просроченных задач
+- [x] Автоматические подсказки тегов
+- [x] Toast уведомления
 
-#### Nice to Have (Future)
-- [ ] Team collaboration (share tasks)
-- [ ] Real-time sync (WebSockets)
-- [ ] Task templates
-- [ ] Recurring tasks
-- [ ] File attachments
-- [ ] Task comments
-- [ ] Email notifications
-- [ ] Dark mode
+#### Приятно иметь (В будущем)
+- [ ] Командная работа (совместные задачи)
+- [ ] Синхронизация в реальном времени (WebSockets)
+- [ ] Шаблоны задач
+- [ ] Повторяющиеся задачи
+- [ ] Прикрепление файлов
+- [ ] Комментарии к задачам
+- [ ] Email уведомления
+- [ ] Темная тема
 
-### Non-Functional Requirements
+### Нефункциональные требования
 
-#### Performance
+#### Производительность
 ```
-API Response Times:
-- GET /api/tasks          → < 100ms
-- GET /api/analytics/*    → < 150ms
-- POST /api/tasks         → < 50ms
-- PUT /api/tasks/{id}     → < 50ms
+Время отклика API:
+- GET /api/tasks          → < 100мс
+- GET /api/analytics/*    → < 150мс
+- POST /api/tasks         → < 50мс
+- PUT /api/tasks/{id}     → < 50мс
 
-Frontend Performance:
-- Initial Load: < 2s
-- Route Navigation: < 100ms
-- Task List Render: < 50ms (100 tasks)
-- Optimistic Update: Instant (0ms perceived latency)
+Производительность Frontend:
+- Начальная загрузка: < 2с
+- Навигация по маршрутам: < 100мс
+- Рендеринг списка задач: < 50мс (100 задач)
+- Оптимистичное обновление: Мгновенно (0мс воспринимаемой задержки)
 ```
 
-#### Scalability
+#### Масштабируемость
 ```
-Database:
-- Support: 100,000+ tasks per user
-- Indexing: All foreign keys + frequently queried fields
-- Query optimization: Eager loading, selective fetching
+База данных:
+- Поддержка: 100,000+ задач на пользователя
+- Индексация: Все внешние ключи + часто запрашиваемые поля
+- Оптимизация запросов: Eager loading, выборочная выборка
 
 Frontend:
-- Virtual scrolling: 10,000+ tasks in list
-- Lazy loading: Routes code-split
-- Debouncing: Search input (300ms)
+- Виртуальная прокрутка: 10,000+ задач в списке
+- Ленивая загрузка: Разделение кода маршрутов
+- Дебаунсинг: Ввод поиска (300мс)
 ```
 
-#### Security
+#### Безопасность
 ```
-Authentication:
-- JWT with RS256 algorithm
-- Token expiration enforced
-- Refresh token rotation
-- Google OAuth2 verified
+Аутентификация:
+- JWT с алгоритмом RS256
+- Принудительное истечение токенов
+- Ротация refresh token
+- Проверка Google OAuth2
 
-Authorization:
-- User can only access own tasks
-- Voters for complex permissions
-- SQL injection prevention (parameterized queries)
-- XSS prevention (sanitized inputs)
+Авторизация:
+- Пользователь может получить доступ только к своим задачам
+- Voters для сложных разрешений
+- Предотвращение SQL-инъекций (параметризованные запросы)
+- Предотвращение XSS (санитизация ввода)
 
-Data Protection:
-- HTTPS only (production)
-- CORS configured (only allowed origins)
-- No sensitive data in localStorage
-- Password hashing (bcrypt, cost 13)
-```
-
----
-
-## User Workflows
-
-### Workflow 1: Creating a Project with Subtasks
-
-```
-User Story:
-"As a user, I want to break down a large project into manageable subtasks"
-
-Steps:
-1. Click "Create Task" button
-2. Enter title: "Build Website"
-3. Set priority: High
-4. Add tags: Work, Urgent
-5. Set due date: 2 weeks from now
-6. Click "Save"
-   → Task appears in list
-7. Click on task to open sidebar
-8. Scroll to "Subtasks" section
-9. Enter "Design Mockups" → Press Enter
-   → Subtask created
-10. Repeat for "Frontend Dev", "Backend API", "Testing"
-11. Click on "Frontend Dev" subtask
-12. Add nested subtasks: "Components", "Styling", "Routing"
-    → Unlimited nesting supported
-```
-
-### Workflow 2: Daily Task Management
-
-```
-User Story:
-"As a user, I want to see my tasks for today and mark them complete"
-
-Steps:
-1. Open app → Dashboard loads
-2. Click "Today" filter in sidebar
-   → Only today's tasks shown
-3. See task "Morning Workout"
-4. Click checkbox to mark complete
-   → Optimistic update (instant visual feedback)
-   → API call in background
-   → Success toast appears: "Task completed!"
-   → Statistics update automatically
-5. Task moves to "Completed" section
-6. Completion streak updates: "🔥 7 days"
-```
-
-### Workflow 3: Viewing Analytics
-
-```
-User Story:
-"As a user, I want to see my productivity trends"
-
-Steps:
-1. Click "Analytics" tab in navigation
-   → Dashboard loads
-2. See overview statistics:
-   - Total tasks: 127
-   - Completed: 85 (67%)
-   - Average completion time: 3.2 days
-3. Scroll to "Completion Timeline"
-   → Graph shows tasks completed over last 30 days
-4. Check "Weekday Productivity"
-   → "You're most productive on Fridays!"
-5. View "Top Tags"
-   → "Work" used in 245 tasks
-6. Read insights:
-   → "Great job! You completed 85% of tasks this week"
-```
-
-### Workflow 4: Filtering & Search
-
-```
-User Story:
-"As a user, I want to find all overdue work tasks"
-
-Steps:
-1. Click "Filters" button
-2. Advanced filter modal opens
-3. Select status: "All"
-4. Select priority: "All"
-5. Select tags: "Work"
-6. Toggle "Only overdue" → ON
-7. Click "Apply Filters"
-   → List updates (filtered tasks shown)
-   → URL updates: ?status=all&tags=Work&overdue=true
-8. See 12 overdue work tasks
-9. Decide to postpone or complete
-```
-
-### Workflow 5: Calendar Planning
-
-```
-User Story:
-"As a user, I want to visualize my tasks on a calendar"
-
-Steps:
-1. Click "Calendar" tab
-2. Monthly view loads
-3. See today highlighted
-4. January 15: 3 task indicators (●●●)
-5. Click on January 15
-   → Day view opens with task list
-6. See tasks:
-   - "Morning Workout" (completed ✓)
-   - "Client Meeting" (2:00 PM)
-   - "Review PRs" (pending)
-7. Click "Client Meeting"
-   → Sidebar opens with details
-8. Mark as complete
-9. Return to month view
-   → January 15 now shows (✓✓●)
+Защита данных:
+- Только HTTPS (production)
+- Настроенный CORS (только разрешенные источники)
+- Нет конфиденциальных данных в localStorage
+- Хеширование паролей (bcrypt, cost 13)
 ```
 
 ---
 
-## System Capabilities
+## Пользовательские сценарии
 
-### What This System CAN Do
+### Сценарий 1: Создание проекта с подзадачами
 
-#### Task Management
-✅ Create unlimited tasks
-✅ Nest subtasks infinitely (no depth limit)
-✅ Bulk operations (multi-select, mass update)
-✅ Drag & drop reordering
-✅ Quick actions (toggle complete, delete)
-✅ Duplicate tasks
-✅ Archive tasks (soft delete)
+```
+Пользовательская история:
+"Как пользователь, я хочу разбить большой проект на управляемые подзадачи"
 
-#### Organization
-✅ Custom tags with colors
-✅ Multiple tags per task
-✅ Tag-based filtering
-✅ Auto-tag suggestions
-✅ Sort by: date, priority, status, title
-✅ Group by: date, status, tag
+Шаги:
+1. Нажать кнопку "Создать задачу"
+2. Ввести заголовок: "Создать веб-сайт"
+3. Установить приоритет: Высокий
+4. Добавить теги: Работа, Срочно
+5. Установить срок: через 2 недели
+6. Нажать "Сохранить"
+   → Задача появляется в списке
+7. Кликнуть на задачу для открытия боковой панели
+8. Прокрутить до секции "Подзадачи"
+9. Ввести "Дизайн мокапов" → Нажать Enter
+   → Подзадача создана
+10. Повторить для "Frontend разработка", "Backend API", "Тестирование"
+11. Кликнуть на подзадачу "Frontend разработка"
+12. Добавить вложенные подзадачи: "Компоненты", "Стилизация", "Роутинг"
+    → Поддерживается неограниченная вложенность
+```
 
-#### Time Management
-✅ Set start dates
-✅ Set due dates
-✅ Track completion time
-✅ Identify overdue tasks
-✅ Calendar integration
-✅ Today/Upcoming quick filters
+### Сценарий 2: Ежедневное управление задачами
 
-#### Analytics
-✅ Real-time statistics
-✅ Completion trends (timeline)
-✅ Status distribution
-✅ Priority breakdown
-✅ Productivity heatmap
-✅ Weekday patterns
-✅ Top tags analysis
-✅ Streak tracking
-✅ Personalized insights
+```
+Пользовательская история:
+"Как пользователь, я хочу видеть свои задачи на сегодня и отмечать их выполненными"
 
-#### Performance
-✅ Fast API responses (< 100ms)
-✅ Optimistic UI updates (instant feedback)
-✅ Virtual scrolling (handle 10,000+ tasks)
-✅ Debounced search
-✅ Code splitting (fast initial load)
+Шаги:
+1. Открыть приложение → Загружается дашборд
+2. Кликнуть фильтр "Сегодня" на боковой панели
+   → Показаны только сегодняшние задачи
+3. Увидеть задачу "Утренняя тренировка"
+4. Кликнуть чекбокс для отметки как завершенной
+   → Оптимистичное обновление (мгновенная визуальная обратная связь)
+   → API вызов в фоне
+   → Появляется успешное toast уведомление: "Задача завершена!"
+   → Статистика автоматически обновляется
+5. Задача перемещается в секцию "Завершенные"
+6. Обновляется серия завершений: "🔥 7 дней"
+```
 
-#### User Experience
-✅ Mobile-first responsive
-✅ Touch gestures support
-✅ Keyboard shortcuts
-✅ Toast notifications
-✅ Loading states
-✅ Error handling
-✅ Offline detection
-✅ Multi-language (RU/EN)
+### Сценарий 3: Просмотр аналитики
 
-### What This System CANNOT Do (Yet)
+```
+Пользовательская история:
+"Как пользователь, я хочу видеть тренды своей продуктивности"
 
-#### Collaboration
-❌ Share tasks with other users
-❌ Assign tasks to team members
-❌ Comments/discussions on tasks
-❌ Real-time multi-user sync
-❌ Task permissions (view/edit)
+Шаги:
+1. Кликнуть вкладку "Аналитика" в навигации
+   → Загружается дашборд
+2. Увидеть обзорную статистику:
+   - Всего задач: 127
+   - Завершено: 85 (67%)
+   - Среднее время завершения: 3.2 дня
+3. Прокрутить до "Временная шкала завершения"
+   → График показывает завершенные задачи за последние 30 дней
+4. Проверить "Продуктивность по дням недели"
+   → "Вы наиболее продуктивны по пятницам!"
+5. Просмотреть "Топ тегов"
+   → "Работа" использована в 245 задачах
+6. Прочитать инсайты:
+   → "Отличная работа! Вы завершили 85% задач на этой неделе"
+```
 
-#### Advanced Features
-❌ Recurring tasks (daily/weekly/monthly)
-❌ Task templates (reusable)
-❌ File attachments
-❌ Task dependencies (A blocks B)
-❌ Gantt chart view
-❌ Kanban board view
-❌ Time tracking (hours spent)
+### Сценарий 4: Фильтрация и поиск
 
-#### Notifications
-❌ Email notifications
-❌ Push notifications
-❌ Reminders (before due date)
-❌ Webhook integrations
+```
+Пользовательская история:
+"Как пользователь, я хочу найти все просроченные рабочие задачи"
 
-#### Integrations
-❌ Google Calendar sync
-❌ Import from Trello/Asana/Jira
-❌ Export to CSV/PDF
-❌ API for third-party apps
+Шаги:
+1. Кликнуть кнопку "Фильтры"
+2. Открывается модальное окно расширенных фильтров
+3. Выбрать статус: "Все"
+4. Выбрать приоритет: "Все"
+5. Выбрать теги: "Работа"
+6. Переключить "Только просроченные" → ВКЛ
+7. Кликнуть "Применить фильтры"
+   → Список обновляется (показаны отфильтрованные задачи)
+   → URL обновляется: ?status=all&tags=Work&overdue=true
+8. Увидеть 12 просроченных рабочих задач
+9. Решить отложить или завершить
+```
+
+### Сценарий 5: Планирование в календаре
+
+```
+Пользовательская история:
+"Как пользователь, я хочу визуализировать свои задачи в календаре"
+
+Шаги:
+1. Кликнуть вкладку "Календарь"
+2. Загружается месячный вид
+3. Увидеть выделенный сегодняшний день
+4. 15 января: 3 индикатора задач (●●●)
+5. Кликнуть на 15 января
+   → Открывается дневной вид со списком задач
+6. Увидеть задачи:
+   - "Утренняя тренировка" (завершена ✓)
+   - "Встреча с клиентом" (2:00 PM)
+   - "Проверить PRs" (в ожидании)
+7. Кликнуть "Встреча с клиентом"
+   → Открывается боковая панель с деталями
+8. Отметить как завершенную
+9. Вернуться к месячному виду
+   → 15 января теперь показывает (✓✓●)
+```
 
 ---
 
-## Performance Goals
+## Возможности системы
 
-### Current Performance (Achieved ✅)
+### Что эта система МОЖЕТ делать
 
-#### API Endpoints
+#### Управление задачами
+✅ Создавать неограниченное количество задач
+✅ Неограниченная вложенность подзадач (нет предела глубины)
+✅ Массовые операции (множественный выбор, массовое обновление)
+✅ Перетаскивание для изменения порядка
+✅ Быстрые действия (переключение завершения, удаление)
+✅ Дублирование задач
+✅ Архивирование задач (мягкое удаление)
+
+#### Организация
+✅ Пользовательские теги с цветами
+✅ Множественные теги на задачу
+✅ Фильтрация по тегам
+✅ Автоматические подсказки тегов
+✅ Сортировка по: дате, приоритету, статусу, заголовку
+✅ Группировка по: дате, статусу, тегу
+
+#### Управление временем
+✅ Установка дат начала
+✅ Установка сроков выполнения
+✅ Отслеживание времени завершения
+✅ Определение просроченных задач
+✅ Интеграция с календарем
+✅ Быстрые фильтры Сегодня/Предстоящие
+
+#### Аналитика
+✅ Статистика в реальном времени
+✅ Тренды завершений (временная шкала)
+✅ Распределение по статусам
+✅ Разбивка по приоритетам
+✅ Тепловая карта продуктивности
+✅ Паттерны по дням недели
+✅ Анализ топ тегов
+✅ Отслеживание серий
+✅ Персонализированные инсайты
+
+#### Производительность
+✅ Быстрые ответы API (< 100мс)
+✅ Оптимистичные обновления UI (мгновенная обратная связь)
+✅ Виртуальная прокрутка (обработка 10,000+ задач)
+✅ Дебаунсинг поиска
+✅ Разделение кода (быстрая начальная загрузка)
+
+#### Пользовательский опыт
+✅ Адаптивный мобильный дизайн
+✅ Поддержка сенсорных жестов
+✅ Клавиатурные сокращения
+✅ Toast уведомления
+✅ Состояния загрузки
+✅ Обработка ошибок
+✅ Определение оффлайн режима
+✅ Многоязычность (RU/EN)
+
+### Что эта система НЕ МОЖЕТ делать (Пока)
+
+#### Совместная работа
+❌ Делиться задачами с другими пользователями
+❌ Назначать задачи членам команды
+❌ Комментарии/обсуждения задач
+❌ Синхронизация нескольких пользователей в реальном времени
+❌ Разрешения на задачи (просмотр/редактирование)
+
+#### Расширенные функции
+❌ Повторяющиеся задачи (ежедневно/еженедельно/ежемесячно)
+❌ Шаблоны задач (переиспользуемые)
+❌ Прикрепление файлов
+❌ Зависимости задач (A блокирует B)
+❌ Вид диаграммы Ганта
+❌ Вид Kanban доски
+❌ Отслеживание времени (потраченные часы)
+
+#### Уведомления
+❌ Email уведомления
+❌ Push уведомления
+❌ Напоминания (перед сроком выполнения)
+❌ Webhook интеграции
+
+#### Интеграции
+❌ Синхронизация с Google Calendar
+❌ Импорт из Trello/Asana/Jira
+❌ Экспорт в CSV/PDF
+❌ API для сторонних приложений
+
+---
+
+## Цели производительности
+
+### Текущая производительность (Достигнута ✅)
+
+#### API эндпоинты
 ```
-GET /api/tasks: ~50-100ms     ✅ Fast enough
-GET /api/analytics/overview: ~35-50ms     ✅ Fast
-GET /api/analytics/dashboard: ~100-150ms  ✅ Acceptable
+GET /api/tasks: ~50-100мс     ✅ Достаточно быстро
+GET /api/analytics/overview: ~35-50мс     ✅ Быстро
+GET /api/analytics/dashboard: ~100-150мс  ✅ Приемлемо
 ```
 
-#### User Actions
+#### Действия пользователя
 ```
-Toggle task complete:
-  Optimistic update: 0ms (instant)
-  API call:          20-50ms
-  Total:             ~50ms    ✅ Fast
+Переключение завершения задачи:
+  Оптимистичное обновление: 0мс (мгновенно)
+  API вызов:          20-50мс
+  Всего:             ~50мс    ✅ Быстро
 
-Create new task:
-  Form submit:       0ms (instant)
-  API call:          30-50ms
-  Total:             ~50ms    ✅ Very fast
+Создание новой задачи:
+  Отправка формы:    0мс (мгновенно)
+  API вызов:          30-50мс
+  Всего:             ~50мс    ✅ Очень быстро
 
-Update task:
-  Optimistic update: 0ms (instant)
-  API call:          20-50ms
-  Total:             ~50ms    ✅ Fast enough
-```
-
-#### Frontend Performance
-```
-Initial Load:
-  First Contentful Paint: ~800ms
-  Time to Interactive:    ~1.2s    ✅ Under 2s goal
-
-Route Navigation:
-  Vue Router:            ~50ms     ✅ Under 100ms goal
-  Component render:      ~30ms     ✅ Fast
-
-Task List Render (100 tasks):
-  Initial render:        ~45ms     ✅ Under 50ms goal
-  Re-render (filter):    ~20ms     ✅ Very fast
-  Virtual scroll:        Handles 10,000+ ✅
+Обновление задачи:
+  Оптимистичное обновление: 0мс (мгновенно)
+  API вызов:          20-50мс
+  Всего:             ~50мс    ✅ Достаточно быстро
 ```
 
-### Future Performance Goals (Next Phase)
+#### Производительность Frontend
+```
+Начальная загрузка:
+  First Contentful Paint: ~800мс
+  Time to Interactive:    ~1.2с    ✅ Меньше цели в 2с
+
+Навигация по маршрутам:
+  Vue Router:            ~50мс     ✅ Меньше цели в 100мс
+  Рендеринг компонента:  ~30мс     ✅ Быстро
+
+Рендеринг списка задач (100 задач):
+  Начальный рендер:      ~45мс     ✅ Меньше цели в 50мс
+  Повторный рендер (фильтр): ~20мс     ✅ Очень быстро
+  Виртуальная прокрутка: Обрабатывает 10,000+ ✅
+```
+
+### Будущие цели производительности (Следующая фаза)
 
 #### Backend
-- [ ] API response time: < 20ms (query optimization, indexes)
-- [ ] Database query time: < 10ms (query optimization, indexes)
-- [ ] Concurrent users: 1000+ (horizontal scaling)
+- [ ] Время отклика API: < 20мс (оптимизация запросов, индексы)
+- [ ] Время запроса к БД: < 10мс (оптимизация запросов, индексы)
+- [ ] Одновременные пользователи: 1000+ (горизонтальное масштабирование)
 
 #### Frontend
-- [ ] Initial load: < 1s (bundle optimization, lazy loading)
-- [ ] Lighthouse score: > 95 (PWA, performance, accessibility)
-- [ ] Memory usage: < 50MB (component lifecycle optimization)
+- [ ] Начальная загрузка: < 1с (оптимизация бандла, ленивая загрузка)
+- [ ] Оценка Lighthouse: > 95 (PWA, производительность, доступность)
+- [ ] Использование памяти: < 50MB (оптимизация жизненного цикла компонентов)
 
-#### Infrastructure
-- [ ] Uptime: 99.9% (redundancy, health checks)
-- [ ] Error rate: < 0.1% (robust error handling)
-
----
-
-## Related Documents
-
-### Must Read Next
-- **[Tech Stack](TECH_STACK.md)** - Technologies powering this system
-- **[Architecture](backend/ARCHITECTURE.md)** - How the system is designed
-
-### For Development
-- **[Coding Standards](CODING_STANDARDS.md)** - How to write code
-- **[Architecture](backend/ARCHITECTURE.md)** - System design
-
-### For Reference
-- **[API Reference](backend/API_REFERENCE.md)** - All endpoints documented
-- **[Troubleshooting](guides/TROUBLESHOOTING.md)** - Common issues
+#### Инфраструктура
+- [ ] Uptime: 99.9% (избыточность, проверки здоровья)
+- [ ] Процент ошибок: < 0.1% (надежная обработка ошибок)
 
 ---
 
-*This project is in active development. Features and capabilities are continuously evolving.*
+## Связанные документы
+
+### Обязательно прочитать дальше
+- **[Tech Stack](TECH_STACK.md)** - Технологии, используемые в системе
+- **[Архитектура](backend/ARCHITECTURE.md)** - Как спроектирована система
+
+### Для разработки
+- **[Стандарты кодирования](CODING_STANDARDS.md)** - Как писать код
+- **[Архитектура](backend/ARCHITECTURE.md)** - Дизайн системы
+
+### Для справки
+- **[API справочник](backend/API_REFERENCE.md)** - Все эндпоинты документированы
+- **[Устранение неполадок](guides/TROUBLESHOOTING.md)** - Распространенные проблемы
+
+---
+
+*Этот проект находится в активной разработке. Функции и возможности постоянно развиваются.*
