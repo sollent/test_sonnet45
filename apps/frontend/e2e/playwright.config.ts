@@ -13,6 +13,11 @@ import { defineConfig, devices } from '@playwright/test'
  */
 export default defineConfig({
   testDir: './tests',
+
+  /* Global setup and teardown */
+  globalSetup: './global-setup.ts',
+  globalTeardown: './global-teardown.ts',
+
   /* Only match E2E test files in e2e directory, ignore Vitest unit tests */
   testMatch: /e2e\/tests\/.*\.spec\.ts$/,
   testIgnore: [

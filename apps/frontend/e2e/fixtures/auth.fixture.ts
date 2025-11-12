@@ -57,19 +57,20 @@ export const invalidEmails = [
 
 /**
  * Test user credentials for login tests
- * Note: These should match actual test users in the database
+ * Note: Uses environment variables in CI/CD, falls back to defaults locally
+ * These credentials match the test user created by the seeding command (app:e2e:seed)
  */
 export const testLoginUsers = {
   valid: {
-    email: 'sollent98@gmail.com',
-    password: 'Pahan1998'
+    email: process.env.E2E_TEST_USER_EMAIL || 'e2e-test@example.com',
+    password: process.env.E2E_TEST_USER_PASSWORD || 'TestPassword123!'
   },
   invalidCredentials: {
     email: 'nonexistent@example.com',
     password: 'WrongPassword123!'
   },
   wrongPassword: {
-    email: 'sollent98@gmail.com',
+    email: process.env.E2E_TEST_USER_EMAIL || 'e2e-test@example.com',
     password: 'WrongPassword123!'
   }
 }
