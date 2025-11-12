@@ -23,7 +23,12 @@ async function globalSetup(config: FullConfig) {
     await execAsync('sleep 15')
 
     console.log('🗄️  Создание базы данных (если не существует)...')
-    await execAsync('docker exec test-backend-php83 php bin/console doctrine:database:create --if-not-exists --env=test')
+    // Примечание: Symfony добавит суффикс _test, поэтому backend_test станет backend_test_test
+    await execAsync(
+      'docker exec ' +
+      '-e "DATABASE_URL=postgresql://test_user:test_password@test-psql16:5432/backend_test?serverVersion=16&charset=utf8" ' +
+      'test-backend-php83 php bin/console doctrine:database:create --if-not-exists --env=test'
+    )
   }
 
   // 2. Очистка и пересоздание схемы БД (для свежих данных каждый раз)
@@ -31,12 +36,21 @@ async function globalSetup(config: FullConfig) {
 
   try {
     // Удаляем схему БД (все таблицы и данные)
-    await execAsync('docker exec test-backend-php83 php bin/console doctrine:schema:drop --force --full-database --env=test')
+    // Примечание: Symfony автоматически добавляет "_test" к имени БД, поэтому backend_test станет backend_test_test
+    await execAsync(
+      'docker exec ' +
+      '-e "DATABASE_URL=postgresql://test_user:test_password@test-psql16:5432/backend_test?serverVersion=16&charset=utf8" ' +
+      'test-backend-php83 php bin/console doctrine:schema:drop --force --full-database --env=test'
+    )
     console.log('✅ Старые данные удалены')
 
     // Создаем схему заново
     console.log('🗄️  Создание свежей схемы базы данных...')
-    await execAsync('docker exec test-backend-php83 php bin/console doctrine:schema:create --env=test')
+    await execAsync(
+      'docker exec ' +
+      '-e "DATABASE_URL=postgresql://test_user:test_password@test-psql16:5432/backend_test?serverVersion=16&charset=utf8" ' +
+      'test-backend-php83 php bin/console doctrine:schema:create --env=test'
+    )
     console.log('✅ Схема БД создана')
   } catch (error) {
     console.error('❌ Не удалось пересоздать схему БД:', error)
@@ -48,7 +62,12 @@ async function globalSetup(config: FullConfig) {
 
   try {
     // ВСЕГДА используем test backend для изоляции (локально и в CI)
-    await execAsync('docker exec test-backend-php83 php bin/console app:e2e:seed --env=test')
+    // Примечание: backend_test станет backend_test_test после добавления суффикса Symfony
+    await execAsync(
+      'docker exec ' +
+      '-e "DATABASE_URL=postgresql://test_user:test_password@test-psql16:5432/backend_test?serverVersion=16&charset=utf8" ' +
+      'test-backend-php83 php bin/console app:e2e:seed --env=test'
+    )
     console.log('✅ Тестовые данные успешно заполнены')
   } catch (error) {
     console.error('❌ Не удалось заполнить тестовые данные:', error)
