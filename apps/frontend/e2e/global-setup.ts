@@ -7,30 +7,33 @@ const execAsync = promisify(exec)
 async function globalSetup(config: FullConfig) {
   console.log('🚀 Запуск глобальной настройки E2E...')
 
-  // 1. Запуск тестового окружения (если еще не запущено) - только в CI
-  if (process.env.CI) {
-    console.log('📦 Запуск тестовых Docker контейнеров...')
-    await execAsync('docker-compose -f infrastructure/docker/docker-compose.test.yml up -d')
+  // 1. Проверка и запуск тестового окружения
+  console.log('📦 Проверка тестовых Docker контейнеров...')
+
+  try {
+    // Проверяем что test окружение запущено
+    await execAsync('docker ps | grep test-backend-php83')
+    console.log('✅ Тестовое окружение уже запущено')
+  } catch {
+    console.log('⚠️  Тестовое окружение не запущено, запускаем...')
+    await execAsync('docker-compose -f infrastructure/docker/docker-compose.test.yml --env-file .env.docker.test up -d')
 
     // Ожидание, пока сервисы станут healthy
     console.log('⏳ Ожидание готовности сервисов...')
-    await execAsync('sleep 10')
+    await execAsync('sleep 15')
 
-    console.log('🗄️  Запуск миграций...')
-    await execAsync('docker-compose -f infrastructure/docker/docker-compose.test.yml exec -T test-backend php bin/console doctrine:migrations:migrate --no-interaction')
+    console.log('🗄️  Создание схемы базы данных...')
+    // Используем doctrine:schema:create вместо миграций (безопаснее для test БД)
+    await execAsync('docker exec test-backend-php83 php bin/console doctrine:database:create --if-not-exists --env=test')
+    await execAsync('docker exec test-backend-php83 php bin/console doctrine:schema:create --env=test')
   }
 
   // 2. Заполнение базы данных тестовыми данными через Symfony команду
   console.log('🌱 Заполнение базы данных тестовыми данными...')
 
   try {
-    if (process.env.CI) {
-      // В CI используем Docker test environment
-      await execAsync('docker-compose -f infrastructure/docker/docker-compose.test.yml exec -T test-backend php bin/console app:e2e:seed')
-    } else {
-      // Локально используем dev backend
-      await execAsync('docker exec backend-php83 php bin/console app:e2e:seed')
-    }
+    // ВСЕГДА используем test backend для изоляции (локально и в CI)
+    await execAsync('docker exec test-backend-php83 php bin/console app:e2e:seed --env=test')
     console.log('✅ Тестовые данные успешно заполнены')
   } catch (error) {
     console.error('❌ Не удалось заполнить тестовые данные:', error)
