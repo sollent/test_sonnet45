@@ -186,6 +186,27 @@ Pinia stores и паттерны состояния
 
 ---
 
+### 🚀 CI/CD & Планы Оптимизации (`project/docs/ci-cd-plans/`)
+
+#### [`ci-cd-plans/FRONTEND_OPTIMIZATION_PLAN.md`](ci-cd-plans/FRONTEND_OPTIMIZATION_PLAN.md)
+**🎯 НОВОЕ** - Комплексный план оптимизации производительности Frontend
+
+**Ключевые Темы:**
+- Анализ текущих проблем (PrimeVue, ECharts, bundle size)
+- Tree-shaking для больших библиотек
+- Продвинутая конфигурация Vite для production
+- Компрессия Gzip + Brotli
+- Manual chunk splitting для оптимального кеширования
+- CSS оптимизация и PurgeCSS
+- Lazy loading тяжелых компонентов
+- Service Worker и PWA
+- Preload/Prefetch стратегии
+- 3-фазный план реализации (3 недели)
+- Ожидаемое улучшение производительности: **60-70%**
+- Целевые метрики: Initial bundle ~300KB (gzip ~100KB), Lighthouse 90+
+
+---
+
 ### 📘 Руководства (`project/docs/guides/`)
 
 #### [`guides/DEVELOPMENT_WORKFLOW.md`](guides/DEVELOPMENT_WORKFLOW.md)
