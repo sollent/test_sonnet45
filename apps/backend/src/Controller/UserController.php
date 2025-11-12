@@ -40,7 +40,6 @@ final class UserController extends AbstractController
     #[OA\Tag(name: 'User')]
     public function register(#[MapRequestPayload] UserRegistrationRequestDto $registrationRequestDto): JsonResponse
     {
-
         try {
             /** @var User $user */
             $user = $this->userRegistrationService->register($registrationRequestDto);
