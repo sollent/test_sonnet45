@@ -1,29 +1,29 @@
-# 🎨 Frontend Architecture - Vue 3 Composition API
+# 🎨 Архитектура Frontend - Vue 3 Composition API
 
-> **TL;DR**: Vue 3 with Composition API + TypeScript strict mode. Smart/Dumb component pattern. Pinia for state management. Composables for reusable logic. Everything is type-safe with zero `any` types.
-
----
-
-## Table of Contents
-
-- [Architecture Overview](#architecture-overview)
-- [Composition API Patterns](#composition-api-patterns)
-- [Component Organization](#component-organization)
-- [Composables Architecture](#composables-architecture)
-- [TypeScript Strict Mode](#typescript-strict-mode)
-- [Code Examples](#code-examples)
+> **Кратко**: Vue 3 с Composition API + TypeScript строгий режим. Паттерн Smart/Dumb компонентов. Pinia для управления состоянием. Composables для переиспользуемой логики. Все типизировано без использования `any`.
 
 ---
 
-## Architecture Overview
+## Содержание
+
+- [Обзор архитектуры](#обзор-архитектуры)
+- [Паттерны Composition API](#паттерны-composition-api)
+- [Организация компонентов](#организация-компонентов)
+- [Архитектура Composables](#архитектура-composables)
+- [Строгий режим TypeScript](#строгий-режим-typescript)
+- [Примеры кода](#примеры-кода)
+
+---
+
+## Обзор архитектуры
 
 ```
 frontend/src/
-├── views/                  # Smart components (pages)
+├── views/                  # Smart компоненты (страницы)
 │   ├── HomeView.vue
 │   ├── AnalyticsView.vue
 │   └── CalendarView.vue
-├── components/             # Dumb components (reusable)
+├── components/             # Dumb компоненты (переиспользуемые)
 │   ├── tasks/
 │   │   ├── TaskCard.vue
 │   │   ├── TaskList.vue
@@ -33,73 +33,73 @@ frontend/src/
 │   │   └── LoadingSpinner.vue
 │   └── modals/
 │       └── TaskDetailModal.vue
-├── stores/                 # Pinia stores (global state)
+├── stores/                 # Pinia хранилища (глобальное состояние)
 │   ├── task.store.ts
 │   ├── auth.store.ts
 │   └── loader.store.ts
-├── composables/            # Reusable logic
+├── composables/            # Переиспользуемая логика
 │   ├── useTaskCompletion.ts
 │   ├── useAuth.ts
 │   └── useToast.ts
-├── services/               # API calls
+├── services/               # API вызовы
 │   ├── api.service.ts
 │   ├── task.service.ts
 │   └── auth.service.ts
-├── types/                  # TypeScript types
+├── types/                  # TypeScript типы
 │   ├── task.types.ts
 │   └── api.types.ts
 ├── router/                 # Vue Router
 │   └── index.ts
-├── i18n/                   # Internationalization
+├── i18n/                   # Интернационализация
 │   └── locales/
 │       ├── en.ts
 │       └── ru.ts
-└── main.ts                 # App entry point
+└── main.ts                 # Точка входа приложения
 ```
 
 ---
 
-## Composition API Patterns
+## Паттерны Composition API
 
-### Why Composition API?
+### Почему Composition API?
 
-✅ Better TypeScript support
-✅ Logic reusability (composables)
-✅ Cleaner code organization
-✅ Smaller bundle size
+✅ Лучшая поддержка TypeScript
+✅ Переиспользуемость логики (composables)
+✅ Более чистая организация кода
+✅ Меньший размер бандла
 
-### Setup Script Pattern
+### Паттерн Setup Script
 
 ```vue
 <script setup lang="ts">
-// ✅ GOOD: <script setup> syntax (Composition API)
+// ✅ ХОРОШО: синтаксис <script setup> (Composition API)
 import { ref, computed, onMounted } from 'vue'
 import { useTaskStore } from '@/stores/task.store'
 import type { Task } from '@/types/task.types'
 
-// Props with TypeScript
+// Props с TypeScript
 const props = defineProps<{
   task: Task
   editable?: boolean
 }>()
 
-// Emits with TypeScript
+// Emits с TypeScript
 const emit = defineEmits<{
   update: [task: Task]
   delete: [id: number]
 }>()
 
-// Reactive state
+// Реактивное состояние
 const isEditing = ref(false)
 const localTitle = ref(props.task.title)
 
-// Computed properties
+// Вычисляемые свойства
 const isOverdue = computed(() => {
   if (!props.task.dueDate) return false
   return new Date(props.task.dueDate) < new Date()
 })
 
-// Methods
+// Методы
 function handleSave() {
   emit('update', {
     ...props.task,
@@ -108,35 +108,35 @@ function handleSave() {
   isEditing.value = false
 }
 
-// Lifecycle hooks
+// Хуки жизненного цикла
 onMounted(() => {
-  console.log('Component mounted')
+  console.log('Компонент примонтирован')
 })
 </script>
 
 <template>
   <div class="task-card">
     <h3>{{ task.title }}</h3>
-    <span v-if="isOverdue" class="overdue">Overdue!</span>
-    <button v-if="editable" @click="handleSave">Save</button>
+    <span v-if="isOverdue" class="overdue">Просрочено!</span>
+    <button v-if="editable" @click="handleSave">Сохранить</button>
   </div>
 </template>
 ```
 
 ---
 
-## Component Organization
+## Организация компонентов
 
-### Smart vs Dumb Components
+### Smart vs Dumb компоненты
 
-#### Smart Components (Views)
-**Location:** `/src/views/`
+#### Smart компоненты (Views)
+**Расположение:** `/src/views/`
 
-**Responsibilities:**
-✅ Fetch data from stores
-✅ Handle business logic
-✅ Manage component state
-✅ Handle routing
+**Ответственность:**
+✅ Получение данных из хранилищ
+✅ Обработка бизнес-логики
+✅ Управление состоянием компонента
+✅ Обработка маршрутизации
 
 ```vue
 <!-- views/TasksView.vue -->
@@ -167,14 +167,14 @@ function handleTaskUpdate(task: Task) {
 </template>
 ```
 
-#### Dumb Components (Reusable)
-**Location:** `/src/components/`
+#### Dumb компоненты (Переиспользуемые)
+**Расположение:** `/src/components/`
 
-**Responsibilities:**
-✅ Receive data via props
-✅ Emit events to parent
-✅ NO direct store access
-✅ Highly reusable
+**Ответственность:**
+✅ Получение данных через props
+✅ Генерация событий для родителя
+✅ БЕЗ прямого доступа к хранилищу
+✅ Высокая переиспользуемость
 
 ```vue
 <!-- components/tasks/TaskList.vue -->
@@ -182,7 +182,7 @@ function handleTaskUpdate(task: Task) {
 import type { Task } from '@/types/task.types'
 import TaskCard from './TaskCard.vue'
 
-// Only props and emits, NO store access
+// Только props и emits, БЕЗ доступа к хранилищу
 const props = defineProps<{
   tasks: Task[]
   loading: boolean
@@ -210,13 +210,13 @@ const emit = defineEmits<{
 
 ---
 
-## Composables Architecture
+## Архитектура Composables
 
-### What are Composables?
+### Что такое Composables?
 
-**Composables = Reusable logic extracted from components**
+**Composables = Переиспользуемая логика, извлеченная из компонентов**
 
-### Example: useTaskCompletion
+### Пример: useTaskCompletion
 
 ```typescript
 // composables/useTaskCompletion.ts
@@ -233,7 +233,7 @@ export function useTaskCompletion() {
   const { showSuccess, showError } = useToast()
 
   /**
-   * Count uncompleted subtasks recursively
+   * Подсчет незавершенных подзадач рекурсивно
    */
   function countUncompletedSubtasks(task: Task): number {
     let count = 0
@@ -251,20 +251,20 @@ export function useTaskCompletion() {
   }
 
   /**
-   * Toggle task completion with confirmation
+   * Переключение завершения задачи с подтверждением
    */
   async function toggleTaskCompletion(task: Task): Promise<void> {
-    // If already completed, just uncomplete
+    // Если уже завершена, просто отменяем завершение
     if (task.isCompleted) {
       showSuccess(t('tasks.task_reopened'))
       await taskStore.toggleTaskCompletion(task.id)
       return
     }
 
-    // Count uncompleted subtasks
+    // Подсчитываем незавершенные подзадачи
     const uncompletedCount = countUncompletedSubtasks(task)
 
-    // Show confirmation if has uncompleted subtasks
+    // Показываем подтверждение, если есть незавершенные подзадачи
     if (uncompletedCount > 0) {
       confirm.require({
         message: t('tasks.complete_with_subtasks_message', { count: uncompletedCount }),
@@ -310,7 +310,7 @@ export function useTaskCompletion() {
 }
 ```
 
-### Usage in Components
+### Использование в компонентах
 
 ```vue
 <script setup lang="ts">
@@ -321,7 +321,7 @@ const props = defineProps<{
   task: Task
 }>()
 
-// ✅ Use composable
+// ✅ Используем composable
 const { toggleTaskCompletion } = useTaskCompletion()
 
 async function handleCheckboxChange(checked: boolean) {
@@ -339,28 +339,28 @@ async function handleCheckboxChange(checked: boolean) {
 
 ---
 
-## TypeScript Strict Mode
+## Строгий режим TypeScript
 
-### Configuration
+### Конфигурация
 
 ```json
 // tsconfig.json
 {
   "compilerOptions": {
-    "strict": true,                    // Enable all strict checks
-    "noImplicitAny": true,             // No 'any' types
-    "strictNullChecks": true,          // Null safety
-    "strictFunctionTypes": true,       // Function type safety
-    "noUnusedLocals": true,            // No unused variables
-    "noUnusedParameters": true         // No unused params
+    "strict": true,                    // Включить все строгие проверки
+    "noImplicitAny": true,             // Нет типов 'any'
+    "strictNullChecks": true,          // Безопасность null
+    "strictFunctionTypes": true,       // Безопасность типов функций
+    "noUnusedLocals": true,            // Нет неиспользуемых переменных
+    "noUnusedParameters": true         // Нет неиспользуемых параметров
   }
 }
 ```
 
-### Type Safety Examples
+### Примеры типобезопасности
 
 ```typescript
-// ✅ GOOD: Strongly typed
+// ✅ ХОРОШО: Строго типизировано
 interface Task {
   id: number
   title: string
@@ -370,14 +370,14 @@ interface Task {
 }
 
 const task: Task = await taskService.getTask(id)
-task.title // TypeScript knows this is string
-task.dueDate // TypeScript knows this is string | null
+task.title // TypeScript знает, что это string
+task.dueDate // TypeScript знает, что это string | null
 
-// ❌ BAD: Using 'any'
+// ❌ ПЛОХО: Использование 'any'
 const task: any = await taskService.getTask(id)
-task.unknownProperty // No error! Dangerous!
+task.unknownProperty // Нет ошибки! Опасно!
 
-// ✅ GOOD: Enum for status
+// ✅ ХОРОШО: Enum для статуса
 enum TaskStatus {
   PENDING = 'pending',
   IN_PROGRESS = 'in_progress',
@@ -386,12 +386,12 @@ enum TaskStatus {
 
 const status: TaskStatus = TaskStatus.COMPLETED
 
-// ✅ GOOD: Union types
+// ✅ ХОРОШО: Union типы
 type Priority = 'low' | 'medium' | 'high' | 'urgent'
-const priority: Priority = 'high' // Type-safe!
-const invalid: Priority = 'invalid' // ❌ TypeScript error
+const priority: Priority = 'high' // Типобезопасно!
+const invalid: Priority = 'invalid' // ❌ Ошибка TypeScript
 
-// ✅ GOOD: Generic types
+// ✅ ХОРОШО: Обобщенные типы
 function useState<T>(initialValue: T): [T, (value: T) => void] {
   const value = ref<T>(initialValue)
   const setValue = (newValue: T) => {
@@ -402,24 +402,24 @@ function useState<T>(initialValue: T): [T, (value: T) => void] {
 
 const [count, setCount] = useState<number>(0)
 setCount(10) // ✅ OK
-setCount('10') // ❌ TypeScript error
+setCount('10') // ❌ Ошибка TypeScript
 
-// ✅ GOOD: Type guards
+// ✅ ХОРОШО: Type guards
 function isTask(obj: any): obj is Task {
   return obj && typeof obj.id === 'number' && typeof obj.title === 'string'
 }
 
 const data: unknown = await fetchData()
 if (isTask(data)) {
-  console.log(data.title) // TypeScript knows data is Task
+  console.log(data.title) // TypeScript знает, что data это Task
 }
 ```
 
 ---
 
-## Code Examples
+## Примеры кода
 
-### Complete Component Example
+### Полный пример компонента
 
 ```vue
 <!-- components/tasks/TaskCard.vue -->
@@ -480,7 +480,7 @@ function handleDelete() {
           @update:modelValue="handleCheckboxChange"
         />
         <h3>{{ task.title }}</h3>
-        <Tag v-if="isOverdue" severity="danger">Overdue</Tag>
+        <Tag v-if="isOverdue" severity="danger">Просрочено</Tag>
       </div>
     </template>
 
@@ -581,41 +581,41 @@ function handleDelete() {
 
 ---
 
-## Best Practices
+## Лучшие практики
 
-### DO's ✅
+### ДЕЛАТЬ ✅
 
-✅ **Use Composition API** - `<script setup>` syntax
-✅ **TypeScript strict mode** - Zero `any` types
-✅ **Smart/Dumb pattern** - Separate concerns
-✅ **Composables for logic** - Reusable functions
-✅ **Props for data flow** - Explicit dependencies
-✅ **Emits for events** - Clear parent communication
-✅ **Computed for derived state** - Reactive calculations
-✅ **onMounted for side effects** - Lifecycle hooks
+✅ **Использовать Composition API** - синтаксис `<script setup>`
+✅ **Строгий режим TypeScript** - Без типов `any`
+✅ **Паттерн Smart/Dumb** - Разделение ответственности
+✅ **Composables для логики** - Переиспользуемые функции
+✅ **Props для потока данных** - Явные зависимости
+✅ **Emits для событий** - Четкая коммуникация с родителем
+✅ **Computed для производного состояния** - Реактивные вычисления
+✅ **onMounted для побочных эффектов** - Хуки жизненного цикла
 
-### DON'Ts ❌
+### НЕ ДЕЛАТЬ ❌
 
-❌ **Options API** - Use Composition API instead
-❌ **`any` types** - Always specify types
-❌ **Direct store access in dumb components** - Use props
-❌ **Business logic in templates** - Move to methods/computed
-❌ **Mutating props** - Emit events instead
-❌ **Global variables** - Use stores/composables
-❌ **Deep nesting** - Extract components
-
----
-
-## Related Documents
-
-### Must Read Next
-- **[State Management](STATE_MANAGEMENT.md)** - Pinia stores
-- **[API Integration](API_INTEGRATION.md)** - Axios setup
-
-### For Reference
-- **[Tech Stack](../TECH_STACK.md)** - Frontend technologies
+❌ **Options API** - Используйте вместо него Composition API
+❌ **Типы `any`** - Всегда указывайте типы
+❌ **Прямой доступ к хранилищу в dumb компонентах** - Используйте props
+❌ **Бизнес-логика в шаблонах** - Переместите в methods/computed
+❌ **Мутирование props** - Генерируйте события вместо этого
+❌ **Глобальные переменные** - Используйте stores/composables
+❌ **Глубокая вложенность** - Извлекайте компоненты
 
 ---
 
-*Last updated: 2025-01-05*
-*Architecture version: 1.0*
+## Связанные документы
+
+### Обязательно прочитайте далее
+- **[Управление состоянием](STATE_MANAGEMENT.md)** - Pinia хранилища
+- **[Интеграция с API](API_INTEGRATION.md)** - Настройка Axios
+
+### Для справки
+- **[Технологический стек](../TECH_STACK.md)** - Frontend технологии
+
+---
+
+*Последнее обновление: 2025-01-05*
+*Версия архитектуры: 1.0*
