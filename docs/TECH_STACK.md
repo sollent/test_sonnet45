@@ -1,28 +1,28 @@
-# 🛠 Tech Stack - Complete Technology Overview
+# 🛠 Технологический стек - Полный обзор технологий
 
-> **TL;DR**: Modern full-stack application built with Symfony 7.1 (PHP 8.3), PostgreSQL, Vue.js 3.4, TypeScript 5.4, and containerized with Docker. Every technology choice is justified by performance, scalability, and developer experience.
-
----
-
-## Table of Contents
-
-- [Architecture Overview](#architecture-overview)
-- [Backend Stack](#backend-stack)
-- [Frontend Stack](#frontend-stack)
-- [Infrastructure](#infrastructure)
-- [Third-Party Services](#third-party-services)
-- [Development Tools](#development-tools)
-- [Technology Justifications](#technology-justifications)
-- [Version Requirements](#version-requirements)
+> **TL;DR**: Современное full-stack приложение, построенное на Symfony 7.1 (PHP 8.3), PostgreSQL, Vue.js 3.4, TypeScript 5.4 и контейнеризированное с помощью Docker. Каждый выбор технологии обоснован производительностью, масштабируемостью и удобством разработки.
 
 ---
 
-## Architecture Overview
+## Содержание
+
+- [Обзор архитектуры](#обзор-архитектуры)
+- [Backend стек](#backend-стек)
+- [Frontend стек](#frontend-стек)
+- [Инфраструктура](#инфраструктура)
+- [Сторонние сервисы](#сторонние-сервисы)
+- [Инструменты разработки](#инструменты-разработки)
+- [Обоснование выбора технологий](#обоснование-выбора-технологий)
+- [Требования к версиям](#требования-к-версиям)
+
+---
+
+## Обзор архитектуры
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                         CLIENT                              │
-│              (Browser - Vue.js 3 SPA)                       │
+│                         КЛИЕНТ                              │
+│              (Браузер - Vue.js 3 SPA)                       │
 └─────────────────────────┬───────────────────────────────────┘
                           │ HTTPS/REST
 ┌─────────────────────────▼───────────────────────────────────┐
@@ -32,57 +32,57 @@
           │
 ┌─────────▼──────────┐
 │   PostgreSQL 15    │
-│  (Primary Data)    │
+│  (Основные данные) │
 └────────────────────┘
 ```
 
-**Architecture Style:** Layered Monolith (Backend) + SPA (Frontend)
+**Стиль архитектуры:** Монолит со слоями (Backend) + SPA (Frontend)
 
 ---
 
-## Backend Stack
+## Backend стек
 
-### Core Framework
+### Основной фреймворк
 
 #### **Symfony 7.1**
 ```json
 "symfony/framework-bundle": "7.1.*"
 ```
 
-**Why Symfony?**
-- **Enterprise-grade**: Battle-tested framework used by millions
-- **SOLID principles**: Built-in dependency injection, follows best practices
-- **Rich ecosystem**: Extensive bundle library (JWT, CORS, Doctrine, etc.)
-- **Performance**: Optimized for high-performance applications
-- **Documentation**: Best-in-class documentation and community support
-- **Type safety**: Works seamlessly with PHP 8.3 typed properties
+**Почему Symfony?**
+- **Корпоративный уровень**: Проверенный в боях фреймворк, используемый миллионами
+- **SOLID принципы**: Встроенная инъекция зависимостей, следует лучшим практикам
+- **Богатая экосистема**: Обширная библиотека бандлов (JWT, CORS, Doctrine и т.д.)
+- **Производительность**: Оптимизирован для высокопроизводительных приложений
+- **Документация**: Лучшая документация и поддержка сообщества в своем классе
+- **Типобезопасность**: Отлично работает с типизированными свойствами PHP 8.3
 
-**Key Features Used:**
-- Controllers (thin HTTP layer)
-- Dependency Injection Container
-- Event Dispatcher (cache invalidation)
-- Serializer (DTO transformation)
-- Validator (request validation)
-- Security component (JWT authentication)
+**Используемые ключевые возможности:**
+- Контроллеры (тонкий HTTP слой)
+- Контейнер инъекции зависимостей
+- Диспетчер событий (инвалидация кеша)
+- Сериализатор (трансформация DTO)
+- Валидатор (валидация запросов)
+- Компонент безопасности (JWT аутентификация)
 
 ---
 
-### Programming Language
+### Язык программирования
 
 #### **PHP 8.3**
 ```json
 "php": ">=8.3"
 ```
 
-**Why PHP 8.3?**
-- **Modern syntax**: Enums, attributes, readonly properties, typed properties
-- **Performance**: JIT compiler, 30% faster than PHP 7.4
-- **Type safety**: Strict types, union types, nullable types
-- **Developer experience**: Much better than older PHP versions
+**Почему PHP 8.3?**
+- **Современный синтаксис**: Перечисления, атрибуты, readonly свойства, типизированные свойства
+- **Производительность**: JIT компилятор, на 30% быстрее чем PHP 7.4
+- **Типобезопасность**: Строгие типы, union типы, nullable типы
+- **Опыт разработки**: Намного лучше, чем старые версии PHP
 
-**PHP 8.3 Features We Use:**
+**Возможности PHP 8.3, которые мы используем:**
 ```php
-// Enums (TaskStatus, TaskPriority)
+// Перечисления (TaskStatus, TaskPriority)
 enum TaskStatus: string
 {
     case PENDING = 'pending';
@@ -90,7 +90,7 @@ enum TaskStatus: string
     case COMPLETED = 'completed';
 }
 
-// Readonly properties
+// Readonly свойства
 final readonly class TaskResponseDto
 {
     public function __construct(
@@ -100,13 +100,13 @@ final readonly class TaskResponseDto
     ) {}
 }
 
-// Typed properties
+// Типизированные свойства
 private readonly LoggerInterface $logger;
 ```
 
 ---
 
-### Database
+### База данных
 
 #### **PostgreSQL 15**
 ```yaml
@@ -114,17 +114,17 @@ private readonly LoggerInterface $logger;
 postgres:15-alpine
 ```
 
-**Why PostgreSQL?**
-- **ACID compliance**: Guaranteed data integrity
-- **JSON support**: Native JSONB for flexible data (tags, metadata)
-- **Performance**: Advanced query optimizer, efficient indexing
-- **Reliability**: Industry-standard for mission-critical applications
-- **Rich data types**: Arrays, JSONB, UUID, full-text search
-- **Advanced features**: CTEs, window functions, materialized views
+**Почему PostgreSQL?**
+- **ACID совместимость**: Гарантированная целостность данных
+- **Поддержка JSON**: Нативный JSONB для гибких данных (теги, метаданные)
+- **Производительность**: Продвинутый оптимизатор запросов, эффективная индексация
+- **Надежность**: Промышленный стандарт для критически важных приложений
+- **Богатые типы данных**: Массивы, JSONB, UUID, полнотекстовый поиск
+- **Продвинутые возможности**: CTE, оконные функции, материализованные представления
 
-**Database Features Used:**
+**Используемые возможности базы данных:**
 ```sql
--- Recursive queries (task hierarchy)
+-- Рекурсивные запросы (иерархия задач)
 WITH RECURSIVE subtasks AS (
     SELECT * FROM task WHERE id = :parent_id
     UNION ALL
@@ -133,10 +133,10 @@ WITH RECURSIVE subtasks AS (
 )
 SELECT * FROM subtasks;
 
--- JSONB columns (future-proof)
+-- JSONB колонки (задел на будущее)
 ALTER TABLE task ADD COLUMN metadata JSONB;
 
--- Advanced indexing
+-- Продвинутая индексация
 CREATE INDEX idx_task_user_status ON task (user_id, status);
 CREATE INDEX idx_task_due_date ON task (due_date) WHERE due_date IS NOT NULL;
 ```
@@ -151,17 +151,17 @@ CREATE INDEX idx_task_due_date ON task (due_date) WHERE due_date IS NOT NULL;
 "doctrine/doctrine-bundle": "^2.12"
 ```
 
-**Why Doctrine?**
-- **Abstraction**: Database-agnostic (can switch from PostgreSQL to MySQL)
-- **Type safety**: Strong PHP type mapping
-- **Migrations**: Version-controlled database schema
-- **Lazy loading**: Efficient relationship loading
-- **Repository pattern**: Built-in data access abstraction
-- **DQL**: Object-oriented query language
+**Почему Doctrine?**
+- **Абстракция**: Не зависит от базы данных (можно переключиться с PostgreSQL на MySQL)
+- **Типобезопасность**: Строгая типизация PHP
+- **Миграции**: Схема базы данных под контролем версий
+- **Ленивая загрузка**: Эффективная загрузка связей
+- **Паттерн репозиторий**: Встроенная абстракция доступа к данным
+- **DQL**: Объектно-ориентированный язык запросов
 
-**Doctrine Features Used:**
+**Используемые возможности Doctrine:**
 ```php
-// Entities with relationships
+// Сущности со связями
 #[ORM\Entity(repositoryClass: TaskRepository::class)]
 class Task
 {
@@ -176,7 +176,7 @@ class Task
     private Collection $tags;
 }
 
-// Custom repositories
+// Пользовательские репозитории
 class TaskRepository extends ServiceEntityRepository
 {
     public function findByUserAndStatus(User $user, TaskStatus $status): array
@@ -194,7 +194,7 @@ class TaskRepository extends ServiceEntityRepository
 
 ---
 
-### Authentication & Security
+### Аутентификация и безопасность
 
 #### **JWT (JSON Web Tokens)**
 ```json
@@ -203,26 +203,26 @@ class TaskRepository extends ServiceEntityRepository
 "gesdinet/jwt-refresh-token-bundle": "^1.3"
 ```
 
-**Why JWT?**
-- **Stateless**: No server-side session storage needed
-- **Scalable**: Works across multiple servers (no sticky sessions)
-- **Standard**: Industry-standard RFC 7519
-- **Flexible**: Can store user claims in token payload
-- **Secure**: RS256 algorithm (asymmetric encryption)
+**Почему JWT?**
+- **Без состояния**: Не требуется серверное хранилище сессий
+- **Масштабируемость**: Работает на нескольких серверах (без sticky sessions)
+- **Стандарт**: Промышленный стандарт RFC 7519
+- **Гибкость**: Можно хранить утверждения пользователя в payload токена
+- **Безопасность**: Алгоритм RS256 (асимметричное шифрование)
 
-**JWT Implementation:**
+**Реализация JWT:**
 ```yaml
 # config/packages/lexik_jwt_authentication.yaml
 lexik_jwt_authentication:
     secret_key: '%env(resolve:JWT_SECRET_KEY)%'
     public_key: '%env(resolve:JWT_PUBLIC_KEY)%'
     pass_phrase: '%env(JWT_PASSPHRASE)%'
-    token_ttl: 1800 # 30 minutes
+    token_ttl: 1800 # 30 минут
 ```
 
-**Token Structure:**
+**Структура токена:**
 ```json
-// Access Token (30 min)
+// Access Token (30 мин)
 {
   "iat": 1641024000,
   "exp": 1641025800,
@@ -230,7 +230,7 @@ lexik_jwt_authentication:
   "username": "user@example.com"
 }
 
-// Refresh Token (7 days)
+// Refresh Token (7 дней)
 {
   "token": "abc123...",
   "valid": "2025-01-12T00:00:00+00:00"
@@ -245,40 +245,40 @@ lexik_jwt_authentication:
 "league/oauth2-google": "^4.0"
 ```
 
-**Why Google OAuth?**
-- **User convenience**: No password to remember
-- **Security**: Leverages Google's security infrastructure
-- **Trust**: Users trust Google authentication
-- **Fast onboarding**: One-click sign-in
+**Почему Google OAuth?**
+- **Удобство для пользователя**: Не нужно запоминать пароль
+- **Безопасность**: Использует инфраструктуру безопасности Google
+- **Доверие**: Пользователи доверяют аутентификации Google
+- **Быстрая регистрация**: Вход в один клик
 
 ---
 
-### API Documentation
+### Документация API
 
 #### **Nelmio API Doc Bundle**
 ```json
 "nelmio/api-doc-bundle": "^4.29"
 ```
 
-**Why Nelmio?**
-- **OpenAPI 3.0**: Industry-standard API documentation format
-- **Swagger UI**: Interactive API documentation
-- **Auto-generation**: Extracts docs from PHP attributes
-- **Developer-friendly**: Easy to test endpoints
+**Почему Nelmio?**
+- **OpenAPI 3.0**: Промышленный стандарт формата документации API
+- **Swagger UI**: Интерактивная документация API
+- **Автогенерация**: Извлекает документацию из PHP атрибутов
+- **Удобство для разработчиков**: Легко тестировать эндпоинты
 
 ---
 
-### CORS Handling
+### Обработка CORS
 
 #### **Nelmio CORS Bundle**
 ```json
 "nelmio/cors-bundle": "^2.5"
 ```
 
-**Why Nelmio CORS?**
-- **Flexible**: Fine-grained CORS configuration
-- **Secure**: Prevents unauthorized cross-origin requests
-- **Easy**: Simple YAML configuration
+**Почему Nelmio CORS?**
+- **Гибкость**: Детальная настройка CORS
+- **Безопасность**: Предотвращает несанкционированные межсайтовые запросы
+- **Простота**: Простая конфигурация YAML
 
 ```yaml
 # config/packages/nelmio_cors.yaml
@@ -294,66 +294,66 @@ nelmio_cors:
 
 ---
 
-### Date/Time Handling
+### Работа с датой/временем
 
 #### **Carbon**
 ```json
 "nesbot/carbon": "^3.9"
 ```
 
-**Why Carbon?**
-- **Developer-friendly**: Fluent API for date manipulation
-- **Timezone aware**: Handles timezones correctly
-- **Localization**: Supports multiple languages
-- **Testing**: Easy to mock time in tests
+**Почему Carbon?**
+- **Удобство для разработчиков**: Fluent API для манипуляций с датами
+- **Учет часовых поясов**: Корректно обрабатывает часовые пояса
+- **Локализация**: Поддержка нескольких языков
+- **Тестирование**: Легко мокировать время в тестах
 
 ```php
-// Carbon usage examples
+// Примеры использования Carbon
 $task->setDueDate(Carbon::parse($dto->dueDate));
 $isOverdue = Carbon::now()->greaterThan($task->getDueDate());
-$completed = $task->getCompletedAt()->diffForHumans(); // "2 hours ago"
+$completed = $task->getCompletedAt()->diffForHumans(); // "2 часа назад"
 ```
 
 ---
 
-## Frontend Stack
+## Frontend стек
 
-### Core Framework
+### Основной фреймворк
 
 #### **Vue.js 3.4.21**
 ```json
 "vue": "^3.4.21"
 ```
 
-**Why Vue.js 3?**
-- **Composition API**: Better code organization, type safety
-- **Performance**: Virtual DOM, efficient reactivity
-- **TypeScript support**: First-class TypeScript integration
-- **Small bundle size**: ~30KB minified + gzipped
-- **Developer experience**: Excellent devtools, hot reload
-- **Progressive**: Can be adopted incrementally
+**Почему Vue.js 3?**
+- **Composition API**: Лучшая организация кода, типобезопасность
+- **Производительность**: Виртуальный DOM, эффективная реактивность
+- **Поддержка TypeScript**: Первоклассная интеграция с TypeScript
+- **Небольшой размер бандла**: ~30KB минифицированный + gzip
+- **Опыт разработки**: Отличные devtools, горячая перезагрузка
+- **Прогрессивный**: Может быть внедрен постепенно
 
-**Vue 3 Features Used:**
+**Используемые возможности Vue 3:**
 ```typescript
-// Composition API with TypeScript
+// Composition API с TypeScript
 const { tasks, loading } = defineProps<{
   tasks: Task[]
   loading: boolean
 }>()
 
-// Reactive state
+// Реактивное состояние
 const selectedTask = ref<Task | null>(null)
 const filter = reactive<TaskFilter>({
   status: null,
   priority: null
 })
 
-// Computed properties
+// Вычисляемые свойства
 const completedTasks = computed(() =>
   tasks.value.filter(t => t.status === TaskStatus.COMPLETED)
 )
 
-// Lifecycle hooks
+// Хуки жизненного цикла
 onMounted(async () => {
   await taskStore.fetchTasks()
 })
@@ -361,21 +361,21 @@ onMounted(async () => {
 
 ---
 
-### Programming Language
+### Язык программирования
 
 #### **TypeScript 5.4.0**
 ```json
 "typescript": "^5.4.0"
 ```
 
-**Why TypeScript?**
-- **Type safety**: Catch errors at compile-time, not runtime
-- **IntelliSense**: Better autocomplete in IDEs
-- **Refactoring**: Safe refactoring with confidence
-- **Documentation**: Types serve as inline documentation
-- **Scalability**: Essential for large codebases
+**Почему TypeScript?**
+- **Типобезопасность**: Ловим ошибки на этапе компиляции, а не во время выполнения
+- **IntelliSense**: Лучшее автодополнение в IDE
+- **Рефакторинг**: Безопасный рефакторинг с уверенностью
+- **Документация**: Типы служат встроенной документацией
+- **Масштабируемость**: Необходим для больших кодовых баз
 
-**TypeScript Strict Mode:**
+**Строгий режим TypeScript:**
 ```json
 // tsconfig.json
 {
@@ -390,14 +390,14 @@ onMounted(async () => {
 }
 ```
 
-**Type Safety Example:**
+**Пример типобезопасности:**
 ```typescript
-// NO 'any' types allowed!
+// НИКАКИХ типов 'any' не разрешено!
 
-// ❌ BAD
-const task: any = await fetchTask() // Loses all type safety
+// ❌ ПЛОХО
+const task: any = await fetchTask() // Теряет всю типобезопасность
 
-// ✅ GOOD
+// ✅ ХОРОШО
 interface Task {
   id: number
   title: string
@@ -406,38 +406,38 @@ interface Task {
 }
 
 const task: Task = await taskService.getTask(id)
-task.title // TypeScript knows this is a string
+task.title // TypeScript знает, что это строка
 ```
 
 ---
 
-### State Management
+### Управление состоянием
 
 #### **Pinia 2.1.7**
 ```json
 "pinia": "^2.1.7"
 ```
 
-**Why Pinia?**
-- **TypeScript-first**: Better type inference than Vuex
-- **Composition API**: Uses same API as Vue 3
-- **Devtools**: Excellent Vue Devtools integration
-- **Lightweight**: Only ~1KB minified + gzipped
-- **Modular**: Easy to split stores by domain
+**Почему Pinia?**
+- **TypeScript-first**: Лучший вывод типов чем у Vuex
+- **Composition API**: Использует тот же API что и Vue 3
+- **Devtools**: Отличная интеграция с Vue Devtools
+- **Легковесность**: Всего ~1KB минифицированный + gzip
+- **Модульность**: Легко разделить сторы по доменам
 
-**Pinia Store Example:**
+**Пример стора Pinia:**
 ```typescript
 export const useTaskStore = defineStore('task', () => {
-  // State
+  // Состояние
   const tasks = ref<Task[]>([])
   const loading = ref(false)
 
-  // Getters
+  // Геттеры
   const completedTasks = computed(() =>
     tasks.value.filter(t => t.status === TaskStatus.COMPLETED)
   )
 
-  // Actions
+  // Действия
   async function fetchTasks(): Promise<void> {
     loading.value = true
     try {
@@ -453,7 +453,7 @@ export const useTaskStore = defineStore('task', () => {
 
 ---
 
-### UI Component Library
+### Библиотека UI компонентов
 
 #### **PrimeVue 3.50.0**
 ```json
@@ -461,41 +461,41 @@ export const useTaskStore = defineStore('task', () => {
 "primeicons": "^7.0.0"
 ```
 
-**Why PrimeVue?**
-- **Rich components**: 80+ ready-to-use components
-- **Customizable**: Theming system, CSS variables
-- **Accessible**: WCAG 2.0 compliant
-- **Responsive**: Mobile-first design
-- **Active development**: Regular updates, bug fixes
-- **Documentation**: Excellent docs with examples
+**Почему PrimeVue?**
+- **Богатые компоненты**: 80+ готовых к использованию компонентов
+- **Настраиваемость**: Система тем, CSS переменные
+- **Доступность**: Соответствует WCAG 2.0
+- **Адаптивность**: Mobile-first дизайн
+- **Активная разработка**: Регулярные обновления, исправления багов
+- **Документация**: Отличная документация с примерами
 
-**PrimeVue Components Used:**
-- **DataTable**: Task lists with sorting, filtering
-- **Calendar**: Date picker for task dates
-- **Dialog**: Modals for create/edit task
-- **Toast**: Notifications
-- **Dropdown**: Select inputs
-- **Chip**: Tags display
-- **ProgressBar**: Loading states
-- **Chart**: Analytics visualizations
+**Используемые компоненты PrimeVue:**
+- **DataTable**: Списки задач с сортировкой, фильтрацией
+- **Calendar**: Выбор даты для задач
+- **Dialog**: Модальные окна для создания/редактирования задач
+- **Toast**: Уведомления
+- **Dropdown**: Выпадающие списки
+- **Chip**: Отображение тегов
+- **ProgressBar**: Состояния загрузки
+- **Chart**: Визуализации аналитики
 
 ---
 
-### Routing
+### Маршрутизация
 
 #### **Vue Router 4.3.0**
 ```json
 "vue-router": "^4.3.0"
 ```
 
-**Why Vue Router?**
-- **Official**: Maintained by Vue.js core team
-- **Type-safe**: Full TypeScript support
-- **Code splitting**: Lazy-load routes
-- **Navigation guards**: Authentication, authorization
-- **History mode**: Clean URLs without hash
+**Почему Vue Router?**
+- **Официальный**: Поддерживается командой Vue.js
+- **Типобезопасность**: Полная поддержка TypeScript
+- **Разделение кода**: Ленивая загрузка маршрутов
+- **Навигационные стражи**: Аутентификация, авторизация
+- **Режим истории**: Чистые URL без хэша
 
-**Router Configuration:**
+**Конфигурация роутера:**
 ```typescript
 const router = createRouter({
   history: createWebHistory(),
@@ -503,7 +503,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: () => import('@/views/HomeView.vue'), // Lazy-loaded
+      component: () => import('@/views/HomeView.vue'), // Ленивая загрузка
       meta: { requiresAuth: true }
     },
     {
@@ -515,7 +515,7 @@ const router = createRouter({
   ]
 })
 
-// Navigation guard
+// Навигационный страж
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
@@ -528,37 +528,37 @@ router.beforeEach((to, from, next) => {
 
 ---
 
-### HTTP Client
+### HTTP клиент
 
 #### **Axios 1.6.7**
 ```json
 "axios": "^1.6.7"
 ```
 
-**Why Axios?**
-- **Interceptors**: Request/response transformation
-- **Automatic transforms**: JSON parsing
-- **Browser support**: Works in all modern browsers
-- **Error handling**: Consistent error structure
-- **TypeScript support**: Type definitions included
+**Почему Axios?**
+- **Перехватчики**: Трансформация запросов/ответов
+- **Автоматические трансформации**: Парсинг JSON
+- **Поддержка браузеров**: Работает во всех современных браузерах
+- **Обработка ошибок**: Последовательная структура ошибок
+- **Поддержка TypeScript**: Включены определения типов
 
 ---
 
-### Build Tool
+### Инструмент сборки
 
 #### **Vite 5.1.5**
 ```json
 "vite": "^5.1.5"
 ```
 
-**Why Vite?**
-- **Lightning fast**: ES modules, no bundling in dev
-- **HMR**: Hot Module Replacement (instant updates)
-- **Build speed**: 10-100x faster than Webpack
-- **Plugin ecosystem**: Rich plugin support
-- **Modern**: Built for modern browsers (ES2015+)
+**Почему Vite?**
+- **Молниеносная скорость**: ES модули, без бандлинга в dev режиме
+- **HMR**: Горячая замена модулей (мгновенные обновления)
+- **Скорость сборки**: В 10-100 раз быстрее чем Webpack
+- **Экосистема плагинов**: Богатая поддержка плагинов
+- **Современный**: Создан для современных браузеров (ES2015+)
 
-**Vite Configuration:**
+**Конфигурация Vite:**
 ```typescript
 // vite.config.ts
 export default defineConfig({
@@ -584,21 +584,21 @@ export default defineConfig({
 
 ---
 
-### Internationalization
+### Интернационализация
 
 #### **Vue I18n 9.14.5**
 ```json
 "vue-i18n": "^9.14.5"
 ```
 
-**Why Vue I18n?**
-- **Official**: Vue.js ecosystem project
-- **Type-safe**: TypeScript support for translations
-- **Pluralization**: Built-in plural rules
-- **Number/Date formatting**: Locale-aware formatting
-- **Lazy loading**: Load translations on-demand
+**Почему Vue I18n?**
+- **Официальный**: Проект экосистемы Vue.js
+- **Типобезопасность**: Поддержка TypeScript для переводов
+- **Плюрализация**: Встроенные правила множественного числа
+- **Форматирование чисел/дат**: Форматирование с учетом локали
+- **Ленивая загрузка**: Загрузка переводов по требованию
 
-**I18n Example:**
+**Пример I18n:**
 ```typescript
 // locales/en.ts
 export default {
@@ -614,7 +614,7 @@ export default {
   }
 }
 
-// Component usage
+// Использование в компоненте
 <template>
   <h1>{{ $t('task.create') }}</h1>
   <p>{{ $t('task.status.pending') }}</p>
@@ -623,7 +623,7 @@ export default {
 
 ---
 
-### Charts & Visualizations
+### Графики и визуализации
 
 #### **ECharts 6.0.0**
 ```json
@@ -631,39 +631,39 @@ export default {
 "vue-echarts": "^8.0.1"
 ```
 
-**Why ECharts?**
-- **Powerful**: Supports 20+ chart types
-- **Performance**: Canvas rendering, handles large datasets
-- **Customizable**: Full control over styling
-- **Responsive**: Auto-resize, mobile-friendly
-- **Interactive**: Zoom, pan, tooltips
+**Почему ECharts?**
+- **Мощность**: Поддержка 20+ типов графиков
+- **Производительность**: Рендеринг на Canvas, обрабатывает большие наборы данных
+- **Настраиваемость**: Полный контроль над стилями
+- **Адаптивность**: Автоизменение размера, mobile-friendly
+- **Интерактивность**: Зум, панорамирование, подсказки
 
 ---
 
-### Utilities
+### Утилиты
 
 #### **VueUse 10.9.0**
 ```json
 "@vueuse/core": "^10.9.0"
 ```
 
-**Why VueUse?**
-- **Composables**: 200+ utility composables
-- **Tree-shakable**: Only import what you use
-- **Type-safe**: Full TypeScript support
-- **Well-tested**: High code coverage
+**Почему VueUse?**
+- **Composables**: 200+ утилитных композаблов
+- **Tree-shakable**: Импортируете только то, что используете
+- **Типобезопасность**: Полная поддержка TypeScript
+- **Хорошо протестировано**: Высокое покрытие кода
 
-**VueUse Examples:**
+**Примеры VueUse:**
 ```typescript
 import { useLocalStorage, useDebounceFn, useIntersectionObserver } from '@vueuse/core'
 
-// Persistent state
+// Персистентное состояние
 const theme = useLocalStorage('theme', 'light')
 
-// Debounced search
+// Debounced поиск
 const debouncedSearch = useDebounceFn(search, 300)
 
-// Infinite scroll
+// Бесконечная прокрутка
 useIntersectionObserver(target, ([{ isIntersecting }]) => {
   if (isIntersecting) loadMore()
 })
@@ -671,9 +671,9 @@ useIntersectionObserver(target, ([{ isIntersecting }]) => {
 
 ---
 
-## Infrastructure
+## Инфраструктура
 
-### Containerization
+### Контейнеризация
 
 #### **Docker & Docker Compose**
 ```yaml
@@ -694,16 +694,16 @@ services:
       - ./backend:/var/www/html
 ```
 
-**Why Docker?**
-- **Consistency**: Same environment across dev, staging, prod
-- **Isolation**: Each service in its own container
-- **Portability**: Runs anywhere Docker runs
-- **Easy setup**: `docker-compose up` and you're running
-- **Version control**: Infrastructure as code
+**Почему Docker?**
+- **Согласованность**: Одинаковое окружение для dev, staging, prod
+- **Изоляция**: Каждый сервис в своем контейнере
+- **Переносимость**: Работает везде, где работает Docker
+- **Простая настройка**: `docker-compose up` и все работает
+- **Контроль версий**: Инфраструктура как код
 
 ---
 
-### Web Server
+### Веб-сервер
 
 #### **Nginx**
 ```nginx
@@ -726,34 +726,34 @@ server {
 }
 ```
 
-**Why Nginx?**
-- **Performance**: Handles 10,000+ concurrent connections
-- **Lightweight**: Low memory footprint
-- **Reverse proxy**: Forwards requests to PHP-FPM
-- **Static files**: Serves assets efficiently
+**Почему Nginx?**
+- **Производительность**: Обрабатывает 10,000+ одновременных соединений
+- **Легковесность**: Низкое потребление памяти
+- **Reverse proxy**: Перенаправляет запросы к PHP-FPM
+- **Статические файлы**: Эффективно обслуживает ассеты
 
 ---
 
-## Third-Party Services
+## Сторонние сервисы
 
 ### Google OAuth2
-- **Purpose**: User authentication
-- **Service**: Google Identity Platform
-- **Implementation**: One Tap sign-in
+- **Назначение**: Аутентификация пользователей
+- **Сервис**: Google Identity Platform
+- **Реализация**: One Tap sign-in
 
 ### Google Fonts
-- **Purpose**: Typography
-- **Fonts**: Inter, Roboto
+- **Назначение**: Типографика
+- **Шрифты**: Inter, Roboto
 
 ---
 
-## Development Tools
+## Инструменты разработки
 
-### Backend Development
+### Backend разработка
 
 #### **Composer**
-- **Version**: 2.x
-- **Purpose**: PHP dependency management
+- **Версия**: 2.x
+- **Назначение**: Управление зависимостями PHP
 
 #### **Symfony CLI**
 ```bash
@@ -766,52 +766,52 @@ symfony console doctrine:migrations:migrate
 ```json
 "phpstan/phpstan": "^2.1"
 ```
-- **Purpose**: Static analysis, type checking
-- **Level**: 8 (maximum strictness)
+- **Назначение**: Статический анализ, проверка типов
+- **Уровень**: 8 (максимальная строгость)
 
 #### **PHP CS Fixer**
 ```json
 "friendsofphp/php-cs-fixer": "^3.66"
 ```
-- **Purpose**: Code style enforcement
-- **Standard**: PSR-12
+- **Назначение**: Принудительное соблюдение стиля кода
+- **Стандарт**: PSR-12
 
 #### **PHPUnit**
 ```json
 "phpunit/phpunit": "^9.5"
 ```
-- **Purpose**: Unit & integration testing
-- **Coverage**: Target 80%+
+- **Назначение**: Unit и интеграционное тестирование
+- **Покрытие**: Цель 80%+
 
 ---
 
-### Frontend Development
+### Frontend разработка
 
 #### **npm/pnpm**
-- **Version**: npm 9.x / pnpm 8.x
-- **Purpose**: JavaScript dependency management
+- **Версия**: npm 9.x / pnpm 8.x
+- **Назначение**: Управление зависимостями JavaScript
 
 #### **ESLint**
-- **Purpose**: JavaScript/TypeScript linting
-- **Config**: Vue.js + TypeScript
+- **Назначение**: Линтинг JavaScript/TypeScript
+- **Конфигурация**: Vue.js + TypeScript
 
 #### **Vitest**
 ```json
 "vitest": "^4.0.3"
 ```
-- **Purpose**: Unit testing
-- **Why Vitest?**: Fast, Vite-native, Jest-compatible API
+- **Назначение**: Unit тестирование
+- **Почему Vitest?**: Быстрый, нативный для Vite, Jest-совместимый API
 
 ---
 
-### Database Tools
+### Инструменты для базы данных
 
 #### **DBeaver / pgAdmin**
-- **Purpose**: Database management
-- **Connection**: PostgreSQL 15
+- **Назначение**: Управление базой данных
+- **Подключение**: PostgreSQL 15
 
 #### **RedisInsight / redis-cli**
-- **Purpose**: Redis monitoring, debugging
+- **Назначение**: Мониторинг Redis, отладка
 ```bash
 docker exec -it redis redis-cli
 > KEYS app:prod:*
@@ -820,45 +820,45 @@ docker exec -it redis redis-cli
 
 ---
 
-### API Testing
+### Тестирование API
 
 #### **Postman / Insomnia**
-- **Purpose**: API endpoint testing
-- **Collections**: All endpoints documented
+- **Назначение**: Тестирование эндпоинтов API
+- **Коллекции**: Все эндпоинты задокументированы
 
 #### **Swagger UI**
 - **URL**: `http://localhost:8000/api/doc`
-- **Purpose**: Interactive API documentation
+- **Назначение**: Интерактивная документация API
 
 ---
 
-## Technology Justifications
+## Обоснование выбора технологий
 
-### Why This Stack?
+### Почему этот стек?
 
 #### **Backend: Symfony + PHP**
-✅ **Enterprise-grade**: Used by enterprise companies (Spotify, Trivago)
-✅ **Type safety**: PHP 8.3 + strict types = fewer bugs
-✅ **Performance**: PHP 8.3 JIT compiler for fast execution
-✅ **Ecosystem**: Mature bundles for everything (JWT, OAuth, CORS)
-✅ **Documentation**: Best-in-class docs + huge community
+✅ **Корпоративный уровень**: Используется крупными компаниями (Spotify, Trivago)
+✅ **Типобезопасность**: PHP 8.3 + строгие типы = меньше багов
+✅ **Производительность**: JIT компилятор PHP 8.3 для быстрого выполнения
+✅ **Экосистема**: Зрелые бандлы для всего (JWT, OAuth, CORS)
+✅ **Документация**: Лучшая документация в классе + огромное сообщество
 
 #### **Frontend: Vue.js + TypeScript**
-✅ **Developer experience**: Composition API + TypeScript = joy
-✅ **Performance**: Virtual DOM + reactivity = fast UI
-✅ **Type safety**: Catch errors before users see them
-✅ **Component library**: PrimeVue = don't reinvent the wheel
-✅ **Tooling**: Vite = instant HMR, fast builds
+✅ **Опыт разработки**: Composition API + TypeScript = радость
+✅ **Производительность**: Виртуальный DOM + реактивность = быстрый UI
+✅ **Типобезопасность**: Ловим ошибки до того, как их увидят пользователи
+✅ **Библиотека компонентов**: PrimeVue = не изобретаем колесо заново
+✅ **Инструментарий**: Vite = мгновенный HMR, быстрые сборки
 
-#### **Database: PostgreSQL**
-✅ **Reliability**: ACID compliance, battle-tested
-✅ **Features**: JSON, recursion, advanced indexing
-✅ **Performance**: Query optimizer, efficient joins
-✅ **Scalability**: Can handle millions of rows
+#### **База данных: PostgreSQL**
+✅ **Надежность**: ACID совместимость, проверено в боях
+✅ **Возможности**: JSON, рекурсия, продвинутая индексация
+✅ **Производительность**: Оптимизатор запросов, эффективные соединения
+✅ **Масштабируемость**: Может обрабатывать миллионы строк
 
 ---
 
-## Version Requirements
+## Требования к версиям
 
 ### Backend
 
@@ -887,7 +887,7 @@ docker exec -it redis redis-cli
 }
 ```
 
-### Infrastructure
+### Инфраструктура
 
 ```yaml
 postgres: "15-alpine"
@@ -898,28 +898,28 @@ node: "20-alpine"
 
 ---
 
-## Dependency Matrix
+## Матрица зависимостей
 
-| Component | Technology | Version | Purpose | Alternatives Considered |
+| Компонент | Технология | Версия | Назначение | Рассмотренные альтернативы |
 |-----------|-----------|---------|---------|------------------------|
-| **Backend Framework** | Symfony | 7.1 | API, routing, DI | Laravel (too heavy), API Platform (overkill) |
-| **Language** | PHP | 8.3 | Business logic | PHP 8.2 (missing features) |
-| **Database** | PostgreSQL | 15 | Data persistence | MySQL (less features), MongoDB (not relational) |
-| **ORM** | Doctrine | 3.2 | Data access | Eloquent (Laravel-only), Raw SQL (too manual) |
-| **Auth** | JWT + OAuth2 | - | Authentication | Session-based (not scalable), Auth0 (expensive) |
-| **Frontend Framework** | Vue.js | 3.4 | UI | React (more complex), Angular (too heavy) |
-| **Language** | TypeScript | 5.4 | Type safety | JavaScript (no types), Flow (deprecated) |
-| **State Management** | Pinia | 2.1 | Global state | Vuex (outdated), Zustand (React-only) |
-| **UI Library** | PrimeVue | 3.50 | Components | Vuetify (Material Design only), Quasar (too opinionated) |
-| **Build Tool** | Vite | 5.1 | Dev server, bundling | Webpack (slower), Parcel (less mature) |
-| **HTTP Client** | Axios | 1.6 | API calls | Fetch API (less features), ky (less popular) |
-| **Testing (BE)** | PHPUnit | 9.5 | Unit tests | Pest (too new), Codeception (too heavy) |
-| **Testing (FE)** | Vitest | 4.0 | Unit tests | Jest (slower), Mocha (manual setup) |
-| **Charts** | ECharts | 6.0 | Visualizations | Chart.js (less features), D3.js (too low-level) |
+| **Backend фреймворк** | Symfony | 7.1 | API, маршрутизация, DI | Laravel (слишком тяжелый), API Platform (избыточный) |
+| **Язык** | PHP | 8.3 | Бизнес-логика | PHP 8.2 (отсутствуют возможности) |
+| **База данных** | PostgreSQL | 15 | Хранение данных | MySQL (меньше возможностей), MongoDB (не реляционная) |
+| **ORM** | Doctrine | 3.2 | Доступ к данным | Eloquent (только Laravel), Raw SQL (слишком ручной) |
+| **Аутентификация** | JWT + OAuth2 | - | Аутентификация | На основе сессий (не масштабируется), Auth0 (дорого) |
+| **Frontend фреймворк** | Vue.js | 3.4 | UI | React (более сложный), Angular (слишком тяжелый) |
+| **Язык** | TypeScript | 5.4 | Типобезопасность | JavaScript (нет типов), Flow (устарел) |
+| **Управление состоянием** | Pinia | 2.1 | Глобальное состояние | Vuex (устарел), Zustand (только React) |
+| **UI библиотека** | PrimeVue | 3.50 | Компоненты | Vuetify (только Material Design), Quasar (слишком жесткий) |
+| **Инструмент сборки** | Vite | 5.1 | Dev сервер, бандлинг | Webpack (медленнее), Parcel (менее зрелый) |
+| **HTTP клиент** | Axios | 1.6 | API вызовы | Fetch API (меньше возможностей), ky (менее популярный) |
+| **Тестирование (BE)** | PHPUnit | 9.5 | Unit тесты | Pest (слишком новый), Codeception (слишком тяжелый) |
+| **Тестирование (FE)** | Vitest | 4.0 | Unit тесты | Jest (медленнее), Mocha (ручная настройка) |
+| **Графики** | ECharts | 6.0 | Визуализации | Chart.js (меньше возможностей), D3.js (слишком низкоуровневый) |
 
 ---
 
-## Performance Benchmarks
+## Бенчмарки производительности
 
 ### Backend
 
@@ -933,25 +933,25 @@ GET /api/analytics/completion     →  40-60ms
 ### Frontend
 
 ```
-Initial Load:        1.2s (Time to Interactive)
-Route Navigation:    50ms
-Component Render:    30ms (100 tasks)
-Bundle Size:         ~300KB (gzipped)
+Начальная загрузка:        1.2s (Time to Interactive)
+Навигация по маршруту:    50ms
+Рендеринг компонента:     30ms (100 задач)
+Размер бандла:            ~300KB (gzipped)
 ```
 
 ---
 
-## Related Documents
+## Связанные документы
 
-### Must Read Next
-- **[Architecture](backend/ARCHITECTURE.md)** - How these technologies work together
-- **[Development Workflow](guides/DEVELOPMENT_WORKFLOW.md)** - Setting up the stack
+### Обязательно прочитать далее
+- **[Архитектура](backend/ARCHITECTURE.md)** - Как эти технологии работают вместе
+- **[Рабочий процесс разработки](guides/DEVELOPMENT_WORKFLOW.md)** - Настройка стека
 
-### For Reference
-- **[Database Schema](backend/DATABASE.md)** - PostgreSQL design
-- **[API Integration](frontend/API_INTEGRATION.md)** - Axios configuration
+### Для справки
+- **[Схема базы данных](backend/DATABASE.md)** - Дизайн PostgreSQL
+- **[Интеграция API](frontend/API_INTEGRATION.md)** - Конфигурация Axios
 
 ---
 
-*Last updated: 2025-01-05*
-*Tech stack version: 1.0*
+*Последнее обновление: 2025-01-05*
+*Версия технологического стека: 1.0*
