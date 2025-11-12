@@ -1,7 +1,7 @@
 # 🔐 Конфигурация Окружения (Environment Configuration)
 
 > **Документация по управлению переменными окружения для Docker и Symfony**
-> **Версия**: 1.1
+> **Версия**: 1.2
 > **Дата**: 2025-11-12
 
 ---
@@ -201,13 +201,38 @@ Creating backend-php83 ... done
 
 **✅ РАЗРЕШЕНО (Development):**
 - Использовать fallback в `docker-compose.dev.yml`
+- Использовать fallback в `apps/backend/.env` и `.env.dev`
 - Не создавать `.env.docker` (fallback сработают)
 - Использовать слабые пароли локально
 
 **❌ ЗАПРЕЩЕНО (Production):**
 - Использовать fallback в `docker-compose.app.yml` или `docker-compose-prod.yml`
+- Использовать fallback в `apps/backend/.env.prod`
 - Деплоить без проверки наличия `.env.docker.prod`
 - Использовать дефолтные credentials (password, admin, user)
+
+### Fail-Fast на Уровне Symfony (ВАЖНО!)
+
+**Проблема**: Даже если Docker правильно настроен с Fail-Fast, Symfony может **молча** использовать fallback из своих `.env` файлов!
+
+**Пример ОПАСНОЙ конфигурации в apps/backend/.env.prod:**
+```bash
+# ❌ ОПАСНО!
+DATABASE_URL="postgresql://${POSTGRES_USER:-prod_user}:${POSTGRES_PASSWORD:-CHANGE_ME}@psql16:5432/${POSTGRES_DB:-backend_prod}?..."
+```
+
+Если Docker не передаст credentials, Symfony использует `CHANGE_ME` как пароль!
+
+**Наше решение (apps/backend/.env.prod):**
+```bash
+# ✅ ПРАВИЛЬНО - Fail-Fast!
+DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@psql16:5432/${POSTGRES_DB}?..."
+APP_SECRET=${APP_SECRET}
+JWT_PASSPHRASE=${JWT_PASSPHRASE}
+MESSENGER_TRANSPORT_DSN=amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@rabbitmq:5672/%2f/messages
+```
+
+**Результат**: Если переменные не заданы, Symfony упадет с ошибкой при попытке подключиться к БД или инициализировать сервисы!
 
 ### Проверка Конфигурации
 
@@ -448,20 +473,30 @@ GOOGLE_CLIENT_SECRET=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
 
 ### `apps/backend/.env.prod` (Production Template)
 
-**Критично**: Production переменные **ОБЯЗАТЕЛЬНО** переопределяются!
+**⚠️ КРИТИЧНО**: Production БЕЗ fallback - Fail-Fast принцип!
 
 ```bash
 APP_ENV=prod
-APP_SECRET=CHANGE_ME_IN_PRODUCTION  # ⚠️ Генерируется в production
+# БЕЗ fallback - MUST be set via environment variable!
+APP_SECRET=${APP_SECRET}
 APP_DEBUG=false
 
-DATABASE_URL="postgresql://prod_user:CHANGE_ME@psql16:5432/backend_prod?serverVersion=16&charset=utf8"
+# Production database - БЕЗ fallback (Fail-Fast принцип!)
+# MUST be set via .env.docker.prod or CI/CD environment variables
+DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@psql16:5432/${POSTGRES_DB}?serverVersion=16&charset=utf8"
 
-JWT_PASSPHRASE=CHANGE_ME_IN_PRODUCTION  # ⚠️ Генерируется в production
+# БЕЗ fallback - MUST be set via environment variable!
+JWT_PASSPHRASE=${JWT_PASSPHRASE}
 
-GOOGLE_CLIENT_ID=YOUR_PRODUCTION_CLIENT_ID
-GOOGLE_CLIENT_SECRET=YOUR_PRODUCTION_CLIENT_SECRET
+# Production RabbitMQ - БЕЗ fallback (Fail-Fast принцип!)
+MESSENGER_TRANSPORT_DSN=amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@rabbitmq:5672/%2f/messages
+
+# Google OAuth2 - БЕЗ fallback (Fail-Fast принцип!)
+GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
 ```
+
+**Если переменные НЕ заданы** → Symfony упадет с ошибкой при старте ✅
 
 ### `apps/backend/.env.test` (Testing)
 
@@ -778,8 +813,16 @@ docker exec backend-php83 php -r "echo getenv('DATABASE_URL');"
 ---
 
 **Последнее обновление**: 2025-11-12
-**Версия документа**: 1.1
+**Версия документа**: 1.2
 **Автор**: Claude Code AI
+
+**Изменения v1.2**:
+- ✅ Убраны ВСЕ fallback из `apps/backend/.env.prod` (Fail-Fast на уровне Symfony!)
+- ✅ Обновлен `.env.prod`: APP_SECRET, DATABASE_URL, JWT_PASSPHRASE, MESSENGER_TRANSPORT_DSN, GOOGLE_* - все БЕЗ fallback
+- ✅ Обновлен `.env.test`: MESSENGER_TRANSPORT_DSN теперь использует переменные окружения с fallback
+- ✅ Добавлена секция "Fail-Fast на Уровне Symfony (ВАЖНО!)" в документацию
+- ✅ Обновлены правила для разработчиков (добавлен запрет fallback в .env.prod)
+- ✅ Обновлены примеры кода для production конфигурации
 
 **Изменения v1.1**:
 - ✅ Добавлен раздел о Fail-Fast принципе безопасности
