@@ -47,6 +47,14 @@ const props = defineProps<{
   }
 }>()
 
+// Безопасные fallback значения для предотвращения ошибок при undefined данных
+const safeData = computed(() => ({
+  dates: props.data?.dates ?? [],
+  created: props.data?.created ?? [],
+  completed: props.data?.completed ?? [],
+  overdue: props.data?.overdue ?? []
+}))
+
 const chartOption = computed(() => ({
   tooltip: {
     trigger: 'axis',
@@ -72,11 +80,11 @@ const chartOption = computed(() => ({
   xAxis: {
     type: 'category',
     boundaryGap: false,
-    data: props.data.dates.map(date => {
+    data: safeData.value.dates.map(date => {
       const d = new Date(date)
-      return d.toLocaleDateString(t('app.locale') === 'ru' ? 'ru-RU' : 'en-US', { 
-        month: 'short', 
-        day: 'numeric' 
+      return d.toLocaleDateString(t('app.locale') === 'ru' ? 'ru-RU' : 'en-US', {
+        month: 'short',
+        day: 'numeric'
       })
     }),
     axisLine: {
@@ -112,7 +120,7 @@ const chartOption = computed(() => ({
       name: t('analytics.created'),
       type: 'line',
       smooth: true,
-      data: props.data.created,
+      data: safeData.value.created,
       itemStyle: {
         color: '#3b82f6'
       },
@@ -137,7 +145,7 @@ const chartOption = computed(() => ({
       name: t('analytics.completed'),
       type: 'line',
       smooth: true,
-      data: props.data.completed,
+      data: safeData.value.completed,
       itemStyle: {
         color: '#10b981'
       },

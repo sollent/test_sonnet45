@@ -46,7 +46,16 @@ const props = defineProps<{
   }
 }>()
 
-const total = computed(() => props.data.total || 0)
+// Безопасные fallback значения для предотвращения ошибок при undefined данных
+const safeData = computed(() => ({
+  pending: props.data?.pending ?? 0,
+  in_progress: props.data?.in_progress ?? 0,
+  completed: props.data?.completed ?? 0,
+  cancelled: props.data?.cancelled ?? 0,
+  total: props.data?.total ?? 0
+}))
+
+const total = computed(() => safeData.value.total)
 
 const chartOption = computed(() => ({
   tooltip: {
@@ -89,23 +98,23 @@ const chartOption = computed(() => ({
         show: false
       },
       data: [
-        { 
-          value: props.data.completed, 
+        {
+          value: safeData.value.completed,
           name: t('tasks.status_completed'),
           itemStyle: { color: '#10b981' }
         },
-        { 
-          value: props.data.in_progress, 
+        {
+          value: safeData.value.in_progress,
           name: t('tasks.status_in_progress'),
           itemStyle: { color: '#3b82f6' }
         },
-        { 
-          value: props.data.pending, 
+        {
+          value: safeData.value.pending,
           name: t('tasks.status_pending'),
           itemStyle: { color: '#94a3b8' }
         },
-        { 
-          value: props.data.cancelled, 
+        {
+          value: safeData.value.cancelled,
           name: t('tasks.status_cancelled'),
           itemStyle: { color: '#ef4444' }
         }
