@@ -60,23 +60,26 @@ const props = defineProps<{
   year: number
 }>()
 
+// Безопасные fallback значения для предотвращения ошибок при undefined данных
+const safeData = computed(() => props.data ?? {})
+
 // Generate all days of the year
 const days = computed(() => {
   const result = []
   const startDate = new Date(props.year, 0, 1)
   const endDate = new Date(props.year, 11, 31)
-  
+
   // Start from first Monday before Jan 1
   const firstDay = new Date(startDate)
   const dayOfWeek = firstDay.getDay()
   const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
   firstDay.setDate(firstDay.getDate() + diff)
-  
+
   const current = new Date(firstDay)
-  
+
   while (current <= endDate || current.getDay() !== 1) {
     const dateStr = current.toISOString().split('T')[0]
-    const count = props.data[dateStr] || 0
+    const count = safeData.value[dateStr] || 0
     
     result.push({
       date: dateStr,
@@ -106,8 +109,8 @@ const months = computed(() => {
 
 const bestMonth = computed(() => {
   const monthCounts: Record<string, number> = {}
-  
-  Object.entries(props.data).forEach(([date, count]) => {
+
+  Object.entries(safeData.value).forEach(([date, count]) => {
     const d = new Date(date)
     if (d.getFullYear() === props.year) {
       const month = d.toLocaleDateString(t('app.locale') === 'ru' ? 'ru-RU' : 'en-US', { month: 'long', year: 'numeric' })
