@@ -1,84 +1,84 @@
-# Coding Standards & Design Principles
+# Стандарты Кодирования и Принципы Проектирования
 
-> **THE MOST IMPORTANT DOCUMENT!** This defines how ALL code in this project must be written. Every class, every method, every line must follow these principles.
-
----
-
-## Table of Contents
-
-- [SOLID Principles](#solid-principles)
-- [GRASP Principles](#grasp-principles)
-- [GoF Design Patterns](#gof-design-patterns)
-- [Backend PHP 8.3 Standards](#backend-php-83-standards)
-- [Frontend TypeScript Standards](#frontend-typescript-standards)
-- [Code Quality Rules](#code-quality-rules)
-- [Common Anti-Patterns to Avoid](#common-anti-patterns-to-avoid)
+> **САМЫЙ ВАЖНЫЙ ДОКУМЕНТ!** Это определяет, как ВЕСЬ код в этом проекте должен быть написан. Каждый класс, каждый метод, каждая строка должны следовать этим принципам.
 
 ---
 
-## SOLID Principles
+## Содержание
 
-SOLID is the foundation of our architecture. Every class in this project follows these 5 principles.
+- [SOLID Принципы](#solid-принципы)
+- [GRASP Принципы](#grasp-принципы)
+- [GoF Паттерны Проектирования](#gof-паттерны-проектирования)
+- [Стандарты Backend PHP 8.3](#стандарты-backend-php-83)
+- [Стандарты Frontend TypeScript](#стандарты-frontend-typescript)
+- [Правила Качества Кода](#правила-качества-кода)
+- [Распространенные Антипаттерны, Которых Следует Избегать](#распространенные-антипаттерны-которых-следует-избегать)
 
-### S - Single Responsibility Principle
+---
 
-**Rule:** Each class should have only ONE reason to change. One responsibility, one purpose.
+## SOLID Принципы
 
-#### Example from Project: TaskResponseDto
+SOLID - это фундамент нашей архитектуры. Каждый класс в этом проекте следует этим 5 принципам.
+
+### S - Принцип Единственной Ответственности
+
+**Правило:** Каждый класс должен иметь только ОДНУ причину для изменения. Одна ответственность, одна цель.
+
+#### Пример из Проекта: TaskResponseDto
 
 ```php
-// location: /backend/src/Dto/Response/Task/TaskResponseDto.php
+// расположение: /backend/src/Dto/Response/Task/TaskResponseDto.php
 
-// GOOD - Single responsibility: Data Transfer Object
+// ✅ ХОРОШО - Единственная ответственность: Объект Передачи Данных
 final class TaskResponseDto implements \JsonSerializable
 {
-    // ONLY data properties
+    // ТОЛЬКО свойства данных
     public int $id;
     public string $title;
     public TaskStatus $status;
 
-    // ONLY data transformation methods
+    // ТОЛЬКО методы преобразования данных
     public static function fromEntity(Task $task): self { }
     public static function fromArray(array $data): self { }
     public function jsonSerialize(): array { }
 
-    // NO business logic
-    // NO database queries
-    // NO HTTP handling
+    // НЕТ бизнес-логики
+    // НЕТ запросов к базе данных
+    // НЕТ обработки HTTP
 }
 ```
 
 ```php
-// BAD - Multiple responsibilities
+// ❌ ПЛОХО - Множественные ответственности
 class TaskDto
 {
     public int $id;
 
-    // WRONG! Database logic in DTO
+    // НЕПРАВИЛЬНО! Логика базы данных в DTO
     public function saveToDatabase() { }
 
-    // WRONG! Business logic in DTO
+    // НЕПРАВИЛЬНО! Бизнес-логика в DTO
     public function validatePriority() { }
 
-    // WRONG! HTTP handling in DTO
+    // НЕПРАВИЛЬНО! Обработка HTTP в DTO
     public function sendEmailNotification() { }
 }
 ```
 
-**Why it matters:** When you need to change how tasks are validated, you don't want to modify the DTO. Each class has one clear purpose.
+**Почему это важно:** Когда вам нужно изменить способ валидации задач, вам не нужно модифицировать DTO. Каждый класс имеет одну четкую цель.
 
 ---
 
-### O - Open/Closed Principle
+### O - Принцип Открытости/Закрытости
 
-**Rule:** Classes should be OPEN for extension but CLOSED for modification. Use interfaces and inheritance.
+**Правило:** Классы должны быть ОТКРЫТЫ для расширения, но ЗАКРЫТЫ для модификации. Используйте интерфейсы и наследование.
 
-#### Example from Project: Recurrence Strategies
+#### Пример из Проекта: Стратегии Повторения
 
 ```php
-// location: /backend/src/Service/Recurrence/RecurrenceStrategyInterface.php
+// расположение: /backend/src/Service/Recurrence/RecurrenceStrategyInterface.php
 
-// GOOD - Interface defines contract
+// ✅ ХОРОШО - Интерфейс определяет контракт
 interface RecurrenceStrategyInterface
 {
     public function calculateNextOccurrence(
@@ -87,7 +87,7 @@ interface RecurrenceStrategyInterface
     ): ?\DateTimeInterface;
 }
 
-// GOOD - Each strategy implements interface
+// ✅ ХОРОШО - Каждая стратегия реализует интерфейс
 final class DailyRecurrenceStrategy implements RecurrenceStrategyInterface
 {
     public function calculateNextOccurrence(
@@ -108,7 +108,7 @@ final class WeeklyRecurrenceStrategy implements RecurrenceStrategyInterface
     }
 }
 
-// EXTENSION: Add new strategy WITHOUT modifying existing code
+// РАСШИРЕНИЕ: Добавить новую стратегию БЕЗ модификации существующего кода
 final class MonthlyRecurrenceStrategy implements RecurrenceStrategyInterface
 {
     public function calculateNextOccurrence(
@@ -121,12 +121,12 @@ final class MonthlyRecurrenceStrategy implements RecurrenceStrategyInterface
 ```
 
 ```php
-// BAD - Giant if/else that needs modification for each new type
+// ❌ ПЛОХО - Гигантский if/else, который требует модификации для каждого нового типа
 class RecurrenceCalculator
 {
     public function calculate($type, $date, $interval)
     {
-        // WRONG! Need to modify this method to add new types
+        // НЕПРАВИЛЬНО! Нужно модифицировать этот метод для добавления новых типов
         if ($type === 'daily') {
             return $date->modify("+$interval days");
         } elseif ($type === 'weekly') {
@@ -134,25 +134,25 @@ class RecurrenceCalculator
         } elseif ($type === 'monthly') {
             return $date->modify("+$interval months");
         }
-        // Adding yearly? Must modify this class!
+        // Добавляете yearly? Нужно модифицировать этот класс!
     }
 }
 ```
 
-**Why it matters:** Adding a new recurrence type (yearly, custom) requires ZERO changes to existing code. Just create a new strategy class.
+**Почему это важно:** Добавление нового типа повторения (yearly, custom) требует НУЛЕВЫХ изменений существующего кода. Просто создайте новый класс стратегии.
 
 ---
 
-### L - Liskov Substitution Principle
+### L - Принцип Подстановки Барбары Лисков
 
-**Rule:** Subtypes must be substitutable for their base types. If S is a subtype of T, then objects of type T may be replaced with objects of type S.
+**Правило:** Подтипы должны быть взаимозаменяемы со своими базовыми типами. Если S - подтип T, то объекты типа T могут быть заменены объектами типа S.
 
-#### Example from Project: Notification Services
+#### Пример из Проекта: Сервисы Уведомлений
 
 ```php
-// location: /backend/src/Service/Notification/Interface/NotificationServiceInterface.php
+// расположение: /backend/src/Service/Notification/Interface/NotificationServiceInterface.php
 
-// GOOD - Base interface
+// ✅ ХОРОШО - Базовый интерфейс
 interface NotificationServiceInterface
 {
     public function send(User $user, string $subject, string $message): bool;
@@ -160,12 +160,12 @@ interface NotificationServiceInterface
     public function supports(string $channel): bool;
 }
 
-// GOOD - Implementation respects contract
+// ✅ ХОРОШО - Реализация соблюдает контракт
 final class EmailNotificationService implements NotificationServiceInterface
 {
     public function send(User $user, string $subject, string $message): bool
     {
-        // Works exactly as interface promises
+        // Работает точно так, как обещает интерфейс
         $email = (new Email())
             ->to($user->getEmail())
             ->subject($subject)
@@ -175,27 +175,27 @@ final class EmailNotificationService implements NotificationServiceInterface
         return true;
     }
 
-    // Other methods follow contract exactly
+    // Остальные методы точно следуют контракту
 }
 
-// Can swap implementations without breaking code
+// Можно менять реализации без поломки кода
 final class SmsNotificationService implements NotificationServiceInterface { }
 final class PushNotificationService implements NotificationServiceInterface { }
 ```
 
 ```php
-// BAD - Violates contract
+// ❌ ПЛОХО - Нарушает контракт
 class BrokenNotification implements NotificationServiceInterface
 {
     public function send(User $user, string $subject, string $message): bool
     {
-        // WRONG! Throws exception when interface doesn't promise it
+        // НЕПРАВИЛЬНО! Выбрасывает исключение, когда интерфейс этого не обещает
         throw new \Exception("Not implemented");
     }
 
     public function sendBulk(array $users, string $subject, string $message): int
     {
-        // WRONG! Returns void when interface requires int
+        // НЕПРАВИЛЬНО! Возвращает void, когда интерфейс требует int
         foreach ($users as $user) {
             $this->send($user, $subject, $message);
         }
@@ -203,34 +203,34 @@ class BrokenNotification implements NotificationServiceInterface
 }
 ```
 
-**Why it matters:** You can swap EmailNotificationService with SmsNotificationService without changing ANY code that uses it.
+**Почему это важно:** Вы можете заменить EmailNotificationService на SmsNotificationService без изменения ЛЮБОГО кода, который его использует.
 
 ---
 
-### I - Interface Segregation Principle
+### I - Принцип Разделения Интерфейса
 
-**Rule:** Many specific interfaces are better than one general-purpose interface. Don't force classes to implement methods they don't need.
+**Правило:** Много специфичных интерфейсов лучше, чем один универсальный интерфейс. Не заставляйте классы реализовывать методы, которые им не нужны.
 
-#### Example from Project: Report Generation
+#### Пример из Проекта: Генерация Отчетов
 
 ```php
-// location: /backend/src/Service/Report/Interface/ReportGeneratorInterface.php
+// расположение: /backend/src/Service/Report/Interface/ReportGeneratorInterface.php
 
-// GOOD - Small, focused interface
+// ✅ ХОРОШО - Маленький, сфокусированный интерфейс
 interface ReportGeneratorInterface
 {
     public function generate(User $user, array $data): string;
     public function supports(string $format): bool;
 }
 
-// GOOD - Separate interface for advanced features (not all generators need this)
+// ✅ ХОРОШО - Отдельный интерфейс для продвинутых функций (не все генераторы нуждаются в этом)
 interface AdvancedReportGeneratorInterface extends ReportGeneratorInterface
 {
     public function generateWithTemplate(User $user, array $data, string $template): string;
     public function setWatermark(string $text): void;
 }
 
-// Implementation chooses what to implement
+// Реализация выбирает, что реализовывать
 final class PdfReportGenerator implements AdvancedReportGeneratorInterface
 {
     public function generate(User $user, array $data): string { }
@@ -239,70 +239,70 @@ final class PdfReportGenerator implements AdvancedReportGeneratorInterface
     public function setWatermark(string $text): void { }
 }
 
-// Simple implementation doesn't need advanced features
+// Простая реализация не нуждается в продвинутых функциях
 final class CsvReportGenerator implements ReportGeneratorInterface
 {
     public function generate(User $user, array $data): string { }
     public function supports(string $format): bool { }
-    // No templates or watermarks needed!
+    // Не нужны шаблоны или водяные знаки!
 }
 ```
 
 ```php
-// BAD - Fat interface forces unnecessary implementations
+// ❌ ПЛОХО - Толстый интерфейс принуждает к ненужным реализациям
 interface ReportManagerInterface
 {
     public function generate(): string;
-    public function generateWithTemplate(): string;   // Not all need this
-    public function setWatermark(): void;            // Not all need this
-    public function exportMetrics(): array;          // Not all need this
-    public function sendToAnalytics(): void;         // Not all need this
+    public function generateWithTemplate(): string;   // Не всем это нужно
+    public function setWatermark(): void;            // Не всем это нужно
+    public function exportMetrics(): array;          // Не всем это нужно
+    public function sendToAnalytics(): void;         // Не всем это нужно
 }
 
-// WRONG! Simple implementation forced to implement everything
+// НЕПРАВИЛЬНО! Простая реализация вынуждена реализовывать всё
 class CsvReportGenerator implements ReportManagerInterface
 {
-    public function generateWithTemplate(): string { return ''; } // Unused
-    public function setWatermark(): void { } // Unused
-    public function exportMetrics(): array { return []; } // Unused
-    public function sendToAnalytics(): void { } // Unused
+    public function generateWithTemplate(): string { return ''; } // Не используется
+    public function setWatermark(): void { } // Не используется
+    public function exportMetrics(): array { return []; } // Не используется
+    public function sendToAnalytics(): void { } // Не используется
 }
 ```
 
-**Why it matters:** Small interfaces = flexible implementations. You don't pay for features you don't use.
+**Почему это важно:** Маленькие интерфейсы = гибкие реализации. Вы не платите за функции, которые не используете.
 
 ---
 
-### D - Dependency Inversion Principle
+### D - Принцип Инверсии Зависимостей
 
-**Rule:** Depend on abstractions (interfaces), not concretions (classes). High-level modules should not depend on low-level modules.
+**Правило:** Зависьте от абстракций (интерфейсов), а не от конкретных реализаций (классов). Высокоуровневые модули не должны зависеть от низкоуровневых модулей.
 
-#### Example from Project: TaskService
+#### Пример из Проекта: TaskService
 
 ```php
-// location: /backend/src/Service/TaskService.php
+// расположение: /backend/src/Service/TaskService.php
 
-// GOOD - Depends on interfaces, not concrete classes
+// ✅ ХОРОШО - Зависит от интерфейсов, а не от конкретных классов
 final class TaskService
 {
     public function __construct(
-        private readonly TaskRepository $taskRepository,              // Interface
-        private readonly TranslatorInterface $translator,             // Interface
-        private readonly EventDispatcherInterface $eventDispatcher,   // Interface
-        private readonly LoggerInterface $logger,                      // Interface
+        private readonly TaskRepository $taskRepository,              // Интерфейс
+        private readonly TranslatorInterface $translator,             // Интерфейс
+        private readonly EventDispatcherInterface $eventDispatcher,   // Интерфейс
+        private readonly LoggerInterface $logger,                      // Интерфейс
     ) {
     }
 
     public function createTask(CreateTaskDto $dto, User $user): Task
     {
-        // Works with ANY implementation of these interfaces
+        // Работает с ЛЮБОЙ реализацией этих интерфейсов
         $task = new Task();
-        // ... setup task
+        // ... настройка задачи
 
-        $this->taskRepository->save($task);  // Could be Doctrine, MongoDB, etc.
-        $this->translator->trans('task.created');   // Any translation system
-        $this->eventDispatcher->dispatch();  // Any event system
-        $this->logger->info();               // Any logger
+        $this->taskRepository->save($task);  // Может быть Doctrine, MongoDB, и т.д.
+        $this->translator->trans('task.created');   // Любая система переводов
+        $this->eventDispatcher->dispatch();  // Любая система событий
+        $this->logger->info();               // Любой логгер
 
         return $task;
     }
@@ -310,45 +310,45 @@ final class TaskService
 ```
 
 ```php
-// BAD - Depends on concrete classes
+// ❌ ПЛОХО - Зависит от конкретных классов
 class TaskService
 {
-    private DoctrineTaskRepository $repository;     // WRONG! Concrete class
-    private SymfonyTranslator $translator;          // WRONG! Concrete class
-    private FileLogger $logger;                     // WRONG! Concrete class
+    private DoctrineTaskRepository $repository;     // НЕПРАВИЛЬНО! Конкретный класс
+    private SymfonyTranslator $translator;          // НЕПРАВИЛЬНО! Конкретный класс
+    private FileLogger $logger;                     // НЕПРАВИЛЬНО! Конкретный класс
 
     public function __construct()
     {
-        // WRONG! Creating dependencies inside
+        // НЕПРАВИЛЬНО! Создание зависимостей внутри
         $this->repository = new DoctrineTaskRepository();
         $this->translator = new SymfonyTranslator('en');
         $this->logger = new FileLogger('/var/log/app.log');
     }
 
-    // Now you're LOCKED to these specific implementations
-    // Can't test, can't swap, can't extend
+    // Теперь вы ПРИВЯЗАНЫ к этим конкретным реализациям
+    // Не можете тестировать, не можете заменять, не можете расширять
 }
 ```
 
-**Why it matters:** Easy testing (mock interfaces), easy swapping (Redis → Memcached), easy extending (add new implementations).
+**Почему это важно:** Легкое тестирование (мокайте интерфейсы), легкая замена (Redis → Memcached), легкое расширение (добавляйте новые реализации).
 
 ---
 
-## GRASP Principles
+## GRASP Принципы
 
-GRASP (General Responsibility Assignment Software Patterns) - patterns for assigning responsibilities to classes.
+GRASP (General Responsibility Assignment Software Patterns) - паттерны для назначения ответственностей классам.
 
-### 1. Information Expert
+### 1. Информационный Эксперт
 
-**Rule:** Assign responsibility to the class that has the information needed to fulfill it.
+**Правило:** Назначайте ответственность классу, который имеет информацию, необходимую для её выполнения.
 
 ```php
-// GOOD - Task entity knows how to calculate its own completion progress
+// ✅ ХОРОШО - Сущность Task знает, как рассчитать свой собственный прогресс выполнения
 final class Task
 {
     public function getCompletionProgress(): float
     {
-        // This class has subtasks, so it's the expert
+        // Этот класс имеет подзадачи, поэтому он эксперт
         $totalSubtasks = $this->subtasks->count();
         if ($totalSubtasks === 0) {
             return $this->isCompleted ? 100.0 : 0.0;
@@ -362,7 +362,7 @@ final class Task
     }
 }
 
-// GOOD - User entity knows how to check permissions
+// ✅ ХОРОШО - Сущность User знает, как проверить права доступа
 final class User
 {
     public function canEditTask(Task $task): bool
@@ -373,36 +373,36 @@ final class User
 ```
 
 ```php
-// BAD - External class calculating progress without task's data
+// ❌ ПЛОХО - Внешний класс рассчитывает прогресс без данных задачи
 class TaskProgressCalculator
 {
     public function calculate(int $taskId): float
     {
-        // WRONG! Needs to fetch task data, inefficient
+        // НЕПРАВИЛЬНО! Нужно получать данные задачи, неэффективно
         $task = $this->repository->find($taskId);
         $subtasks = $this->repository->findSubtasks($taskId);
-        // Should be Task's responsibility!
+        // Должно быть ответственностью Task!
     }
 }
 ```
 
 ---
 
-### 2. Creator
+### 2. Создатель
 
-**Rule:** Class B should create instances of Class A if one of these is true:
-- B contains or aggregates A
-- B records instances of A
-- B closely uses A
-- B has initializing data for A
+**Правило:** Класс B должен создавать экземпляры класса A, если верно одно из условий:
+- B содержит или агрегирует A
+- B записывает экземпляры A
+- B активно использует A
+- B имеет инициализирующие данные для A
 
 ```php
-// GOOD - TaskService creates Tasks (has initializing data from DTO)
+// ✅ ХОРОШО - TaskService создает Tasks (имеет инициализирующие данные из DTO)
 final class TaskService
 {
     public function createTask(CreateTaskDto $dto, User $user): Task
     {
-        // Service is the CREATOR - has DTO data, User reference
+        // Сервис - СОЗДАТЕЛЬ - имеет данные DTO, ссылку на User
         $task = new Task();
         $task->setTitle($dto->title);
         $task->setDescription($dto->description);
@@ -413,12 +413,12 @@ final class TaskService
     }
 }
 
-// GOOD - Task creates Subtasks (contains/aggregates them)
+// ✅ ХОРОШО - Task создает Subtasks (содержит/агрегирует их)
 final class Task
 {
     public function addSubtask(string $title): Task
     {
-        // Task is the CREATOR - contains subtasks
+        // Task - СОЗДАТЕЛЬ - содержит подзадачи
         $subtask = new Task();
         $subtask->setTitle($title);
         $subtask->setParentTask($this);
@@ -431,33 +431,33 @@ final class Task
 ```
 
 ```php
-// BAD - Controller creating entities (not its responsibility)
+// ❌ ПЛОХО - Контроллер создает сущности (не его ответственность)
 class TaskController
 {
     public function create(Request $request): JsonResponse
     {
-        // WRONG! Controller doesn't have business logic
+        // НЕПРАВИЛЬНО! Контроллер не имеет бизнес-логики
         $task = new Task();
         $task->setTitle($request->get('title'));
-        // Should delegate to Service!
+        // Должен делегировать Service!
     }
 }
 ```
 
 ---
 
-### 3. Controller (Thin Controllers)
+### 3. Контроллер (Тонкие Контроллеры)
 
-**Rule:** Controllers handle system events (HTTP requests) but delegate work to services.
+**Правило:** Контроллеры обрабатывают системные события (HTTP запросы), но делегируют работу сервисам.
 
 ```php
-// GOOD - Thin controller (only HTTP concern)
-// location: /backend/src/Controller/Api/TaskController.php
+// ✅ ХОРОШО - Тонкий контроллер (только HTTP забота)
+// расположение: /backend/src/Controller/Api/TaskController.php
 
 final class TaskController extends AbstractController
 {
     public function __construct(
-        private readonly TaskService $taskService,        // Delegate to service
+        private readonly TaskService $taskService,        // Делегировать сервису
         private readonly NotificationService $notificationService
     ) {
     }
@@ -466,29 +466,29 @@ final class TaskController extends AbstractController
     public function create(
         #[MapRequestPayload] CreateTaskDto $dto
     ): JsonResponse {
-        // ONLY HTTP concerns:
-        // 1. Get authenticated user
+        // ТОЛЬКО HTTP заботы:
+        // 1. Получить аутентифицированного пользователя
         $user = $this->getUser();
 
-        // 2. Delegate to service (business logic)
+        // 2. Делегировать сервису (бизнес-логика)
         $task = $this->taskService->createTask($dto, $user);
 
-        // 3. Convert to DTO
+        // 3. Конвертировать в DTO
         $responseDto = TaskResponseDto::fromEntity($task);
 
-        // 4. Return HTTP response
+        // 4. Вернуть HTTP ответ
         return $this->json($responseDto, Response::HTTP_CREATED);
     }
 }
 ```
 
 ```php
-// BAD - Fat controller (business logic inside)
+// ❌ ПЛОХО - Толстый контроллер (бизнес-логика внутри)
 class TaskController
 {
     public function create(Request $request): JsonResponse
     {
-        // WRONG! Business logic in controller
+        // НЕПРАВИЛЬНО! Бизнес-логика в контроллере
         $task = new Task();
         $task->setTitle($request->get('title'));
 
@@ -499,10 +499,10 @@ class TaskController
         $this->entityManager->persist($task);
         $this->entityManager->flush();
 
-        // WRONG! Notification logic in controller
+        // НЕПРАВИЛЬНО! Логика уведомлений в контроллере
         $this->emailService->send($this->getUser(), 'Task created', 'Your task was created');
 
-        // WRONG! Event dispatching in controller
+        // НЕПРАВИЛЬНО! Отправка событий в контроллере
         $this->eventDispatcher->dispatch(new TaskCreatedEvent($task));
 
         return $this->json($task);
@@ -512,12 +512,12 @@ class TaskController
 
 ---
 
-### 4. Low Coupling
+### 4. Низкая Связанность
 
-**Rule:** Minimize dependencies between classes. Classes should be as independent as possible.
+**Правило:** Минимизируйте зависимости между классами. Классы должны быть настолько независимыми, насколько это возможно.
 
 ```php
-// GOOD - Low coupling via dependency injection
+// ✅ ХОРОШО - Низкая связанность через внедрение зависимостей
 final class TaskService
 {
     public function __construct(
@@ -525,51 +525,51 @@ final class TaskService
         private readonly LoggerInterface $logger,
         private readonly EventDispatcherInterface $eventDispatcher,
     ) {
-        // Only 3 dependencies, all through interfaces
+        // Только 3 зависимости, все через интерфейсы
     }
 }
 
-// GOOD - NotificationService doesn't know about TaskService
+// ✅ ХОРОШО - NotificationService не знает о TaskService
 final readonly class EmailNotificationService
 {
     public function __construct(
         private MailerInterface $mailer,
         private TranslatorInterface $translator,
     ) {
-        // Only 2 dependencies, focused on email notifications
+        // Только 2 зависимости, сфокусированы на email уведомлениях
     }
 }
 ```
 
 ```php
-// BAD - High coupling (many dependencies)
+// ❌ ПЛОХО - Высокая связанность (много зависимостей)
 class TaskManager
 {
     private TaskRepository $repository;
     private LoggerInterface $logger;
     private EventDispatcher $eventDispatcher;
     private TranslatorInterface $translator;
-    private EmailService $emailService;           // Too many!
+    private EmailService $emailService;           // Слишком много!
     private NotificationService $notificationService;
     private AnalyticsService $analyticsService;
     private SearchIndexer $searchIndexer;
     private AuditLogger $auditLogger;
 
-    // WRONG! Too many responsibilities, too many dependencies
+    // НЕПРАВИЛЬНО! Слишком много ответственностей, слишком много зависимостей
 }
 ```
 
 ---
 
-### 5. High Cohesion
+### 5. Высокая Связность
 
-**Rule:** Keep related functionality together. Each class should have a focused, cohesive set of responsibilities.
+**Правило:** Держите связанную функциональность вместе. Каждый класс должен иметь сфокусированный, связный набор ответственностей.
 
 ```php
-// GOOD - High cohesion (all methods related to email notifications)
+// ✅ ХОРОШО - Высокая связность (все методы связаны с email уведомлениями)
 final readonly class EmailNotificationService
 {
-    // All methods are about EMAIL NOTIFICATIONS
+    // Все методы об EMAIL УВЕДОМЛЕНИЯХ
     public function sendTaskCreatedNotification(User $user, Task $task): bool { }
     public function sendTaskDueNotification(User $user, Task $task): bool { }
     public function sendTaskCompletedNotification(User $user, Task $task): bool { }
@@ -577,10 +577,10 @@ final readonly class EmailNotificationService
     public function queueNotification(User $user, string $subject, string $message): void { }
 }
 
-// GOOD - High cohesion (all methods related to analytics calculations)
+// ✅ ХОРОШО - Высокая связность (все методы связаны с расчетами аналитики)
 final readonly class AnalyticsCalculationService
 {
-    // All methods are about ANALYTICS CALCULATIONS
+    // Все методы о РАСЧЕТАХ АНАЛИТИКИ
     public function calculateCompletionRate(User $user): float { }
     public function calculateProductivityTrend(User $user, int $days): array { }
     public function calculateTaskDistribution(User $user): array { }
@@ -588,26 +588,26 @@ final readonly class AnalyticsCalculationService
 ```
 
 ```php
-// BAD - Low cohesion (unrelated methods in same class)
+// ❌ ПЛОХО - Низкая связность (несвязанные методы в одном классе)
 class TaskHelper
 {
     public function sendEmail() { }          // Email
-    public function logActivity() { }        // Logging
-    public function generatePDF() { }        // PDF generation
-    public function translateMessage() { }   // Translation
-    public function calculateTax() { }       // Business logic
-    // WRONG! Too many unrelated responsibilities
+    public function logActivity() { }        // Логирование
+    public function generatePDF() { }        // Генерация PDF
+    public function translateMessage() { }   // Перевод
+    public function calculateTax() { }       // Бизнес-логика
+    // НЕПРАВИЛЬНО! Слишком много несвязанных ответственностей
 }
 ```
 
 ---
 
-### 6. Polymorphism
+### 6. Полиморфизм
 
-**Rule:** Use polymorphism to handle alternatives based on type.
+**Правило:** Используйте полиморфизм для обработки альтернатив на основе типа.
 
 ```php
-// GOOD - Polymorphic recurrence strategies
+// ✅ ХОРОШО - Полиморфные стратегии повторения
 interface RecurrenceStrategyInterface
 {
     public function calculateNextOccurrence(
@@ -637,7 +637,7 @@ final class RecurrenceService
 
     public function calculateNext(RecurrenceRule $rule): ?\DateTimeInterface
     {
-        // Polymorphism - no if/else needed!
+        // Полиморфизм - не нужно if/else!
         $strategy = $this->strategies[$rule->getRecurrenceType()->value];
         return $strategy->calculateNextOccurrence(
             $rule->getNextOccurrenceDate(),
@@ -648,12 +648,12 @@ final class RecurrenceService
 ```
 
 ```php
-// BAD - No polymorphism, giant if/else
+// ❌ ПЛОХО - Нет полиморфизма, гигантский if/else
 class RecurrenceCalculator
 {
     public function calculate(RecurrenceRule $rule): ?\DateTimeInterface
     {
-        // WRONG! If/else instead of polymorphism
+        // НЕПРАВИЛЬНО! If/else вместо полиморфизма
         if ($rule->getType() === 'daily') {
             return $this->calculateDaily($rule);
         } elseif ($rule->getType() === 'weekly') {
@@ -661,22 +661,22 @@ class RecurrenceCalculator
         } elseif ($rule->getType() === 'monthly') {
             return $this->calculateMonthly($rule);
         }
-        // Adding new type? Modify this method!
+        // Добавляете новый тип? Модифицируйте этот метод!
     }
 }
 ```
 
 ---
 
-### 7. Pure Fabrication
+### 7. Чистая Выдумка
 
-**Rule:** Create artificial classes (not domain objects) when needed for good design.
+**Правило:** Создавайте искусственные классы (не доменные объекты), когда это нужно для хорошего дизайна.
 
 ```php
-// GOOD - Pure fabrication (not a domain entity, but needed for architecture)
+// ✅ ХОРОШО - Чистая выдумка (не сущность домена, но нужна для архитектуры)
 final readonly class ReportFileNameGenerator
 {
-    // Not a real-world concept, but critical for report generation architecture
+    // Не реальная концепция, но критична для архитектуры генерации отчетов
     public function generateTaskReportName(User $user, string $format): string
     {
         return sprintf(
@@ -693,10 +693,10 @@ final readonly class ReportFileNameGenerator
     }
 }
 
-// GOOD - Pure fabrication for DTO transformation
+// ✅ ХОРОШО - Чистая выдумка для преобразования DTO
 final class TaskResponseDto implements \JsonSerializable
 {
-    // Not a domain entity, but critical for API layer
+    // Не сущность домена, но критична для API слоя
     public static function fromEntity(Task $task): self { }
     public static function fromArray(array $data): self { }
     public function jsonSerialize(): array { }
@@ -705,61 +705,61 @@ final class TaskResponseDto implements \JsonSerializable
 
 ---
 
-### 8. Indirection
+### 8. Посредник
 
-**Rule:** Use intermediate objects to reduce coupling and increase reusability.
+**Правило:** Используйте промежуточные объекты для уменьшения связанности и увеличения переиспользуемости.
 
 ```php
-// GOOD - Indirection via LoggerService (intermediate layer)
+// ✅ ХОРОШО - Посредник через LoggerService (промежуточный слой)
 final class TaskService
 {
     public function __construct(
-        private readonly LoggerInterface $logger,  // Indirection!
+        private readonly LoggerInterface $logger,  // Посредник!
     ) {
     }
 
     public function createTask(CreateTaskDto $dto, User $user): Task
     {
-        // Service doesn't talk to specific logger implementation
-        // Goes through LoggerInterface (indirection layer)
+        // Сервис не общается с конкретной реализацией логгера
+        // Идет через LoggerInterface (слой посредника)
         $this->logger->info('Creating task', [
             'user_id' => $user->getId(),
             'title' => $dto->title,
         ]);
 
         $task = new Task();
-        // ... create task
+        // ... создание задачи
 
         return $task;
     }
 }
 
-// GOOD - EventDispatcher provides indirection to event handling
+// ✅ ХОРОШО - EventDispatcher обеспечивает посредничество для обработки событий
 final class TaskEventDispatcher
 {
     public function __construct(
-        private EventDispatcherInterface $dispatcher,  // Indirection!
+        private EventDispatcherInterface $dispatcher,  // Посредник!
     ) {
     }
 
-    // Abstracts event dispatching complexity
+    // Абстрагирует сложность отправки событий
     public function dispatchTaskCreated(Task $task): void
     {
-        // Complex event logic hidden behind simple interface
+        // Сложная логика событий скрыта за простым интерфейсом
         $this->dispatcher->dispatch(new TaskCreatedEvent($task));
     }
 }
 ```
 
 ```php
-// BAD - No indirection (direct coupling)
+// ❌ ПЛОХО - Нет посредника (прямая связанность)
 class TaskService
 {
     private FileLogger $fileLogger;
 
     public function createTask(CreateTaskDto $dto, User $user): Task
     {
-        // WRONG! Service talks directly to specific logger
+        // НЕПРАВИЛЬНО! Сервис общается напрямую с конкретным логгером
         $logMessage = sprintf(
             "[%s] Creating task for user %d: %s\n",
             date('Y-m-d H:i:s'),
@@ -769,7 +769,7 @@ class TaskService
         file_put_contents('/var/log/tasks.log', $logMessage, FILE_APPEND);
 
         $task = new Task();
-        // ... create task
+        // ... создание задачи
 
         return $task;
     }
@@ -778,12 +778,12 @@ class TaskService
 
 ---
 
-### 9. Protected Variations
+### 9. Защита от Вариаций
 
-**Rule:** Protect elements from variations in other elements by wrapping them with stable interface.
+**Правило:** Защищайте элементы от вариаций в других элементах, оборачивая их стабильным интерфейсом.
 
 ```php
-// GOOD - Protected from file storage implementation changes
+// ✅ ХОРОШО - Защищены от изменений реализации файлового хранилища
 interface FileStorageInterface
 {
     public function store(string $path, string $content): bool;
@@ -791,38 +791,38 @@ interface FileStorageInterface
     public function delete(string $path): bool;
 }
 
-// Implementation 1: Local filesystem
+// Реализация 1: Локальная файловая система
 final class LocalFileStorage implements FileStorageInterface { }
 
-// Implementation 2: S3 (can swap without changing code!)
+// Реализация 2: S3 (можно заменять без изменения кода!)
 final class S3Storage implements FileStorageInterface { }
 
-// Implementation 3: In-memory (for testing)
+// Реализация 3: В памяти (для тестирования)
 final class InMemoryStorage implements FileStorageInterface { }
 
-// Services are PROTECTED from variations
+// Сервисы ЗАЩИЩЕНЫ от вариаций
 final class ReportService
 {
     public function __construct(
-        private readonly FileStorageInterface $storage  // Stable interface!
+        private readonly FileStorageInterface $storage  // Стабильный интерфейс!
     ) {
-        // Don't care if it's Local, S3, or In-Memory
-        // Interface protects from variations
+        // Не важно, Local, S3 или In-Memory
+        // Интерфейс защищает от вариаций
     }
 }
 ```
 
 ---
 
-## GoF Design Patterns
+## GoF Паттерны Проектирования
 
-### 1. Repository Pattern
+### 1. Паттерн Репозиторий
 
-**Purpose:** Separate data access logic from business logic.
+**Цель:** Отделить логику доступа к данным от бизнес-логики.
 
 ```php
-// GOOD - Repository abstracts database
-// location: /backend/src/Repository/Database/TaskRepository.php
+// ✅ ХОРОШО - Репозиторий абстрагирует базу данных
+// расположение: /backend/src/Repository/Database/TaskRepository.php
 
 interface TaskRepositoryInterface
 {
@@ -847,7 +847,7 @@ final class TaskRepository implements TaskRepositoryInterface
             ->setParameter('user', $user)
             ->setParameter('archived', false);
 
-        // Complex query logic isolated here
+        // Сложная логика запросов изолирована здесь
         if ($filters->status) {
             $qb->andWhere('t.status = :status')
                ->setParameter('status', $filters->status);
@@ -857,7 +857,7 @@ final class TaskRepository implements TaskRepositoryInterface
     }
 }
 
-// Service uses repository (doesn't know about Doctrine)
+// Сервис использует репозиторий (не знает о Doctrine)
 final class TaskService
 {
     public function __construct(
@@ -867,7 +867,7 @@ final class TaskService
 
     public function getActiveTasks(User $user, TaskFilterDto $filters): array
     {
-        // Clean! No SQL, no Doctrine, just domain logic
+        // Чисто! Нет SQL, нет Doctrine, только доменная логика
         return $this->repository->findActiveByUser($user, $filters);
     }
 }
@@ -875,17 +875,17 @@ final class TaskService
 
 ---
 
-### 2. Factory Pattern (Static Factory Methods)
+### 2. Паттерн Фабрика (Статические Фабричные Методы)
 
-**Purpose:** Encapsulate object creation logic.
+**Цель:** Инкапсулировать логику создания объектов.
 
 ```php
-// GOOD - Factory methods in DTO
-// location: /backend/src/Dto/Response/Task/TaskResponseDto.php
+// ✅ ХОРОШО - Фабричные методы в DTO
+// расположение: /backend/src/Dto/Response/Task/TaskResponseDto.php
 
 final class TaskResponseDto implements \JsonSerializable
 {
-    // Factory method: Database → DTO
+    // Фабричный метод: База данных → DTO
     public static function fromEntity(
         Task $task,
         bool $includeSubtasks = false,
@@ -906,7 +906,7 @@ final class TaskResponseDto implements \JsonSerializable
         return $dto;
     }
 
-    // Factory method: Redis Cache → DTO
+    // Фабричный метод: Кэш Redis → DTO
     public static function fromArray(array $data): self
     {
         if (!isset($data['id'], $data['title'], $data['status'])) {
@@ -922,29 +922,29 @@ final class TaskResponseDto implements \JsonSerializable
     }
 }
 
-// Usage is clean and expressive
+// Использование чистое и выразительное
 $dtoFromDb = TaskResponseDto::fromEntity($task);
 $dtoFromCache = TaskResponseDto::fromArray($cachedData);
 ```
 
 ---
 
-### 3. Strategy Pattern
+### 3. Паттерн Стратегия
 
-**Purpose:** Define a family of algorithms, encapsulate each one, and make them interchangeable.
+**Цель:** Определить семейство алгоритмов, инкапсулировать каждый и сделать их взаимозаменяемыми.
 
 ```php
-// GOOD - Export strategies
-// location: /backend/src/Service/Export/TaskExportService.php
+// ✅ ХОРОШО - Стратегии экспорта
+// расположение: /backend/src/Service/Export/TaskExportService.php
 
-// Strategy interface
+// Интерфейс стратегии
 interface ExportStrategyInterface
 {
     public function export(array $tasks, User $user): string;
     public function getContentType(): string;
 }
 
-// STRATEGY 1: CSV Export
+// СТРАТЕГИЯ 1: Экспорт CSV
 final class CsvExportStrategy implements ExportStrategyInterface
 {
     public function export(array $tasks, User $user): string
@@ -968,12 +968,12 @@ final class CsvExportStrategy implements ExportStrategyInterface
     }
 }
 
-// STRATEGY 2: PDF Export
+// СТРАТЕГИЯ 2: Экспорт PDF
 final class PdfExportStrategy implements ExportStrategyInterface
 {
     public function export(array $tasks, User $user): string
     {
-        // Generate PDF with proper formatting
+        // Генерация PDF с правильным форматированием
         return $this->pdfGenerator->generate($tasks);
     }
 
@@ -983,7 +983,7 @@ final class PdfExportStrategy implements ExportStrategyInterface
     }
 }
 
-// Context uses strategies
+// Контекст использует стратегии
 final class TaskExportService
 {
     public function __construct(
@@ -1004,26 +1004,26 @@ final class TaskExportService
 }
 ```
 
-**When to use each strategy:**
+**Когда использовать каждую стратегию:**
 
-- **CSV:** For simple data export, spreadsheet compatibility
-- **PDF:** For formatted reports, professional documents
+- **CSV:** Для простого экспорта данных, совместимости с электронными таблицами
+- **PDF:** Для форматированных отчетов, профессиональных документов
 
 ---
 
-### 4. Observer Pattern (Event Subscribers)
+### 4. Паттерн Наблюдатель (Подписчики Событий)
 
-**Purpose:** Define one-to-many dependency. When one object changes state, all dependents are notified.
+**Цель:** Определить зависимость один-ко-многим. Когда один объект меняет состояние, все зависимые уведомляются.
 
 ```php
-// GOOD - Event subscriber observes entity changes
-// location: /backend/src/EventSubscriber/CacheInvalidationSubscriber.php
+// ✅ ХОРОШО - Подписчик событий наблюдает за изменениями сущностей
+// расположение: /backend/src/EventSubscriber/CacheInvalidationSubscriber.php
 
 final readonly class CacheInvalidationSubscriber implements EventSubscriber
 {
     public function getSubscribedEvents(): array
     {
-        // Observer pattern: Listen to Doctrine events
+        // Паттерн Наблюдатель: Слушать события Doctrine
         return [
             Events::postPersist,
             Events::postUpdate,
@@ -1035,7 +1035,7 @@ final readonly class CacheInvalidationSubscriber implements EventSubscriber
     {
         $entity = $args->getObject();
 
-        // React to changes
+        // Реагировать на изменения
         if ($entity instanceof Task) {
             $this->invalidateTaskCache($entity, 'update');
         } elseif ($entity instanceof Tag) {
@@ -1047,31 +1047,31 @@ final readonly class CacheInvalidationSubscriber implements EventSubscriber
     {
         $user = $task->getUser();
 
-        // Invalidate task lists
+        // Инвалидировать списки задач
         $this->taskCache->invalidateTaskLists($user);
 
-        // Invalidate statistics
+        // Инвалидировать статистику
         $this->taskCache->invalidateStatistics($user);
 
-        // Invalidate analytics
+        // Инвалидировать аналитику
         $this->analyticsCache->invalidateAll($user);
     }
 }
 ```
 
-**Benefits:**
-- Decoupled: TaskService doesn't know about cache invalidation
-- Automatic: Cache invalidates whenever entity changes
-- Extensible: Add new observers without modifying existing code
+**Преимущества:**
+- Разделены: TaskService не знает об инвалидации кэша
+- Автоматически: Кэш инвалидируется при любом изменении сущности
+- Расширяемо: Добавляйте новых наблюдателей без модификации существующего кода
 
 ---
 
-### 5. Builder Pattern (DTO Construction)
+### 5. Паттерн Строитель (Конструирование DTO)
 
-**Purpose:** Separate construction of complex object from its representation.
+**Цель:** Отделить конструирование сложного объекта от его представления.
 
 ```php
-// GOOD - TaskResponseDto acts as builder for complex task representation
+// ✅ ХОРОШО - TaskResponseDto действует как строитель для сложного представления задачи
 final class TaskResponseDto implements \JsonSerializable
 {
     public static function fromEntity(
@@ -1081,25 +1081,25 @@ final class TaskResponseDto implements \JsonSerializable
     ): self {
         $dto = new self();
 
-        // Step 1: Basic properties
+        // Шаг 1: Базовые свойства
         $dto->id = $task->getId();
         $dto->title = $task->getTitle();
         $dto->status = $task->getStatus();
 
-        // Step 2: Conditional metadata
+        // Шаг 2: Условные метаданные
         if ($includeMeta) {
             $dto->createdAt = $task->getCreatedAt();
             $dto->updatedAt = $task->getUpdatedAt();
         }
 
-        // Step 3: Subtask counts
+        // Шаг 3: Счетчики подзадач
         $subtasks = $task->getSubtasks();
         $dto->subtaskCount = $subtasks->count();
         $dto->completedSubtaskCount = $subtasks->filter(
             fn(Task $subtask) => $subtask->isCompleted()
         )->count();
 
-        // Step 4: Conditional nested subtasks
+        // Шаг 4: Условные вложенные подзадачи
         if ($includeSubtasks) {
             $dto->subtasks = array_map(
                 fn($subtask) => self::fromEntity($subtask, true, $includeMeta),
@@ -1107,7 +1107,7 @@ final class TaskResponseDto implements \JsonSerializable
             );
         }
 
-        // Step 5: Tags transformation
+        // Шаг 5: Преобразование тегов
         $dto->tags = array_map(
             static fn($tag) => [
                 'id' => $tag->getId(),
@@ -1121,63 +1121,63 @@ final class TaskResponseDto implements \JsonSerializable
     }
 }
 
-// Usage shows flexibility
-$lightDto = TaskResponseDto::fromEntity($task, false, false);     // Minimal
-$fullDto = TaskResponseDto::fromEntity($task, true, true);        // Complete
-$listDto = TaskResponseDto::fromEntity($task, false, true);       // For lists
+// Использование показывает гибкость
+$lightDto = TaskResponseDto::fromEntity($task, false, false);     // Минимальный
+$fullDto = TaskResponseDto::fromEntity($task, true, true);        // Полный
+$listDto = TaskResponseDto::fromEntity($task, false, true);       // Для списков
 ```
 
 ---
 
-## Backend PHP 8.3 Standards
+## Стандарты Backend PHP 8.3
 
-### Naming Conventions
+### Соглашения об Именовании
 
 ```php
-// PascalCase for classes
+// PascalCase для классов
 final class TaskService { }
 final class TaskResponseDto { }
 final class EmailNotificationService { }
 
-// camelCase for methods and variables
+// camelCase для методов и переменных
 public function createTask() { }
 public function getActiveTasks() { }
 private string $userName;
 private int $taskCount;
 
-// SCREAMING_SNAKE_CASE for constants
+// SCREAMING_SNAKE_CASE для констант
 private const RETRY_DELAY_MS = 1000;
 private const MAX_RETRY_ATTEMPTS = 3;
 public const MAX_SUBTASKS_DEPTH = 5;
 
-// snake_case for database columns (migration files)
+// snake_case для столбцов базы данных (файлы миграций)
 $table->addColumn('created_at', 'datetime');
 $table->addColumn('due_date', 'datetime_immutable');
 $table->addColumn('is_completed', 'boolean');
 ```
 
-### Type Hints EVERYWHERE
+### Типизация ВЕЗДЕ
 
 ```php
-// GOOD - Full type hints
+// ✅ ХОРОШО - Полная типизация
 final class TaskService
 {
     public function __construct(
-        private readonly TaskRepository $taskRepository,           // Type hint
-        private readonly NotificationService $notificationService, // Type hint
-        private readonly EventDispatcherInterface $eventDispatcher, // Type hint
-        private readonly LoggerInterface $logger,                  // Type hint
+        private readonly TaskRepository $taskRepository,           // Типизация
+        private readonly NotificationService $notificationService, // Типизация
+        private readonly EventDispatcherInterface $eventDispatcher, // Типизация
+        private readonly LoggerInterface $logger,                  // Типизация
     ) {
     }
 
-    public function createTask(CreateTaskDto $dto, User $user): Task  // Return type
+    public function createTask(CreateTaskDto $dto, User $user): Task  // Возвращаемый тип
     {
         $task = new Task();
         // ...
         return $task;
     }
 
-    public function getActiveTasks(User $user, TaskFilterDto $filters): array  // Return type
+    public function getActiveTasks(User $user, TaskFilterDto $filters): array  // Возвращаемый тип
     {
         return $this->taskRepository->findActiveByUser($user, $filters);
     }
@@ -1185,36 +1185,36 @@ final class TaskService
 ```
 
 ```php
-// BAD - No type hints
+// ❌ ПЛОХО - Нет типизации
 class TaskService
 {
-    private $repository;  // WRONG! No type
-    private $cache;       // WRONG! No type
+    private $repository;  // НЕПРАВИЛЬНО! Нет типа
+    private $cache;       // НЕПРАВИЛЬНО! Нет типа
 
-    public function create($dto, $user)  // WRONG! No types
+    public function create($dto, $user)  // НЕПРАВИЛЬНО! Нет типов
     {
         // ...
-        return $task;  // WRONG! No return type
+        return $task;  // НЕПРАВИЛЬНО! Нет возвращаемого типа
     }
 }
 ```
 
-### Readonly Properties (PHP 8.1+)
+### Readonly Свойства (PHP 8.1+)
 
 ```php
-// GOOD - Readonly properties prevent accidental mutation
+// ✅ ХОРОШО - Readonly свойства предотвращают случайную мутацию
 final class TaskResponseDto
 {
     public readonly int $id;
     public readonly string $title;
     public readonly TaskStatus $status;
 
-    // Or entire class readonly (PHP 8.2+)
+    // Или весь класс readonly (PHP 8.2+)
 }
 
 final readonly class EmailNotificationService
 {
-    // All properties are automatically readonly
+    // Все свойства автоматически readonly
     public function __construct(
         private MailerInterface $mailer,
         private TranslatorInterface $translator,
@@ -1223,10 +1223,10 @@ final readonly class EmailNotificationService
 }
 ```
 
-### Constructor Property Promotion (PHP 8.0+)
+### Продвижение Свойств в Конструкторе (PHP 8.0+)
 
 ```php
-// GOOD - Modern PHP 8.0+ syntax
+// ✅ ХОРОШО - Современный синтаксис PHP 8.0+
 final class TaskService
 {
     public function __construct(
@@ -1234,13 +1234,13 @@ final class TaskService
         private readonly NotificationService $notificationService,
         private readonly LoggerInterface $logger,
     ) {
-        // Properties declared and initialized automatically!
+        // Свойства объявлены и инициализированы автоматически!
     }
 }
 ```
 
 ```php
-// BAD - Old PHP 7 syntax (verbose)
+// ❌ ПЛОХО - Старый синтаксис PHP 7 (многословный)
 class TaskService
 {
     private TaskRepository $taskRepository;
@@ -1259,10 +1259,10 @@ class TaskService
 }
 ```
 
-### Enums Instead of Constants (PHP 8.1+)
+### Перечисления Вместо Констант (PHP 8.1+)
 
 ```php
-// GOOD - Enum with methods
+// ✅ ХОРОШО - Перечисление с методами
 enum TaskStatus: string
 {
     case PENDING = 'pending';
@@ -1283,38 +1283,38 @@ enum TaskStatus: string
     public function getLabel(): string
     {
         return match($this) {
-            self::PENDING => 'Pending',
-            self::IN_PROGRESS => 'In Progress',
-            self::COMPLETED => 'Completed',
-            self::CANCELLED => 'Cancelled',
+            self::PENDING => 'В ожидании',
+            self::IN_PROGRESS => 'В работе',
+            self::COMPLETED => 'Выполнена',
+            self::CANCELLED => 'Отменена',
         };
     }
 }
 
-// Usage
+// Использование
 $task->setStatus(TaskStatus::IN_PROGRESS);
 $color = $task->getStatus()->getColor();
 ```
 
 ```php
-// BAD - Constants (old way)
+// ❌ ПЛОХО - Константы (старый способ)
 class TaskStatus
 {
     public const PENDING = 'pending';
     public const IN_PROGRESS = 'in_progress';
     public const COMPLETED = 'completed';
 
-    // WRONG! No type safety, no methods
+    // НЕПРАВИЛЬНО! Нет типобезопасности, нет методов
 }
 
-// WRONG! Can use invalid values
-$task->setStatus('invalid_status');  // No error!
+// НЕПРАВИЛЬНО! Можно использовать невалидные значения
+$task->setStatus('invalid_status');  // Нет ошибки!
 ```
 
-### Match Expressions (PHP 8.0+)
+### Match Выражения (PHP 8.0+)
 
 ```php
-// GOOD - Match expression (type-safe, exhaustive)
+// ✅ ХОРОШО - Match выражение (типобезопасное, исчерпывающее)
 public function getTtl(string $type): int
 {
     return match($type) {
@@ -1327,7 +1327,7 @@ public function getTtl(string $type): int
     };
 }
 
-// GOOD - Match with enums
+// ✅ ХОРОШО - Match с перечислениями
 public function getStatusColor(TaskStatus $status): string
 {
     return match($status) {
@@ -1335,13 +1335,13 @@ public function getStatusColor(TaskStatus $status): string
         TaskStatus::IN_PROGRESS => '#3b82f6',
         TaskStatus::COMPLETED => '#22c55e',
         TaskStatus::CANCELLED => '#ef4444',
-        // No default needed - exhaustive!
+        // Не нужен default - исчерпывающее!
     };
 }
 ```
 
 ```php
-// BAD - Switch statement (verbose, not exhaustive)
+// ❌ ПЛОХО - Switch оператор (многословный, не исчерпывающий)
 public function getStatusColor($status): string
 {
     switch($status) {
@@ -1357,13 +1357,13 @@ public function getStatusColor($status): string
 }
 ```
 
-### Named Arguments (PHP 8.0+)
+### Именованные Аргументы (PHP 8.0+)
 
 ```php
-// GOOD - Named arguments for clarity
+// ✅ ХОРОШО - Именованные аргументы для ясности
 $notification = $this->notificationService->send(
     user: $user,
-    subject: 'Task Created',
+    subject: 'Задача Создана',
     message: $this->translator->trans('task.created', ['title' => $task->getTitle()])
 );
 
@@ -1375,21 +1375,21 @@ $dto = TaskResponseDto::fromEntity(
 ```
 
 ```php
-// BAD - Positional arguments (unclear)
+// ❌ ПЛОХО - Позиционные аргументы (неясно)
 $notification = $this->notificationService->send(
     $user,
-    'Task Created',
+    'Задача Создана',
     $this->translator->trans('task.created', ['title' => $task->getTitle()])
 );
 
-$dto = TaskResponseDto::fromEntity($task, true, false);  // What do true/false mean?
+$dto = TaskResponseDto::fromEntity($task, true, false);  // Что означают true/false?
 ```
 
 ---
 
-## Frontend TypeScript Standards
+## Стандарты Frontend TypeScript
 
-### Strict Mode (No 'any')
+### Строгий Режим (Без 'any')
 
 ```typescript
 // tsconfig.json
@@ -1404,7 +1404,7 @@ $dto = TaskResponseDto::fromEntity($task, true, false);  // What do true/false m
 ```
 
 ```typescript
-// GOOD - Full typing
+// ✅ ХОРОШО - Полная типизация
 interface Task {
   id: number
   title: string
@@ -1425,20 +1425,20 @@ const error = ref<string | null>(null)
 ```
 
 ```typescript
-// BAD - Using 'any'
-function updateTask(task: any, updates: any): any {  // WRONG!
+// ❌ ПЛОХО - Использование 'any'
+function updateTask(task: any, updates: any): any {  // НЕПРАВИЛЬНО!
   return { ...task, ...updates }
 }
 
-const tasks = ref([])  // WRONG! No type
-const data: any = {}   // WRONG! 'any' disables type checking
+const tasks = ref([])  // НЕПРАВИЛЬНО! Нет типа
+const data: any = {}   // НЕПРАВИЛЬНО! 'any' отключает проверку типов
 ```
 
-### Type Everything (Props, Emits, State)
+### Типизируйте Всё (Props, Emits, State)
 
 ```vue
 <script setup lang="ts">
-// GOOD - Typed props
+// ✅ ХОРОШО - Типизированные props
 interface Props {
   task: Task
   readonly?: boolean
@@ -1450,7 +1450,7 @@ const props = withDefaults(defineProps<Props>(), {
   showSubtasks: true
 })
 
-// GOOD - Typed emits
+// ✅ ХОРОШО - Типизированные emits
 interface Emits {
   (e: 'update:task', task: Task): void
   (e: 'delete', taskId: number): void
@@ -1459,7 +1459,7 @@ interface Emits {
 
 const emit = defineEmits<Emits>()
 
-// GOOD - Typed reactive state
+// ✅ ХОРОШО - Типизированное реактивное состояние
 const tasks = ref<Task[]>([])
 const selectedTask = ref<Task | null>(null)
 const filters = ref<TaskFilters>({
@@ -1472,22 +1472,22 @@ const filters = ref<TaskFilters>({
 
 ```vue
 <script setup lang="ts">
-// BAD - No types
+// ❌ ПЛОХО - Нет типов
 const props = defineProps({
-  task: Object,  // WRONG! Should be Task
+  task: Object,  // НЕПРАВИЛЬНО! Должно быть Task
   readonly: Boolean
 })
 
-const emit = defineEmits(['update', 'delete'])  // WRONG! No parameter types
+const emit = defineEmits(['update', 'delete'])  // НЕПРАВИЛЬНО! Нет типов параметров
 
-const tasks = ref([])  // WRONG! No type
+const tasks = ref([])  // НЕПРАВИЛЬНО! Нет типа
 </script>
 ```
 
-### Interfaces for Objects
+### Интерфейсы для Объектов
 
 ```typescript
-// GOOD - Interfaces define structure
+// ✅ ХОРОШО - Интерфейсы определяют структуру
 interface Task {
   id: number
   title: string
@@ -1518,10 +1518,10 @@ interface ApiResponse<T> {
 }
 ```
 
-### Type Guards
+### Защита Типов
 
 ```typescript
-// GOOD - Type guards for runtime type checking
+// ✅ ХОРОШО - Защита типов для проверки типов во время выполнения
 function isTask(value: unknown): value is Task {
   return (
     typeof value === 'object' &&
@@ -1536,7 +1536,7 @@ function isTasks(value: unknown): value is Task[] {
   return Array.isArray(value) && value.every(isTask)
 }
 
-// Usage
+// Использование
 const response = await api.getTasks()
 if (isTasks(response)) {
   tasks.value = response
@@ -1545,11 +1545,11 @@ if (isTasks(response)) {
 }
 ```
 
-### Composition API Only (No Options API)
+### Только Composition API (Без Options API)
 
 ```vue
 <script setup lang="ts">
-// GOOD - Composition API
+// ✅ ХОРОШО - Composition API
 import { ref, computed, onMounted } from 'vue'
 import { useTaskStore } from '@/stores/taskStore'
 
@@ -1570,7 +1570,7 @@ async function handleUpdate(task: Task) {
 
 ```vue
 <script lang="ts">
-// BAD - Options API (don't use)
+// ❌ ПЛОХО - Options API (не используйте)
 export default {
   data() {
     return {
@@ -1592,13 +1592,13 @@ export default {
 </script>
 ```
 
-### Smart/Dumb Components
+### Умные/Глупые Компоненты
 
 ```vue
-<!-- SMART COMPONENT (container) -->
-<!-- location: /frontend/src/views/TaskListView.vue -->
+<!-- УМНЫЙ КОМПОНЕНТ (контейнер) -->
+<!-- расположение: /frontend/src/views/TaskListView.vue -->
 <script setup lang="ts">
-// Smart: Has business logic, store access, API calls
+// Умный: Имеет бизнес-логику, доступ к хранилищу, вызовы API
 import { useTaskStore } from '@/stores/taskStore'
 import TaskList from '@/components/tasks/TaskList.vue'
 
@@ -1631,10 +1631,10 @@ async function handleTaskDelete(taskId: number) {
 ```
 
 ```vue
-<!-- DUMB COMPONENT (presentational) -->
-<!-- location: /frontend/src/components/tasks/TaskList.vue -->
+<!-- ГЛУПЫЙ КОМПОНЕНТ (представление) -->
+<!-- расположение: /frontend/src/components/tasks/TaskList.vue -->
 <script setup lang="ts">
-// Dumb: Only receives props, emits events, no business logic
+// Глупый: Только получает props, эмитит события, нет бизнес-логики
 interface Props {
   tasks: Task[]
   loading: boolean
@@ -1649,8 +1649,8 @@ interface Emits {
 
 const emit = defineEmits<Emits>()
 
-// No store access, no API calls!
-// Just presentation and event emission
+// Нет доступа к хранилищу, нет вызовов API!
+// Только представление и эмиссия событий
 </script>
 
 <template>
@@ -1668,12 +1668,12 @@ const emit = defineEmits<Emits>()
 
 ---
 
-## Code Quality Rules
+## Правила Качества Кода
 
-### DRY (Don't Repeat Yourself)
+### DRY (Не Повторяйтесь)
 
 ```php
-// GOOD - Extract to reusable method
+// ✅ ХОРОШО - Извлечение в переиспользуемый метод
 final class TaskResponseDto
 {
     public static function fromEntity(Task $task, bool $includeSubtasks = false): self
@@ -1682,7 +1682,7 @@ final class TaskResponseDto
         $dto->id = $task->getId();
         $dto->title = $task->getTitle();
 
-        $dto->tags = self::mapTags($task->getTags());  // Reusable
+        $dto->tags = self::mapTags($task->getTags());  // Переиспользуемый
 
         if ($includeSubtasks) {
             $dto->subtasks = array_map(
@@ -1694,7 +1694,7 @@ final class TaskResponseDto
         return $dto;
     }
 
-    // Reusable tag mapping
+    // Переиспользуемое преобразование тегов
     private static function mapTags(Collection $tags): array
     {
         return array_map(
@@ -1710,14 +1710,14 @@ final class TaskResponseDto
 ```
 
 ```php
-// BAD - Repeated code
+// ❌ ПЛОХО - Повторяющийся код
 final class TaskResponseDto
 {
     public static function fromEntity(Task $task): self
     {
         $dto = new self();
 
-        // WRONG! Tag mapping repeated
+        // НЕПРАВИЛЬНО! Преобразование тегов повторяется
         $dto->tags = array_map(
             static fn($tag) => [
                 'id' => $tag->getId(),
@@ -1727,7 +1727,7 @@ final class TaskResponseDto
             $task->getTags()->toArray()
         );
 
-        // WRONG! Same code repeated for subtasks
+        // НЕПРАВИЛЬНО! Тот же код повторяется для подзадач
         $dto->subtasks = array_map(
             fn($subtask) => [
                 'id' => $subtask->getId(),
@@ -1746,10 +1746,10 @@ final class TaskResponseDto
 }
 ```
 
-### KISS (Keep It Simple, Stupid)
+### KISS (Держите Это Простым)
 
 ```php
-// GOOD - Simple and clear
+// ✅ ХОРОШО - Просто и ясно
 public function isOverdue(): bool
 {
     return $this->dueDate !== null
@@ -1774,10 +1774,10 @@ public function getCompletionProgress(): float
 ```
 
 ```php
-// BAD - Overly complex
+// ❌ ПЛОХО - Излишне сложно
 public function isOverdue(): bool
 {
-    // WRONG! Too complex for simple check
+    // НЕПРАВИЛЬНО! Слишком сложно для простой проверки
     $now = new \DateTimeImmutable();
     $dueDate = $this->getDueDate();
 
@@ -1796,10 +1796,10 @@ public function isOverdue(): bool
 }
 ```
 
-### YAGNI (You Aren't Gonna Need It)
+### YAGNI (Вам Это Не Понадобится)
 
 ```php
-// GOOD - Only implement what's needed NOW
+// ✅ ХОРОШО - Реализуйте только то, что нужно СЕЙЧАС
 final class TaskService
 {
     public function createTask(CreateTaskDto $dto, User $user): Task
@@ -1817,10 +1817,10 @@ final class TaskService
 ```
 
 ```php
-// BAD - Over-engineering for future needs
+// ❌ ПЛОХО - Избыточное проектирование для будущих нужд
 final class TaskService
 {
-    // WRONG! We don't need these features yet
+    // НЕПРАВИЛЬНО! Нам пока не нужны эти функции
     public function createTaskWithAI(CreateTaskDto $dto, User $user): Task { }
     public function createTaskFromEmail(string $email, User $user): Task { }
     public function createTaskFromVoice(string $audioFile, User $user): Task { }
@@ -1831,46 +1831,46 @@ final class TaskService
 
 ---
 
-## Common Anti-Patterns to Avoid
+## Распространенные Антипаттерны, Которых Следует Избегать
 
-### God Objects
+### Божественные Объекты
 
 ```php
-// BAD - God object (does everything)
+// ❌ ПЛОХО - Божественный объект (делает всё)
 class TaskManager
 {
-    // Database
+    // База данных
     public function save() { }
     public function delete() { }
     public function query() { }
 
-    // Validation
+    // Валидация
     public function validate() { }
 
-    // Notifications
+    // Уведомления
     public function sendEmail() { }
     public function sendSms() { }
 
-    // Logging
+    // Логирование
     public function logActivity() { }
 
-    // Analytics
+    // Аналитика
     public function trackEvent() { }
 
-    // Export
+    // Экспорт
     public function exportToPDF() { }
     public function exportToExcel() { }
 
-    // Too many responsibilities!
+    // Слишком много ответственностей!
 }
 ```
 
-**Fix:** Split into focused classes (TaskService, TaskRepository, NotificationService, TaskExporter)
+**Решение:** Разделить на сфокусированные классы (TaskService, TaskRepository, NotificationService, TaskExporter)
 
-### Anemic Domain Model
+### Анемичная Доменная Модель
 
 ```php
-// BAD - Anemic (just getters/setters, no behavior)
+// ❌ ПЛОХО - Анемичная (только геттеры/сеттеры, нет поведения)
 class Task
 {
     private string $title;
@@ -1882,7 +1882,7 @@ class Task
     public function setIsCompleted(bool $isCompleted): void { $this->isCompleted = $isCompleted; }
 }
 
-// WRONG! Business logic outside entity
+// НЕПРАВИЛЬНО! Бизнес-логика вне сущности
 class TaskService
 {
     public function markAsComplete(Task $task): void
@@ -1894,7 +1894,7 @@ class TaskService
 ```
 
 ```php
-// GOOD - Rich domain model (behavior in entity)
+// ✅ ХОРОШО - Богатая доменная модель (поведение в сущности)
 class Task
 {
     private string $title;
@@ -1903,7 +1903,7 @@ class Task
 
     public function complete(): void
     {
-        // Business logic belongs here!
+        // Бизнес-логика принадлежит здесь!
         $this->isCompleted = true;
         $this->completedAt = new \DateTimeImmutable();
     }
@@ -1920,33 +1920,33 @@ class TaskService
 {
     public function markAsComplete(Task $task): void
     {
-        $task->complete();  // Clean!
+        $task->complete();  // Чисто!
         $this->repository->save($task);
     }
 }
 ```
 
-### Magic Numbers
+### Магические Числа
 
 ```php
-// BAD - Magic numbers
+// ❌ ПЛОХО - Магические числа
 public function getRetryDelay(): int
 {
     if ($this->attemptCount === 1) {
-        return 1000;  // What is 1000?
+        return 1000;  // Что такое 1000?
     } elseif ($this->attemptCount === 2) {
-        return 5000;  // What is 5000?
+        return 5000;  // Что такое 5000?
     }
 }
 ```
 
 ```php
-// GOOD - Named constants
+// ✅ ХОРОШО - Именованные константы
 final readonly class NotificationRetryService
 {
-    private const RETRY_DELAY_FIRST = 1000;      // 1 second
-    private const RETRY_DELAY_SECOND = 5000;     // 5 seconds
-    private const RETRY_DELAY_THIRD = 15000;     // 15 seconds
+    private const RETRY_DELAY_FIRST = 1000;      // 1 секунда
+    private const RETRY_DELAY_SECOND = 5000;     // 5 секунд
+    private const RETRY_DELAY_THIRD = 15000;     // 15 секунд
     private const MAX_RETRY_ATTEMPTS = 3;
 
     public function getRetryDelay(int $attemptCount): int
@@ -1963,41 +1963,41 @@ final readonly class NotificationRetryService
 
 ---
 
-## Summary Checklist
+## Контрольный Список Резюме
 
-Before committing code, verify:
+Перед коммитом кода проверьте:
 
 ### PHP Backend
-- [ ] All classes use type hints (parameters and return types)
-- [ ] Constructor property promotion used
-- [ ] Readonly properties where possible
-- [ ] Enums instead of constants
-- [ ] Match expressions instead of switch
-- [ ] Named arguments for clarity
-- [ ] Each class has single responsibility
-- [ ] Dependencies injected via constructor
-- [ ] Controllers are thin (only HTTP logic)
-- [ ] Business logic in services
-- [ ] Database queries in repositories
+- [ ] Все классы используют типизацию (параметры и возвращаемые типы)
+- [ ] Используется продвижение свойств в конструкторе
+- [ ] Readonly свойства где возможно
+- [ ] Перечисления вместо констант
+- [ ] Match выражения вместо switch
+- [ ] Именованные аргументы для ясности
+- [ ] Каждый класс имеет единственную ответственность
+- [ ] Зависимости внедрены через конструктор
+- [ ] Контроллеры тонкие (только HTTP логика)
+- [ ] Бизнес-логика в сервисах
+- [ ] Запросы к базе данных в репозиториях
 
 ### TypeScript Frontend
-- [ ] Strict mode enabled
-- [ ] No 'any' types
-- [ ] Props typed with interfaces
-- [ ] Emits typed with interfaces
-- [ ] Reactive state typed
-- [ ] Type guards for unknown data
-- [ ] Composition API only
-- [ ] Smart/dumb component separation
+- [ ] Строгий режим включен
+- [ ] Нет 'any' типов
+- [ ] Props типизированы интерфейсами
+- [ ] Emits типизированы интерфейсами
+- [ ] Реактивное состояние типизировано
+- [ ] Защита типов для неизвестных данных
+- [ ] Только Composition API
+- [ ] Разделение умных/глупых компонентов
 
-### General
-- [ ] No code duplication (DRY)
-- [ ] Simple solutions (KISS)
-- [ ] No premature optimization (YAGNI)
-- [ ] Meaningful variable names
-- [ ] Functions do one thing
-- [ ] Comments explain WHY, not WHAT
+### Общее
+- [ ] Нет дублирования кода (DRY)
+- [ ] Простые решения (KISS)
+- [ ] Нет преждевременной оптимизации (YAGNI)
+- [ ] Осмысленные имена переменных
+- [ ] Функции делают одну вещь
+- [ ] Комментарии объясняют ПОЧЕМУ, а не ЧТО
 
 ---
 
-**Last Updated:** November 5, 2025
+**Последнее Обновление:** Ноябрь 5, 2025
