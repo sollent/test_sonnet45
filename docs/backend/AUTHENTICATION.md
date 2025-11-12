@@ -1,69 +1,69 @@
-# 🔐 Authentication & Authorization
+# 🔐 Аутентификация и Авторизация
 
-> **TL;DR**: JWT-based authentication with Google OAuth2 One Tap sign-in. Access tokens (30 min) + Refresh tokens (30 days). Security voters for authorization. RS256 asymmetric encryption for maximum security.
+> **TL;DR**: Аутентификация на основе JWT с Google OAuth2 One Tap. Access-токены (30 мин) + Refresh-токены (30 дней). Security voters для авторизации. Асимметричное шифрование RS256 для максимальной безопасности.
 
 ---
 
-## Table of Contents
+## Содержание
 
-- [Overview](#overview)
-- [JWT Token Flow](#jwt-token-flow)
-- [Google OAuth2 Integration](#google-oauth2-integration)
-- [Token Refresh Mechanism](#token-refresh-mechanism)
+- [Обзор](#обзор)
+- [Поток JWT-токенов](#поток-jwt-токенов)
+- [Интеграция Google OAuth2](#интеграция-google-oauth2)
+- [Механизм обновления токенов](#механизм-обновления-токенов)
 - [Security Voters](#security-voters)
-- [Code Examples](#code-examples)
+- [Примеры кода](#примеры-кода)
 
 ---
 
-## Overview
+## Обзор
 
-### Authentication Strategy
+### Стратегия аутентификации
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                  AUTHENTICATION FLOW                        │
+│                  ПОТОК АУТЕНТИФИКАЦИИ                       │
 └─────────────────────────────────────────────────────────────┘
 
-User clicks "Sign in with Google"
+Пользователь нажимает "Войти через Google"
            │
            ▼
-Google One Tap UI appears
+Появляется Google One Tap UI
            │
            ▼
-User selects Google account
+Пользователь выбирает Google аккаунт
            │
            ▼
-Google returns ID Token (JWT)
+Google возвращает ID Token (JWT)
            │
            ▼
-Frontend sends token to /api/auth/google
+Frontend отправляет токен на /api/auth/google
            │
            ▼
-Backend validates with Google public keys
+Backend проверяет токен с помощью публичных ключей Google
            │
            ▼
-Backend finds/creates User in database
+Backend находит/создает User в базе данных
            │
            ▼
-Backend generates Access Token (30 min)
+Backend генерирует Access Token (30 мин)
            │
            ▼
-Backend generates Refresh Token (30 days)
+Backend генерирует Refresh Token (30 дней)
            │
            ▼
-Frontend stores tokens in localStorage
+Frontend сохраняет токены в localStorage
            │
            ▼
-User is authenticated!
+Пользователь аутентифицирован!
 ```
 
 ---
 
-## JWT Token Flow
+## Поток JWT-токенов
 
-### Token Types
+### Типы токенов
 
-#### 1. Access Token (30 minutes)
+#### 1. Access Token (30 минут)
 
 ```json
 {
@@ -74,12 +74,12 @@ User is authenticated!
 }
 ```
 
-**Purpose:** Authenticate API requests
-**Lifetime:** 30 minutes
-**Storage:** `localStorage` (frontend)
-**Usage:** Sent in `Authorization: Bearer <token>` header
+**Назначение:** Аутентификация API-запросов
+**Время жизни:** 30 минут
+**Хранение:** `localStorage` (frontend)
+**Использование:** Отправляется в заголовке `Authorization: Bearer <token>`
 
-#### 2. Refresh Token (30 days)
+#### 2. Refresh Token (30 дней)
 
 ```json
 {
@@ -89,14 +89,14 @@ User is authenticated!
 }
 ```
 
-**Purpose:** Get new access token
-**Lifetime:** 30 days
-**Storage:** `refresh_tokens` table (database)
-**Usage:** POST to `/api/token/refresh`
+**Назначение:** Получение нового access-токена
+**Время жизни:** 30 дней
+**Хранение:** таблица `refresh_tokens` (база данных)
+**Использование:** POST на `/api/token/refresh`
 
 ---
 
-### Token Configuration
+### Конфигурация токенов
 
 ```yaml
 # config/packages/lexik_jwt_authentication.yaml
@@ -104,28 +104,28 @@ lexik_jwt_authentication:
     secret_key: '%env(resolve:JWT_SECRET_KEY)%'
     public_key: '%env(resolve:JWT_PUBLIC_KEY)%'
     pass_phrase: '%env(JWT_PASSPHRASE)%'
-    token_ttl: 1800  # 30 minutes
+    token_ttl: 1800  # 30 минут
     user_identity_field: email
 ```
 
-### Generate Keys (RS256)
+### Генерация ключей (RS256)
 
 ```bash
-# Generate private key
+# Генерация приватного ключа
 openssl genpkey -algorithm RSA -out config/jwt/private.pem -pkeyopt rsa_keygen_bits:4096
 
-# Generate public key
+# Генерация публичного ключа
 openssl rsa -pubout -in config/jwt/private.pem -out config/jwt/public.pem
 
-# Set passphrase in .env
+# Установка passphrase в .env
 JWT_PASSPHRASE=your-secret-passphrase
 ```
 
 ---
 
-## Google OAuth2 Integration
+## Интеграция Google OAuth2
 
-### Configuration
+### Конфигурация
 
 ```yaml
 # config/packages/knpu_oauth2_client.yaml
@@ -142,31 +142,31 @@ knpu_oauth2_client:
 ### Frontend (Google One Tap)
 
 ```typescript
-// Frontend: Load Google Sign-In library
+// Frontend: Загрузка библиотеки Google Sign-In
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 
-// Initialize One Tap
+// Инициализация One Tap
 google.accounts.id.initialize({
   client_id: 'YOUR_GOOGLE_CLIENT_ID',
   callback: handleCredentialResponse
 })
 
-// Handle response
+// Обработка ответа
 async function handleCredentialResponse(response: CredentialResponse) {
-  const credential = response.credential  // JWT from Google
+  const credential = response.credential  // JWT от Google
 
-  // Send to backend
+  // Отправка на backend
   const result = await axios.post('/api/auth/google', {
     credential
   })
 
-  // Store tokens
+  // Сохранение токенов
   localStorage.setItem('access_token', result.data.token)
   localStorage.setItem('refresh_token', result.data.refreshToken)
 }
 ```
 
-### Backend (Token Validation)
+### Backend (валидация токена)
 
 ```php
 <?php
@@ -186,13 +186,13 @@ public function google(
         return $this->json(['error' => 'Missing credential'], 400);
     }
 
-    // ✅ Fetch Google's public keys
+    // ✅ Получение публичных ключей Google
     $googleJwks = json_decode(
         file_get_contents('https://www.googleapis.com/oauth2/v3/certs'),
         true
     );
 
-    // ✅ Decode and verify JWT with Google's keys
+    // ✅ Декодирование и проверка JWT с помощью ключей Google
     $decoded = JWT::decode($credential, JWK::parseKeySet($googleJwks));
 
     $email = $decoded->email ?? null;
@@ -201,13 +201,13 @@ public function google(
         return $this->json(['error' => 'Invalid token'], 400);
     }
 
-    // ✅ Find or create user
+    // ✅ Поиск или создание пользователя
     $user = $googleAuthenticator->loadUserFromDecodedJwt($decoded);
 
-    // ✅ Generate access token
+    // ✅ Генерация access-токена
     $token = $jwtManager->create($user);
 
-    // ✅ Generate refresh token
+    // ✅ Генерация refresh-токена
     $refreshToken = $refreshTokenManager->create();
     $refreshToken->setRefreshToken(Uuid::v4()->toRfc4122());
     $refreshToken->setUsername($user->getUserIdentifier());
@@ -245,11 +245,11 @@ class GoogleAuthenticator extends OAuthUserProvider
             throw new \RuntimeException('Email not found in Google token');
         }
 
-        // ✅ Find existing user
+        // ✅ Поиск существующего пользователя
         $user = $this->em->getRepository(User::class)
             ->findOneBy(['email' => $email]);
 
-        // ✅ Create new user if not exists
+        // ✅ Создание нового пользователя, если не существует
         if (!$user) {
             $user = new User();
             $user->setEmail($email);
@@ -267,14 +267,14 @@ class GoogleAuthenticator extends OAuthUserProvider
 
 ---
 
-## Token Refresh Mechanism
+## Механизм обновления токенов
 
-### Why Refresh Tokens?
+### Зачем нужны refresh-токены?
 
-**Problem:** Access tokens expire in 30 minutes
-**Solution:** Use refresh token to get new access token without re-login
+**Проблема:** Access-токены истекают через 30 минут
+**Решение:** Использование refresh-токена для получения нового access-токена без повторной авторизации
 
-### Frontend Implementation
+### Реализация на Frontend
 
 ```typescript
 // src/services/api.service.ts
@@ -284,23 +284,23 @@ class ApiService {
   private failedQueue: Array<any> = []
 
   setupInterceptors() {
-    // Response interceptor
+    // Перехватчик ответов
     this.axiosInstance.interceptors.response.use(
       (response) => response,
       async (error: AxiosError) => {
         const originalRequest = error.config as any
 
-        // If 401 and not already retried
+        // Если 401 и еще не повторяли
         if (error.response?.status === 401 && !originalRequest._retry) {
           const refreshToken = localStorage.getItem('refresh_token')
 
           if (!refreshToken) {
-            // No refresh token → redirect to login
+            // Нет refresh-токена → редирект на логин
             window.location.href = '/login'
             return Promise.reject(error)
           }
 
-          // If already refreshing, queue request
+          // Если уже обновляем, добавить запрос в очередь
           if (this.isRefreshing) {
             return new Promise((resolve, reject) => {
               this.failedQueue.push({ resolve, reject })
@@ -315,23 +315,23 @@ class ApiService {
           this.isRefreshing = true
 
           try {
-            // ✅ Call refresh endpoint
+            // ✅ Вызов endpoint обновления
             const { data } = await this.axiosInstance.post('/api/token/refresh', {
               refreshToken
             })
 
-            // ✅ Save new tokens
+            // ✅ Сохранение новых токенов
             localStorage.setItem('access_token', data.token)
             localStorage.setItem('refresh_token', data.refreshToken)
 
-            // ✅ Process queued requests
+            // ✅ Обработка запросов в очереди
             this.processQueue(null, data.token)
 
-            // ✅ Retry original request
+            // ✅ Повтор оригинального запроса
             originalRequest.headers.Authorization = `Bearer ${data.token}`
             return this.axiosInstance.request(originalRequest)
           } catch (refreshError) {
-            // ✅ Refresh failed → redirect to login
+            // ✅ Обновление не удалось → редирект на логин
             this.processQueue(refreshError, null)
             this.clearAuth()
             window.location.href = '/login'
@@ -359,11 +359,11 @@ class ApiService {
 }
 ```
 
-### Backend Refresh Endpoint
+### Backend endpoint обновления
 
 ```php
 <?php
-// Handled by gesdinet/jwt-refresh-token-bundle
+// Обрабатывается gesdinet/jwt-refresh-token-bundle
 
 #[Route('/api/token/refresh', methods: ['POST'])]
 public function refresh(Request $request): JsonResponse
@@ -371,20 +371,20 @@ public function refresh(Request $request): JsonResponse
     $data = json_decode($request->getContent(), true);
     $refreshToken = $data['refreshToken'] ?? null;
 
-    // ✅ Validate refresh token
+    // ✅ Валидация refresh-токена
     $token = $this->refreshTokenManager->get($refreshToken);
 
     if (!$token || !$token->isValid()) {
         return $this->json(['error' => 'Invalid refresh token'], 401);
     }
 
-    // ✅ Load user
+    // ✅ Загрузка пользователя
     $user = $this->userProvider->loadUserByIdentifier($token->getUsername());
 
-    // ✅ Generate new access token
+    // ✅ Генерация нового access-токена
     $jwt = $this->jwtManager->create($user);
 
-    // ✅ Generate new refresh token (rotation)
+    // ✅ Генерация нового refresh-токена (ротация)
     $newRefreshToken = $this->refreshTokenManager->create();
     $newRefreshToken->setRefreshToken(Uuid::v4()->toRfc4122());
     $newRefreshToken->setUsername($user->getUserIdentifier());
@@ -392,7 +392,7 @@ public function refresh(Request $request): JsonResponse
 
     $this->refreshTokenManager->save($newRefreshToken);
 
-    // ✅ Invalidate old refresh token
+    // ✅ Инвалидация старого refresh-токена
     $this->refreshTokenManager->delete($token);
 
     return $this->json([
@@ -406,16 +406,16 @@ public function refresh(Request $request): JsonResponse
 
 ## Security Voters
 
-### What are Voters?
+### Что такое Voters?
 
-**Purpose:** Complex authorization logic (beyond simple roles)
+**Назначение:** Сложная логика авторизации (помимо простых ролей)
 
-**Example:** "Can user edit this task?"
-- User must be authenticated ✓
-- User must own the task ✓
-- Task must not be archived ✓
+**Пример:** "Может ли пользователь редактировать эту задачу?"
+- Пользователь должен быть аутентифицирован ✓
+- Пользователь должен быть владельцем задачи ✓
+- Задача не должна быть архивирована ✓
 
-### TaskVoter Implementation
+### Реализация TaskVoter
 
 ```php
 <?php
@@ -429,7 +429,7 @@ class TaskVoter extends Voter
 
     protected function supports(string $attribute, mixed $subject): bool
     {
-        // Only vote on Task entities
+        // Голосуем только за сущности Task
         if (!in_array($attribute, [self::EDIT, self::DELETE, self::VIEW])) {
             return false;
         }
@@ -448,7 +448,7 @@ class TaskVoter extends Voter
     ): bool {
         $user = $token->getUser();
 
-        // User must be authenticated
+        // Пользователь должен быть аутентифицирован
         if (!$user instanceof User) {
             return false;
         }
@@ -466,18 +466,18 @@ class TaskVoter extends Voter
 
     private function canView(Task $task, User $user): bool
     {
-        // ✅ User must own the task
+        // ✅ Пользователь должен быть владельцем задачи
         return $task->getUser() === $user;
     }
 
     private function canEdit(Task $task, User $user): bool
     {
-        // ✅ User must own the task
+        // ✅ Пользователь должен быть владельцем задачи
         if ($task->getUser() !== $user) {
             return false;
         }
 
-        // ✅ Task must not be archived
+        // ✅ Задача не должна быть архивирована
         if ($task->isArchived()) {
             return false;
         }
@@ -487,13 +487,13 @@ class TaskVoter extends Voter
 
     private function canDelete(Task $task, User $user): bool
     {
-        // ✅ User must own the task
+        // ✅ Пользователь должен быть владельцем задачи
         return $task->getUser() === $user;
     }
 }
 ```
 
-### Using Voters in Controllers
+### Использование Voters в контроллерах
 
 ```php
 <?php
@@ -510,17 +510,17 @@ public function update(
         throw new NotFoundHttpException();
     }
 
-    // ✅ Check authorization with voter
+    // ✅ Проверка авторизации через voter
     $this->denyAccessUnlessGranted('TASK_EDIT', $task);
 
-    // If we reach here, user CAN edit task
+    // Если мы здесь, пользователь МОЖЕТ редактировать задачу
     $updatedTask = $this->taskService->updateTask($task, $dto);
 
     return $this->json($updatedTask);
 }
 ```
 
-### Using Voters in Services
+### Использование Voters в сервисах
 
 ```php
 <?php
@@ -534,7 +534,7 @@ class TaskService
 
     public function deleteTask(Task $task): void
     {
-        // ✅ Check authorization
+        // ✅ Проверка авторизации
         if (!$this->security->isGranted('TASK_DELETE', $task)) {
             throw new AccessDeniedException('You cannot delete this task');
         }
@@ -547,13 +547,13 @@ class TaskService
 
 ---
 
-## Code Examples
+## Примеры кода
 
-### Complete Authentication Flow
+### Полный поток аутентификации
 
 ```php
 <?php
-// 1. User signs in with Google
+// 1. Пользователь входит через Google
 POST /api/auth/google
 Body: { "credential": "eyJhbGc..." }
 
@@ -564,31 +564,31 @@ Response:
   "refreshTokenExpiration": 1738790400
 }
 
-// 2. Frontend stores tokens
+// 2. Frontend сохраняет токены
 localStorage.setItem('access_token', response.token)
 localStorage.setItem('refresh_token', response.refreshToken)
 
-// 3. Frontend makes authenticated request
+// 3. Frontend делает аутентифицированный запрос
 GET /api/tasks
 Headers: {
   Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...
 }
 
-// 4. Access token expires (30 min later)
+// 4. Access-токен истекает (через 30 мин)
 GET /api/tasks
 Response: 401 Unauthorized
 
-// 5. Frontend automatically refreshes token
+// 5. Frontend автоматически обновляет токен
 POST /api/token/refresh
 Body: { "refreshToken": "550e8400-e29b-41d4-a716-446655440000" }
 
 Response:
 {
-  "token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",  // New access token
-  "refreshToken": "660e8400-e29b-41d4-a716-446655440000"  // New refresh token
+  "token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",  // Новый access-токен
+  "refreshToken": "660e8400-e29b-41d4-a716-446655440000"  // Новый refresh-токен
 }
 
-// 6. Frontend retries original request with new token
+// 6. Frontend повторяет оригинальный запрос с новым токеном
 GET /api/tasks
 Headers: {
   Authorization: Bearer <new_token>
@@ -598,41 +598,43 @@ Response: 200 OK
 
 ---
 
-## Security Best Practices
+## Лучшие практики безопасности
 
-### DO's ✅
+### ДЕЛАТЬ ✅
 
-✅ **Use RS256 (asymmetric)** - More secure than HS256
-✅ **Short access token lifetime** - 30 minutes max
-✅ **Long refresh token lifetime** - 7-30 days
-✅ **Rotate refresh tokens** - Generate new on each refresh
-✅ **Store refresh tokens in database** - Can be revoked
-✅ **Validate Google JWT with Google keys** - Don't trust client
-✅ **Use HTTPS only** - Never send tokens over HTTP
-✅ **Implement voters for complex auth** - Don't put logic in controllers
+✅ **Использовать RS256 (асимметричный)** - Безопаснее чем HS256
+✅ **Короткое время жизни access-токена** - Максимум 30 минут
+✅ **Длинное время жизни refresh-токена** - 7-30 дней
+✅ **Ротация refresh-токенов** - Генерировать новый при каждом обновлении
+✅ **Хранить refresh-токены в базе данных** - Можно отозвать
+✅ **Валидировать Google JWT ключами Google** - Не доверять клиенту
+✅ **Использовать только HTTPS** - Никогда не отправлять токены по HTTP
+✅ **Использовать voters для сложной авторизации** - Не размещать логику в контроллерах
 
-### DON'Ts ❌
+### НЕ ДЕЛАТЬ ❌
 
-❌ **Store access tokens in cookies** - XSS vulnerability
-❌ **Use same token for access and refresh** - Security risk
-❌ **Skip token validation** - Always verify signature
-❌ **Hardcode secrets** - Use environment variables
-❌ **Trust client-side validation** - Always validate server-side
-❌ **Expose JWT secret** - Keep private key private
-❌ **Allow infinite refresh** - Implement max refresh count
-
----
-
-## Related Documents
-
-### Must Read Next
-- **[Architecture](ARCHITECTURE.md)** - How auth integrates with services
-- **[API Reference](API_REFERENCE.md)** - Auth endpoints
-
-### For Reference
-- **[Frontend API Integration](../frontend/API_INTEGRATION.md)** - Token handling in frontend
+❌ **Хранить access-токены в cookies** - Уязвимость XSS
+❌ **Использовать один токен для access и refresh** - Риск безопасности
+❌ **Пропускать валидацию токена** - Всегда проверять подпись
+❌ **Хардкодить секреты** - Использовать переменные окружения
+❌ **Доверять клиентской валидации** - Всегда проверять на сервере
+❌ **Раскрывать JWT secret** - Держать приватный ключ в секрете
+❌ **Разрешать бесконечное обновление** - Реализовать максимальное количество обновлений
 
 ---
 
-*Last updated: 2025-01-05*
-*Authentication version: 1.0*
+## Связанные документы
+
+### Обязательно прочитать
+
+- **[Архитектура](ARCHITECTURE.md)** - Как аутентификация интегрируется с сервисами
+- **[API Reference](API_REFERENCE.md)** - Endpoints аутентификации
+
+### Для справки
+
+- **[Frontend API Integration](../frontend/API_INTEGRATION.md)** - Обработка токенов на frontend
+
+---
+
+*Последнее обновление: 2025-01-05*
+*Версия аутентификации: 1.0*
