@@ -43,107 +43,118 @@ const props = defineProps<{
   }
 }>()
 
-const chartOption = computed(() => ({
-  tooltip: {
-    trigger: 'axis',
-    axisPointer: {
-      type: 'shadow'
-    },
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderColor: '#e2e8f0',
-    borderWidth: 1,
-    textStyle: {
-      color: '#1e293b'
-    }
-  },
-  legend: {
-    data: [t('tasks.status_completed'), t('tasks.status_in_progress'), t('tasks.status_pending')],
-    textStyle: {
-      color: '#64748b'
-    },
-    bottom: 0
-  },
-  grid: {
-    left: '3%',
-    right: '4%',
-    bottom: '15%',
-    top: '3%',
-    containLabel: true
-  },
-  xAxis: {
-    type: 'value',
-    axisLabel: {
-      color: '#64748b'
-    },
-    splitLine: {
-      lineStyle: {
-        color: '#f1f5f9'
+const chartOption = computed(() => {
+  // Безопасные fallback значения для предотвращения ошибок при undefined данных
+  const defaultPriorityData = { completed: 0, inProgress: 0, pending: 0, total: 0 }
+  const safeData = {
+    urgent: props.data?.urgent ?? defaultPriorityData,
+    high: props.data?.high ?? defaultPriorityData,
+    medium: props.data?.medium ?? defaultPriorityData,
+    low: props.data?.low ?? defaultPriorityData
+  }
+
+  return {
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: {
+        type: 'shadow'
+      },
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      borderColor: '#e2e8f0',
+      borderWidth: 1,
+      textStyle: {
+        color: '#1e293b'
       }
-    }
-  },
-  yAxis: {
-    type: 'category',
-    data: [
-      t('tasks.priority_urgent'),
-      t('tasks.priority_high'),
-      t('tasks.priority_medium'),
-      t('tasks.priority_low')
-    ],
-    axisLabel: {
-      color: '#64748b',
-      fontSize: 13
     },
-    axisLine: {
-      lineStyle: {
-        color: '#e2e8f0'
+    legend: {
+      data: [t('tasks.status_completed'), t('tasks.status_in_progress'), t('tasks.status_pending')],
+      textStyle: {
+        color: '#64748b'
+      },
+      bottom: 0
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '15%',
+      top: '3%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'value',
+      axisLabel: {
+        color: '#64748b'
+      },
+      splitLine: {
+        lineStyle: {
+          color: '#f1f5f9'
+        }
       }
-    }
-  },
-  series: [
-    {
-      name: t('tasks.status_completed'),
-      type: 'bar',
-      stack: 'total',
+    },
+    yAxis: {
+      type: 'category',
       data: [
-        props.data.urgent.completed,
-        props.data.high.completed,
-        props.data.medium.completed,
-        props.data.low.completed
+        t('tasks.priority_urgent'),
+        t('tasks.priority_high'),
+        t('tasks.priority_medium'),
+        t('tasks.priority_low')
       ],
-      itemStyle: {
-        color: '#10b981'
+      axisLabel: {
+        color: '#64748b',
+        fontSize: 13
+      },
+      axisLine: {
+        lineStyle: {
+          color: '#e2e8f0'
+        }
       }
     },
-    {
-      name: t('tasks.status_in_progress'),
-      type: 'bar',
-      stack: 'total',
-      data: [
-        props.data.urgent.inProgress,
-        props.data.high.inProgress,
-        props.data.medium.inProgress,
-        props.data.low.inProgress
-      ],
-      itemStyle: {
-        color: '#3b82f6'
+    series: [
+      {
+        name: t('tasks.status_completed'),
+        type: 'bar',
+        stack: 'total',
+        data: [
+          safeData.urgent.completed,
+          safeData.high.completed,
+          safeData.medium.completed,
+          safeData.low.completed
+        ],
+        itemStyle: {
+          color: '#10b981'
+        }
+      },
+      {
+        name: t('tasks.status_in_progress'),
+        type: 'bar',
+        stack: 'total',
+        data: [
+          safeData.urgent.inProgress,
+          safeData.high.inProgress,
+          safeData.medium.inProgress,
+          safeData.low.inProgress
+        ],
+        itemStyle: {
+          color: '#3b82f6'
+        }
+      },
+      {
+        name: t('tasks.status_pending'),
+        type: 'bar',
+        stack: 'total',
+        data: [
+          safeData.urgent.pending,
+          safeData.high.pending,
+          safeData.medium.pending,
+          safeData.low.pending
+        ],
+        itemStyle: {
+          color: '#94a3b8'
+        }
       }
-    },
-    {
-      name: t('tasks.status_pending'),
-      type: 'bar',
-      stack: 'total',
-      data: [
-        props.data.urgent.pending,
-        props.data.high.pending,
-        props.data.medium.pending,
-        props.data.low.pending
-      ],
-      itemStyle: {
-        color: '#94a3b8'
-      }
-    }
-  ]
-}))
+    ]
+  }
+})
 </script>
 
 <style scoped>
