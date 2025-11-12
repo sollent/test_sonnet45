@@ -1,99 +1,99 @@
-# 🏗 Backend Architecture - Layered Design & Patterns
+# 🏗 Архитектура Backend - Слоистый дизайн и паттерны
 
-> **TL;DR**: Clean layered architecture following SOLID principles. Controller → Service → Repository pattern with strict separation of concerns. Every class has a single responsibility, uses dependency injection, and follows established design patterns.
-
----
-
-## Table of Contents
-
-- [Architecture Overview](#architecture-overview)
-- [Layered Architecture](#layered-architecture)
-- [SOLID Principles Applied](#solid-principles-applied)
-- [Design Patterns](#design-patterns)
-- [Dependency Injection](#dependency-injection)
-- [DTO Pattern](#dto-pattern)
-- [Request Flow](#request-flow)
-- [Code Examples](#code-examples)
-- [Best Practices](#best-practices)
+> **TL;DR**: Чистая слоистая архитектура, следующая принципам SOLID. Паттерн Controller → Service → Repository со строгим разделением ответственности. Каждый класс имеет единственную ответственность, использует внедрение зависимостей и следует устоявшимся паттернам проектирования.
 
 ---
 
-## Architecture Overview
+## Содержание
 
-### High-Level Architecture
+- [Обзор архитектуры](#обзор-архитектуры)
+- [Слоистая архитектура](#слоистая-архитектура)
+- [Применение принципов SOLID](#применение-принципов-solid)
+- [Паттерны проектирования](#паттерны-проектирования)
+- [Внедрение зависимостей](#внедрение-зависимостей)
+- [Паттерн DTO](#паттерн-dto)
+- [Поток запроса](#поток-запроса)
+- [Примеры кода](#примеры-кода)
+- [Лучшие практики](#лучшие-практики)
+
+---
+
+## Обзор архитектуры
+
+### Архитектура высокого уровня
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│                      HTTP REQUEST                            │
-│                    (from Frontend)                           │
+│                      HTTP ЗАПРОС                             │
+│                    (с Frontend)                              │
 └────────────────────────┬─────────────────────────────────────┘
                          │
                          ▼
 ┌──────────────────────────────────────────────────────────────┐
-│                 🛡 SECURITY LAYER                            │
-│  - JWT Authentication                                        │
-│  - Authorization (Voters)                                    │
-│  - CORS Handling                                             │
+│                 🛡 СЛОЙ БЕЗОПАСНОСТИ                         │
+│  - JWT Аутентификация                                        │
+│  - Авторизация (Voters)                                      │
+│  - Обработка CORS                                            │
 └────────────────────────┬─────────────────────────────────────┘
                          │
                          ▼
 ┌──────────────────────────────────────────────────────────────┐
-│                 📥 CONTROLLER LAYER                          │
-│  - Route mapping                                             │
-│  - Request validation (MapRequestPayload)                    │
-│  - Response formatting                                       │
-│  - NO business logic                                         │
+│                 📥 СЛОЙ КОНТРОЛЛЕРОВ                         │
+│  - Маршрутизация                                             │
+│  - Валидация запроса (MapRequestPayload)                     │
+│  - Форматирование ответа                                     │
+│  - БЕЗ бизнес-логики                                         │
 └────────────────────────┬─────────────────────────────────────┘
                          │
                          ▼
 ┌──────────────────────────────────────────────────────────────┐
-│                 ⚙️ SERVICE LAYER                             │
-│  - Business logic                                            │
-│  - Transaction management                                    │
-│  - Data transformation                                       │
-│  - Event dispatching                                         │
+│                 ⚙️ СЛОЙ СЕРВИСОВ                             │
+│  - Бизнес-логика                                             │
+│  - Управление транзакциями                                   │
+│  - Трансформация данных                                      │
+│  - Отправка событий                                          │
 └────────────────────────┬─────────────────────────────────────┘
                          │
                          ▼
 ┌──────────────────────────────────────────────────────────────┐
-│                 💾 REPOSITORY LAYER                          │
-│  - Database queries                                          │
-│  - Data access logic                                         │
-│  - Query optimization                                        │
-│  - Entity hydration                                          │
+│                 💾 СЛОЙ РЕПОЗИТОРИЕВ                         │
+│  - Запросы к базе данных                                     │
+│  - Логика доступа к данным                                   │
+│  - Оптимизация запросов                                      │
+│  - Гидратация сущностей                                      │
 └────────────────────────┬─────────────────────────────────────┘
                          │
                          ▼
 ┌──────────────────────────────────────────────────────────────┐
-│                 📊 DATA LAYER                                │
-│  - PostgreSQL (entities)                                     │
+│                 📊 СЛОЙ ДАННЫХ                               │
+│  - PostgreSQL (сущности)                                     │
 └──────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Layered Architecture
+## Слоистая архитектура
 
-### 1. Controller Layer
+### 1. Слой контроллеров
 
-**Location:** `/backend/src/Controller/Api/`
+**Расположение:** `/backend/src/Controller/Api/`
 
-**Responsibility:** HTTP handling ONLY
+**Ответственность:** ТОЛЬКО обработка HTTP
 
-#### What Controllers DO:
-✅ Map routes to methods
-✅ Validate request data (via attributes)
-✅ Call service layer
-✅ Return HTTP responses
-✅ Handle HTTP errors
+#### Что контроллеры ДЕЛАЮТ:
+✅ Маршрутизируют пути к методам
+✅ Валидируют данные запроса (через атрибуты)
+✅ Вызывают слой сервисов
+✅ Возвращают HTTP-ответы
+✅ Обрабатывают HTTP-ошибки
 
-#### What Controllers DON'T DO:
-❌ Business logic
-❌ Database queries
-❌ Data transformation
-❌ Complex calculations
+#### Что контроллеры НЕ ДЕЛАЮТ:
+❌ Бизнес-логика
+❌ Запросы к базе данных
+❌ Трансформация данных
+❌ Сложные вычисления
 
-#### Example: TaskController
+#### Пример: TaskController
 
 ```php
 <?php
@@ -104,48 +104,48 @@
 class TaskController extends AbstractController
 {
     public function __construct(
-        private readonly TaskService $taskService,          // ✅ Service injected
+        private readonly TaskService $taskService,          // ✅ Сервис внедрен
         private readonly TranslationService $translationService
     ) {}
 
     #[Route('', name: 'list', methods: ['GET'])]
     public function list(
-        #[MapQueryString] ?TaskFilterDto $filters,          // ✅ Auto-validated
-        #[CurrentUser] User $user                           // ✅ Auto-injected
+        #[MapQueryString] ?TaskFilterDto $filters,          // ✅ Автоматическая валидация
+        #[CurrentUser] User $user                           // ✅ Автоматическое внедрение
     ): JsonResponse {
-        // ✅ GOOD: Delegate to service
+        // ✅ ХОРОШО: Делегирование сервису
         $tasks = $this->taskService->getUserTasks($user, $filters);
 
-        return $this->json($tasks);                         // ✅ Return response
+        return $this->json($tasks);                         // ✅ Возврат ответа
     }
 
     #[Route('', name: 'create', methods: ['POST'])]
     public function create(
-        #[MapRequestPayload] CreateTaskDto $dto,            // ✅ Validated DTO
+        #[MapRequestPayload] CreateTaskDto $dto,            // ✅ Валидированный DTO
         #[CurrentUser] User $user
     ): JsonResponse {
-        $task = $this->taskService->createTask($dto, $user); // ✅ Service handles logic
+        $task = $this->taskService->createTask($dto, $user); // ✅ Сервис обрабатывает логику
 
         return $this->json($task, Response::HTTP_CREATED);
     }
 }
 ```
 
-#### ❌ BAD Controller Example (DON'T DO THIS):
+#### ❌ ПЛОХОЙ пример контроллера (НЕ ДЕЛАЙТЕ ТАК):
 
 ```php
-// ❌ BAD: Business logic in controller
+// ❌ ПЛОХО: Бизнес-логика в контроллере
 public function create(Request $request): JsonResponse
 {
-    // ❌ Manual request parsing
+    // ❌ Ручной парсинг запроса
     $data = json_decode($request->getContent(), true);
 
-    // ❌ Direct database access
+    // ❌ Прямой доступ к базе данных
     $task = new Task();
     $task->setTitle($data['title']);
     $task->setUser($this->getUser());
 
-    // ❌ Business logic in controller
+    // ❌ Бизнес-логика в контроллере
     if ($data['parentId']) {
         $parent = $this->em->find(Task::class, $data['parentId']);
         if ($parent->getUser() !== $this->getUser()) {
@@ -154,7 +154,7 @@ public function create(Request $request): JsonResponse
         $task->setParent($parent);
     }
 
-    // ❌ Cache management in controller
+    // ❌ Управление кешем в контроллере
     $this->redis->del("user_tasks_{$this->getUser()->getId()}");
 
     $this->em->persist($task);
@@ -164,37 +164,37 @@ public function create(Request $request): JsonResponse
 }
 ```
 
-**Why is this BAD?**
-- Controller knows about database (EntityManager)
-- Controller knows about cache (Redis)
-- Business logic (parent validation) in controller
-- Hard to test (coupled to HTTP)
-- No DTO validation
-- Manual request parsing (error-prone)
+**Почему это ПЛОХО?**
+- Контроллер знает о базе данных (EntityManager)
+- Контроллер знает о кеше (Redis)
+- Бизнес-логика (валидация родителя) в контроллере
+- Сложно тестировать (связано с HTTP)
+- Нет валидации DTO
+- Ручной парсинг запроса (подвержен ошибкам)
 
 ---
 
-### 2. Service Layer
+### 2. Слой сервисов
 
-**Location:** `/backend/src/Service/`
+**Расположение:** `/backend/src/Service/`
 
-**Responsibility:** Business logic & orchestration
+**Ответственность:** Бизнес-логика и оркестрация
 
-#### What Services DO:
-✅ Implement business rules
-✅ Orchestrate multiple operations
-✅ Manage transactions
-✅ Transform data (Entity ↔ DTO)
-✅ Dispatch domain events
-✅ Validate business constraints
+#### Что сервисы ДЕЛАЮТ:
+✅ Реализуют бизнес-правила
+✅ Оркеструют множественные операции
+✅ Управляют транзакциями
+✅ Трансформируют данные (Entity ↔ DTO)
+✅ Отправляют доменные события
+✅ Валидируют бизнес-ограничения
 
-#### What Services DON'T DO:
-❌ Direct HTTP handling
-❌ Know about request/response
-❌ Direct database queries (use repositories)
-❌ Know about presentation layer
+#### Что сервисы НЕ ДЕЛАЮТ:
+❌ Прямая обработка HTTP
+❌ Знают о запросе/ответе
+❌ Прямые запросы к базе данных (используют репозитории)
+❌ Знают о слое представления
 
-#### Example: TaskService
+#### Пример: TaskService
 
 ```php
 <?php
@@ -211,11 +211,11 @@ final class TaskService
     ) {}
 
     /**
-     * Create a new task with all business rules applied
+     * Создать новую задачу с применением всех бизнес-правил
      */
     public function createTask(CreateTaskDto $dto, User $user): Task
     {
-        // ✅ Business logic: Create entity
+        // ✅ Бизнес-логика: Создание сущности
         $task = new Task();
         $task->setTitle($dto->title)
             ->setDescription($dto->description)
@@ -225,17 +225,17 @@ final class TaskService
             ->setDueDate($dto->dueDate ? new \DateTimeImmutable($dto->dueDate) : null)
             ->setUser($user);
 
-        // ✅ Business rule: Handle parent task relationship
+        // ✅ Бизнес-правило: Обработка связи с родительской задачей
         if ($dto->parentTaskId !== null) {
             $parentTask = $this->taskRepository->find($dto->parentTaskId);
 
-            // ✅ Business validation: User owns parent
+            // ✅ Бизнес-валидация: Пользователь владеет родительской задачей
             if ($parentTask && $parentTask->getUser() === $user) {
                 $task->setParentTask($parentTask);
             }
         }
 
-        // ✅ Business logic: Handle tags (find or create)
+        // ✅ Бизнес-логика: Обработка тегов (найти или создать)
         if (!empty($dto->tags)) {
             $tags = $this->tagRepository->findOrCreateByNames($dto->tags, $user);
             foreach ($tags as $tag) {
@@ -243,37 +243,37 @@ final class TaskService
             }
         }
 
-        // ✅ Transaction: Persist
+        // ✅ Транзакция: Сохранение
         $this->entityManager->persist($task);
         $this->entityManager->flush();
 
-        // ✅ Event dispatching: Notify listeners
+        // ✅ Отправка события: Уведомление слушателей
         $this->eventDispatcher->dispatch(new TaskCreatedEvent($task));
 
-        // ✅ Logging: Track task creation
+        // ✅ Логирование: Отслеживание создания задачи
         $this->logger->info('Task created', ['taskId' => $task->getId(), 'userId' => $user->getId()]);
 
         return $task;
     }
 
     /**
-     * Update existing task
+     * Обновить существующую задачу
      */
     public function updateTask(int $id, UpdateTaskDto $dto, User $user): Task
     {
         $task = $this->taskRepository->find($id);
 
-        // ✅ Business validation: Task exists
+        // ✅ Бизнес-валидация: Задача существует
         if (!$task) {
             throw new TaskNotFoundException();
         }
 
-        // ✅ Business validation: User owns task
+        // ✅ Бизнес-валидация: Пользователь владеет задачей
         if ($task->getUser() !== $user) {
             throw new TaskAccessDeniedException();
         }
 
-        // ✅ Business logic: Update fields
+        // ✅ Бизнес-логика: Обновление полей
         if ($dto->title !== null) {
             $task->setTitle($dto->title);
         }
@@ -282,10 +282,10 @@ final class TaskService
             $task->setStatus($dto->status);
         }
 
-        // ✅ Transaction: Flush changes
+        // ✅ Транзакция: Фиксация изменений
         $this->entityManager->flush();
 
-        // ✅ Event dispatching: Notify listeners
+        // ✅ Отправка события: Уведомление слушателей
         $this->eventDispatcher->dispatch(new TaskUpdatedEvent($task));
 
         return $task;
@@ -295,26 +295,26 @@ final class TaskService
 
 ---
 
-### 3. Repository Layer
+### 3. Слой репозиториев
 
-**Location:** `/backend/src/Repository/Database/`
+**Расположение:** `/backend/src/Repository/Database/`
 
-**Responsibility:** Data access ONLY
+**Ответственность:** ТОЛЬКО доступ к данным
 
-#### What Repositories DO:
-✅ Execute database queries
-✅ Build complex QueryBuilders
-✅ Optimize queries (joins, indexes)
-✅ Hydrate entities from database
-✅ Return entities or arrays
+#### Что репозитории ДЕЛАЮТ:
+✅ Выполняют запросы к базе данных
+✅ Строят сложные QueryBuilders
+✅ Оптимизируют запросы (joins, индексы)
+✅ Гидратируют сущности из базы данных
+✅ Возвращают сущности или массивы
 
-#### What Repositories DON'T DO:
-❌ Business logic
-❌ Data validation
-❌ Transaction management
-❌ Know about HTTP layer
+#### Что репозитории НЕ ДЕЛАЮТ:
+❌ Бизнес-логика
+❌ Валидация данных
+❌ Управление транзакциями
+❌ Знают о слое HTTP
 
-#### Example: TaskRepository
+#### Пример: TaskRepository
 
 ```php
 <?php
@@ -329,10 +329,10 @@ class TaskRepository extends ServiceEntityRepository
     }
 
     /**
-     * Find all tasks for a user
+     * Найти все задачи пользователя
      *
-     * ✅ GOOD: Repository handles data access only
-     * ✅ GOOD: Uses QueryBuilder for complex queries
+     * ✅ ХОРОШО: Репозиторий обрабатывает только доступ к данным
+     * ✅ ХОРОШО: Использует QueryBuilder для сложных запросов
      */
     public function findUserTasks(
         User $user,
@@ -340,7 +340,7 @@ class TaskRepository extends ServiceEntityRepository
         ?bool $includeArchived = false,
         ?bool $onlyParentTasks = true
     ): array {
-        // Build query with criteria
+        // Построение запроса с критериями
         $qb = $this->createQueryBuilder('t')
             ->where('t.user = :user')
             ->setParameter('user', $user);
@@ -367,7 +367,7 @@ class TaskRepository extends ServiceEntityRepository
     }
 
     /**
-     * Find tasks with specific filters (complex query)
+     * Найти задачи с конкретными фильтрами (сложный запрос)
      */
     public function findByFilters(User $user, TaskFilterDto $filters): array
     {
@@ -376,7 +376,7 @@ class TaskRepository extends ServiceEntityRepository
             ->where('t.user = :user')
             ->setParameter('user', $user);
 
-        // ✅ Dynamic query building
+        // ✅ Динамическое построение запроса
         if ($filters->status !== null) {
             $qb->andWhere('t.status = :status')
                 ->setParameter('status', $filters->status);
@@ -401,11 +401,11 @@ class TaskRepository extends ServiceEntityRepository
     }
 
     /**
-     * Find tasks with recursive subtasks (PostgreSQL CTE)
+     * Найти задачи с рекурсивными подзадачами (PostgreSQL CTE)
      */
     public function findWithAllSubtasks(int $taskId): array
     {
-        // ✅ Advanced SQL: Recursive Common Table Expression
+        // ✅ Продвинутый SQL: Рекурсивное общее табличное выражение
         $sql = "
             WITH RECURSIVE subtasks AS (
                 SELECT * FROM task WHERE id = :taskId
@@ -428,79 +428,79 @@ class TaskRepository extends ServiceEntityRepository
 
 ---
 
-## SOLID Principles Applied
+## Применение принципов SOLID
 
-### S - Single Responsibility Principle
+### S - Принцип единственной ответственности
 
-**"A class should have one, and only one, reason to change."**
+**"Класс должен иметь одну, и только одну, причину для изменения."**
 
-#### ✅ GOOD Examples:
+#### ✅ ХОРОШИЕ примеры:
 
 ```php
-// ✅ TaskController: ONLY handles HTTP
+// ✅ TaskController: ТОЛЬКО обрабатывает HTTP
 class TaskController extends AbstractController
 {
-    // Single responsibility: Map HTTP → Service
+    // Единственная ответственность: Маршрутизация HTTP → Service
 }
 
-// ✅ TaskService: ONLY handles business logic
+// ✅ TaskService: ТОЛЬКО обрабатывает бизнес-логику
 class TaskService
 {
-    // Single responsibility: Business rules
+    // Единственная ответственность: Бизнес-правила
 }
 
-// ✅ TaskRepository: ONLY handles data access
+// ✅ TaskRepository: ТОЛЬКО обрабатывает доступ к данным
 class TaskRepository extends ServiceEntityRepository
 {
-    // Single responsibility: Database queries
+    // Единственная ответственность: Запросы к базе данных
 }
 
-// ✅ TranslationService: ONLY handles translations
+// ✅ TranslationService: ТОЛЬКО обрабатывает переводы
 class TranslationService
 {
-    // Single responsibility: i18n translations
+    // Единственная ответственность: i18n переводы
 }
 ```
 
-#### ❌ BAD Example:
+#### ❌ ПЛОХОЙ пример:
 
 ```php
-// ❌ God class with multiple responsibilities
+// ❌ Божественный класс с множественными ответственностями
 class TaskManager
 {
-    // ❌ HTTP handling
+    // ❌ Обработка HTTP
     public function handleRequest(Request $request) { }
 
-    // ❌ Business logic
+    // ❌ Бизнес-логика
     public function createTask(array $data) { }
 
-    // ❌ Database access
+    // ❌ Доступ к базе данных
     public function saveToDatabase(Task $task) { }
 
-    // ❌ Cache management
+    // ❌ Управление кешем
     public function updateCache(Task $task) { }
 
-    // ❌ Email sending
+    // ❌ Отправка email
     public function sendNotification(Task $task) { }
 }
 ```
 
 ---
 
-### O - Open/Closed Principle
+### O - Принцип открытости/закрытости
 
-**"Open for extension, closed for modification."**
+**"Открыт для расширения, закрыт для модификации."**
 
-#### ✅ GOOD: Strategy Pattern
+#### ✅ ХОРОШО: Паттерн Стратегия
 
 ```php
-// ✅ Interface defines contract
+// ✅ Интерфейс определяет контракт
 interface RecurrenceStrategyInterface
 {
     public function generateNextOccurrence(\DateTimeInterface $from): ?\DateTimeInterface;
 }
 
-// ✅ Each strategy is separate class
+// ✅ Каждая стратегия — отдельный класс
 class DailyRecurrenceStrategy implements RecurrenceStrategyInterface
 {
     public function generateNextOccurrence(\DateTimeInterface $from): ?\DateTimeInterface
@@ -517,7 +517,7 @@ class WeeklyRecurrenceStrategy implements RecurrenceStrategyInterface
     }
 }
 
-// ✅ Service uses strategy (closed for modification)
+// ✅ Сервис использует стратегию (закрыт для модификации)
 class RecurrenceService
 {
     public function __construct(
@@ -530,60 +530,60 @@ class RecurrenceService
     }
 }
 
-// ✅ Add new strategy WITHOUT modifying existing code
+// ✅ Добавить новую стратегию БЕЗ модификации существующего кода
 class CustomRecurrenceStrategy implements RecurrenceStrategyInterface
 {
     public function generateNextOccurrence(\DateTimeInterface $from): ?\DateTimeInterface
     {
-        // Custom logic
+        // Пользовательская логика
     }
 }
 ```
 
 ---
 
-### L - Liskov Substitution Principle
+### L - Принцип подстановки Барбары Лисков
 
-**"Derived classes must be substitutable for their base classes."**
+**"Производные классы должны быть заменяемыми на свои базовые классы."**
 
 ```php
-// ✅ Base repository
+// ✅ Базовый репозиторий
 abstract class AbstractRepository
 {
     abstract public function find(int $id): ?object;
     abstract public function findAll(): array;
 }
 
-// ✅ TaskRepository can replace AbstractRepository
+// ✅ TaskRepository может заменить AbstractRepository
 class TaskRepository extends AbstractRepository
 {
     public function find(int $id): ?object
     {
-        return $this->_em->find(Task::class, $id); // ✅ Returns Task (is object)
+        return $this->_em->find(Task::class, $id); // ✅ Возвращает Task (является object)
     }
 
     public function findAll(): array
     {
-        return $this->_em->getRepository(Task::class)->findAll(); // ✅ Returns array
+        return $this->_em->getRepository(Task::class)->findAll(); // ✅ Возвращает array
     }
 }
 
-// ✅ Any code expecting AbstractRepository works with TaskRepository
+// ✅ Любой код, ожидающий AbstractRepository, работает с TaskRepository
 function processRepository(AbstractRepository $repo): void
 {
-    $entity = $repo->find(1);    // ✅ Works with any repository
-    $all = $repo->findAll();      // ✅ Works with any repository
+    $entity = $repo->find(1);    // ✅ Работает с любым репозиторием
+    $all = $repo->findAll();      // ✅ Работает с любым репозиторием
 }
 ```
 
 ---
 
-### I - Interface Segregation Principle
+### I - Принцип разделения интерфейса
 
-**"Don't force clients to depend on interfaces they don't use."**
+**"Не заставляйте клиентов зависеть от интерфейсов, которые они не используют."**
 
 ```php
-// ✅ GOOD: Small, focused interfaces
+// ✅ ХОРОШО: Маленькие, сфокусированные интерфейсы
 interface NotificationServiceInterface
 {
     public function send(User $user, string $message): void;
@@ -596,7 +596,7 @@ interface LoggerInterface
     public function error(string $message, array $context = []): void;
 }
 
-// ❌ BAD: Fat interface
+// ❌ ПЛОХО: Толстый интерфейс
 interface TaskManagerInterface
 {
     public function create(array $data): Task;
@@ -607,46 +607,46 @@ interface TaskManagerInterface
     public function cache(Task $task): void;
     public function validate(array $data): bool;
     public function transform(Task $task): array;
-    // ... too many methods!
+    // ... слишком много методов!
 }
 ```
 
 ---
 
-### D - Dependency Inversion Principle
+### D - Принцип инверсии зависимостей
 
-**"Depend on abstractions, not concretions."**
+**"Зависьте от абстракций, а не от конкретных реализаций."**
 
 ```php
-// ✅ GOOD: Depend on interface
+// ✅ ХОРОШО: Зависимость от интерфейса
 class TaskService
 {
     public function __construct(
-        private readonly TaskRepositoryInterface $taskRepository,    // ✅ Interface
-        private readonly EventDispatcherInterface $eventDispatcher   // ✅ Interface
+        private readonly TaskRepositoryInterface $taskRepository,    // ✅ Интерфейс
+        private readonly EventDispatcherInterface $eventDispatcher   // ✅ Интерфейс
     ) {}
 }
 
-// ❌ BAD: Depend on concrete class
+// ❌ ПЛОХО: Зависимость от конкретного класса
 class TaskService
 {
     public function __construct(
-        private readonly TaskRepository $taskRepository,             // ❌ Concrete class
-        private readonly EventDispatcher $eventDispatcher            // ❌ Concrete class
+        private readonly TaskRepository $taskRepository,             // ❌ Конкретный класс
+        private readonly EventDispatcher $eventDispatcher            // ❌ Конкретный класс
     ) {}
 }
 ```
 
 ---
 
-## Design Patterns
+## Паттерны проектирования
 
-### 1. Repository Pattern
+### 1. Паттерн Репозиторий
 
-**Purpose:** Abstraction layer between business logic and data access.
+**Назначение:** Слой абстракции между бизнес-логикой и доступом к данным.
 
 ```php
-// Repository interface (contract)
+// Интерфейс репозитория (контракт)
 interface TaskRepositoryInterface
 {
     public function find(int $id): ?Task;
@@ -655,13 +655,13 @@ interface TaskRepositoryInterface
     public function delete(Task $task): void;
 }
 
-// Concrete implementation
+// Конкретная реализация
 class TaskRepository implements TaskRepositoryInterface
 {
-    // Database-specific implementation
+    // Реализация, специфичная для базы данных
 }
 
-// ✅ Service depends on interface, not implementation
+// ✅ Сервис зависит от интерфейса, а не от реализации
 class TaskService
 {
     public function __construct(
@@ -670,19 +670,19 @@ class TaskService
 }
 ```
 
-**Benefits:**
-- Easy to switch databases (PostgreSQL → MySQL)
-- Easy to mock in tests
-- Centralized query logic
+**Преимущества:**
+- Легко переключить базу данных (PostgreSQL → MySQL)
+- Легко мокировать в тестах
+- Централизованная логика запросов
 
 ---
 
-### 2. DTO (Data Transfer Object) Pattern
+### 2. Паттерн DTO (Объект передачи данных)
 
-**Purpose:** Transfer data between layers without exposing entities.
+**Назначение:** Передача данных между слоями без раскрытия сущностей.
 
 ```php
-// Request DTO (from client)
+// Request DTO (от клиента)
 final readonly class CreateTaskDto
 {
     public function __construct(
@@ -701,7 +701,7 @@ final readonly class CreateTaskDto
     ) {}
 }
 
-// Response DTO (to client)
+// Response DTO (к клиенту)
 final readonly class TaskResponseDto
 {
     public function __construct(
@@ -715,11 +715,11 @@ final readonly class TaskResponseDto
         public array $tags,
         public array $subtasks,
         public bool $isOverdue,
-        public ?string $statusLabel,      // Translated
-        public ?string $priorityLabel     // Translated
+        public ?string $statusLabel,      // Переведено
+        public ?string $priorityLabel     // Переведено
     ) {}
 
-    // ✅ Factory method: Entity → DTO
+    // ✅ Фабричный метод: Entity → DTO
     public static function fromEntity(Task $task): self
     {
         return new self(
@@ -733,27 +733,27 @@ final readonly class TaskResponseDto
             tags: array_map(fn($tag) => TagResponseDto::fromEntity($tag), $task->getTags()->toArray()),
             subtasks: array_map(fn($sub) => self::fromEntity($sub), $task->getSubtasks()->toArray()),
             isOverdue: $task->isOverdue(),
-            statusLabel: null,   // Set by controller
-            priorityLabel: null  // Set by controller
+            statusLabel: null,   // Устанавливается контроллером
+            priorityLabel: null  // Устанавливается контроллером
         );
     }
 }
 ```
 
-**Benefits:**
-- Validation at DTO level (via attributes)
-- Never expose entities to HTTP layer
-- Type-safe request/response
-- Easy to version (CreateTaskDtoV2)
+**Преимущества:**
+- Валидация на уровне DTO (через атрибуты)
+- Никогда не раскрывайте сущности слою HTTP
+- Типобезопасные запрос/ответ
+- Легко версионировать (CreateTaskDtoV2)
 
 ---
 
-### 3. Dependency Injection (DI)
+### 3. Внедрение зависимостей (DI)
 
-**Symfony's built-in DI container automatically wires dependencies.**
+**Встроенный DI-контейнер Symfony автоматически связывает зависимости.**
 
 ```php
-// ✅ Constructor injection (recommended)
+// ✅ Инъекция через конструктор (рекомендуется)
 class TaskService
 {
     public function __construct(
@@ -763,14 +763,14 @@ class TaskService
         private readonly EventDispatcherInterface $eventDispatcher
     ) {}
 
-    // All dependencies injected automatically by Symfony
+    // Все зависимости автоматически внедряются Symfony
 }
 
-// ✅ Register services in services.yaml
+// ✅ Регистрация сервисов в services.yaml
 services:
     _defaults:
-        autowire: true      # Auto-inject dependencies
-        autoconfigure: true # Auto-configure services
+        autowire: true      # Автоматическое внедрение зависимостей
+        autoconfigure: true # Автоматическая настройка сервисов
 
     App\:
         resource: '../src/'
@@ -779,19 +779,19 @@ services:
             - '../src/Kernel.php'
 ```
 
-**Benefits:**
-- Easy testing (inject mocks)
-- Loose coupling
-- No manual instantiation
+**Преимущества:**
+- Легкое тестирование (внедряйте моки)
+- Слабая связанность
+- Нет ручного создания экземпляров
 
 ---
 
-### 4. Factory Pattern
+### 4. Паттерн Фабрика
 
-**Purpose:** Create complex objects.
+**Назначение:** Создание сложных объектов.
 
 ```php
-// ✅ Static factory method
+// ✅ Статический фабричный метод
 final readonly class TaskResponseDto
 {
     public static function fromEntity(Task $task): self
@@ -799,23 +799,23 @@ final readonly class TaskResponseDto
         return new self(
             id: $task->getId(),
             title: $task->getTitle(),
-            // ... map all fields
+            // ... маппинг всех полей
         );
     }
 }
 
-// Usage in service
+// Использование в сервисе
 $dto = TaskResponseDto::fromEntity($task);
 ```
 
 ---
 
-### 5. Event Subscriber Pattern
+### 5. Паттерн Подписчик событий
 
-**Purpose:** Decouple side effects from business logic.
+**Назначение:** Разделение побочных эффектов от бизнес-логики.
 
 ```php
-// Event subscriber for automatic notifications and logging
+// Подписчик событий для автоматических уведомлений и логирования
 class TaskEventSubscriber implements EventSubscriberInterface
 {
     public function __construct(
@@ -837,10 +837,10 @@ class TaskEventSubscriber implements EventSubscriberInterface
         $task = $event->getTask();
         $user = $task->getUser();
 
-        // ✅ Automatically send notification
+        // ✅ Автоматически отправить уведомление
         $this->notificationService->send($user, 'Task created: ' . $task->getTitle());
 
-        // ✅ Log the event
+        // ✅ Залогировать событие
         $this->logger->info('Task created', ['taskId' => $task->getId()]);
     }
 }
@@ -848,9 +848,9 @@ class TaskEventSubscriber implements EventSubscriberInterface
 
 ---
 
-## Dependency Injection
+## Внедрение зависимостей
 
-### How Symfony DI Works
+### Как работает DI в Symfony
 
 ```yaml
 # config/services.yaml
@@ -859,26 +859,26 @@ services:
         autowire: true
         autoconfigure: true
 
-    # Controllers auto-registered
+    # Контроллеры регистрируются автоматически
     App\Controller\:
         resource: '../src/Controller/'
         tags: ['controller.service_arguments']
 
-    # Services auto-registered
+    # Сервисы регистрируются автоматически
     App\Service\:
         resource: '../src/Service/'
 
-    # Repositories auto-registered
+    # Репозитории регистрируются автоматически
     App\Repository\:
         resource: '../src/Repository/'
 ```
 
-### Constructor Injection (Recommended)
+### Инъекция через конструктор (рекомендуется)
 
 ```php
 class TaskController extends AbstractController
 {
-    // ✅ Dependencies injected via constructor
+    // ✅ Зависимости внедряются через конструктор
     public function __construct(
         private readonly TaskService $taskService,
         private readonly TranslationService $translationService,
@@ -887,7 +887,7 @@ class TaskController extends AbstractController
 
     public function list(): JsonResponse
     {
-        // Use injected services
+        // Использование внедренных сервисов
         $tasks = $this->taskService->getUserTasks(...);
         $this->logger->info('Task list retrieved');
         return $this->json($tasks);
@@ -897,9 +897,9 @@ class TaskController extends AbstractController
 
 ---
 
-## DTO Pattern
+## Паттерн DTO
 
-### Request DTOs (Input Validation)
+### Request DTOs (валидация входных данных)
 
 ```php
 final readonly class CreateTaskDto
@@ -923,7 +923,7 @@ final readonly class CreateTaskDto
 }
 ```
 
-### Response DTOs (Output Formatting)
+### Response DTOs (форматирование выходных данных)
 
 ```php
 final readonly class TaskResponseDto implements \JsonSerializable
@@ -936,7 +936,7 @@ final readonly class TaskResponseDto implements \JsonSerializable
         public array $subtasks = []
     ) {}
 
-    // ✅ Control JSON serialization
+    // ✅ Контроль JSON-сериализации
     public function jsonSerialize(): array
     {
         return [
@@ -952,52 +952,52 @@ final readonly class TaskResponseDto implements \JsonSerializable
 
 ---
 
-## Request Flow
+## Поток запроса
 
-### Complete Request/Response Cycle
+### Полный цикл запрос/ответ
 
 ```
-1. HTTP Request arrives
+1. Поступает HTTP-запрос
    ↓
-2. Symfony Router matches route → TaskController::create()
+2. Маршрутизатор Symfony находит маршрут → TaskController::create()
    ↓
-3. Security component checks JWT token
+3. Компонент безопасности проверяет JWT-токен
    ↓
-4. Voter checks authorization (TaskVoter)
+4. Voter проверяет авторизацию (TaskVoter)
    ↓
-5. MapRequestPayload validates CreateTaskDto
+5. MapRequestPayload валидирует CreateTaskDto
    ↓
-6. Controller calls TaskService::createTask()
+6. Контроллер вызывает TaskService::createTask()
    ↓
-7. Service validates business rules
+7. Сервис валидирует бизнес-правила
    ↓
-8. Service calls TaskRepository::save()
+8. Сервис вызывает TaskRepository::save()
    ↓
-9. Repository persists to PostgreSQL
+9. Репозиторий сохраняет в PostgreSQL
    ↓
-10. Service dispatches TaskCreatedEvent
+10. Сервис отправляет TaskCreatedEvent
    ↓
-11. Event subscribers handle side effects (notifications, logging)
+11. Подписчики событий обрабатывают побочные эффекты (уведомления, логирование)
    ↓
-12. Service returns Task entity
+12. Сервис возвращает сущность Task
    ↓
-13. Controller transforms Task → TaskResponseDto
+13. Контроллер трансформирует Task → TaskResponseDto
    ↓
-14. Controller returns JsonResponse
+14. Контроллер возвращает JsonResponse
    ↓
-15. Symfony serializes DTO → JSON
+15. Symfony сериализует DTO → JSON
    ↓
-16. HTTP Response sent to client
+16. HTTP-ответ отправляется клиенту
 ```
 
 ---
 
-## Code Examples
+## Примеры кода
 
-### Complete CRUD Example
+### Полный пример CRUD
 
 ```php
-// Controller: HTTP layer
+// Контроллер: HTTP-слой
 class TaskController extends AbstractController
 {
     #[Route('/api/tasks', methods: ['POST'])]
@@ -1011,28 +1011,28 @@ class TaskController extends AbstractController
     }
 }
 
-// Service: Business logic layer
+// Сервис: Слой бизнес-логики
 class TaskService
 {
     public function createTask(CreateTaskDto $dto, User $user): Task
     {
-        // Business logic
+        // Бизнес-логика
         $task = new Task();
         $task->setTitle($dto->title);
         $task->setUser($user);
 
-        // Persist
+        // Сохранение
         $this->entityManager->persist($task);
         $this->entityManager->flush();
 
-        // Event dispatching
+        // Отправка события
         $this->eventDispatcher->dispatch(new TaskCreatedEvent($task));
 
         return $task;
     }
 }
 
-// Repository: Data access layer
+// Репозиторий: Слой доступа к данным
 class TaskRepository extends ServiceEntityRepository
 {
     public function save(Task $task): void
@@ -1045,47 +1045,47 @@ class TaskRepository extends ServiceEntityRepository
 
 ---
 
-## Best Practices
+## Лучшие практики
 
-### DO's ✅
+### ДЕЛАЙТЕ ✅
 
-✅ **Keep controllers thin** - Only HTTP handling
-✅ **Use DTOs** - Never expose entities to HTTP
-✅ **Inject dependencies** - Constructor injection
-✅ **Use type hints** - Strict types everywhere
-✅ **Follow naming conventions** - TaskService, TaskRepository
-✅ **Single responsibility** - One class, one purpose
-✅ **Use readonly properties** - PHP 8.3 feature
-✅ **Use enums** - TaskStatus, TaskPriority
-✅ **Optimize queries** - Use indexes, joins, eager loading
-✅ **Events for side effects** - Notifications, logging via events
+✅ **Держите контроллеры тонкими** - Только обработка HTTP
+✅ **Используйте DTO** - Никогда не раскрывайте сущности HTTP
+✅ **Внедряйте зависимости** - Инъекция через конструктор
+✅ **Используйте типизацию** - Строгие типы везде
+✅ **Следуйте соглашениям именования** - TaskService, TaskRepository
+✅ **Единственная ответственность** - Один класс, одна цель
+✅ **Используйте readonly-свойства** - Функция PHP 8.3
+✅ **Используйте enums** - TaskStatus, TaskPriority
+✅ **Оптимизируйте запросы** - Используйте индексы, joins, eager loading
+✅ **События для побочных эффектов** - Уведомления, логирование через события
 
-### DON'Ts ❌
+### НЕ ДЕЛАЙТЕ ❌
 
-❌ **Business logic in controllers**
-❌ **Direct database access in controllers**
-❌ **Expose entities to HTTP layer**
-❌ **Manual request parsing**
-❌ **God classes** (one class doing everything)
-❌ **Tight coupling** (depend on interfaces)
-❌ **Global state** (use dependency injection)
-❌ **Magic numbers** (use constants/enums)
-❌ **Suppressing errors** (let exceptions bubble up)
-❌ **Direct infrastructure access in controllers** (Redis, message queues)
-
----
-
-## Related Documents
-
-### Must Read Next
-- **[Database](DATABASE.md)** - Entity relationships
-- **[Authentication](AUTHENTICATION.md)** - JWT & OAuth2
-
-### For Reference
-- **[API Reference](API_REFERENCE.md)** - All endpoints
-- **[Coding Standards](../CODING_STANDARDS.md)** - Code quality
+❌ **Бизнес-логика в контроллерах**
+❌ **Прямой доступ к базе данных в контроллерах**
+❌ **Раскрытие сущностей слою HTTP**
+❌ **Ручной парсинг запросов**
+❌ **Божественные классы** (один класс делает всё)
+❌ **Жёсткая связанность** (зависьте от интерфейсов)
+❌ **Глобальное состояние** (используйте внедрение зависимостей)
+❌ **Магические числа** (используйте константы/enums)
+❌ **Подавление ошибок** (позволяйте исключениям всплывать)
+❌ **Прямой доступ к инфраструктуре в контроллерах** (Redis, очереди сообщений)
 
 ---
 
-*Last updated: 2025-01-05*
-*Architecture version: 1.0*
+## Связанные документы
+
+### Обязательно прочитать далее
+- **[Database](DATABASE.md)** - Связи сущностей
+- **[Authentication](AUTHENTICATION.md)** - JWT и OAuth2
+
+### Для справки
+- **[API Reference](API_REFERENCE.md)** - Все эндпоинты
+- **[Coding Standards](../CODING_STANDARDS.md)** - Качество кода
+
+---
+
+*Последнее обновление: 2025-01-05*
+*Версия архитектуры: 1.0*
