@@ -1,46 +1,46 @@
-# 🗂 State Management - Pinia Stores
+# 🗂 Управление Состоянием - Pinia Stores
 
-> **TL;DR**: Pinia stores for global state management. TaskStore for tasks, AuthStore for authentication. Actions vs Getters pattern. Optimistic UI updates for instant feedback.
+> **TL;DR**: Pinia stores для управления глобальным состоянием. TaskStore для задач, AuthStore для аутентификации. Паттерн Actions vs Getters. Оптимистичные обновления UI для мгновенной обратной связи.
 
 ---
 
-## Table of Contents
+## Содержание
 
-- [Pinia Store Pattern](#pinia-store-pattern)
+- [Паттерн Pinia Store](#паттерн-pinia-store)
 - [TaskStore](#taskstore)
 - [AuthStore](#authstore)
 - [Actions vs Getters](#actions-vs-getters)
-- [Optimistic Updates](#optimistic-updates)
+- [Оптимистичные Обновления](#оптимистичные-обновления)
 
 ---
 
-## Pinia Store Pattern
+## Паттерн Pinia Store
 
-### Why Pinia?
+### Почему Pinia?
 
-✅ **TypeScript-first** - Better type inference than Vuex
-✅ **Composition API** - Uses same patterns as Vue 3
-✅ **Modular** - Easy to split by domain
-✅ **Devtools** - Excellent debugging
-✅ **Lightweight** - Only ~1KB
+✅ **TypeScript-first** - Лучший вывод типов, чем в Vuex
+✅ **Composition API** - Использует те же паттерны, что и Vue 3
+✅ **Модульность** - Легко разделить по доменам
+✅ **Devtools** - Отличная отладка
+✅ **Легковесность** - Всего ~1KB
 
-### Store Structure
+### Структура Store
 
 ```typescript
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
 export const useMyStore = defineStore('my-store', () => {
-  // State (ref)
+  // Состояние (ref)
   const items = ref<Item[]>([])
   const loading = ref(false)
 
-  // Getters (computed)
+  // Геттеры (computed)
   const completedItems = computed(() =>
     items.value.filter(item => item.completed)
   )
 
-  // Actions (functions)
+  // Действия (functions)
   async function fetchItems() {
     loading.value = true
     try {
@@ -58,9 +58,9 @@ export const useMyStore = defineStore('my-store', () => {
 
 ## TaskStore
 
-**Location:** `/src/stores/task.store.ts`
+**Расположение:** `/src/stores/task.store.ts`
 
-### Complete TaskStore Implementation
+### Полная Реализация TaskStore
 
 ```typescript
 import { defineStore } from 'pinia'
@@ -69,14 +69,14 @@ import { taskService } from '@/services/task.service'
 import type { Task, TaskFilters, TaskStatistics } from '@/types/task.types'
 
 export const useTaskStore = defineStore('task', () => {
-  // ===== STATE =====
+  // ===== СОСТОЯНИЕ =====
   const tasks = ref<Task[]>([])
   const selectedTask = ref<Task | null>(null)
   const statistics = ref<TaskStatistics | null>(null)
   const isLoading = ref(false)
   const error = ref<string | null>(null)
 
-  // ===== GETTERS =====
+  // ===== ГЕТТЕРЫ =====
   const pendingTasks = computed(() =>
     tasks.value.filter(t => t.status === 'pending' && !t.isArchived)
   )
@@ -112,7 +112,7 @@ export const useTaskStore = defineStore('task', () => {
     }
   })
 
-  // ===== ACTIONS =====
+  // ===== ДЕЙСТВИЯ =====
   async function fetchTasks(filters?: TaskFilters): Promise<void> {
     isLoading.value = true
     error.value = null
@@ -129,7 +129,7 @@ export const useTaskStore = defineStore('task', () => {
 
   async function fetchTask(id: number): Promise<Task> {
     const task = await taskService.getTask(id)
-    // Update task in store if it exists
+    // Обновить задачу в store, если она существует
     const index = tasks.value.findIndex(t => t.id === id)
     if (index !== -1) {
       tasks.value[index] = task
@@ -140,17 +140,17 @@ export const useTaskStore = defineStore('task', () => {
   async function createTask(data: CreateTaskRequest): Promise<Task> {
     const newTask = await taskService.createTask(data)
 
-    // ✅ Optimistic update: Add immediately to local state
+    // ✅ Оптимистичное обновление: добавить сразу в локальное состояние
     tasks.value.unshift(newTask)
 
-    // Invalidate statistics cache
+    // Инвалидировать кэш статистики
     statistics.value = null
 
     return newTask
   }
 
   async function updateTask(id: number, data: UpdateTaskRequest): Promise<Task> {
-    // ✅ Optimistic update: Update local state immediately
+    // ✅ Оптимистичное обновление: обновить локальное состояние немедленно
     const index = tasks.value.findIndex(t => t.id === id)
     if (index !== -1) {
       const optimisticTask = { ...tasks.value[index], ...data }
@@ -160,17 +160,17 @@ export const useTaskStore = defineStore('task', () => {
     try {
       const updatedTask = await taskService.updateTask(id, data)
 
-      // Replace with server response
+      // Заменить ответом сервера
       if (index !== -1) {
         tasks.value[index] = updatedTask
       }
 
-      // Invalidate statistics cache
+      // Инвалидировать кэш статистики
       statistics.value = null
 
       return updatedTask
     } catch (error) {
-      // ❌ Rollback on error
+      // ❌ Откат при ошибке
       await fetchTasks()
       throw error
     }
@@ -183,7 +183,7 @@ export const useTaskStore = defineStore('task', () => {
     const task = tasks.value[index]
     const newStatus = task.isCompleted ? 'pending' : 'completed'
 
-    // ✅ Optimistic update
+    // ✅ Оптимистичное обновление
     tasks.value[index] = {
       ...task,
       status: newStatus,
@@ -197,7 +197,7 @@ export const useTaskStore = defineStore('task', () => {
       statistics.value = null
       return updated
     } catch (error) {
-      // ❌ Rollback
+      // ❌ Откат
       tasks.value[index] = task
       throw error
     }
@@ -207,14 +207,14 @@ export const useTaskStore = defineStore('task', () => {
     const index = tasks.value.findIndex(t => t.id === id)
     if (index === -1) return
 
-    // ✅ Optimistic delete
+    // ✅ Оптимистичное удаление
     const deletedTask = tasks.value.splice(index, 1)[0]
 
     try {
       await taskService.deleteTask(id)
       statistics.value = null
     } catch (error) {
-      // ❌ Rollback
+      // ❌ Откат
       tasks.value.splice(index, 0, deletedTask)
       throw error
     }
@@ -222,7 +222,7 @@ export const useTaskStore = defineStore('task', () => {
 
   async function fetchStatistics(): Promise<TaskStatistics> {
     if (statistics.value) {
-      return statistics.value // Return cached
+      return statistics.value // Вернуть из кэша
     }
 
     statistics.value = await taskService.getStatistics()
@@ -236,19 +236,19 @@ export const useTaskStore = defineStore('task', () => {
   }
 
   return {
-    // State
+    // Состояние
     tasks,
     selectedTask,
     statistics,
     isLoading,
     error,
-    // Getters
+    // Геттеры
     pendingTasks,
     completedTasks,
     todayTasks,
     overdueTasks,
     tasksByPriority,
-    // Actions
+    // Действия
     fetchTasks,
     fetchTask,
     createTask,
@@ -265,7 +265,7 @@ export const useTaskStore = defineStore('task', () => {
 
 ## AuthStore
 
-**Location:** `/src/stores/auth.store.ts`
+**Расположение:** `/src/stores/auth.store.ts`
 
 ```typescript
 import { defineStore } from 'pinia'
@@ -275,33 +275,33 @@ import type { User, LoginResponse } from '@/types/auth.types'
 import { STORAGE_KEYS } from '@/config/constants'
 
 export const useAuthStore = defineStore('auth', () => {
-  // ===== STATE =====
+  // ===== СОСТОЯНИЕ =====
   const user = ref<User | null>(null)
   const accessToken = ref<string | null>(null)
   const refreshToken = ref<string | null>(null)
   const isLoading = ref(false)
 
-  // ===== GETTERS =====
+  // ===== ГЕТТЕРЫ =====
   const isAuthenticated = computed(() => !!accessToken.value && !!user.value)
   const userName = computed(() => user.value?.name || user.value?.email || '')
   const userEmail = computed(() => user.value?.email || '')
 
-  // ===== ACTIONS =====
+  // ===== ДЕЙСТВИЯ =====
   async function loginWithGoogle(credential: string): Promise<void> {
     isLoading.value = true
 
     try {
       const response: LoginResponse = await authService.loginWithGoogle(credential)
 
-      // Store tokens
+      // Сохранить токены
       accessToken.value = response.token
       refreshToken.value = response.refreshToken
 
-      // Store in localStorage
+      // Сохранить в localStorage
       localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, response.token)
       localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, response.refreshToken)
 
-      // Fetch user profile
+      // Загрузить профиль пользователя
       await fetchUser()
     } finally {
       isLoading.value = false
@@ -318,7 +318,7 @@ export const useAuthStore = defineStore('auth', () => {
     accessToken.value = null
     refreshToken.value = null
 
-    // Clear localStorage
+    // Очистить localStorage
     localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN)
     localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN)
     localStorage.removeItem(STORAGE_KEYS.USER)
@@ -337,16 +337,16 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   return {
-    // State
+    // Состояние
     user,
     accessToken,
     refreshToken,
     isLoading,
-    // Getters
+    // Геттеры
     isAuthenticated,
     userName,
     userEmail,
-    // Actions
+    // Действия
     loginWithGoogle,
     fetchUser,
     logout,
@@ -359,15 +359,15 @@ export const useAuthStore = defineStore('auth', () => {
 
 ## Actions vs Getters
 
-### When to Use Getters
+### Когда Использовать Getters
 
-✅ Derived state (computed from existing state)
-✅ Filtering/sorting
-✅ Aggregations
-✅ Synchronous transformations
+✅ Производное состояние (вычисленное из существующего состояния)
+✅ Фильтрация/сортировка
+✅ Агрегации
+✅ Синхронные преобразования
 
 ```typescript
-// ✅ GOOD: Getter for derived state
+// ✅ ХОРОШО: Геттер для производного состояния
 const completedCount = computed(() =>
   tasks.value.filter(t => t.isCompleted).length
 )
@@ -378,15 +378,15 @@ const completionRate = computed(() => {
 })
 ```
 
-### When to Use Actions
+### Когда Использовать Actions
 
-✅ Async operations (API calls)
-✅ State mutations
-✅ Side effects
-✅ Complex business logic
+✅ Асинхронные операции (API вызовы)
+✅ Мутации состояния
+✅ Побочные эффекты
+✅ Сложная бизнес-логика
 
 ```typescript
-// ✅ GOOD: Action for async operation
+// ✅ ХОРОШО: Действие для асинхронной операции
 async function createTask(data: CreateTaskRequest): Promise<Task> {
   isLoading.value = true
   try {
@@ -401,43 +401,43 @@ async function createTask(data: CreateTaskRequest): Promise<Task> {
 
 ---
 
-## Optimistic Updates
+## Оптимистичные Обновления
 
-### What is Optimistic UI?
+### Что такое Оптимистичный UI?
 
-**Update UI immediately, then sync with server**
+**Обновить UI немедленно, затем синхронизировать с сервером**
 
-**Benefits:**
-- Instant user feedback
-- Perceived performance boost
-- Better UX
+**Преимущества:**
+- Мгновенная обратная связь пользователю
+- Повышение воспринимаемой производительности
+- Лучший UX
 
-### Implementation Pattern
+### Паттерн Реализации
 
 ```typescript
 async function updateTask(id: number, data: UpdateTaskRequest): Promise<Task> {
   const index = tasks.value.findIndex(t => t.id === id)
   if (index === -1) throw new Error('Task not found')
 
-  // 1️⃣ Save original state (for rollback)
+  // 1️⃣ Сохранить исходное состояние (для отката)
   const originalTask = { ...tasks.value[index] }
 
-  // 2️⃣ Optimistic update (immediate UI update)
+  // 2️⃣ Оптимистичное обновление (немедленное обновление UI)
   tasks.value[index] = { ...originalTask, ...data }
 
   try {
-    // 3️⃣ API call (happens in background)
+    // 3️⃣ API вызов (происходит в фоновом режиме)
     const updatedTask = await taskService.updateTask(id, data)
 
-    // 4️⃣ Replace with server response (confirmation)
+    // 4️⃣ Заменить ответом сервера (подтверждение)
     tasks.value[index] = updatedTask
 
     return updatedTask
   } catch (error) {
-    // 5️⃣ Rollback on error (restore original state)
+    // 5️⃣ Откат при ошибке (восстановить исходное состояние)
     tasks.value[index] = originalTask
 
-    // Show error to user
+    // Показать ошибку пользователю
     showError('Failed to update task')
 
     throw error
@@ -445,22 +445,22 @@ async function updateTask(id: number, data: UpdateTaskRequest): Promise<Task> {
 }
 ```
 
-### Example: Checkbox Toggle
+### Пример: Переключение Чекбокса
 
 ```typescript
-// User clicks checkbox
+// Пользователь кликает чекбокс
 async function toggleTaskCompletion(id: number): Promise<void> {
-  // ✅ UI updates instantly (0ms)
+  // ✅ UI обновляется мгновенно (0ms)
   const task = tasks.value.find(t => t.id === id)
   if (task) {
     task.isCompleted = !task.isCompleted
   }
 
   try {
-    // API call (~35ms in background)
+    // API вызов (~35ms в фоновом режиме)
     await taskService.updateTask(id, { status: task.isCompleted ? 'completed' : 'pending' })
   } catch (error) {
-    // ❌ Rollback if failed
+    // ❌ Откат при ошибке
     if (task) {
       task.isCompleted = !task.isCompleted
     }
@@ -468,38 +468,38 @@ async function toggleTaskCompletion(id: number): Promise<void> {
 }
 ```
 
-**Result:** User sees instant feedback, API sync happens invisibly
+**Результат:** Пользователь видит мгновенную обратную связь, синхронизация с API происходит незаметно
 
 ---
 
-## Best Practices
+## Лучшие Практики
 
-### DO's ✅
+### ДЕЛАЙТЕ ✅
 
-✅ **Use Composition API syntax** - `defineStore('name', () => {})`
-✅ **Separate state/getters/actions** - Clear organization
-✅ **Optimistic updates** - Instant UI feedback
-✅ **Error handling** - Rollback on failure
-✅ **Type everything** - No `any` types
-✅ **Clear cache on logout** - Call `clearTasks()`
+✅ **Используйте синтаксис Composition API** - `defineStore('name', () => {})`
+✅ **Разделяйте state/getters/actions** - Четкая организация
+✅ **Оптимистичные обновления** - Мгновенная обратная связь UI
+✅ **Обработка ошибок** - Откат при ошибке
+✅ **Типизируйте все** - Никаких `any` типов
+✅ **Очищайте кэш при выходе** - Вызывайте `clearTasks()`
 
-### DON'Ts ❌
+### НЕ ДЕЛАЙТЕ ❌
 
-❌ **Mutate state directly from components** - Use actions
-❌ **Duplicate state** - Single source of truth
-❌ **Forget to handle errors** - Always try/catch
-❌ **Skip rollback** - Optimistic updates need rollback
-❌ **Cache forever** - Invalidate when needed
-
----
-
-## Related Documents
-
-### Must Read Next
-- **[Architecture](ARCHITECTURE.md)** - Component patterns
-- **[API Integration](API_INTEGRATION.md)** - Service layer
+❌ **Мутировать состояние напрямую из компонентов** - Используйте действия
+❌ **Дублировать состояние** - Единственный источник истины
+❌ **Забывать обрабатывать ошибки** - Всегда try/catch
+❌ **Пропускать откат** - Оптимистичные обновления требуют отката
+❌ **Кэшировать навсегда** - Инвалидируйте при необходимости
 
 ---
 
-*Last updated: 2025-01-05*
-*State management version: 1.0*
+## Связанные Документы
+
+### Обязательно Прочитайте Далее
+- **[Архитектура](ARCHITECTURE.md)** - Паттерны компонентов
+- **[API Интеграция](API_INTEGRATION.md)** - Слой сервисов
+
+---
+
+*Последнее обновление: 2025-01-05*
+*Версия управления состоянием: 1.0*
