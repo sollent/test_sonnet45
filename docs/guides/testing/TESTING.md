@@ -1,24 +1,24 @@
-# 🧪 Testing Guide - Comprehensive Testing Strategy
+# 🧪 Руководство по тестированию - Комплексная стратегия тестирования
 
-> **TL;DR**: Backend uses PHPUnit 9.6 with Unit/Integration/Functional tests. Frontend uses Vitest with 7 test files covering composables, stores, components, services, and views. All tests follow strict isolation and mocking principles.
-
----
-
-## 📖 Table of Contents
-
-1. [Backend Testing (PHPUnit)](#backend-testing-phpunit)
-2. [Frontend Testing (Vitest)](#frontend-testing-vitest)
-3. [Test Writing Guidelines](#test-writing-guidelines)
-4. [CI/CD Integration](#cicd-integration)
-5. [Troubleshooting](#troubleshooting)
+> **Кратко**: Backend использует PHPUnit 9.6 с Unit/Integration/Functional тестами. Frontend использует Vitest с 7 тестовыми файлами, покрывающими composables, stores, components, services и views. Все тесты следуют строгим принципам изоляции и мокирования.
 
 ---
 
-## Backend Testing (PHPUnit)
+## 📖 Содержание
 
-### Configuration
+1. [Тестирование Backend (PHPUnit)](#тестирование-backend-phpunit)
+2. [Тестирование Frontend (Vitest)](#тестирование-frontend-vitest)
+3. [Рекомендации по написанию тестов](#рекомендации-по-написанию-тестов)
+4. [Интеграция с CI/CD](#интеграция-с-cicd)
+5. [Решение проблем](#решение-проблем)
 
-**Location**: `backend/phpunit.xml.dist`
+---
+
+## Тестирование Backend (PHPUnit)
+
+### Конфигурация
+
+**Расположение**: `backend/phpunit.xml.dist`
 
 ```xml
 <phpunit>
@@ -32,15 +32,15 @@
 </phpunit>
 ```
 
-**Key Extensions:**
-- **DAMA DoctrineTestBundle** - Database transaction management for tests
-- **Zenstruck Foundry** - Factory pattern for test data
+**Ключевые расширения:**
+- **DAMA DoctrineTestBundle** - Управление транзакциями базы данных для тестов
+- **Zenstruck Foundry** - Паттерн Factory для тестовых данных
 
-### Test Organization
+### Организация тестов
 
 ```
 backend/tests/
-├── Unit/                      # Isolated unit tests (no DB, no HTTP)
+├── Unit/                      # Изолированные юнит-тесты (без БД, без HTTP)
 │   ├── Service/
 │   │   └── UserRegistrationServiceTest.php
 │   ├── Repository/
@@ -48,12 +48,12 @@ backend/tests/
 │   └── Security/
 │       └── GoogleAuthenticatorTest.php
 │
-├── Integration/               # Integration tests (mocked external services)
+├── Integration/               # Интеграционные тесты (с моками внешних сервисов)
 │   └── Api/
 │       ├── GoogleAuthIntegrationTest.php
 │       └── GoogleAuthWithHttpMockTest.php
 │
-├── Functional/                # Full E2E tests (real HTTP requests)
+├── Functional/                # Полные E2E тесты (реальные HTTP запросы)
 │   └── Api/
 │       ├── AuthenticationTest.php
 │       ├── UserRegistrationTest.php
@@ -61,45 +61,45 @@ backend/tests/
 │       ├── UserProfileTest.php
 │       └── GoogleAuthTest.php
 │
-└── bootstrap.php              # Test environment setup
+└── bootstrap.php              # Настройка тестового окружения
 ```
 
-### Running Tests
+### Запуск тестов
 
 ```bash
-# Run all tests
+# Запустить все тесты
 docker exec backend-php83 vendor/bin/phpunit
 
-# Run specific test suite
+# Запустить конкретный набор тестов
 docker exec backend-php83 vendor/bin/phpunit tests/Unit
 docker exec backend-php83 vendor/bin/phpunit tests/Integration
 docker exec backend-php83 vendor/bin/phpunit tests/Functional
 
-# Run specific test file
+# Запустить конкретный тестовый файл
 docker exec backend-php83 vendor/bin/phpunit tests/Unit/Service/UserRegistrationServiceTest.php
 
-# Run specific test method
+# Запустить конкретный тестовый метод
 docker exec backend-php83 vendor/bin/phpunit --filter testRegisterSuccessfully
 
-# With coverage
+# С покрытием кода
 docker exec backend-php83 vendor/bin/phpunit --coverage-html coverage
 docker exec backend-php83 vendor/bin/phpunit --coverage-text
 ```
 
-### Test Types Explained
+### Типы тестов - подробное описание
 
-#### 1. Unit Tests
+#### 1. Юнит-тесты (Unit Tests)
 
-**Purpose**: Test isolated components (services, entities) without dependencies.
+**Цель**: Тестирование изолированных компонентов (сервисов, сущностей) без зависимостей.
 
-**Characteristics:**
-- ✅ Uses mocks for all dependencies
-- ✅ No database access
-- ✅ No HTTP requests
-- ✅ Fast execution (<1ms per test)
-- ✅ Pure logic testing
+**Характеристики:**
+- ✅ Использует моки для всех зависимостей
+- ✅ Без доступа к базе данных
+- ✅ Без HTTP запросов
+- ✅ Быстрое выполнение (<1мс на тест)
+- ✅ Тестирование чистой логики
 
-**Example**: `tests/Unit/Service/UserRegistrationServiceTest.php`
+**Пример**: `tests/Unit/Service/UserRegistrationServiceTest.php`
 
 ```php
 <?php
@@ -117,14 +117,14 @@ class UserRegistrationServiceTest extends TestCase
 
     protected function setUp(): void
     {
-        // Mock all dependencies
+        // Мокируем все зависимости
         $this->userRepository = $this->createMock(UserRepository::class);
         $this->service = new UserRegistrationService($this->userRepository);
     }
 
     public function testRegisterSuccessfully(): void
     {
-        // Arrange
+        // Arrange - Подготовка
         $dto = new UserRegistrationRequestDto(
             email: 'test@example.com',
             password: 'SecurePassword123'
@@ -135,28 +135,28 @@ class UserRegistrationServiceTest extends TestCase
             ->method('findOneBy')
             ->willReturn(null);
 
-        // Act
+        // Act - Действие
         $user = $this->service->register($dto);
 
-        // Assert
+        // Assert - Проверка
         $this->assertInstanceOf(User::class, $user);
         $this->assertEquals('test@example.com', $user->getEmail());
     }
 }
 ```
 
-#### 2. Integration Tests
+#### 2. Интеграционные тесты (Integration Tests)
 
-**Purpose**: Test component integration with mocked external services (Google API, etc).
+**Цель**: Тестирование интеграции компонентов с моками внешних сервисов (Google API и др.).
 
-**Characteristics:**
-- ✅ Uses real database (with transactions)
-- ✅ Mocks external HTTP calls
-- ✅ Tests API integration logic
-- ✅ Medium execution speed (~100ms per test)
-- ✅ Zenstruck Foundry for factories
+**Характеристики:**
+- ✅ Использует реальную базу данных (с транзакциями)
+- ✅ Мокирует внешние HTTP вызовы
+- ✅ Тестирует логику интеграции с API
+- ✅ Средняя скорость выполнения (~100мс на тест)
+- ✅ Zenstruck Foundry для фабрик
 
-**Example**: `tests/Integration/Api/GoogleAuthIntegrationTest.php`
+**Пример**: `tests/Integration/Api/GoogleAuthIntegrationTest.php`
 
 ```php
 <?php
@@ -168,13 +168,13 @@ use Zenstruck\Foundry\Test\ResetDatabase;
 
 class GoogleAuthIntegrationTest extends WebTestCase
 {
-    use ResetDatabase; // Clears DB after each test
+    use ResetDatabase; // Очищает БД после каждого теста
 
     public function testGoogleAuthWithMockedGoogleAPI(): void
     {
-        // Mock Google API responses
+        // Мокируем ответы Google API
         $mockHttpClient = $this->createMock(HttpClientInterface::class);
-        // ... setup mocks
+        // ... настройка моков
 
         $client = static::createClient();
         $client->request('POST', '/api/auth/google', [
@@ -188,19 +188,19 @@ class GoogleAuthIntegrationTest extends WebTestCase
 }
 ```
 
-#### 3. Functional Tests
+#### 3. Функциональные тесты (Functional Tests)
 
-**Purpose**: Test complete API workflows with real HTTP requests.
+**Цель**: Тестирование полных API workflow с реальными HTTP запросами.
 
-**Characteristics:**
-- ✅ Uses WebTestCase (Symfony)
-- ✅ Real HTTP client
-- ✅ Real database (with ResetDatabase)
-- ✅ Tests full request/response cycle
-- ✅ Slower execution (~200ms per test)
-- ✅ Uses Foundry factories (UserFactory)
+**Характеристики:**
+- ✅ Использует WebTestCase (Symfony)
+- ✅ Реальный HTTP клиент
+- ✅ Реальная база данных (с ResetDatabase)
+- ✅ Тестирует полный цикл запрос/ответ
+- ✅ Более медленное выполнение (~200мс на тест)
+- ✅ Использует Foundry фабрики (UserFactory)
 
-**Example**: `tests/Functional/Api/AuthenticationTest.php`
+**Пример**: `tests/Functional/Api/AuthenticationTest.php`
 
 ```php
 <?php
@@ -219,7 +219,7 @@ class AuthenticationTest extends WebTestCase
 
     public function testSuccessfulLogin(): void
     {
-        // Arrange: Create user with known credentials
+        // Arrange: Создаем пользователя с известными учетными данными
         UserFactory::createOne([
             'email' => 'test@example.com',
             'password' => 'password123',
@@ -227,7 +227,7 @@ class AuthenticationTest extends WebTestCase
 
         $client = static::createClient();
 
-        // Act: Perform login
+        // Act: Выполняем логин
         $client->request(
             'POST',
             '/api/auth',
@@ -240,7 +240,7 @@ class AuthenticationTest extends WebTestCase
             ])
         );
 
-        // Assert: Check response
+        // Assert: Проверяем ответ
         $this->assertResponseStatusCodeSame(200);
 
         $data = json_decode($client->getResponse()->getContent(), true);
@@ -274,23 +274,23 @@ class AuthenticationTest extends WebTestCase
 }
 ```
 
-### Key Testing Tools
+### Ключевые инструменты тестирования
 
 #### Zenstruck Foundry
 
-Factory pattern for test data creation:
+Паттерн Factory для создания тестовых данных:
 
 ```php
 use App\TestsUtilities\Factory\UserFactory;
 use App\TestsUtilities\Factory\TaskFactory;
 
-// Create single entity
+// Создать одну сущность
 $user = UserFactory::createOne(['email' => 'test@example.com']);
 
-// Create multiple entities
+// Создать несколько сущностей
 $users = UserFactory::createMany(5);
 
-// Create with relationships
+// Создать с связями
 $task = TaskFactory::createOne([
     'title' => 'Test Task',
     'user' => $user,
@@ -299,24 +299,24 @@ $task = TaskFactory::createOne([
 
 #### ResetDatabase Trait
 
-Automatically resets database after each test:
+Автоматически сбрасывает базу данных после каждого теста:
 
 ```php
 use Zenstruck\Foundry\Test\ResetDatabase;
 
 class MyTest extends WebTestCase
 {
-    use ResetDatabase; // Database is clean for each test
+    use ResetDatabase; // База данных очищается для каждого теста
 }
 ```
 
 ---
 
-## Frontend Testing (Vitest)
+## Тестирование Frontend (Vitest)
 
-### Configuration
+### Конфигурация
 
-**Location**: `frontend/vite.config.ts`
+**Расположение**: `frontend/vite.config.ts`
 
 ```typescript
 export default defineConfig({
@@ -340,12 +340,12 @@ export default defineConfig({
 })
 ```
 
-**Key Configuration:**
-- **Environment**: happy-dom (faster than jsdom)
-- **Globals**: `describe`, `it`, `expect` available without imports
-- **Coverage**: v8 provider with text/json/html reports
+**Ключевые настройки:**
+- **Environment**: happy-dom (быстрее чем jsdom)
+- **Globals**: `describe`, `it`, `expect` доступны без импортов
+- **Coverage**: v8 провайдер с text/json/html отчетами
 
-### Test Organization
+### Организация тестов
 
 ```
 frontend/src/
@@ -375,38 +375,38 @@ frontend/src/
         └── auth.service.spec.ts
 ```
 
-**Total**: 7 test files
+**Всего**: 7 тестовых файлов
 
-### Running Tests
+### Запуск тестов
 
 ```bash
-# Navigate to frontend
+# Перейти в frontend
 cd frontend
 
-# Run all tests once
+# Запустить все тесты один раз
 npm run test:run
 
-# Watch mode (reruns on changes)
+# Режим наблюдения (перезапускает при изменениях)
 npm run test
 
-# UI mode (interactive browser interface)
+# UI режим (интерактивный браузерный интерфейс)
 npm run test:ui
 
-# Generate coverage report
+# Сгенерировать отчет о покрытии
 npm run test:coverage
 ```
 
-### Test Examples
+### Примеры тестов
 
-#### 1. Composable Test
+#### 1. Тест Composable
 
-**File**: `src/composables/__tests__/useToast.spec.ts`
+**Файл**: `src/composables/__tests__/useToast.spec.ts`
 
 ```typescript
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { useToast } from '../useToast'
 
-// Mock PrimeVue's useToast
+// Мокируем useToast из PrimeVue
 vi.mock('primevue/usetoast', () => ({
   useToast: vi.fn(() => ({
     add: vi.fn(),
@@ -422,7 +422,7 @@ describe('useToast', () => {
     toast = useToast()
   })
 
-  it('should show success toast with custom message', () => {
+  it('должен показать toast успеха с кастомным сообщением', () => {
     toast.showSuccess('Operation completed')
 
     expect(mockAdd).toHaveBeenCalledWith({
@@ -433,22 +433,22 @@ describe('useToast', () => {
     })
   })
 
-  it('should show error toast with longer life', () => {
+  it('должен показать toast ошибки с более длительным временем жизни', () => {
     toast.showError('Error message')
 
     expect(mockAdd).toHaveBeenCalledWith(
       expect.objectContaining({
         severity: 'error',
-        life: 5000, // Errors show longer
+        life: 5000, // Ошибки показываются дольше
       })
     )
   })
 })
 ```
 
-#### 2. Store Test
+#### 2. Тест Store
 
-**File**: `src/stores/__tests__/auth.store.spec.ts`
+**Файл**: `src/stores/__tests__/auth.store.spec.ts`
 
 ```typescript
 import { describe, it, expect, beforeEach } from 'vitest'
@@ -460,14 +460,14 @@ describe('Auth Store', () => {
     setActivePinia(createPinia())
   })
 
-  it('should initialize with logged out state', () => {
+  it('должен инициализироваться в состоянии "выход выполнен"', () => {
     const authStore = useAuthStore()
 
     expect(authStore.isAuthenticated).toBe(false)
     expect(authStore.user).toBeNull()
   })
 
-  it('should set user on login', () => {
+  it('должен установить пользователя при логине', () => {
     const authStore = useAuthStore()
     const user = { id: 1, email: 'test@example.com' }
 
@@ -477,7 +477,7 @@ describe('Auth Store', () => {
     expect(authStore.user).toEqual(user)
   })
 
-  it('should clear user on logout', () => {
+  it('должен очистить пользователя при выходе', () => {
     const authStore = useAuthStore()
     authStore.setUser({ id: 1, email: 'test@example.com' })
 
@@ -489,9 +489,9 @@ describe('Auth Store', () => {
 })
 ```
 
-#### 3. Component Test
+#### 3. Тест компонента
 
-**File**: `src/components/ui/__tests__/BaseButton.spec.ts`
+**Файл**: `src/components/ui/__tests__/BaseButton.spec.ts`
 
 ```typescript
 import { describe, it, expect } from 'vitest'
@@ -499,7 +499,7 @@ import { mount } from '@vue/test-utils'
 import BaseButton from '../BaseButton.vue'
 
 describe('BaseButton', () => {
-  it('renders button with text', () => {
+  it('рендерит кнопку с текстом', () => {
     const wrapper = mount(BaseButton, {
       props: {
         label: 'Click me'
@@ -509,7 +509,7 @@ describe('BaseButton', () => {
     expect(wrapper.text()).toContain('Click me')
   })
 
-  it('emits click event when clicked', async () => {
+  it('генерирует событие click при клике', async () => {
     const wrapper = mount(BaseButton, {
       props: {
         label: 'Click me'
@@ -521,7 +521,7 @@ describe('BaseButton', () => {
     expect(wrapper.emitted('click')).toHaveLength(1)
   })
 
-  it('applies disabled class when disabled prop is true', () => {
+  it('применяет класс disabled когда prop disabled равен true', () => {
     const wrapper = mount(BaseButton, {
       props: {
         label: 'Click me',
@@ -534,9 +534,9 @@ describe('BaseButton', () => {
 })
 ```
 
-#### 4. Service Test
+#### 4. Тест Service
 
-**File**: `src/services/__tests__/auth.service.spec.ts`
+**Файл**: `src/services/__tests__/auth.service.spec.ts`
 
 ```typescript
 import { describe, it, expect, vi, beforeEach } from 'vitest'
@@ -550,7 +550,7 @@ describe('Auth Service', () => {
     vi.clearAllMocks()
   })
 
-  it('should call login endpoint with credentials', async () => {
+  it('должен вызвать endpoint логина с учетными данными', async () => {
     const mockResponse = {
       data: {
         token: 'jwt-token',
@@ -569,7 +569,7 @@ describe('Auth Service', () => {
     expect(result).toEqual(mockResponse.data)
   })
 
-  it('should throw error on failed login', async () => {
+  it('должен выбросить ошибку при неудачном логине', async () => {
     vi.mocked(axios.post).mockRejectedValue(new Error('Invalid credentials'))
 
     await expect(
@@ -581,62 +581,62 @@ describe('Auth Service', () => {
 
 ---
 
-## Test Writing Guidelines
+## Рекомендации по написанию тестов
 
-### General Principles
+### Общие принципы
 
-#### 1. **Arrange-Act-Assert (AAA) Pattern**
+#### 1. **Паттерн Arrange-Act-Assert (AAA)**
 
 ```typescript
-it('should do something', () => {
-  // Arrange: Setup test data and mocks
+it('должен что-то сделать', () => {
+  // Arrange: Подготовка тестовых данных и моков
   const input = { value: 10 }
   const expected = 20
 
-  // Act: Execute the function under test
+  // Act: Выполнение тестируемой функции
   const result = doubleValue(input.value)
 
-  // Assert: Verify the result
+  // Assert: Проверка результата
   expect(result).toBe(expected)
 })
 ```
 
-#### 2. **Test Isolation**
+#### 2. **Изоляция тестов**
 
-✅ **DO**: Each test should be independent
+✅ **ДЕЛАЙ**: Каждый тест должен быть независимым
 ```typescript
 describe('Calculator', () => {
   beforeEach(() => {
-    // Reset state before each test
+    // Сбросить состояние перед каждым тестом
     calculator = new Calculator()
   })
 
-  it('adds numbers', () => {
+  it('складывает числа', () => {
     expect(calculator.add(2, 3)).toBe(5)
   })
 
-  it('subtracts numbers', () => {
+  it('вычитает числа', () => {
     expect(calculator.subtract(5, 3)).toBe(2)
   })
 })
 ```
 
-❌ **DON'T**: Share state between tests
+❌ **НЕ ДЕЛАЙ**: Не используй общее состояние между тестами
 ```typescript
-let sharedValue = 0 // ❌ Bad: shared state
+let sharedValue = 0 // ❌ Плохо: общее состояние
 
-it('test 1', () => {
-  sharedValue = 5 // Affects test 2
+it('тест 1', () => {
+  sharedValue = 5 // Влияет на тест 2
 })
 
-it('test 2', () => {
-  expect(sharedValue).toBe(0) // ❌ Fails due to test 1
+it('тест 2', () => {
+  expect(sharedValue).toBe(0) // ❌ Падает из-за теста 1
 })
 ```
 
-#### 3. **Mock External Dependencies**
+#### 3. **Мокируй внешние зависимости**
 
-✅ **DO**: Mock HTTP, database, external services
+✅ **ДЕЛАЙ**: Мокируй HTTP, базу данных, внешние сервисы
 ```typescript
 vi.mock('axios', () => ({
   default: {
@@ -645,110 +645,110 @@ vi.mock('axios', () => ({
 }))
 ```
 
-❌ **DON'T**: Make real HTTP calls in tests
+❌ **НЕ ДЕЛАЙ**: Не делай реальные HTTP вызовы в тестах
 ```typescript
-// ❌ Bad: makes real HTTP call
+// ❌ Плохо: делает реальный HTTP вызов
 await axios.get('https://api.example.com/data')
 ```
 
-#### 4. **Test Behavior, Not Implementation**
+#### 4. **Тестируй поведение, а не реализацию**
 
-✅ **DO**: Test what the code does
+✅ **ДЕЛАЙ**: Тестируй что делает код
 ```typescript
-it('displays error message when login fails', () => {
-  // Test the observable behavior
+it('отображает сообщение об ошибке когда логин не удался', () => {
+  // Тестируем наблюдаемое поведение
   expect(wrapper.text()).toContain('Invalid credentials')
 })
 ```
 
-❌ **DON'T**: Test internal implementation
+❌ **НЕ ДЕЛАЙ**: Не тестируй внутреннюю реализацию
 ```typescript
-it('calls internal method', () => {
-  // ❌ Bad: testing private implementation
+it('вызывает внутренний метод', () => {
+  // ❌ Плохо: тестирование приватной реализации
   expect(component.internalMethod).toHaveBeenCalled()
 })
 ```
 
-### Backend Test Guidelines
+### Рекомендации для Backend тестов
 
-✅ **DO's**:
-- Use appropriate test type (Unit/Integration/Functional)
-- Mock all external services in Unit tests
-- Use ResetDatabase trait in Integration/Functional tests
-- Use Foundry factories for test data
-- Test happy path AND error cases
-- Test edge cases (null, empty, boundary values)
+✅ **ДЕЛАЙ**:
+- Используй подходящий тип теста (Unit/Integration/Functional)
+- Мокируй все внешние сервисы в Unit тестах
+- Используй ResetDatabase trait в Integration/Functional тестах
+- Используй Foundry фабрики для тестовых данных
+- Тестируй как happy path ТАК И случаи с ошибками
+- Тестируй граничные случаи (null, пустые значения, граничные значения)
 
-❌ **DON'Ts**:
-- Don't test framework code
-- Don't test getters/setters without logic
-- Don't skip database cleanup
-- Don't make real HTTP calls to external APIs
-- Don't share fixtures between tests
+❌ **НЕ ДЕЛАЙ**:
+- Не тестируй код фреймворка
+- Не тестируй геттеры/сеттеры без логики
+- Не пропускай очистку базы данных
+- Не делай реальные HTTP вызовы к внешним API
+- Не используй общие фикстуры между тестами
 
-### Frontend Test Guidelines
+### Рекомендации для Frontend тестов
 
-✅ **DO's**:
-- Mock external dependencies (axios, stores, composables)
-- Use `@vue/test-utils` for component mounting
-- Test user interactions (click, input, submit)
-- Test computed properties and watchers
-- Test emitted events
-- Use `beforeEach` for setup
+✅ **ДЕЛАЙ**:
+- Мокируй внешние зависимости (axios, stores, composables)
+- Используй `@vue/test-utils` для монтирования компонентов
+- Тестируй взаимодействие пользователя (click, input, submit)
+- Тестируй computed свойства и watchers
+- Тестируй генерируемые события
+- Используй `beforeEach` для настройки
 
-❌ **DON'Ts**:
-- Don't test library code (Vue, PrimeVue)
-- Don't test CSS/styling
-- Don't test implementation details (internal methods)
-- Don't make real API calls
-- Don't skip cleanup in `beforeEach`/`afterEach`
+❌ **НЕ ДЕЛАЙ**:
+- Не тестируй код библиотек (Vue, PrimeVue)
+- Не тестируй CSS/стилизацию
+- Не тестируй детали реализации (внутренние методы)
+- Не делай реальные API вызовы
+- Не пропускай очистку в `beforeEach`/`afterEach`
 
 ---
 
-## CI/CD Integration
+## Интеграция с CI/CD
 
 ### Backend CI
 
 ```bash
-# Run in CI pipeline
+# Запуск в CI pipeline
 docker exec backend-php83 vendor/bin/phpunit --coverage-text --colors=never
 ```
 
 ### Frontend CI
 
 ```bash
-# Run in CI pipeline
+# Запуск в CI pipeline
 cd frontend && npm run test:run -- --reporter=junit --coverage
 ```
 
 ---
 
-## Troubleshooting
+## Решение проблем
 
-### Backend Issues
+### Проблемы Backend
 
-**Problem**: Tests fail with database connection errors
+**Проблема**: Тесты падают с ошибками подключения к базе данных
 ```
-Solution: Ensure APP_ENV=test and database is created
+Решение: Убедись что APP_ENV=test и база данных создана
 docker exec backend-php83 php bin/console doctrine:database:create --env=test
 ```
 
-**Problem**: Tests leave data in database
+**Проблема**: Тесты оставляют данные в базе
 ```
-Solution: Use ResetDatabase trait
+Решение: Используй ResetDatabase trait
 use Zenstruck\Foundry\Test\ResetDatabase;
 ```
 
-**Problem**: Slow integration tests
+**Проблема**: Медленные интеграционные тесты
 ```
-Solution: Use DAMA DoctrineTestBundle (already configured)
+Решение: Используй DAMA DoctrineTestBundle (уже настроен)
 ```
 
-### Frontend Issues
+### Проблемы Frontend
 
-**Problem**: Tests fail with "Cannot find module"
+**Проблема**: Тесты падают с ошибкой "Cannot find module"
 ```
-Solution: Check vite.config.ts alias configuration
+Решение: Проверь конфигурацию alias в vite.config.ts
 resolve: {
   alias: {
     '@': fileURLToPath(new URL('./src', import.meta.url))
@@ -756,17 +756,17 @@ resolve: {
 }
 ```
 
-**Problem**: Tests fail with "ReferenceError: document is not defined"
+**Проблема**: Тесты падают с "ReferenceError: document is not defined"
 ```
-Solution: Ensure environment is set to 'happy-dom'
+Решение: Убедись что environment установлен в 'happy-dom'
 test: {
   environment: 'happy-dom'
 }
 ```
 
-**Problem**: Pinia store tests fail
+**Проблема**: Тесты Pinia store падают
 ```
-Solution: Create new Pinia instance in beforeEach
+Решение: Создай новый Pinia instance в beforeEach
 beforeEach(() => {
   setActivePinia(createPinia())
 })
@@ -774,14 +774,14 @@ beforeEach(() => {
 
 ---
 
-## Coverage Goals
+## Цели по покрытию
 
-### Backend Coverage Targets
+### Целевые показатели покрытия Backend
 - **Unit Tests**: >80%
 - **Integration Tests**: >70%
 - **Functional Tests**: >60%
 
-### Frontend Coverage Targets
+### Целевые показатели покрытия Frontend
 - **Components**: >70%
 - **Stores**: >80%
 - **Services**: >80%
@@ -789,14 +789,14 @@ beforeEach(() => {
 
 ---
 
-## Related Documents
+## Связанные документы
 
-- **[Development Workflow](DEVELOPMENT_WORKFLOW.md)** - Running tests in development
-- **[Backend Architecture](../backend/ARCHITECTURE.md)** - Understanding code structure
-- **[Frontend Architecture](../frontend/ARCHITECTURE.md)** - Component patterns
-- **[Troubleshooting](TROUBLESHOOTING.md)** - Common issues and fixes
+- **[Development Workflow](DEVELOPMENT_WORKFLOW.md)** - Запуск тестов в разработке
+- **[Backend Architecture](../backend/ARCHITECTURE.md)** - Понимание структуры кода
+- **[Frontend Architecture](../frontend/ARCHITECTURE.md)** - Паттерны компонентов
+- **[Troubleshooting](TROUBLESHOOTING.md)** - Распространенные проблемы и решения
 
 ---
 
-*Last updated: 2025-11-06 by Claude Code AI*
-*Documentation version: 2.0*
+*Последнее обновление: 2025-11-06 от Claude Code AI*
+*Версия документации: 2.0*
