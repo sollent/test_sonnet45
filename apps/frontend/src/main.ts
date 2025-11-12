@@ -11,11 +11,10 @@ import { setupPrimeVue } from './plugins/primevue'
 import 'primeicons/primeicons.css'
 import 'primevue/resources/themes/lara-light-blue/theme.css'
 
-// AOS Animation Library
-import 'aos/dist/aos.css'
-
 // Custom styles (after PrimeVue to allow overrides)
 import './assets/styles/main.css'
+
+// Note: AOS CSS is lazy-loaded in LandingPage.vue to reduce initial bundle size
 
 // Get initial locale for PrimeVue
 const initialLocale = getInitialLocale()

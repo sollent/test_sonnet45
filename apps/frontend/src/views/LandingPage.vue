@@ -455,10 +455,14 @@ const watchDemo = () => {
 // Lifecycle
 onMounted(() => {
   window.addEventListener('scroll', handleScroll)
-  
-  // Initialize AOS animations
+
+  // Initialize AOS animations (lazy loaded for better performance)
   if (typeof window !== 'undefined') {
-    import('aos').then(AOS => {
+    // Import both AOS library and CSS dynamically
+    Promise.all([
+      import('aos'),
+      import('aos/dist/aos.css')
+    ]).then(([AOS]) => {
       AOS.default.init({
         duration: 1000,
         once: true,
