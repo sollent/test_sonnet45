@@ -1,54 +1,54 @@
-# Troubleshooting Guide - Complete Solutions
+# Руководство по устранению неполадок - Полные решения
 
-## Table of Contents
-1. [Solved Issues](#solved-issues)
-2. [Docker Issues](#docker-issues)
-3. [Database Issues](#database-issues)
-4. [Frontend Issues](#frontend-issues)
-5. [Backend Issues](#backend-issues)
-6. [Performance Issues](#performance-issues)
-7. [Security Issues](#security-issues)
-
----
-
-## Solved Issues
-
-These are critical issues that were encountered and solved during development. Solutions are battle-tested and production-ready.
+## Содержание
+1. [Решенные проблемы](#решенные-проблемы)
+2. [Проблемы с Docker](#проблемы-с-docker)
+3. [Проблемы с базой данных](#проблемы-с-базой-данных)
+4. [Проблемы Frontend](#проблемы-frontend)
+5. [Проблемы Backend](#проблемы-backend)
+6. [Проблемы производительности](#проблемы-производительности)
+7. [Проблемы безопасности](#проблемы-безопасности)
 
 ---
 
-### 1. CORS Errors
+## Решенные проблемы
 
-**Problem:**
+Это критические проблемы, с которыми столкнулись во время разработки и которые были успешно решены. Решения проверены в боевых условиях и готовы к использованию в продакшене.
+
+---
+
+### 1. Ошибки CORS
+
+**Проблема:**
 ```
 Access to XMLHttpRequest at 'http://localhost:8089/api/tasks' from origin
 'http://localhost:3000' has been blocked by CORS policy: No
 'Access-Control-Allow-Origin' header is present on the requested resource.
 ```
 
-**Symptoms:**
-- API calls work in Postman but fail in browser
-- Console shows CORS policy errors
-- Preflight OPTIONS requests fail
-- No response data visible in Network tab
+**Симптомы:**
+- API-запросы работают в Postman, но не работают в браузере
+- В консоли отображаются ошибки политики CORS
+- Preflight OPTIONS запросы завершаются неудачей
+- Данные ответа не видны во вкладке Network
 
-**Root Cause:**
+**Корневая причина:**
 
-The CORS configuration was disabled with `paths: '^/': null` in `nelmio_cors.yaml`:
+Конфигурация CORS была отключена с помощью `paths: '^/': null` в `nelmio_cors.yaml`:
 
 ```yaml
-# BROKEN CONFIGURATION
+# НЕРАБОТАЮЩАЯ КОНФИГУРАЦИЯ
 nelmio_cors:
     paths:
-        '^/': null  # This completely DISABLES CORS!
+        '^/': null  # Это ПОЛНОСТЬЮ ОТКЛЮЧАЕТ CORS!
 ```
 
-**Solution:**
+**Решение:**
 
-**File:** `/backend/config/packages/nelmio_cors.yaml`
+**Файл:** `/backend/config/packages/nelmio_cors.yaml`
 
 ```yaml
-# WORKING CONFIGURATION
+# РАБОЧАЯ КОНФИГУРАЦИЯ
 nelmio_cors:
     defaults:
         origin_regex: true
@@ -65,31 +65,31 @@ nelmio_cors:
             max_age: 3600
 ```
 
-**Step-by-Step Fix:**
+**Пошаговое исправление:**
 
-1. Edit `/backend/config/packages/nelmio_cors.yaml`
-2. Replace entire content with working configuration above
-3. Rebuild Docker containers:
+1. Отредактируйте `/backend/config/packages/nelmio_cors.yaml`
+2. Замените всё содержимое на рабочую конфигурацию выше
+3. Пересоберите Docker-контейнеры:
    ```bash
    docker-compose down
    docker-compose up -d --build
    ```
-4. Test in browser console:
+4. Проверьте в консоли браузера:
    ```javascript
    fetch('http://localhost:8089/api/tasks', {
      headers: { 'Authorization': 'Bearer YOUR_TOKEN' }
    }).then(r => r.json()).then(console.log)
    ```
 
-**Prevention:**
-- Never use `paths: '^/': null` - it disables CORS entirely
-- Always specify explicit paths like `'^/api'`
-- Test API calls from frontend before deployment
-- Use browser DevTools Network tab to inspect CORS headers
+**Предотвращение:**
+- Никогда не используйте `paths: '^/': null` - это полностью отключает CORS
+- Всегда указывайте явные пути типа `'^/api'`
+- Тестируйте API-вызовы из frontend перед деплоем
+- Используйте вкладку Network в DevTools браузера для проверки CORS-заголовков
 
-**Verification:**
+**Проверка:**
 
-Check that response includes these headers:
+Убедитесь, что ответ включает эти заголовки:
 ```http
 Access-Control-Allow-Origin: *
 Access-Control-Allow-Methods: GET, OPTIONS, POST, PUT, PATCH, DELETE
@@ -98,47 +98,47 @@ Access-Control-Allow-Headers: Content-Type, Authorization
 
 ---
 
-### 2. Date Shifting (Timezone Issue)
+### 2. Сдвиг дат (проблема с временными зонами)
 
-**Problem:**
+**Проблема:**
 ```javascript
-// User selects: 2025-01-15
-// Backend receives: 2025-01-14T23:00:00Z
-// Database stores: 2025-01-14
-// Frontend displays: 2025-01-14 (wrong!)
+// Пользователь выбирает: 2025-01-15
+// Backend получает: 2025-01-14T23:00:00Z
+// База данных хранит: 2025-01-14
+// Frontend отображает: 2025-01-14 (неправильно!)
 ```
 
-**Symptoms:**
-- Dates shift backward by 1 day
-- Tasks appear on wrong day in calendar
-- Due dates are one day earlier than selected
-- Timezone-related errors in browser console
+**Симптомы:**
+- Даты сдвигаются назад на 1 день
+- Задачи появляются на неправильный день в календаре
+- Сроки выполнения на день раньше, чем были выбраны
+- Ошибки, связанные с временными зонами, в консоли браузера
 
-**Root Cause:**
+**Корневая причина:**
 
-JavaScript `Date.toISOString()` converts to UTC, but users work in local timezone:
+JavaScript `Date.toISOString()` конвертирует в UTC, но пользователи работают в локальной временной зоне:
 
 ```javascript
-// BROKEN CODE
-const date = new Date('2025-01-15'); // Local midnight
-date.toISOString(); // "2025-01-14T23:00:00.000Z" (UTC, shifted!)
+// НЕРАБОТАЮЩИЙ КОД
+const date = new Date('2025-01-15'); // Локальная полночь
+date.toISOString(); // "2025-01-14T23:00:00.000Z" (UTC, сдвинуто!)
 ```
 
-**Solution:**
+**Решение:**
 
-Create utility function that preserves local timezone:
+Создайте утилитарную функцию, которая сохраняет локальную временную зону:
 
-**File:** `/frontend/src/utils/dateUtils.ts`
+**Файл:** `/frontend/src/utils/dateUtils.ts`
 
 ```typescript
 /**
- * Format date for API (preserves local timezone)
+ * Форматирование даты для API (сохраняет локальную временную зону)
  *
- * PROBLEM: toISOString() converts to UTC, shifting dates
- * SOLUTION: Manually format using local timezone
+ * ПРОБЛЕМА: toISOString() конвертирует в UTC, сдвигая даты
+ * РЕШЕНИЕ: Форматируем вручную с использованием локальной временной зоны
  *
- * @param date - Date to format
- * @returns ISO 8601 string in local timezone (e.g., "2025-01-15T00:00:00+03:00")
+ * @param date - Дата для форматирования
+ * @returns ISO 8601 строка в локальной временной зоне (например, "2025-01-15T00:00:00+03:00")
  */
 export function formatDateForApi(date: Date | null): string | null {
   if (!date) return null;
@@ -150,7 +150,7 @@ export function formatDateForApi(date: Date | null): string | null {
   const minutes = String(date.getMinutes()).padStart(2, '0');
   const seconds = String(date.getSeconds()).padStart(2, '0');
 
-  // Get timezone offset in format "+03:00" or "-05:00"
+  // Получаем смещение временной зоны в формате "+03:00" или "-05:00"
   const tzOffset = -date.getTimezoneOffset();
   const tzHours = String(Math.floor(Math.abs(tzOffset) / 60)).padStart(2, '0');
   const tzMinutes = String(Math.abs(tzOffset) % 60).padStart(2, '0');
@@ -160,7 +160,7 @@ export function formatDateForApi(date: Date | null): string | null {
 }
 
 /**
- * Format date as YYYY-MM-DD (for date pickers)
+ * Форматирование даты как YYYY-MM-DD (для date pickers)
  */
 export function formatDateOnly(date: Date | null): string | null {
   if (!date) return null;
@@ -173,15 +173,15 @@ export function formatDateOnly(date: Date | null): string | null {
 }
 ```
 
-**Usage:**
+**Использование:**
 
 ```typescript
-// BEFORE (BROKEN)
+// ДО (НЕРАБОТАЕТ)
 const task = {
   dueDate: new Date('2025-01-15').toISOString() // "2025-01-14T23:00:00.000Z" ❌
 };
 
-// AFTER (WORKING)
+// ПОСЛЕ (РАБОТАЕТ)
 import { formatDateForApi } from '@/utils/dateUtils';
 
 const task = {
@@ -189,36 +189,36 @@ const task = {
 };
 ```
 
-**Step-by-Step Fix:**
+**Пошаговое исправление:**
 
-1. Create `formatDateForApi()` function in dateUtils.ts
-2. Find all `.toISOString()` calls in codebase:
+1. Создайте функцию `formatDateForApi()` в dateUtils.ts
+2. Найдите все вызовы `.toISOString()` в кодовой базе:
    ```bash
    grep -r "toISOString()" frontend/src/
    ```
-3. Replace with `formatDateForApi()`:
+3. Замените на `formatDateForApi()`:
    ```typescript
-   // Task creation/update
+   // Создание/обновление задачи
    dueDate: formatDateForApi(formData.dueDate)
 
-   // Date filters
+   // Фильтры по дате
    dateFrom: formatDateOnly(filters.dateFrom)
    ```
-4. Test date selection:
-   - Select 2025-01-15 in date picker
-   - Check network request payload
-   - Verify backend receives 2025-01-15, not 2025-01-14
+4. Протестируйте выбор даты:
+   - Выберите 2025-01-15 в date picker
+   - Проверьте payload сетевого запроса
+   - Убедитесь, что backend получает 2025-01-15, а не 2025-01-14
 
-**Prevention:**
-- Never use `.toISOString()` for user-facing dates
-- Always use timezone-aware formatting
-- Test with different timezones (UTC, EST, PST, JST)
-- Document timezone handling in API docs
+**Предотвращение:**
+- Никогда не используйте `.toISOString()` для пользовательских дат
+- Всегда используйте форматирование с учетом временной зоны
+- Тестируйте с разными временными зонами (UTC, EST, PST, JST)
+- Документируйте обработку временных зон в документации API
 
-**Verification:**
+**Проверка:**
 
 ```typescript
-// Test in browser console
+// Тест в консоли браузера
 import { formatDateForApi } from '@/utils/dateUtils';
 
 const date = new Date('2025-01-15');
@@ -231,41 +231,41 @@ console.log('formatDateForApi():', formatDateForApi(date));
 
 ---
 
-### 3. UI Blinking on Updates
+### 3. Мигание UI при обновлениях
 
-**Problem:**
+**Проблема:**
 
-Every time a task is updated (title change, completion toggle), the entire task list reloads, causing:
-- Visible flicker/blink
-- Scroll position jumps to top
-- Loading spinner appears briefly
-- Poor user experience
+Каждый раз, когда задача обновляется (изменение заголовка, переключение завершения), весь список задач перезагружается, вызывая:
+- Видимое мигание/вспышка
+- Прыжок позиции прокрутки наверх
+- Кратковременное появление спиннера загрузки
+- Плохой пользовательский опыт
 
-**Symptoms:**
-- UI feels sluggish
-- Tasks disappear and reappear
-- Animations restart
-- State resets (expanded items collapse)
+**Симптомы:**
+- UI ощущается медленным
+- Задачи исчезают и появляются снова
+- Анимации перезапускаются
+- Состояние сбрасывается (развернутые элементы сворачиваются)
 
-**Root Cause:**
+**Корневая причина:**
 
-After every task mutation, the app fetched the entire task list from the API:
+После каждой мутации задачи приложение получало весь список задач с API:
 
 ```typescript
-// BEFORE (causes UI blinking)
+// ДО (вызывает мигание UI)
 const updateTask = async (taskId: number, updates: Partial<Task>) => {
   await api.put(`/tasks/${taskId}`, updates);
 
-  // This fetches ALL tasks again, replacing entire list
-  await fetchTasks(); // ❌ Causes UI to reload
+  // Это получает ВСЕ задачи снова, заменяя весь список
+  await fetchTasks(); // ❌ Вызывает перезагрузку UI
 };
 ```
 
-**Solution:**
+**Решение:**
 
-Use **point updates** - update only the specific task in the local state without refetching:
+Используйте **точечные обновления** - обновляйте только конкретную задачу в локальном состоянии без повторного получения:
 
-**File:** `/frontend/src/stores/taskStore.ts`
+**Файл:** `/frontend/src/stores/taskStore.ts`
 
 ```typescript
 import { defineStore } from 'pinia';
@@ -280,59 +280,59 @@ export const useTaskStore = defineStore('tasks', {
 
   actions: {
     /**
-     * Update task in local state (point update - no refetch)
+     * Обновление задачи в локальном состоянии (точечное обновление - без повторного получения)
      */
     updateTaskInState(taskId: number, updates: Partial<Task>) {
       const index = this.tasks.findIndex(t => t.id === taskId);
       if (index !== -1) {
-        // Merge updates into existing task
+        // Объединяем обновления с существующей задачей
         this.tasks[index] = { ...this.tasks[index], ...updates };
       }
     },
 
     /**
-     * Update task on backend and in local state
+     * Обновление задачи на backend и в локальном состоянии
      */
     async updateTask(taskId: number, updates: Partial<Task>) {
       try {
-        // 1. Send update to backend
+        // 1. Отправляем обновление на backend
         const { data } = await api.put(`/tasks/${taskId}`, updates);
 
-        // 2. Update local state with response (no refetch!)
+        // 2. Обновляем локальное состояние ответом (без повторного получения!)
         this.updateTaskInState(taskId, data);
 
         return data;
       } catch (error) {
-        console.error('Failed to update task:', error);
+        console.error('Не удалось обновить задачу:', error);
         throw error;
       }
     },
 
     /**
-     * Toggle task completion
+     * Переключение завершения задачи
      */
     async toggleTaskCompletion(taskId: number) {
       try {
         const { data } = await api.post(`/tasks/${taskId}/toggle`);
 
-        // Update local state (no refetch!)
+        // Обновляем локальное состояние (без повторного получения!)
         this.updateTaskInState(taskId, data);
 
         return data;
       } catch (error) {
-        console.error('Failed to toggle task:', error);
+        console.error('Не удалось переключить задачу:', error);
         throw error;
       }
     },
 
     /**
-     * Fetch all tasks (only call on mount or explicit refresh)
+     * Получение всех задач (вызывать только при монтировании или явном обновлении)
      */
     async fetchTasks(filters?: TaskFilters) {
       this.loading = true;
       try {
         const { data } = await api.get('/tasks', { params: filters });
-        this.tasks = data; // Replace entire list
+        this.tasks = data; // Заменяем весь список
       } finally {
         this.loading = false;
       }
@@ -341,7 +341,7 @@ export const useTaskStore = defineStore('tasks', {
 });
 ```
 
-**Usage in Components:**
+**Использование в компонентах:**
 
 ```vue
 <script setup lang="ts">
@@ -349,68 +349,68 @@ import { useTaskStore } from '@/stores/taskStore';
 
 const taskStore = useTaskStore();
 
-// BEFORE (causes blinking)
+// ДО (вызывает мигание)
 const handleComplete = async (taskId: number) => {
   await api.post(`/tasks/${taskId}/complete`);
-  await taskStore.fetchTasks(); // ❌ Refetches all tasks
+  await taskStore.fetchTasks(); // ❌ Получает все задачи снова
 };
 
-// AFTER (smooth update)
+// ПОСЛЕ (плавное обновление)
 const handleComplete = async (taskId: number) => {
-  await taskStore.toggleTaskCompletion(taskId); // ✅ Updates only this task
+  await taskStore.toggleTaskCompletion(taskId); // ✅ Обновляет только эту задачу
 };
 </script>
 ```
 
-**Step-by-Step Fix:**
+**Пошаговое исправление:**
 
-1. Add `updateTaskInState()` method to store
-2. Replace `fetchTasks()` calls after mutations with point updates
-3. Use backend response to update local state
-4. Only call `fetchTasks()` on:
-   - Component mount
-   - Manual refresh button
-   - Navigation between views
+1. Добавьте метод `updateTaskInState()` в store
+2. Замените вызовы `fetchTasks()` после мутаций на точечные обновления
+3. Используйте ответ backend для обновления локального состояния
+4. Вызывайте `fetchTasks()` только при:
+   - Монтировании компонента
+   - Нажатии кнопки ручного обновления
+   - Навигации между представлениями
 
-**Prevention:**
-- Implement optimistic updates (update UI before API call)
-- Use WebSocket for real-time updates
-- Debounce rapid mutations
-- Show subtle loading indicators (not full list reload)
+**Предотвращение:**
+- Реализуйте оптимистичные обновления (обновляйте UI перед API-вызовом)
+- Используйте WebSocket для обновлений в реальном времени
+- Применяйте debounce для быстрых мутаций
+- Показывайте тонкие индикаторы загрузки (не полную перезагрузку списка)
 
-**Verification:**
+**Проверка:**
 
 ```typescript
-// Test in browser console
+// Тест в консоли браузера
 const taskStore = useTaskStore();
 
-// Watch for list reloads
+// Отслеживаем перезагрузки списка
 let reloadCount = 0;
 taskStore.$subscribe((mutation, state) => {
-  console.log('Store updated:', ++reloadCount);
+  console.log('Store обновлен:', ++reloadCount);
 });
 
-// Toggle task completion
+// Переключаем завершение задачи
 await taskStore.toggleTaskCompletion(123);
-// Should log only 1 update, not 2 (update + refetch)
+// Должно залогировать только 1 обновление, а не 2 (обновление + повторное получение)
 ```
 
 ---
 
-### 4. Subtasks Not Updating
+### 4. Подзадачи не обновляются
 
-**Problem:**
+**Проблема:**
 
-When a subtask is completed, the parent task's `completionProgress` doesn't update in the UI. Refresh is required to see changes.
+Когда подзадача завершается, `completionProgress` родительской задачи не обновляется в UI. Требуется обновление для просмотра изменений.
 
-**Symptoms:**
-- Progress bar shows outdated value
-- `subtaskCount` and `completedSubtaskCount` don't change
-- Parent task UI doesn't react to subtask changes
+**Симптомы:**
+- Прогресс-бар показывает устаревшее значение
+- `subtaskCount` и `completedSubtaskCount` не меняются
+- UI родительской задачи не реагирует на изменения подзадач
 
-**Root Cause:**
+**Корневая причина:**
 
-Vue 3 reactivity doesn't track nested object mutations deeply:
+Реактивность Vue 3 не отслеживает глубокие мутации вложенных объектов:
 
 ```vue
 <script setup lang="ts">
@@ -424,17 +424,17 @@ const task = ref({
   completionProgress: 0
 });
 
-// This doesn't trigger reactivity!
-task.value.subtasks[0].isCompleted = true; // ❌ Not reactive
-task.value.completionProgress = 50; // ❌ Not reactive
+// Это не вызывает реактивность!
+task.value.subtasks[0].isCompleted = true; // ❌ Не реактивно
+task.value.completionProgress = 50; // ❌ Не реактивно
 </script>
 ```
 
-**Solution:**
+**Решение:**
 
-Create composable that handles subtask updates with proper reactivity:
+Создайте composable, который обрабатывает обновления подзадач с правильной реактивностью:
 
-**File:** `/frontend/src/composables/useTaskCompletion.ts`
+**Файл:** `/frontend/src/composables/useTaskCompletion.ts`
 
 ```typescript
 import { ref, computed } from 'vue';
@@ -445,27 +445,27 @@ export function useTaskCompletion(task: Ref<Task>) {
   const isUpdating = ref(false);
 
   /**
-   * Toggle subtask completion with reactivity
+   * Переключение завершения подзадачи с реактивностью
    */
   const toggleSubtask = async (subtaskId: number) => {
     isUpdating.value = true;
 
     try {
-      // 1. Call API
+      // 1. Вызов API
       const { data } = await api.post(`/tasks/${subtaskId}/toggle`);
 
-      // 2. Find subtask in array
+      // 2. Находим подзадачу в массиве
       const subtaskIndex = task.value.subtasks.findIndex(st => st.id === subtaskId);
 
       if (subtaskIndex !== -1) {
-        // 3. Create NEW subtask object (triggers reactivity)
+        // 3. Создаем НОВЫЙ объект подзадачи (вызывает реактивность)
         task.value.subtasks[subtaskIndex] = { ...data };
 
-        // 4. Recalculate parent task progress
+        // 4. Пересчитываем прогресс родительской задачи
         const completedCount = task.value.subtasks.filter(st => st.isCompleted).length;
         const totalCount = task.value.subtasks.length;
 
-        // 5. Update parent task (create NEW object to trigger reactivity)
+        // 5. Обновляем родительскую задачу (создаем НОВЫЙ объект для вызова реактивности)
         task.value = {
           ...task.value,
           completedSubtaskCount: completedCount,
@@ -475,7 +475,7 @@ export function useTaskCompletion(task: Ref<Task>) {
 
       return data;
     } catch (error) {
-      console.error('Failed to toggle subtask:', error);
+      console.error('Не удалось переключить подзадачу:', error);
       throw error;
     } finally {
       isUpdating.value = false;
@@ -483,19 +483,19 @@ export function useTaskCompletion(task: Ref<Task>) {
   };
 
   /**
-   * Computed progress percentage
+   * Вычисляемый процент прогресса
    */
   const progressPercentage = computed(() => {
     return Math.round(task.value.completionProgress);
   });
 
   /**
-   * Computed progress label
+   * Вычисляемая метка прогресса
    */
   const progressLabel = computed(() => {
     const completed = task.value.completedSubtaskCount;
     const total = task.value.subtaskCount;
-    return `${completed}/${total} completed`;
+    return `${completed}/${total} выполнено`;
   });
 
   return {
@@ -507,14 +507,14 @@ export function useTaskCompletion(task: Ref<Task>) {
 }
 ```
 
-**Usage:**
+**Использование:**
 
 ```vue
 <template>
   <div class="task-card">
     <h3>{{ task.title }}</h3>
 
-    <!-- Progress bar -->
+    <!-- Прогресс-бар -->
     <div class="progress">
       <div
         class="progress-bar"
@@ -523,7 +523,7 @@ export function useTaskCompletion(task: Ref<Task>) {
       <span>{{ progressLabel }}</span>
     </div>
 
-    <!-- Subtasks -->
+    <!-- Подзадачи -->
     <div class="subtasks">
       <div
         v-for="subtask in task.subtasks"
@@ -551,101 +551,101 @@ const props = defineProps<{
   task: Task
 }>();
 
-// Make task reactive
+// Делаем задачу реактивной
 const task = ref(props.task);
 
-// Use composable
+// Используем composable
 const { toggleSubtask, isUpdating, progressPercentage, progressLabel } = useTaskCompletion(task);
 </script>
 ```
 
-**Step-by-Step Fix:**
+**Пошаговое исправление:**
 
-1. Create `useTaskCompletion` composable
-2. Replace direct property mutations with composable methods
-3. Always create NEW objects when updating (spread operator)
-4. Use computed properties for derived values
-5. Test reactivity in Vue DevTools
+1. Создайте composable `useTaskCompletion`
+2. Замените прямые мутации свойств на методы composable
+3. Всегда создавайте НОВЫЕ объекты при обновлении (оператор spread)
+4. Используйте computed свойства для производных значений
+5. Тестируйте реактивность в Vue DevTools
 
-**Prevention:**
-- Use composables for complex state updates
-- Never mutate nested objects directly
-- Always create new objects/arrays when updating
-- Use Vue DevTools to verify reactivity
+**Предотвращение:**
+- Используйте composables для сложных обновлений состояния
+- Никогда не изменяйте вложенные объекты напрямую
+- Всегда создавайте новые объекты/массивы при обновлении
+- Используйте Vue DevTools для проверки реактивности
 
-**Verification:**
+**Проверка:**
 
 ```typescript
-// Test in Vue DevTools
+// Тест в Vue DevTools
 const task = ref({
   id: 1,
   subtasks: [{ id: 2, isCompleted: false }],
   completionProgress: 0
 });
 
-// Toggle subtask
+// Переключаем подзадачу
 await toggleSubtask(2);
 
-// Check that these updated:
-console.log(task.value.completionProgress); // Should be 100
-console.log(task.value.completedSubtaskCount); // Should be 1
+// Проверяем, что эти значения обновились:
+console.log(task.value.completionProgress); // Должно быть 100
+console.log(task.value.completedSubtaskCount); // Должно быть 1
 ```
 
 ---
 
-## Docker Issues
+## Проблемы с Docker
 
-### Container Won't Start
+### Контейнер не запускается
 
-**Error:**
+**Ошибка:**
 ```
 ERROR: for ultra_backend  Cannot start service backend: driver failed programming external connectivity
 Error starting userland proxy: listen tcp4 0.0.0.0:8089: bind: address already in use
 ```
 
-**Diagnosis:**
+**Диагностика:**
 ```bash
-# Find process using port 8089
+# Найти процесс, использующий порт 8089
 lsof -i :8089
-# or
+# или
 netstat -tulpn | grep 8089
 
-# Output shows:
+# Вывод показывает:
 php-fpm   12345  user    8u  IPv4  0x123456789  0t0  TCP *:8089 (LISTEN)
 ```
 
-**Solution:**
+**Решение:**
 
 ```bash
-# Option 1: Kill process
+# Вариант 1: Убить процесс
 kill -9 12345
 
-# Option 2: Change port in docker-compose.yml
+# Вариант 2: Изменить порт в docker-compose.yml
 services:
   backend:
     ports:
-      - "8090:80"  # Changed from 8089 to 8090
+      - "8090:80"  # Изменено с 8089 на 8090
 
-# Restart containers
+# Перезапустить контейнеры
 docker-compose down
 docker-compose up -d
 ```
 
-**Prevention:**
-- Use unique ports for each project
-- Document port usage in README
-- Add port check to startup script
+**Предотвращение:**
+- Используйте уникальные порты для каждого проекта
+- Документируйте использование портов в README
+- Добавьте проверку портов в скрипт запуска
 
 ---
 
-### Port Conflicts
+### Конфликты портов
 
-**Common Ports:**
+**Распространенные порты:**
 - 8089 - Backend (PHP-FPM)
 - 3000 - Frontend (Vite)
 - 5432 - PostgreSQL
 
-**Check All Ports:**
+**Проверка всех портов:**
 ```bash
 # macOS/Linux
 lsof -i :8089 -i :3000 -i :5432
@@ -654,31 +654,31 @@ lsof -i :8089 -i :3000 -i :5432
 netstat -ano | findstr "8089 3000 5432"
 ```
 
-**Fix Port Conflicts:**
+**Исправление конфликтов портов:**
 
-Edit `docker-compose.yml`:
+Отредактируйте `docker-compose.yml`:
 ```yaml
 services:
   backend:
     ports:
-      - "8090:80"  # Changed from 8089
+      - "8090:80"  # Изменено с 8089
 
   frontend:
     ports:
-      - "3001:3000"  # Changed from 3000
+      - "3001:3000"  # Изменено с 3000
 
   postgres:
     ports:
-      - "5433:5432"  # Changed from 5432
+      - "5433:5432"  # Изменено с 5432
 ```
 
-Don't forget to update `.env` files!
+Не забудьте обновить файлы `.env`!
 
 ---
 
-### Permission Errors
+### Ошибки прав доступа
 
-**Error:**
+**Ошибка:**
 ```
 ERROR: for ultra_backend  Cannot start service backend:
 OCI runtime create failed: container_linux.go:380: starting container process caused:
@@ -687,73 +687,73 @@ to rootfs at "/var/www" caused: mkdir /var/lib/docker/overlay2/abc123/merged/var
 permission denied
 ```
 
-**Solution:**
+**Решение:**
 
 ```bash
-# Fix ownership
+# Исправить владельца
 sudo chown -R $USER:$USER backend/
 sudo chown -R $USER:$USER frontend/
 
-# Fix permissions
+# Исправить права
 sudo chmod -R 755 backend/var/
 sudo chmod -R 777 backend/var/log/
 
-# Rebuild
+# Пересобрать
 docker-compose down
 docker-compose up -d --build
 ```
 
 ---
 
-### Volume Mounting Issues
+### Проблемы монтирования томов
 
-**Error:**
+**Ошибка:**
 ```
 ERROR: for ultra_backend  Cannot create container for service backend:
 failed to mount local volume: mount /path/to/backend:/var/www:ro, flags: 0x1000:
 no such file or directory
 ```
 
-**Solution:**
+**Решение:**
 
 ```bash
-# Create missing directories
+# Создать отсутствующие директории
 mkdir -p backend/var/log
 mkdir -p backend/public/uploads
 
-# Fix docker-compose.yml paths
+# Исправить пути в docker-compose.yml
 services:
   backend:
     volumes:
-      - ./backend:/var/www  # Use relative paths
-      - ./backend/var:/var/www/var  # Mount var directory
+      - ./backend:/var/www  # Используйте относительные пути
+      - ./backend/var:/var/www/var  # Смонтировать директорию var
 
-# Restart
+# Перезапустить
 docker-compose up -d
 ```
 
 ---
 
-## Database Issues
+## Проблемы с базой данных
 
-### Migration Errors
+### Ошибки миграций
 
-**Error:**
+**Ошибка:**
 ```
 An exception occurred while executing a query: SQLSTATE[42P01]:
 Undefined table: 7 ERROR: relation "task" does not exist
 ```
 
-**Solution:**
+**Решение:**
 
 ```bash
-# Check migration status
+# Проверить статус миграций
 docker exec -it ultra_backend php bin/console doctrine:migrations:status
 
-# Run migrations
+# Запустить миграции
 docker exec -it ultra_backend php bin/console doctrine:migrations:migrate
 
-# If migrations fail, reset database
+# Если миграции не удаются, сбросить базу данных
 docker exec -it ultra_backend php bin/console doctrine:database:drop --force
 docker exec -it ultra_backend php bin/console doctrine:database:create
 docker exec -it ultra_backend php bin/console doctrine:migrations:migrate
@@ -761,57 +761,57 @@ docker exec -it ultra_backend php bin/console doctrine:migrations:migrate
 
 ---
 
-### Connection Pool Exhausted
+### Пул соединений исчерпан
 
-**Error:**
+**Ошибка:**
 ```
 SQLSTATE[08006] [7] FATAL: sorry, too many clients already
 Connection pool exhausted
 ```
 
-**Diagnosis:**
+**Диагностика:**
 ```bash
-# Connect to PostgreSQL
+# Подключиться к PostgreSQL
 docker exec -it ultra_postgres psql -U postgres
 
-# Check active connections
+# Проверить активные соединения
 SELECT count(*) FROM pg_stat_activity;
 
-# Show max connections
+# Показать максимум соединений
 SHOW max_connections;
 ```
 
-**Solution:**
+**Решение:**
 
-Edit `docker-compose.yml`:
+Отредактируйте `docker-compose.yml`:
 ```yaml
 services:
   postgres:
     image: postgres:15-alpine
     command: postgres -c max_connections=200
-    #                    ↑ Increase from default 100
+    #                    ↑ Увеличено с дефолтных 100
 ```
 
-Edit `backend/config/packages/doctrine.yaml`:
+Отредактируйте `backend/config/packages/doctrine.yaml`:
 ```yaml
 doctrine:
     dbal:
         connections:
             default:
                 options:
-                    # Limit connections per worker
+                    # Ограничить соединения на worker
                     max_connections: 10
 ```
 
 ---
 
-### Slow Queries (N+1 Problem)
+### Медленные запросы (проблема N+1)
 
-**Error:** API responses take 2-5 seconds
+**Ошибка:** API-ответы занимают 2-5 секунд
 
-**Diagnosis:**
+**Диагностика:**
 
-Enable query logging in `doctrine.yaml`:
+Включите логирование запросов в `doctrine.yaml`:
 ```yaml
 doctrine:
     dbal:
@@ -819,23 +819,23 @@ doctrine:
         profiling: true
 ```
 
-Check logs:
+Проверьте логи:
 ```bash
 docker exec -it ultra_backend tail -f var/log/dev.log | grep "SELECT"
 
-# Output shows repeated queries:
+# Вывод показывает повторяющиеся запросы:
 SELECT * FROM task WHERE id = 1
 SELECT * FROM task WHERE id = 2
 SELECT * FROM task WHERE id = 3
-# ... 500 queries! (N+1 problem)
+# ... 500 запросов! (проблема N+1)
 ```
 
-**Solution:**
+**Решение:**
 
-Use `JOIN` queries in repositories:
+Используйте `JOIN` запросы в репозиториях:
 
 ```php
-// BEFORE (N+1 problem)
+// ДО (проблема N+1)
 public function findActiveTasks(User $user): array
 {
     $tasks = $this->createQueryBuilder('t')
@@ -844,15 +844,15 @@ public function findActiveTasks(User $user): array
         ->getQuery()
         ->getResult();
 
-    // Each task triggers separate query for tags!
+    // Каждая задача вызывает отдельный запрос для тегов!
     foreach ($tasks as $task) {
-        $task->getTags(); // Extra query
+        $task->getTags(); // Дополнительный запрос
     }
 
     return $tasks;
 }
 
-// AFTER (Single query with JOIN)
+// ПОСЛЕ (Один запрос с JOIN)
 public function findActiveTasks(User $user): array
 {
     return $this->createQueryBuilder('t')
@@ -870,22 +870,22 @@ public function findActiveTasks(User $user): array
 
 ---
 
-### Deadlocks
+### Взаимоблокировки (Deadlocks)
 
-**Error:**
+**Ошибка:**
 ```
 SQLSTATE[40P01]: Deadlock detected: 7 ERROR: deadlock detected
 DETAIL: Process 12345 waits for ShareLock on transaction 67890
 ```
 
-**Solution:**
+**Решение:**
 
-1. Use consistent lock order
-2. Keep transactions short
-3. Use optimistic locking
+1. Используйте последовательный порядок блокировок
+2. Держите транзакции короткими
+3. Используйте оптимистичную блокировку
 
 ```php
-// Add version field to entity
+// Добавьте поле version в entity
 #[ORM\Entity]
 #[ORM\HasLifecycleCallbacks]
 class Task
@@ -895,77 +895,77 @@ class Task
     private int $version;
 }
 
-// Doctrine will check version on update
+// Doctrine будет проверять версию при обновлении
 try {
     $task->setTitle('Updated');
     $this->entityManager->flush();
 } catch (OptimisticLockException $e) {
-    // Handle concurrent modification
-    throw new ConflictException('Task was modified by another user');
+    // Обработка одновременной модификации
+    throw new ConflictException('Задача была изменена другим пользователем');
 }
 ```
 
 ---
 
-## Frontend Issues
+## Проблемы Frontend
 
-### Type Errors in Strict Mode
+### Ошибки типов в строгом режиме
 
-**Error:**
+**Ошибка:**
 ```typescript
 TS2345: Argument of type 'number | null' is not assignable to parameter of type 'number'.
   Type 'null' is not assignable to type 'number'.
 ```
 
-**Solution:**
+**Решение:**
 
-Use type guards:
+Используйте type guards:
 
 ```typescript
-// BEFORE (type error)
+// ДО (ошибка типов)
 const updateTask = (taskId: number | null) => {
-  api.put(`/tasks/${taskId}`, data); // ❌ taskId might be null
+  api.put(`/tasks/${taskId}`, data); // ❌ taskId может быть null
 };
 
-// AFTER (type safe)
+// ПОСЛЕ (type safe)
 const updateTask = (taskId: number | null) => {
   if (!taskId) {
-    console.error('Task ID is required');
+    console.error('Task ID обязателен');
     return;
   }
 
-  api.put(`/tasks/${taskId}`, data); // ✅ taskId is number
+  api.put(`/tasks/${taskId}`, data); // ✅ taskId это number
 };
 
-// Or use non-null assertion (when you're sure it's not null)
+// Или используйте non-null assertion (когда уверены, что не null)
 const updateTask = (taskId: number | null) => {
-  api.put(`/tasks/${taskId!}`, data); // ⚠️ Use with caution
+  api.put(`/tasks/${taskId!}`, data); // ⚠️ Используйте с осторожностью
 };
 ```
 
 ---
 
-### Pinia Store Not Reactive
+### Pinia Store не реактивен
 
-**Problem:** Store updates don't trigger component re-renders
+**Проблема:** Обновления store не вызывают повторный рендеринг компонентов
 
-**Solution:**
+**Решение:**
 
 ```typescript
-// WRONG - Direct mutation doesn't trigger reactivity
+// НЕПРАВИЛЬНО - Прямая мутация не вызывает реактивность
 const taskStore = useTaskStore();
 taskStore.tasks[0].title = 'Updated'; // ❌
 
-// CORRECT - Use actions
+// ПРАВИЛЬНО - Используйте actions
 const taskStore = useTaskStore();
 taskStore.updateTask(taskId, { title: 'Updated' }); // ✅
 
-// Or use $patch for bulk updates
+// Или используйте $patch для массовых обновлений
 taskStore.$patch({
-  tasks: [...taskStore.tasks] // Create new array
+  tasks: [...taskStore.tasks] // Создать новый массив
 });
 
-// Or use $state (replaces entire state)
+// Или используйте $state (заменяет всё состояние)
 taskStore.$state = {
   ...taskStore.$state,
   tasks: updatedTasks
@@ -974,19 +974,19 @@ taskStore.$state = {
 
 ---
 
-### API Calls Failing
+### API-вызовы не работают
 
-**Error:**
+**Ошибка:**
 ```
 TypeError: Cannot read property 'data' of undefined
 Network Error
 CORS Error
 ```
 
-**Diagnosis:**
+**Диагностика:**
 
 ```typescript
-// Enable Axios interceptor logging
+// Включить логирование Axios interceptor
 api.interceptors.request.use(config => {
   console.log('Request:', config.method, config.url, config.data);
   return config;
@@ -1004,15 +1004,15 @@ api.interceptors.response.use(
 );
 ```
 
-**Common Fixes:**
+**Распространенные исправления:**
 
-1. **CORS** - Check backend CORS config (see [CORS Errors](#1-cors-errors))
-2. **Auth** - Verify JWT token in localStorage
-3. **Base URL** - Check `.env` file:
+1. **CORS** - Проверьте конфигурацию CORS на backend (см. [Ошибки CORS](#1-ошибки-cors))
+2. **Auth** - Проверьте JWT токен в localStorage
+3. **Base URL** - Проверьте файл `.env`:
    ```env
    VITE_API_BASE_URL=http://localhost:8089/api
    ```
-4. **Network** - Verify backend container is running:
+4. **Network** - Убедитесь, что backend контейнер запущен:
    ```bash
    docker ps | grep backend
    curl http://localhost:8089/api/tasks
@@ -1020,28 +1020,28 @@ api.interceptors.response.use(
 
 ---
 
-### Token Refresh Infinite Loop
+### Бесконечный цикл обновления токена
 
-**Problem:** App keeps refreshing token in loop
+**Проблема:** Приложение продолжает обновлять токен в цикле
 
-**Diagnosis:**
+**Диагностика:**
 
 ```javascript
-// Check localStorage
+// Проверить localStorage
 localStorage.getItem('token');
 localStorage.getItem('refreshToken');
 
-// Check if tokens are expired
+// Проверить, истекли ли токены
 function isTokenExpired(token) {
   const decoded = JSON.parse(atob(token.split('.')[1]));
   return decoded.exp * 1000 < Date.now();
 }
 
-console.log('Access token expired:', isTokenExpired(accessToken));
-console.log('Refresh token expired:', isTokenExpired(refreshToken));
+console.log('Access token истек:', isTokenExpired(accessToken));
+console.log('Refresh token истек:', isTokenExpired(refreshToken));
 ```
 
-**Solution:**
+**Решение:**
 
 ```typescript
 // auth.ts
@@ -1055,7 +1055,7 @@ api.interceptors.response.use(
 
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
-        // Wait for refresh to complete
+        // Ждать завершения обновления
         return new Promise(resolve => {
           refreshSubscribers.push((token: string) => {
             originalRequest.headers.Authorization = `Bearer ${token}`;
@@ -1075,18 +1075,18 @@ api.interceptors.response.use(
         localStorage.setItem('token', data.token);
         localStorage.setItem('refreshToken', data.refreshToken);
 
-        // Notify subscribers
+        // Уведомить подписчиков
         refreshSubscribers.forEach(callback => callback(data.token));
         refreshSubscribers = [];
 
         isRefreshing = false;
 
-        // Retry original request
+        // Повторить исходный запрос
         originalRequest.headers.Authorization = `Bearer ${data.token}`;
         return api(originalRequest);
       } catch (refreshError) {
         isRefreshing = false;
-        // Logout user
+        // Разлогинить пользователя
         localStorage.removeItem('token');
         localStorage.removeItem('refreshToken');
         window.location.href = '/login';
@@ -1101,24 +1101,24 @@ api.interceptors.response.use(
 
 ---
 
-## Performance Issues
+## Проблемы производительности
 
-### Slow Initial Load
+### Медленная начальная загрузка
 
-**Problem:** App takes 5-10 seconds to load
+**Проблема:** Приложение загружается 5-10 секунд
 
-**Diagnosis:**
+**Диагностика:**
 
 ```bash
-# Check bundle size
+# Проверить размер бандла
 npm run build
-# Look for warnings about large chunks
+# Искать предупреждения о больших чанках
 
-# Analyze bundle
+# Анализировать бандл
 npm install -D rollup-plugin-visualizer
 ```
 
-Add to `vite.config.ts`:
+Добавьте в `vite.config.ts`:
 ```typescript
 import { visualizer } from 'rollup-plugin-visualizer';
 
@@ -1133,11 +1133,11 @@ export default defineConfig({
 });
 ```
 
-**Solution:**
+**Решение:**
 
 1. **Code splitting:**
    ```typescript
-   // Use dynamic imports
+   // Используйте динамические импорты
    const Dashboard = () => import('./views/Dashboard.vue');
    const Tasks = () => import('./views/Tasks.vue');
 
@@ -1147,12 +1147,12 @@ export default defineConfig({
    ];
    ```
 
-2. **Lazy load heavy libraries:**
+2. **Ленивая загрузка тяжелых библиотек:**
    ```typescript
-   // BEFORE
+   // ДО
    import Chart from 'chart.js';
 
-   // AFTER
+   // ПОСЛЕ
    const loadChart = async () => {
      const { Chart } = await import('chart.js');
      return Chart;
@@ -1161,39 +1161,39 @@ export default defineConfig({
 
 3. **Tree shaking:**
    ```typescript
-   // BEFORE - Imports entire lodash (70KB)
+   // ДО - Импортирует весь lodash (70KB)
    import _ from 'lodash';
 
-   // AFTER - Imports only what you need (5KB)
+   // ПОСЛЕ - Импортирует только необходимое (5KB)
    import debounce from 'lodash/debounce';
    import throttle from 'lodash/throttle';
    ```
 
 ---
 
-### Memory Leaks
+### Утечки памяти
 
-**Problem:** Browser tab uses 500MB+ memory
+**Проблема:** Вкладка браузера использует 500MB+ памяти
 
-**Diagnosis:**
+**Диагностика:**
 
-Use Chrome DevTools:
-1. Open DevTools → Performance → Memory
-2. Take heap snapshot
-3. Perform actions
-4. Take another snapshot
-5. Compare snapshots
+Используйте Chrome DevTools:
+1. Откройте DevTools → Performance → Memory
+2. Сделайте снимок кучи
+3. Выполните действия
+4. Сделайте еще один снимок
+5. Сравните снимки
 
-**Common Causes:**
+**Распространенные причины:**
 
-1. **Event listeners not removed:**
+1. **Event listeners не удалены:**
    ```typescript
-   // WRONG
+   // НЕПРАВИЛЬНО
    onMounted(() => {
      window.addEventListener('resize', handleResize);
    });
 
-   // CORRECT
+   // ПРАВИЛЬНО
    onMounted(() => {
      window.addEventListener('resize', handleResize);
    });
@@ -1203,14 +1203,14 @@ Use Chrome DevTools:
    });
    ```
 
-2. **Timers not cleared:**
+2. **Таймеры не очищены:**
    ```typescript
-   // WRONG
+   // НЕПРАВИЛЬНО
    const interval = setInterval(() => {
      fetchData();
    }, 5000);
 
-   // CORRECT
+   // ПРАВИЛЬНО
    let interval: number;
 
    onMounted(() => {
@@ -1224,35 +1224,35 @@ Use Chrome DevTools:
    });
    ```
 
-3. **Large objects in closures:**
+3. **Большие объекты в замыканиях:**
    ```typescript
-   // WRONG - Keeps entire array in memory
+   // НЕПРАВИЛЬНО - Держит весь массив в памяти
    const largeArray = new Array(1000000);
    const getFirst = () => largeArray[0];
 
-   // CORRECT - Only keeps what's needed
+   // ПРАВИЛЬНО - Держит только необходимое
    const firstItem = largeArray[0];
    const getFirst = () => firstItem;
    ```
 
 ---
 
-## Security Issues
+## Проблемы безопасности
 
-### XSS Vulnerabilities
+### XSS уязвимости
 
-**Problem:** User input not sanitized
+**Проблема:** Пользовательский ввод не санитизирован
 
-**Solution:**
+**Решение:**
 
 ```vue
-<!-- WRONG - Renders raw HTML -->
+<!-- НЕПРАВИЛЬНО - Рендерит сырой HTML -->
 <div v-html="task.description"></div>
 
-<!-- CORRECT - Escapes HTML -->
+<!-- ПРАВИЛЬНО - Экранирует HTML -->
 <div>{{ task.description }}</div>
 
-<!-- If you need HTML, sanitize it -->
+<!-- Если нужен HTML, санитизируйте его -->
 <template>
   <div v-html="sanitizedDescription"></div>
 </template>
@@ -1268,36 +1268,36 @@ const sanitizedDescription = computed(() => {
 
 ---
 
-### JWT Token in URL
+### JWT токен в URL
 
-**Problem:** Token exposed in browser history
+**Проблема:** Токен раскрывается в истории браузера
 
-**Solution:**
+**Решение:**
 
 ```typescript
-// WRONG - Token in query string
+// НЕПРАВИЛЬНО - Токен в query string
 router.push(`/dashboard?token=${token}`);
 
-// CORRECT - Token in localStorage
+// ПРАВИЛЬНО - Токен в localStorage
 localStorage.setItem('token', token);
 router.push('/dashboard');
 ```
 
 ---
 
-## Conclusion
+## Заключение
 
-This troubleshooting guide covers all major issues encountered during development. For issues not listed here:
+Это руководство по устранению неполадок охватывает все основные проблемы, с которыми столкнулись во время разработки. Для проблем, не перечисленных здесь:
 
-1. Check Docker logs: `docker-compose logs -f`
-2. Check browser console
-3. Check backend logs: `backend/var/log/dev.log`
-4. Enable debug mode in `.env`: `APP_DEBUG=true`
-5. Use Xdebug for PHP debugging
-6. Use Vue DevTools for frontend debugging
+1. Проверьте логи Docker: `docker-compose logs -f`
+2. Проверьте консоль браузера
+3. Проверьте логи backend: `backend/var/log/dev.log`
+4. Включите режим отладки в `.env`: `APP_DEBUG=true`
+5. Используйте Xdebug для отладки PHP
+6. Используйте Vue DevTools для отладки frontend
 
-**Remember:**
-- Always check logs first
-- Search error messages on Google/Stack Overflow
-- Test in isolation (clear data, verify configuration)
-- Document new issues for future reference
+**Помните:**
+- Всегда сначала проверяйте логи
+- Ищите сообщения об ошибках в Google/Stack Overflow
+- Тестируйте изолированно (очистите данные, проверьте конфигурацию)
+- Документируйте новые проблемы для будущего
