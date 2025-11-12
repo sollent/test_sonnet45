@@ -1,9 +1,10 @@
 # Стратегия изоляции E2E тестов для CI/CD
 
-> **Статус**: 📋 Планирование
+> **Статус**: 🔄 В разработке (обновлено с полным seeding)
 > **Приоритет**: 🔴 Критический
-> **Ожидаемое время**: 2-3 дня
+> **Ожидаемое время**: 3-4 дня
 > **Создано**: 2025-11-12
+> **Обновлено**: 2025-11-12 (добавлена стратегия полного seeding тестовых данных)
 
 ---
 
@@ -14,6 +15,7 @@ E2E тесты в настоящее время используют **заха�
 - `apps/frontend/e2e/fixtures/auth.fixture.ts:64-66`
 - Пользователь должен существовать в базе данных до запуска тестов
 - Тесты НЕ изолированы - они делят одно и то же состояние базы данных
+- **Отсутствуют предсказуемые тестовые данные** - нет гарантии наличия задач, тегов, recurrence rules
 - **Блокирует CI/CD**: Невозможно надежно запускать параллельные тестовые наборы
 
 ### Последствия
@@ -22,6 +24,8 @@ E2E тесты в настоящее время используют **заха�
 3. ❌ Невозможно запускать несколько CI пайплайнов параллельно
 4. ❌ Нет чистого старта - тесты зависят от существующих данных
 5. ❌ Невозможно воспроизвести сбои локально
+6. ❌ Тесты фильтрации/календаря падают без предсказуемых задач
+7. ❌ Тесты recurrence rules требуют ручного создания повторяющихся задач
 
 ---
 
@@ -133,8 +137,16 @@ JWT_PASSPHRASE=your-passphrase
 
 ---
 
-### Фаза 2: Глобальная настройка Playwright (День 1, после обеда)
-**Цель**: Автоматически подготовить тестовую базу данных и пользователя
+### Фаза 2: Глобальная настройка Playwright (День 1-2)
+**Цель**: Автоматически подготовить тестовую базу данных с полным набором тестовых данных
+
+**Что создаётся:**
+- ✅ Тестовый пользователь (e2e-test@example.com)
+- ✅ 10 задач с различными статусами, приоритетами, датами
+- ✅ 4 повторяющиеся задачи (daily, weekly, monthly, yearly)
+- ✅ 5 тегов с разными цветами
+- ✅ Связи задача-тег
+- ✅ 1 родительская задача + 1 подзадача (тестирование вложенности)
 
 #### 2.1 Создать скрипт глобальной настройки
 ```typescript
@@ -154,52 +166,54 @@ async function globalSetup(config: FullConfig) {
     await execAsync('docker-compose -f infrastructure/docker/docker-compose.test.yml up -d')
 
     // Ожидание, пока сервисы станут healthy
+    console.log('⏳ Ожидание готовности сервисов...')
+    await execAsync('sleep 10')
+
+    console.log('🗄️  Запуск миграций...')
     await execAsync('docker-compose -f infrastructure/docker/docker-compose.test.yml exec -T test-backend php bin/console doctrine:migrations:migrate --no-interaction')
   }
 
-  // 2. Создание тестового пользователя через API
-  const API_URL = process.env.PLAYWRIGHT_API_URL || 'http://localhost:8090'
-  const TEST_USER_EMAIL = process.env.E2E_TEST_USER_EMAIL || 'e2e-test@example.com'
-  const TEST_USER_PASSWORD = process.env.E2E_TEST_USER_PASSWORD || 'TestPassword123!'
-
-  console.log(`👤 Создание тестового пользователя: ${TEST_USER_EMAIL}`)
+  // 2. Заполнение базы данных тестовыми данными через Symfony команду
+  console.log('🌱 Заполнение базы данных тестовыми данными...')
 
   try {
-    const browser = await chromium.launch()
-    const context = await browser.newContext()
-    const page = await context.newPage()
-
-    // Попытка зарегистрировать тестового пользователя (упадет, если уже существует - это OK)
-    const response = await page.request.post(`${API_URL}/api/users`, {
-      data: {
-        email: TEST_USER_EMAIL,
-        password: TEST_USER_PASSWORD,
-        confirmPassword: TEST_USER_PASSWORD
-      }
-    })
-
-    if (response.ok()) {
-      console.log('✅ Тестовый пользователь успешно создан')
-    } else if (response.status() === 400) {
-      const body = await response.json()
-      if (body.message?.includes('already exists')) {
-        console.log('ℹ️  Тестовый пользователь уже существует (OK)')
-      } else {
-        console.error('❌ Не удалось создать тестового пользователя:', body)
-      }
+    if (process.env.CI) {
+      // В CI используем Docker
+      await execAsync('docker-compose -f infrastructure/docker/docker-compose.test.yml exec -T test-backend php bin/console app:e2e:seed')
+    } else {
+      // Локально используем dev backend
+      await execAsync('docker exec backend-php83 php bin/console app:e2e:seed')
     }
-
-    await browser.close()
+    console.log('✅ Тестовые данные успешно заполнены')
   } catch (error) {
-    console.error('❌ Глобальная настройка не удалась:', error)
+    console.error('❌ Не удалось заполнить тестовые данные:', error)
     throw error
   }
 
   console.log('✅ Глобальная настройка завершена\n')
+  console.log('📊 Созданные тестовые данные:')
+  console.log('   👤 1 тестовый пользователь (e2e-test@example.com)')
+  console.log('   📝 10 задач (с различными статусами, приоритетами, датами)')
+  console.log('   🔁 4 повторяющиеся задачи (daily, weekly, monthly, yearly)')
+  console.log('   🏷️  5 тегов')
+  console.log('   🌲 1 родительская задача + 1 подзадача')
 }
 
 export default globalSetup
 ```
+
+**Ключевые изменения по сравнению с оригинальным планом:**
+- ❌ **Удалена** регистрация через API (ненадёжно, может конфликтовать)
+- ✅ **Добавлен** вызов Symfony команды `app:e2e:seed`
+- ✅ Команда создаёт **все тестовые данные** за один вызов:
+  - Тестовый пользователь
+  - 10 задач с различными статусами/приоритетами/датами
+  - 4 повторяющиеся задачи (daily, weekly, monthly, yearly)
+  - 5 тегов
+  - Связи задача-тег
+  - 1 родительская задача + 1 подзадача
+- ✅ Работает как в **CI** (через test-backend), так и **локально** (через backend-php83)
+- ✅ Идемпотентная операция - можно запускать многократно без ошибок
 
 #### 2.2 Создать скрипт глобальной очистки (опционально)
 ```typescript
@@ -250,11 +264,19 @@ export default defineConfig({
 ```
 
 **Файлы для создания:**
+- `apps/backend/src/Command/E2ESeedCommand.php` ⭐ **Новая Symfony команда для seeding**
 - `apps/frontend/e2e/global-setup.ts`
 - `apps/frontend/e2e/global-teardown.ts`
 
 **Файлы для изменения:**
 - `apps/frontend/e2e/playwright.config.ts`
+
+**Преимущества подхода с Symfony командой:**
+- ✅ **Надёжность**: Нативная работа с Doctrine ORM, никаких API запросов
+- ✅ **Скорость**: Одна команда создаёт все данные (~5 секунд)
+- ✅ **Предсказуемость**: Всегда одинаковый набор данных
+- ✅ **Простота отладки**: Можно запустить команду вручную для проверки
+- ✅ **Идемпотентность**: Безопасно запускать многократно
 
 ---
 
@@ -387,89 +409,6 @@ registerUser().then(() => {
 ### Фаза 5: Интеграция CI/CD (День 3)
 **Цель**: Настроить GitHub Actions (или другой CI) для запуска E2E тестов
 
-#### 5.1 Создать workflow для GitHub Actions
-```yaml
-# .github/workflows/e2e-tests.yml
-name: E2E Tests
-
-on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main, develop]
-
-jobs:
-  e2e-tests:
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-
-    env:
-      E2E_TEST_USER_EMAIL: e2e-ci-test@example.com
-      E2E_TEST_USER_PASSWORD: TestPassword123!
-      PLAYWRIGHT_BASE_URL: http://localhost:3000
-      PLAYWRIGHT_API_URL: http://localhost:8090
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: apps/frontend/package-lock.json
-
-      - name: Install frontend dependencies
-        working-directory: apps/frontend
-        run: npm ci
-
-      - name: Install Playwright browsers
-        working-directory: apps/frontend
-        run: npx playwright install --with-deps chromium
-
-      - name: Start test environment
-        run: |
-          docker-compose -f infrastructure/docker/docker-compose.test.yml up -d
-          # Ожидание, пока сервисы станут healthy
-          timeout 60 bash -c 'until docker-compose -f infrastructure/docker/docker-compose.test.yml exec -T test-backend php bin/console doctrine:database:create --if-not-exists; do sleep 2; done'
-
-      - name: Run database migrations
-        run: |
-          docker-compose -f infrastructure/docker/docker-compose.test.yml exec -T test-backend php bin/console doctrine:migrations:migrate --no-interaction
-
-      - name: Run E2E tests
-        working-directory: apps/frontend
-        env:
-          CI: true
-        run: npm run test:e2e
-
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report
-          path: apps/frontend/playwright-report/
-          retention-days: 7
-
-      - name: Upload test videos
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-videos
-          path: apps/frontend/test-results/
-          retention-days: 7
-
-      - name: Stop test environment
-        if: always()
-        run: docker-compose -f infrastructure/docker/docker-compose.test.yml down -v
-```
-
-**Файлы для создания:**
-- `.github/workflows/e2e-tests.yml`
-
----
-
 ## 🎯 Альтернативные решения (Не рекомендуются)
 
 ### Вариант B: Изоляция на основе транзакций
@@ -516,20 +455,31 @@ jobs:
 
 ## ✅ Критерии успеха
 
-### Фаза 1-2 (Базовая изоляция)
+### Фаза 1-2 (Базовая изоляция + Полный Seeding)
 - [ ] Тестовая база данных работает в Docker
-- [ ] Глобальная настройка автоматически создает тестового пользователя
-- [ ] E2E тесты проходят с использованием изолированной базы данных
+- [ ] Symfony команда `app:e2e:seed` создана и работает
+- [ ] Команда создаёт полный набор тестовых данных:
+  - [ ] 1 тестовый пользователь
+  - [ ] 10 задач (различные статусы, приоритеты, даты)
+  - [ ] 4 повторяющиеся задачи (daily, weekly, monthly, yearly)
+  - [ ] 5 тегов
+  - [ ] Связи задача-тег
+  - [ ] 1 родительская задача + 1 подзадача
+- [ ] Глобальная настройка Playwright вызывает `app:e2e:seed`
+- [ ] E2E тесты проходят с использованием предсказуемых тестовых данных
+- [ ] Seeding работает как локально, так и в CI
 
 ### Фаза 3-4 (Developer Experience)
 - [ ] Разработчики могут запускать E2E тесты одной командой
 - [ ] Учетные данные тестового пользователя настраиваются через env vars
-- [ ] Документация обновлена
+- [ ] Можно вручную запустить `docker exec backend-php83 php bin/console app:e2e:seed`
+- [ ] Документация обновлена с примерами тестовых данных
 
 ### Фаза 5 (CI/CD)
 - [ ] GitHub Actions workflow проходит успешно
-- [ ] Тесты выполняются менее чем за 5 минут
+- [ ] Тесты выполняются менее чем за 5 минут (включая seeding)
 - [ ] Отчеты о тестах загружаются как артефакты
+- [ ] Seeding выполняется автоматически перед тестами
 
 ---
 
@@ -546,15 +496,284 @@ docker-compose -f infrastructure/docker/docker-compose.test.yml down
 ```
 
 ### 2. Управление тестовыми данными
-Создать отдельную команду для данных E2E тестов:
-```bash
-php bin/console app:e2e:seed
+
+#### 2.1 Структура тестовых данных
+
+Создать Symfony команду `app:e2e:seed` для заполнения тестовой БД предсказуемыми данными:
+
+**Тестовый пользователь:**
+- Email: `e2e-test@example.com`
+- Password: `TestPassword123!`
+- Создаётся ОДИН пользователь для всех E2E тестов
+
+**Задачи (Tasks):**
+- **10 задач** с разными состояниями, приоритетами и датами
+- Покрывают все основные сценарии фильтрации и календаря
+
+| ID | Title | Status | Priority | Due Date | Parent | Recurrence |
+|----|-------|--------|----------|----------|--------|------------|
+| 1 | Task Today 1 | pending | medium | today | - | - |
+| 2 | Task Today 2 | pending | high | today | - | - |
+| 3 | Task Tomorrow | pending | low | tomorrow | - | - |
+| 4 | Task Overdue | pending | urgent | yesterday | - | - |
+| 5 | Task Next Week | pending | medium | +7 days | - | - |
+| 6 | Task Completed | completed | medium | today | - | - |
+| 7 | Task In Progress | in_progress | high | today | - | - |
+| 8 | Task No Date | pending | low | null | - | - |
+| 9 | Parent Task | pending | medium | today | - | - |
+| 10 | Subtask 1 | pending | low | today | Task 9 | - |
+
+**Повторяющиеся задачи (Recurrence Rules):**
+- **4 recurring tasks** покрывающих все типы повторений
+
+| Task Title | Recurrence Type | Interval | Details |
+|------------|-----------------|----------|---------|
+| Daily Recurring Task | daily | 1 | Every day |
+| Weekly Recurring Task | weekly | 1 | Every Monday |
+| Monthly Recurring Task | monthly | 1 | Day 15 of month |
+| Yearly Recurring Task | yearly | 1 | January 1st |
+
+**Теги (Tags):**
+- **5 тегов** с разными цветами для тестов фильтрации
+
+| Tag Name | Color | Task Count |
+|----------|-------|------------|
+| Work | #FF5733 | 3 tasks |
+| Personal | #33FF57 | 2 tasks |
+| Urgent | #FF3333 | 1 task |
+| Project | #3357FF | 2 tasks |
+| Home | #F3FF33 | 1 task |
+
+**Связи задачи-теги:**
+- Task 1 → Work, Urgent
+- Task 2 → Work, Project
+- Task 3 → Personal
+- Task 4 → Urgent
+- Task 5 → Project
+- Task 6 → Personal
+- Task 7 → Work
+- Task 8 → Home
+
+#### 2.2 Symfony команда для seeding
+
+Создать команду `apps/backend/src/Command/E2ESeedCommand.php`:
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Command;
+
+use App\Entity\Task;
+use App\Entity\Tag;
+use App\Entity\User;
+use App\Entity\RecurrenceRule;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Console\Attribute\AsCommand;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+
+#[AsCommand(
+    name: 'app:e2e:seed',
+    description: 'Seeds the database with test data for E2E tests'
+)]
+final class E2ESeedCommand extends Command
+{
+    public function __construct(
+        private readonly EntityManagerInterface $entityManager,
+        private readonly UserPasswordHasherInterface $passwordHasher
+    ) {
+        parent::__construct();
+    }
+
+    protected function execute(InputInterface $input, OutputInterface $output): int
+    {
+        $io = new SymfonyStyle($input, $output);
+
+        $io->title('🌱 Seeding E2E Test Data');
+
+        // 1. Create test user
+        $user = $this->createTestUser();
+        $io->success('✅ Test user created: ' . $user->getEmail());
+
+        // 2. Create tags
+        $tags = $this->createTags($user);
+        $io->success('✅ Created ' . count($tags) . ' tags');
+
+        // 3. Create tasks (including subtasks)
+        $tasks = $this->createTasks($user, $tags);
+        $io->success('✅ Created ' . count($tasks) . ' tasks');
+
+        // 4. Create recurrence rules
+        $recurrences = $this->createRecurrenceRules($user);
+        $io->success('✅ Created ' . count($recurrences) . ' recurrence rules');
+
+        $this->entityManager->flush();
+
+        $io->success('🎉 E2E test data seeded successfully!');
+
+        return Command::SUCCESS;
+    }
+
+    private function createTestUser(): User
+    {
+        // Check if user already exists
+        $existingUser = $this->entityManager
+            ->getRepository(User::class)
+            ->findOneBy(['email' => 'e2e-test@example.com']);
+
+        if ($existingUser) {
+            return $existingUser;
+        }
+
+        $user = new User();
+        $user->setEmail('e2e-test@example.com');
+        $user->setPassword($this->passwordHasher->hashPassword($user, 'TestPassword123!'));
+
+        $this->entityManager->persist($user);
+
+        return $user;
+    }
+
+    private function createTags(User $user): array
+    {
+        $tagData = [
+            ['name' => 'Work', 'color' => '#FF5733'],
+            ['name' => 'Personal', 'color' => '#33FF57'],
+            ['name' => 'Urgent', 'color' => '#FF3333'],
+            ['name' => 'Project', 'color' => '#3357FF'],
+            ['name' => 'Home', 'color' => '#F3FF33'],
+        ];
+
+        $tags = [];
+        foreach ($tagData as $data) {
+            $tag = new Tag();
+            $tag->setName($data['name']);
+            $tag->setColor($data['color']);
+            $tag->setUser($user);
+
+            $this->entityManager->persist($tag);
+            $tags[$data['name']] = $tag;
+        }
+
+        return $tags;
+    }
+
+    private function createTasks(User $user, array $tags): array
+    {
+        $now = new \DateTimeImmutable();
+
+        $tasksData = [
+            ['title' => 'Task Today 1', 'status' => 'pending', 'priority' => 'medium', 'dueDate' => $now, 'tags' => ['Work', 'Urgent']],
+            ['title' => 'Task Today 2', 'status' => 'pending', 'priority' => 'high', 'dueDate' => $now, 'tags' => ['Work', 'Project']],
+            ['title' => 'Task Tomorrow', 'status' => 'pending', 'priority' => 'low', 'dueDate' => $now->modify('+1 day'), 'tags' => ['Personal']],
+            ['title' => 'Task Overdue', 'status' => 'pending', 'priority' => 'urgent', 'dueDate' => $now->modify('-1 day'), 'tags' => ['Urgent']],
+            ['title' => 'Task Next Week', 'status' => 'pending', 'priority' => 'medium', 'dueDate' => $now->modify('+7 days'), 'tags' => ['Project']],
+            ['title' => 'Task Completed', 'status' => 'completed', 'priority' => 'medium', 'dueDate' => $now, 'tags' => ['Personal']],
+            ['title' => 'Task In Progress', 'status' => 'in_progress', 'priority' => 'high', 'dueDate' => $now, 'tags' => ['Work']],
+            ['title' => 'Task No Date', 'status' => 'pending', 'priority' => 'low', 'dueDate' => null, 'tags' => ['Home']],
+        ];
+
+        $tasks = [];
+        foreach ($tasksData as $data) {
+            $task = new Task();
+            $task->setTitle($data['title']);
+            $task->setStatus($data['status']);
+            $task->setPriority($data['priority']);
+            $task->setDueDate($data['dueDate']);
+            $task->setUser($user);
+
+            // Add tags
+            foreach ($data['tags'] as $tagName) {
+                if (isset($tags[$tagName])) {
+                    $task->addTag($tags[$tagName]);
+                }
+            }
+
+            $this->entityManager->persist($task);
+            $tasks[] = $task;
+        }
+
+        // Create parent task with subtask
+        $parentTask = new Task();
+        $parentTask->setTitle('Parent Task');
+        $parentTask->setStatus('pending');
+        $parentTask->setPriority('medium');
+        $parentTask->setDueDate($now);
+        $parentTask->setUser($user);
+        $this->entityManager->persist($parentTask);
+        $tasks[] = $parentTask;
+
+        $subtask = new Task();
+        $subtask->setTitle('Subtask 1');
+        $subtask->setStatus('pending');
+        $subtask->setPriority('low');
+        $subtask->setDueDate($now);
+        $subtask->setUser($user);
+        $subtask->setParent($parentTask);
+        $this->entityManager->persist($subtask);
+        $tasks[] = $subtask;
+
+        return $tasks;
+    }
+
+    private function createRecurrenceRules(User $user): array
+    {
+        $now = new \DateTimeImmutable();
+
+        $recurrenceData = [
+            ['title' => 'Daily Recurring Task', 'type' => 'daily', 'interval' => 1],
+            ['title' => 'Weekly Recurring Task', 'type' => 'weekly', 'interval' => 1, 'daysOfWeek' => [1]], // Monday
+            ['title' => 'Monthly Recurring Task', 'type' => 'monthly', 'interval' => 1, 'dayOfMonth' => 15],
+            ['title' => 'Yearly Recurring Task', 'type' => 'yearly', 'interval' => 1, 'monthOfYear' => 1, 'dayOfMonth' => 1],
+        ];
+
+        $rules = [];
+        foreach ($recurrenceData as $data) {
+            $task = new Task();
+            $task->setTitle($data['title']);
+            $task->setStatus('pending');
+            $task->setPriority('medium');
+            $task->setDueDate($now);
+            $task->setUser($user);
+            $this->entityManager->persist($task);
+
+            $rule = new RecurrenceRule();
+            $rule->setTask($task);
+            $rule->setRecurrenceType($data['type']);
+            $rule->setIntervalValue($data['interval']);
+            $rule->setStartDate($now);
+
+            if (isset($data['daysOfWeek'])) {
+                $rule->setDaysOfWeek($data['daysOfWeek']);
+            }
+            if (isset($data['dayOfMonth'])) {
+                $rule->setDayOfMonth($data['dayOfMonth']);
+            }
+            if (isset($data['monthOfYear'])) {
+                $rule->setMonthOfYear($data['monthOfYear']);
+            }
+
+            $this->entityManager->persist($rule);
+            $rules[] = $rule;
+        }
+
+        return $rules;
+    }
+}
 ```
-Она должна создавать:
-- 1 тестового пользователя (e2e-test@example.com)
-- 5-10 примеров задач с разными состояниями
-- 2-3 примера тегов
-- Без лишних данных (минимум для скорости)
+
+**Команда создаёт минимальный, но полный набор данных для покрытия всех E2E тестов:**
+- ✅ Фильтры по статусу, приоритету, дате
+- ✅ Календарные представления
+- ✅ Тесты вложенных задач
+- ✅ Тесты тегов
+- ✅ Тесты повторяющихся задач
+- ✅ Быстрое выполнение (< 5 секунд)
 
 ### 3. Переменные окружения
 Добавить в документацию:
@@ -574,21 +793,46 @@ E2E_TEST_USER_PASSWORD=<secure-generated-password>
 
 ### Для разработчиков (локально)
 ```bash
-# Однократная настройка
-npm run test:e2e:setup
+# 1. Убедиться, что backend запущен
+docker ps | grep backend-php83
 
-# Запуск тестов
+# 2. Заполнить БД тестовыми данными (вручную, если нужно)
+docker exec backend-php83 php bin/console app:e2e:seed
+
+# 3. Запуск тестов (seeding выполнится автоматически в global-setup)
+cd apps/frontend
 npm run test:e2e
 
-# Отладка тестов
+# 4. Отладка тестов с UI
 npm run test:e2e:ui
+
+# 5. Проверить созданные данные в БД
+docker exec -it backend-psql16 psql -U user -d backend-app -c "SELECT COUNT(*) FROM tasks WHERE user_id = (SELECT id FROM users WHERE email = 'e2e-test@example.com');"
 ```
+
+### Что делает seeding команда?
+```bash
+docker exec backend-php83 php bin/console app:e2e:seed
+```
+**Результат:**
+- ✅ Создаёт/обновляет пользователя `e2e-test@example.com`
+- ✅ Создаёт 10 задач с разными статусами/приоритетами/датами
+- ✅ Создаёт 4 повторяющиеся задачи (daily, weekly, monthly, yearly)
+- ✅ Создаёт 5 тегов и связывает их с задачами
+- ✅ Создаёт родительскую задачу с подзадачей
+- ⚡ Выполняется за ~5 секунд
+- 🔁 Идемпотентная - можно запускать многократно
 
 ### Для CI/CD
 ```bash
 # Автоматически через GitHub Actions
 git push origin main
 # Проверить: https://github.com/<org>/<repo>/actions
+
+# В CI workflow автоматически выполняется:
+# 1. docker-compose up (test environment)
+# 2. php bin/console app:e2e:seed
+# 3. npm run test:e2e
 ```
 
 ---
@@ -611,5 +855,13 @@ git push origin main
 
 ---
 
-**Последнее обновление**: 2025-11-12
+**Последнее обновление**: 2025-11-12 (добавлена стратегия полного seeding тестовых данных)
 **Следующий обзор**: После завершения Фазы 2
+
+**Changelog v2.0:**
+- ✅ Добавлена Symfony команда `app:e2e:seed` для полного заполнения БД
+- ✅ Определена структура тестовых данных (10 задач, 4 recurrence, 5 тегов)
+- ✅ Обновлён global-setup.ts для вызова команды seeding
+- ✅ Добавлены преимущества подхода с Symfony командой
+- ✅ Расширены критерии успеха
+- ✅ Обновлён "Быстрый старт" с примерами использования
