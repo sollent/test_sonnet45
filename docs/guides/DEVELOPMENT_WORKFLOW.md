@@ -1,176 +1,176 @@
-# 🛠 Development Workflow - Daily Development Guide
+# 🛠 Процесс разработки - Руководство для ежедневной работы
 
-> **TL;DR**: Docker setup for backend (Symfony + PostgreSQL) via `docker-compose.yml` in root, npm for frontend (Vue + Vite). Database migrations with Doctrine. Git workflow with feature branches.
+> **Кратко**: Docker для бэкенда (Symfony + PostgreSQL) через `docker-compose.yml` в корне, npm для фронтенда (Vue + Vite). Миграции БД через Doctrine. Git workflow с feature-ветками.
 
 ---
 
-## 📋 Project Structure
+## 📋 Структура проекта
 
 ```
 test_sonnet45/
-├── docker-compose.yml              # Main Docker Compose (includes infrastructure configs)
-├── Makefile                        # Common commands
+├── docker-compose.yml              # Главный Docker Compose (подключает конфиги инфраструктуры)
+├── Makefile                        # Общие команды
 ├── apps/
-│   ├── backend/                    # Symfony application
-│   │   ├── src/                    # PHP source code
-│   │   ├── config/                 # Configuration files
+│   ├── backend/                    # Symfony приложение
+│   │   ├── src/                    # PHP исходный код
+│   │   ├── config/                 # Конфигурационные файлы
 │   │   └── ...
-│   └── frontend/                   # Vue.js application
-│       ├── src/                    # TypeScript source code
+│   └── frontend/                   # Vue.js приложение
+│       ├── src/                    # TypeScript исходный код
 │       └── ...
 ├── infrastructure/
-│   ├── docker/                     # Docker configuration
-│   │   ├── docker-compose.app.yml  # App services
-│   │   ├── docker-compose.ai.yml   # AI services (placeholder)
-│   │   ├── docker-compose.dev.yml  # Dev overrides
+│   ├── docker/                     # Docker конфигурация
+│   │   ├── docker-compose.app.yml  # Сервисы приложения
+│   │   ├── docker-compose.ai.yml   # AI сервисы (заглушка)
+│   │   ├── docker-compose.dev.yml  # Dev переопределения
 │   │   ├── dev/
-│   │   │   ├── nginx/              # Nginx configuration
-│   │   │   └── php/                # PHP-FPM configuration
-│   │   └── cron/                   # Cron jobs
-│   └── ai-services/                # AI infrastructure (placeholder)
-└── scripts/                        # Utility scripts
+│   │   │   ├── nginx/              # Nginx конфигурация
+│   │   │   └── php/                # PHP-FPM конфигурация
+│   │   └── cron/                   # Cron задачи
+│   └── ai-services/                # AI инфраструктура (заглушка)
+└── scripts/                        # Утилитные скрипты
 ```
 
 ---
 
-## First-Time Setup
+## Первоначальная настройка
 
-### 1. Clone Repository
+### 1. Клонирование репозитория
 
 ```bash
 git clone <repository-url>
 cd test_sonnet45
 ```
 
-### 2. Backend Setup (Docker)
+### 2. Настройка бэкенда (Docker)
 
-**IMPORTANT**: Docker configuration is `docker-compose.yml` in project root
+**ВАЖНО**: Docker конфигурация находится в `docker-compose.yml` в корне проекта
 
 ```bash
 cd apps/backend
 
-# Copy environment file
+# Копируем файл окружения
 cp .env .env.local
 
-# Configure .env.local
+# Настраиваем .env.local
 DATABASE_URL="postgresql://user:password@psql16:5432/backend-app"
 JWT_SECRET_KEY=%kernel.project_dir%/config/jwt/private.pem
 JWT_PUBLIC_KEY=%kernel.project_dir%/config/jwt/public.pem
 GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
 
-# Generate JWT keys
+# Генерируем JWT ключи
 mkdir -p config/jwt
 openssl genpkey -algorithm RSA -out config/jwt/private.pem -pkeyopt rsa_keygen_bits:4096
 openssl rsa -pubout -in config/jwt/private.pem -out config/jwt/public.pem
 
-# Start Docker services (from project root)
+# Запускаем Docker сервисы (из корня проекта)
 cd ../..
 docker-compose up -d
 
-# Install dependencies
+# Устанавливаем зависимости
 docker exec backend-php83 composer install
 
-# Run migrations
+# Выполняем миграции
 docker exec backend-php83 php bin/console doctrine:migrations:migrate
 
-# (Optional) Load fixtures
+# (Опционально) Загружаем фикстуры
 docker exec backend-php83 php bin/console doctrine:fixtures:load
 ```
 
-### 3. Frontend Setup
+### 3. Настройка фронтенда
 
 ```bash
 cd apps/frontend
 
-# Install dependencies
+# Устанавливаем зависимости
 npm install
 
-# Copy environment file (if needed)
+# Копируем файл окружения (при необходимости)
 cp .env.example .env
 
-# Configure .env
+# Настраиваем .env
 VITE_API_BASE_URL=http://localhost:8089
 VITE_GOOGLE_CLIENT_ID=your-google-client-id
 
-# Start dev server
+# Запускаем dev сервер
 npm run dev
 ```
 
-### 4. Access Application
+### 4. Доступ к приложению
 
-- **Frontend:** http://localhost:3000 (Vite dev server)
+- **Фронтенд:** http://localhost:3000 (Vite dev server)
 - **Backend API:** http://localhost:8089/api (Nginx)
-- **PostgreSQL:** localhost:15432 (external port)
+- **PostgreSQL:** localhost:15432 (внешний порт)
 - **RabbitMQ Management:** http://localhost:15672 (user/password)
 
-### 5. Install Git Hooks (Recommended)
+### 5. Установка Git хуков (рекомендуется)
 
 ```bash
-# Install pre-commit hooks for code quality checks
+# Устанавливаем pre-commit хуки для проверки качества кода
 bash scripts/install-git-hooks.sh
 ```
 
-This installs Git hooks that automatically run:
-- **PHP-CS-Fixer** - Code style checks (PSR-12)
-- **PHPStan** - Static analysis (level 5)
+Это устанавливает Git хуки, которые автоматически запускают:
+- **PHP-CS-Fixer** - Проверка стиля кода (PSR-12)
+- **PHPStan** - Статический анализ (уровень 5)
 
-Hooks run before each commit and block commits with issues.
+Хуки выполняются перед каждым коммитом и блокируют коммиты с проблемами.
 
 ---
 
-## Daily Development
+## Ежедневная разработка
 
-### Starting Services
+### Запуск сервисов
 
 ```bash
-# Start backend (from docker/ directory)
+# Запуск бэкенда (из директории docker)
 cd docker
 docker-compose up -d
 
-# Or from anywhere in project:
+# Или из любого места проекта:
 docker-compose -f docker/docker-compose.yml up -d
 
-# Start frontend (from frontend/ directory)
+# Запуск фронтенда (из директории frontend)
 cd frontend
 npm run dev
 ```
 
-### Stopping Services
+### Остановка сервисов
 
 ```bash
-# Stop backend (from docker/ directory)
+# Остановка бэкенда (из директории docker)
 cd docker
 docker-compose down
 
-# Or from anywhere:
+# Или из любого места:
 docker-compose -f docker/docker-compose.yml down
 
-# Stop frontend
-Ctrl+C in terminal
+# Остановка фронтенда
+Ctrl+C в терминале
 ```
 
-### Rebuilding Docker Containers
+### Пересборка Docker контейнеров
 
 ```bash
-# Rebuild all containers (when Dockerfile changes)
+# Пересборка всех контейнеров (при изменении Dockerfile)
 cd docker
 docker-compose down
 docker-compose build --no-cache
 docker-compose up -d
 
-# Rebuild specific service
+# Пересборка конкретного сервиса
 docker-compose build --no-cache php83-fpm
 docker-compose up -d php83-fpm
 ```
 
-### Viewing Docker Logs
+### Просмотр логов Docker
 
 ```bash
-# All services
+# Все сервисы
 docker-compose logs -f
 
-# Specific service
+# Конкретный сервис
 docker-compose logs -f php83-fpm
 docker-compose logs -f nginx
 docker-compose logs -f psql16
@@ -178,26 +178,26 @@ docker-compose logs -f psql16
 
 ---
 
-## Database Operations
+## Операции с базой данных
 
-### Create Migration
+### Создание миграции
 
 ```bash
-# Auto-generate migration from entity changes
+# Автогенерация миграции на основе изменений в сущностях
 docker exec backend-php83 php bin/console make:migration
 
-# Review migration file in migrations/
-# Then run migration
+# Просмотрите файл миграции в migrations/
+# Затем выполните миграцию
 docker exec backend-php83 php bin/console doctrine:migrations:migrate
 ```
 
-### Rollback Migration
+### Откат миграции
 
 ```bash
 docker exec backend-php83 php bin/console doctrine:migrations:migrate prev
 ```
 
-### Create Entity
+### Создание сущности
 
 ```bash
 docker exec backend-php83 php bin/console make:entity
@@ -205,290 +205,290 @@ docker exec backend-php83 php bin/console make:entity
 
 ---
 
-## Docker Container Operations
+## Операции с Docker контейнерами
 
-### Managing Containers
+### Управление контейнерами
 
 ```bash
-# List all running containers
+# Список всех запущенных контейнеров
 docker ps
 
-# List all containers (including stopped)
+# Список всех контейнеров (включая остановленные)
 docker ps -a
 
-# Check container logs
+# Проверка логов контейнера
 docker logs backend-php83
-docker logs -f backend-nginx     # Follow logs in real-time
-docker logs --tail 100 backend-php83  # Last 100 lines
+docker logs -f backend-nginx     # Следить за логами в реальном времени
+docker logs --tail 100 backend-php83  # Последние 100 строк
 
-# Restart specific container
+# Перезапуск конкретного контейнера
 docker restart backend-php83
 
-# Stop specific container
+# Остановка конкретного контейнера
 docker stop backend-php83
 
-# Start specific container
+# Запуск конкретного контейнера
 docker start backend-php83
 
-# Remove stopped containers
+# Удаление остановленных контейнеров
 docker rm backend-php83
 ```
 
-### Accessing Containers
+### Доступ к контейнерам
 
 ```bash
-# Execute commands in containers
+# Выполнение команд в контейнерах
 docker exec backend-php83 php --version
 docker exec backend-php83 composer --version
 
-# Interactive shell access
+# Интерактивный доступ к shell
 docker exec -it backend-php83 bash
 docker exec -it backend-psql16 bash
 ```
 
-### PostgreSQL Database Operations
+### Операции с PostgreSQL базой данных
 
 ```bash
-# Connect to PostgreSQL
+# Подключение к PostgreSQL
 docker exec -it backend-psql16 psql -U user -d backend-app
 
-# Common PostgreSQL commands (inside psql)
-\dt              # List tables
-\d+ tasks        # Describe tasks table
-\l               # List databases
-\q               # Quit
+# Основные команды PostgreSQL (внутри psql)
+\dt              # Список таблиц
+\d+ tasks        # Описание таблицы tasks
+\l               # Список баз данных
+\q               # Выход
 
-# Execute SQL from host
+# Выполнение SQL с хоста
 docker exec backend-psql16 psql -U user -d backend-app -c "SELECT COUNT(*) FROM tasks;"
 
-# Backup database
+# Резервное копирование базы данных
 docker exec backend-psql16 pg_dump -U user backend-app > backup.sql
 
-# Restore database
+# Восстановление базы данных
 docker exec -i backend-psql16 psql -U user -d backend-app < backup.sql
 
-# Drop and recreate database (CAREFUL!)
+# Удаление и пересоздание базы данных (ОСТОРОЖНО!)
 docker exec backend-php83 php bin/console doctrine:database:drop --force
 docker exec backend-php83 php bin/console doctrine:database:create
 docker exec backend-php83 php bin/console doctrine:migrations:migrate --no-interaction
 ```
 
-### Symfony Console Commands
+### Команды Symfony Console
 
 ```bash
-# Cache operations
+# Операции с кешем
 docker exec backend-php83 php bin/console cache:clear
 docker exec backend-php83 php bin/console cache:warmup
 
-# Database operations
+# Операции с базой данных
 docker exec backend-php83 php bin/console doctrine:database:create
 docker exec backend-php83 php bin/console doctrine:schema:update --dump-sql
 docker exec backend-php83 php bin/console doctrine:migrations:status
 
-# Debug commands
+# Команды отладки
 docker exec backend-php83 php bin/console debug:router
 docker exec backend-php83 php bin/console debug:container
 docker exec backend-php83 php bin/console debug:autowiring
 
-# Messenger (queue) operations
+# Операции с Messenger (очередь)
 docker exec backend-php83 php bin/console messenger:consume async -vv
 docker exec backend-php83 php bin/console messenger:stats
 ```
 
-### Code Quality Tools
+### Инструменты качества кода
 
-#### PHP-CS-Fixer (Code Style)
+#### PHP-CS-Fixer (Стиль кода)
 
-PHP-CS-Fixer automatically fixes PHP code to follow PSR-12 and modern PHP 8.3 standards.
+PHP-CS-Fixer автоматически исправляет PHP код для соответствия PSR-12 и современным стандартам PHP 8.3.
 
 ```bash
-# Check code style (dry-run, no changes)
+# Проверка стиля кода (dry-run, без изменений)
 make cs-fixer-check
-# OR
+# ИЛИ
 docker exec backend-php83 vendor/bin/php-cs-fixer fix --dry-run --diff --verbose
 
-# Fix code style automatically
+# Автоматическое исправление стиля кода
 make cs-fixer-fix
-# OR
+# ИЛИ
 docker exec backend-php83 vendor/bin/php-cs-fixer fix --verbose
 ```
 
-**Configuration:** `apps/backend/.php-cs-fixer.php`
+**Конфигурация:** `apps/backend/.php-cs-fixer.php`
 
-**Key features:**
-- PSR-12 compliance
-- Modern PHP 8.3 features (strict types, readonly, enums)
-- Array trailing commas
-- Aligned binary operators
-- Ordered class elements
-- PHPDoc formatting
+**Ключевые возможности:**
+- Соответствие PSR-12
+- Современные возможности PHP 8.3 (strict types, readonly, enums)
+- Завершающие запятые в массивах
+- Выравнивание бинарных операторов
+- Упорядоченные элементы классов
+- Форматирование PHPDoc
 
-#### PHPStan (Static Analysis)
+#### PHPStan (Статический анализ)
 
-PHPStan performs static analysis to find bugs without running code.
+PHPStan выполняет статический анализ для поиска ошибок без запуска кода.
 
 ```bash
-# Run static analysis (level 5)
+# Запуск статического анализа (уровень 5)
 make phpstan
-# OR
+# ИЛИ
 docker exec backend-php83 vendor/bin/phpstan analyse --memory-limit=1G
 
-# Generate baseline (ignore existing errors)
+# Генерация baseline (игнорировать существующие ошибки)
 make phpstan-baseline
-# OR
+# ИЛИ
 docker exec backend-php83 vendor/bin/phpstan analyse --generate-baseline
 ```
 
-**Configuration:** `apps/backend/phpstan.neon`
+**Конфигурация:** `apps/backend/phpstan.neon`
 
-**Current level:** 5 (good starting point)
+**Текущий уровень:** 5 (хорошая стартовая точка)
 
-**Extensions enabled:**
-- phpstan-symfony (Symfony-specific checks)
-- phpstan-doctrine (Doctrine ORM checks)
+**Включенные расширения:**
+- phpstan-symfony (Symfony-специфичные проверки)
+- phpstan-doctrine (Doctrine ORM проверки)
 
-#### Run All Quality Checks
+#### Запуск всех проверок качества
 
 ```bash
-# Check code style + static analysis
+# Проверка стиля кода + статический анализ
 make quality-check
 
-# Fix code style + run static analysis
+# Исправление стиля кода + запуск статического анализа
 make quality-fix
 ```
 
-#### Git Pre-Commit Hooks
+#### Git Pre-Commit хуки
 
-Automatically runs quality checks before each commit.
+Автоматически запускает проверки качества перед каждым коммитом.
 
-**Installation:**
+**Установка:**
 ```bash
-# Install Git hooks (run once after cloning)
+# Установка Git хуков (выполнить один раз после клонирования)
 bash scripts/install-git-hooks.sh
 ```
 
-**What it does:**
-1. Detects changed PHP files in `apps/backend/`
-2. Runs PHP-CS-Fixer check (dry-run)
-3. Runs PHPStan analysis
-4. Blocks commit if issues found
+**Что делает:**
+1. Обнаруживает измененные PHP файлы в `apps/backend/`
+2. Запускает проверку PHP-CS-Fixer (dry-run)
+3. Запускает анализ PHPStan
+4. Блокирует коммит при обнаружении проблем
 
-**Bypass hook** (not recommended):
+**Обход хука** (не рекомендуется):
 ```bash
 git commit --no-verify
 ```
 
-### Complete Project Rebuild
+### Полная пересборка проекта
 
 ```bash
-# WARNING: This will delete ALL data (database, cache, logs)
+# ВНИМАНИЕ: Это удалит ВСЕ данные (база данных, кеш, логи)
 
-# 1. Stop and remove all containers
+# 1. Остановка и удаление всех контейнеров
 cd docker
-docker-compose down -v  # -v removes volumes (database data!)
+docker-compose down -v  # -v удаляет volumes (данные базы!)
 
-# 2. Remove all images (optional)
+# 2. Удаление всех образов (опционально)
 docker rmi $(docker images -q 'docker_*')
 
-# 3. Rebuild containers from scratch
+# 3. Пересборка контейнеров с нуля
 docker-compose build --no-cache
 
-# 4. Start containers
+# 4. Запуск контейнеров
 docker-compose up -d
 
-# 5. Reinstall backend dependencies
+# 5. Переустановка зависимостей бэкенда
 docker exec backend-php83 composer install
 
-# 6. Recreate database
+# 6. Пересоздание базы данных
 docker exec backend-php83 php bin/console doctrine:database:create
 docker exec backend-php83 php bin/console doctrine:migrations:migrate --no-interaction
 
-# 7. (Optional) Load fixtures
+# 7. (Опционально) Загрузка фикстур
 docker exec backend-php83 php bin/console doctrine:fixtures:load --no-interaction
 
-# 8. Clear cache
+# 8. Очистка кеша
 docker exec backend-php83 php bin/console cache:clear
 ```
 
-### Container Health Checks
+### Проверка работоспособности контейнеров
 
 ```bash
-# Check if all containers are running
+# Проверка запущены ли все контейнеры
 docker-compose ps
 
-# Check container resource usage
+# Проверка использования ресурсов контейнерами
 docker stats
 
-# Check specific container health
+# Проверка работоспособности конкретного контейнера
 docker inspect backend-php83 | grep -i health
 docker inspect backend-psql16 | grep -i status
 
-# Test backend API is responding
+# Тест ответа backend API
 curl http://localhost:8089/api/health
 
-# Test database connection
+# Тест подключения к базе данных
 docker exec backend-php83 php bin/console doctrine:query:sql "SELECT 1"
 ```
 
 ---
 
-## Testing
+## Тестирование
 
-### Backend Tests
+### Тесты бэкенда
 
 ```bash
-# Run all tests
+# Запуск всех тестов
 docker exec backend-php83 php bin/phpunit
 
-# Run specific test file
+# Запуск конкретного тестового файла
 docker exec backend-php83 php bin/phpunit tests/Unit/Service/TaskServiceTest.php
 
-# Run with coverage
+# Запуск с покрытием кода
 docker exec backend-php83 php bin/phpunit --coverage-text
 ```
 
-### Frontend Tests
+### Тесты фронтенда
 
 ```bash
 cd frontend
 
-# Run all tests
+# Запуск всех тестов
 npm run test:run
 
-# Run tests in watch mode
+# Запуск тестов в режиме watch
 npm run test
 
-# Run with coverage
+# Запуск с покрытием кода
 npm run test:coverage
 ```
 
 ---
 
-## Troubleshooting
+## Устранение неполадок
 
-### Container won't start
+### Контейнер не запускается
 
 ```bash
-# Check logs
+# Проверка логов
 docker logs backend-php83
 
-# Check if port is already in use
+# Проверка занят ли порт
 lsof -i :8089
 lsof -i :15432
 
-# Force remove and recreate
+# Принудительное удаление и пересоздание
 cd docker
 docker-compose down
 docker-compose up -d --force-recreate
 ```
 
-### Database connection issues
+### Проблемы с подключением к базе данных
 
 ```bash
-# Check PostgreSQL is running
+# Проверка запущен ли PostgreSQL
 docker ps | grep psql16
 
-# Test connection from PHP container
+# Тест подключения из PHP контейнера
 docker exec backend-php83 php -r "
 try {
     \$pdo = new PDO('pgsql:host=psql16;port=5432;dbname=backend-app', 'user', 'password');
@@ -499,16 +499,16 @@ try {
 "
 ```
 
-### Performance issues
+### Проблемы с производительностью
 
 ```bash
-# Check resource usage
+# Проверка использования ресурсов
 docker stats
 
-# Clear all caches
+# Очистка всех кешей
 docker exec backend-php83 php bin/console cache:clear
 
-# Restart containers
+# Перезапуск контейнеров
 cd docker
 docker-compose restart
 ```
@@ -520,26 +520,26 @@ docker-compose restart
 ### Feature Branch
 
 ```bash
-# Create feature branch
+# Создание feature ветки
 git checkout -b feature/my-feature
 
-# Make changes, commit
+# Внесение изменений, коммит
 git add .
 git commit -m "Add my feature"
 
-# Push to remote
+# Push на удаленный репозиторий
 git push -u origin feature/my-feature
 
-# Create pull request on GitHub
+# Создание pull request на GitHub
 ```
 
 ---
 
-## Related Documents
+## Связанные документы
 
-- **[Architecture](../backend/ARCHITECTURE.md)** - Code organization
-- **[Testing](TESTING.md)** - Writing tests
+- **[Архитектура](../backend/ARCHITECTURE.md)** - Организация кода
+- **[Тестирование](TESTING.md)** - Написание тестов
 
 ---
 
-*Last updated: 2025-01-05*
+*Последнее обновление: 2025-01-05*
