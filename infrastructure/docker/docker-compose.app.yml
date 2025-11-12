@@ -26,6 +26,13 @@ services:
       - ./dev/php/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
     environment:
       PHP_IDE_CONFIG: "serverName=docker.backend-app"
+      # Database credentials from .env.docker (для использования в Symfony)
+      POSTGRES_DB: ${POSTGRES_DB:-backend-app}
+      POSTGRES_USER: ${POSTGRES_USER:-user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      # RabbitMQ credentials from .env.docker
+      RABBITMQ_USER: ${RABBITMQ_USER:-user}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-password}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     dns:
