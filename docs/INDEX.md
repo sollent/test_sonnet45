@@ -1,516 +1,516 @@
-# 📚 Task Manager - Complete Documentation Index
+# 📚 Task Manager - Полный Индекс Документации
 
-> **For AI Assistants**: This documentation is specifically designed to provide complete project context. Read this INDEX first, then navigate to relevant sections based on your task.
-
----
-
-## 🎯 Quick Start for AI
-
-**New to this project?** Follow this reading order:
-
-1. **[Project Overview](PROJECT_OVERVIEW.md)** - Understanding what we're building *(5 min read)*
-2. **[Tech Stack](TECH_STACK.md)** - Technologies and versions *(3 min read)*
-3. **[Coding Standards](CODING_STANDARDS.md)** - How we write code (CRITICAL) *(10 min read)*
-4. **[Architecture](backend/ARCHITECTURE.md)** - System design patterns *(8 min read)*
-
-**Already familiar?** Jump to:
-- **[API Reference](backend/API_REFERENCE.md)** - All endpoints documented
-- **[Troubleshooting](guides/TROUBLESHOOTING.md)** - Common issues & solutions
-- **[Development Workflow](guides/DEVELOPMENT_WORKFLOW.md)** - Day-to-day development
+> **Для AI-ассистентов**: Эта документация специально разработана для предоставления полного контекста проекта. Сначала прочитайте этот ИНДЕКС, затем переходите к релевантным разделам в зависимости от вашей задачи.
 
 ---
 
-## 📖 Documentation Structure
+## 🎯 Быстрый Старт для AI
 
-### 🌍 General
+**Новичок в этом проекте?** Следуйте этому порядку чтения:
+
+1. **[Обзор Проекта](PROJECT_OVERVIEW.md)** - Понимание того, что мы строим *(5 мин чтения)*
+2. **[Технологический Стек](TECH_STACK.md)** - Технологии и версии *(3 мин чтения)*
+3. **[Стандарты Кодирования](CODING_STANDARDS.md)** - Как мы пишем код (КРИТИЧНО) *(10 мин чтения)*
+4. **[Архитектура](backend/ARCHITECTURE.md)** - Паттерны проектирования системы *(8 мин чтения)*
+
+**Уже знакомы?** Переходите к:
+- **[Справочник API](backend/API_REFERENCE.md)** - Все эндпоинты задокументированы
+- **[Решение Проблем](guides/TROUBLESHOOTING.md)** - Частые проблемы и решения
+- **[Рабочий Процесс Разработки](guides/DEVELOPMENT_WORKFLOW.md)** - Ежедневная разработка
+
+---
+
+## 📖 Структура Документации
+
+### 🌍 Общее
 
 #### [`PROJECT_OVERVIEW.md`](PROJECT_OVERVIEW.md)
-What is this application, its purpose, main features, and business logic
+Что это за приложение, его цель, основные функции и бизнес-логика
 
-**Key Topics:**
-- Application description
-- Core features (tasks, subtasks, calendar, analytics)
-- Business requirements
-- User workflows
+**Ключевые Темы:**
+- Описание приложения
+- Основные функции (задачи, подзадачи, календарь, аналитика)
+- Бизнес-требования
+- Рабочие процессы пользователя
 
 #### [`TECH_STACK.md`](TECH_STACK.md)
-Complete technology stack with versions and justifications
+Полный технологический стек с версиями и обоснованиями
 
-**Key Topics:**
-- Backend stack (Symfony 7.1, PHP 8.3, PostgreSQL)
-- Frontend stack (Vue.js 3, TypeScript, PrimeVue)
-- Infrastructure (Docker, Nginx)
-- Third-party services (Google OAuth)
+**Ключевые Темы:**
+- Backend стек (Symfony 7.1, PHP 8.3, PostgreSQL)
+- Frontend стек (Vue.js 3, TypeScript, PrimeVue)
+- Инфраструктура (Docker, Nginx)
+- Сторонние сервисы (Google OAuth)
 
 #### [`CODING_STANDARDS.md`](CODING_STANDARDS.md)
-**⚠️ CRITICAL DOCUMENT** - Coding principles and best practices
+**⚠️ КРИТИЧЕСКИЙ ДОКУМЕНТ** - Принципы кодирования и лучшие практики
 
-**Key Topics:**
-- SOLID principles (applied everywhere)
-- GRASP principles (design patterns)
-- GoF patterns (specific implementations)
-- Backend conventions (Symfony)
-- Frontend conventions (Vue + TypeScript)
-- Code quality checklist
+**Ключевые Темы:**
+- Принципы SOLID (применяются везде)
+- Принципы GRASP (паттерны проектирования)
+- Паттерны GoF (конкретные реализации)
+- Backend конвенции (Symfony)
+- Frontend конвенции (Vue + TypeScript)
+- Чеклист качества кода
 
 ---
 
 ### 🔧 Backend (`project/backend/`)
 
 #### [`backend/ARCHITECTURE.md`](backend/ARCHITECTURE.md)
-Backend architecture, layers, and design patterns
+Архитектура Backend, слои и паттерны проектирования
 
-**Key Topics:**
-- Layered architecture (Controller → Service → Repository)
-- Domain-Driven Design principles
-- Dependency injection
-- DTO pattern
-- Event system
-- Authentication & authorization
+**Ключевые Темы:**
+- Слоистая архитектура (Controller → Service → Repository)
+- Принципы Domain-Driven Design
+- Внедрение зависимостей
+- Паттерн DTO
+- Система событий
+- Аутентификация и авторизация
 
 
 #### [`backend/API_REFERENCE.md`](backend/API_REFERENCE.md)
-Complete API endpoint documentation
+Полная документация API эндпоинтов
 
-**Key Topics:**
-- Authentication endpoints (JWT, Google OAuth)
-- Task CRUD operations
-- Tag management
-- Analytics endpoints
-- Request/Response examples
-- Error responses
-- Query parameters & filtering
+**Ключевые Темы:**
+- Эндпоинты аутентификации (JWT, Google OAuth)
+- CRUD операции для задач
+- Управление тегами
+- Эндпоинты аналитики
+- Примеры Request/Response
+- Ответы с ошибками
+- Query параметры и фильтрация
 
 #### [`backend/DATABASE.md`](backend/DATABASE.md)
-Database schema, entities, and relationships
+Схема базы данных, сущности и связи
 
-**Key Topics:**
-- Entity relationship diagram
-- Task entity (with unlimited nesting)
-- User entity
-- Tag entity
-- JWT refresh token storage
-- Migrations workflow
+**Ключевые Темы:**
+- Диаграмма связей сущностей
+- Сущность Task (с неограниченной вложенностью)
+- Сущность User
+- Сущность Tag
+- Хранение JWT refresh токенов
+- Рабочий процесс миграций
 
 #### [`backend/AUTHENTICATION.md`](backend/AUTHENTICATION.md)
-Authentication & authorization implementation
+Реализация аутентификации и авторизации
 
-**Key Topics:**
-- JWT token flow (access + refresh)
-- Google OAuth2 integration
-- Token refresh mechanism
+**Ключевые Темы:**
+- Поток JWT токенов (access + refresh)
+- Интеграция Google OAuth2
+- Механизм обновления токенов
 - Security voters
-- Role-based access control
+- Контроль доступа на основе ролей
 
 #### [`backend/RECURRENCE_TASKS.md`](backend/RECURRENCE_TASKS.md)
-Recurring tasks functionality and implementation
+Функциональность и реализация повторяющихся задач
 
-**Key Topics:**
-- RecurrenceRule entity and relationships
-- RecurrenceService business logic
-- Strategy pattern for recurrence types (daily, weekly, monthly, yearly, custom)
-- Cron-based automatic task generation
-- CLI command for processing rules
-- Testing and troubleshooting
-- Usage examples for each recurrence type
+**Ключевые Темы:**
+- Сущность RecurrenceRule и связи
+- Бизнес-логика RecurrenceService
+- Паттерн Strategy для типов повторения (daily, weekly, monthly, yearly, custom)
+- Автоматическая генерация задач на основе Cron
+- CLI команда для обработки правил
+- Тестирование и решение проблем
+- Примеры использования для каждого типа повторения
 
 #### [`backend/TEST_COVERAGE.md`](backend/TEST_COVERAGE.md)
-**📊 Updated 2025-11-10** - Complete backend test coverage report and analysis
+**📊 Обновлено 2025-11-10** - Полный отчет и анализ покрытия тестами backend
 
-**Key Topics:**
-- Coverage statistics by layer (Controllers, Services, Repositories, etc.)
-- Test quality analysis (Unit, Integration, Functional)
-- Detailed tables with all 33 test files
-- What's covered vs. what's missing (29 components identified)
-- Updated coverage estimate: ~65-70% (was ~75-80%)
-- Link to implementation plan
+**Ключевые Темы:**
+- Статистика покрытия по слоям (Controllers, Services, Repositories, и т.д.)
+- Анализ качества тестов (Unit, Integration, Functional)
+- Детальные таблицы со всеми 33 тестовыми файлами
+- Что покрыто vs что отсутствует (29 компонентов идентифицировано)
+- Обновленная оценка покрытия: ~65-70% (было ~75-80%)
+- Ссылка на план реализации
 
 #### [`backend/MISSING_TEST_COVERAGE_PLAN.md`](backend/MISSING_TEST_COVERAGE_PLAN.md)
-**🎯 NEW** - Step-by-step implementation plan for writing missing tests
+**🎯 НОВОЕ** - Пошаговый план реализации для написания недостающих тестов
 
-**Key Topics:**
-- **29 components** that need test coverage
-- Complete breakdown by priority (Critical → High → Medium → Low)
-- Detailed test cases for each component (with code examples)
-- 5-phase implementation roadmap (25-30 hours total)
-- Testing guidelines (AAA pattern, mocking, factories)
-- Success criteria and coverage goals
-- **Ready for immediate implementation** ✅
+**Ключевые Темы:**
+- **29 компонентов**, которые нуждаются в тестовом покрытии
+- Полная разбивка по приоритету (Critical → High → Medium → Low)
+- Детальные тест-кейсы для каждого компонента (с примерами кода)
+- 5-фазная дорожная карта реализации (25-30 часов всего)
+- Руководство по тестированию (AAA паттерн, моки, фабрики)
+- Критерии успеха и цели покрытия
+- **Готово к немедленной реализации** ✅
 
 ---
 
 ### 🎨 Frontend (`project/frontend/`)
 
 #### [`frontend/ARCHITECTURE.md`](frontend/ARCHITECTURE.md)
-Frontend architecture and component organization
+Архитектура Frontend и организация компонентов
 
-**Key Topics:**
-- Composition API patterns
-- Smart/Dumb components
-- State management (Pinia stores)
-- Composables architecture
-- Service layer (API calls)
+**Ключевые Темы:**
+- Паттерны Composition API
+- Smart/Dumb компоненты
+- Управление состоянием (Pinia stores)
+- Архитектура Composables
+- Слой сервисов (API вызовы)
 - TypeScript strict mode
 
 #### [`frontend/COMPONENTS.md`](frontend/COMPONENTS.md)
-Component library and usage patterns
+Библиотека компонентов и паттерны использования
 
-**Key Topics:**
-- Component hierarchy
-- PrimeVue integration
-- Reusable components
-- Props & Events patterns
-- Slot usage
-- Styling conventions
+**Ключевые Темы:**
+- Иерархия компонентов
+- Интеграция PrimeVue
+- Переиспользуемые компоненты
+- Паттерны Props & Events
+- Использование слотов
+- Конвенции стилизации
 
 #### [`frontend/STATE_MANAGEMENT.md`](frontend/STATE_MANAGEMENT.md)
-Pinia stores and state patterns
+Pinia stores и паттерны состояния
 
-**Key Topics:**
-- Store organization (by domain)
-- TaskStore (main state)
-- AuthStore (authentication)
+**Ключевые Темы:**
+- Организация Store (по доменам)
+- TaskStore (основное состояние)
+- AuthStore (аутентификация)
 - Actions vs Getters
-- Optimistic updates
+- Оптимистичные обновления
 
 #### [`frontend/API_INTEGRATION.md`](frontend/API_INTEGRATION.md)
-How frontend communicates with backend
+Как frontend общается с backend
 
-**Key Topics:**
-- Axios configuration
-- API service layer
-- Request/Response interceptors
-- Error handling
-- Token management
-- Retry logic
+**Ключевые Темы:**
+- Конфигурация Axios
+- Слой API сервисов
+- Перехватчики Request/Response
+- Обработка ошибок
+- Управление токенами
+- Логика повторных попыток
 
 ---
 
-### 📘 Guides (`project/docs/guides/`)
+### 📘 Руководства (`project/docs/guides/`)
 
 #### [`guides/DEVELOPMENT_WORKFLOW.md`](guides/DEVELOPMENT_WORKFLOW.md)
-Day-to-day development process
+Процесс ежедневной разработки
 
-**Key Topics:**
-- **Docker setup** - `docker/docker-compose.yml` (MAIN CONFIG)
-- Running backend (Symfony via Docker)
-- Running frontend (Vite: `cd frontend && npm run dev`)
-- Complete project rebuild commands
-- Database migrations & operations
-- PostgreSQL operations
-- Symfony console commands
-- Container management (logs, restart, health checks)
-- Testing workflow
-- Git workflow & commits
+**Ключевые Темы:**
+- **Настройка Docker** - `docker/docker-compose.yml` (ГЛАВНЫЙ КОНФИГ)
+- Запуск backend (Symfony через Docker)
+- Запуск frontend (Vite: `cd frontend && npm run dev`)
+- Команды полной пересборки проекта
+- Миграции базы данных и операции
+- Операции PostgreSQL
+- Команды консоли Symfony
+- Управление контейнерами (логи, перезапуск, проверка здоровья)
+- Рабочий процесс тестирования
+- Git рабочий процесс и коммиты
 
 #### [`guides/CODE_QUALITY.md`](guides/CODE_QUALITY.md)
-Code quality tools and automated checks
+Инструменты качества кода и автоматические проверки
 
-**Key Topics:**
-- PHP-CS-Fixer (PSR-12 + PHP 8.3 code style)
-- PHPStan (static analysis level 5)
-- Git pre-commit hooks setup
-- Makefile commands for quality checks
-- Configuration details and customization
-- Troubleshooting quality tools
+**Ключевые Темы:**
+- PHP-CS-Fixer (PSR-12 + PHP 8.3 стиль кода)
+- PHPStan (статический анализ уровень 5)
+- Настройка Git pre-commit hooks
+- Makefile команды для проверки качества
+- Детали конфигурации и кастомизация
+- Решение проблем с инструментами качества
 
 #### [`guides/TROUBLESHOOTING.md`](guides/TROUBLESHOOTING.md)
-Common issues and their solutions
+Частые проблемы и их решения
 
-**Key Topics:**
-- CORS errors (solved)
-- Date shifting (solved)
-- UI blinking (solved)
-- Memory exhaustion (solved)
-- Docker issues
-- Database connection issues
+**Ключевые Темы:**
+- CORS ошибки (решено)
+- Смещение дат (решено)
+- Мерцание UI (решено)
+- Исчерпание памяти (решено)
+- Проблемы с Docker
+- Проблемы с подключением к базе данных
 
 #### [`guides/testing/TESTING.md`](guides/testing/TESTING.md)
-Comprehensive testing strategy for backend and frontend
+Комплексная стратегия тестирования для backend и frontend
 
-**Key Topics:**
-- Backend testing (PHPUnit 9.6): Unit, Integration, Functional tests
-- Frontend testing (Vitest): 7 test files covering all layers
-- Test organization and structure (3 test types on backend)
-- Writing guidelines (AAA pattern, mocking, isolation)
-- Zenstruck Foundry factories for test data
-- ResetDatabase trait and DAMA DoctrineTestBundle
-- Happy-dom environment for frontend
-- CI/CD integration and coverage goals
-- Detailed examples for each test type
-- Troubleshooting common test issues
+**Ключевые Темы:**
+- Backend тестирование (PHPUnit 9.6): Unit, Integration, Functional тесты
+- Frontend тестирование (Vitest): 7 тестовых файлов покрывающих все слои
+- Организация и структура тестов (3 типа тестов на backend)
+- Руководство по написанию (AAA паттерн, моки, изоляция)
+- Zenstruck Foundry фабрики для тестовых данных
+- ResetDatabase trait и DAMA DoctrineTestBundle
+- Happy-dom окружение для frontend
+- Интеграция CI/CD и цели покрытия
+- Детальные примеры для каждого типа тестов
+- Решение частых проблем с тестами
 
 #### [`guides/e2e/E2E_TESTING_PLAN.md`](guides/e2e/E2E_TESTING_PLAN.md)
-Complete End-to-End (E2E) browser testing plan and strategy
+Полный план и стратегия End-to-End (E2E) браузерного тестирования
 
-**Key Topics:**
-- Technology stack recommendation (Playwright)
-- Test architecture (Page Object Model)
-- 100+ detailed test scenarios covering all features
-- Test cases by feature (Auth, Tasks, Filters, Calendar, Analytics, Profile)
-- Implementation phases (5-week plan)
-- CI/CD integration examples
-- Test coverage goals and success metrics
-- Page objects structure and best practices
+**Ключевые Темы:**
+- Рекомендация технологического стека (Playwright)
+- Архитектура тестов (Page Object Model)
+- 100+ детальных тестовых сценариев покрывающих все функции
+- Тест-кейсы по функциям (Auth, Tasks, Filters, Calendar, Analytics, Profile)
+- Фазы реализации (5-недельный план)
+- Примеры интеграции CI/CD
+- Цели тестового покрытия и метрики успеха
+- Структура page objects и лучшие практики
 
 #### [`guides/e2e/E2E_GIT_WORKFLOW.md`](guides/e2e/E2E_GIT_WORKFLOW.md)
-Git workflow guide for E2E tests development in separate branch
+Руководство по Git workflow для разработки E2E тестов в отдельной ветке
 
-**Key Topics:**
-- Branch management for E2E tests
-- Synchronization with main branch without switching
-- Rebase vs Merge strategies
-- Pull request workflow
-- Critical rules for parallel AI work
+**Ключевые Темы:**
+- Управление ветками для E2E тестов
+- Синхронизация с main веткой без переключения
+- Стратегии Rebase vs Merge
+- Рабочий процесс Pull Request
+- Критические правила для параллельной работы AI
 
 #### [`guides/DEPLOYMENT.md`](guides/DEPLOYMENT.md)
-Production deployment guide
+Руководство по production развертыванию
 
-**Key Topics:**
-- Environment configuration
-- Docker production build
-- Database setup
-- SSL/HTTPS setup
-- Monitoring & logs
+**Ключевые Темы:**
+- Конфигурация окружения
+- Docker production сборка
+- Настройка базы данных
+- Настройка SSL/HTTPS
+- Мониторинг и логи
 
 #### [`guides/voice-ai/VOICE_AI_ASSISTANT_PLAN.md`](guides/voice-ai/VOICE_AI_ASSISTANT_PLAN.md)
-Voice AI Assistant implementation plan with LLM integration
+План реализации голосового AI ассистента с интеграцией LLM
 
-**Key Topics:**
-- Technology stack (Llama 3.2, Ollama, Whisper, Centrifugo)
-- System architecture and data flow
-- 5-phase implementation plan (19 days)
-- Backend services structure (SOLID/GRASP)
-- Frontend components and WebSocket integration
-- Telegram bot integration
-- Testing strategy and critical points
-- Future scaling and multi-messenger support
+**Ключевые Темы:**
+- Технологический стек (Llama 3.2, Ollama, Whisper, Centrifugo)
+- Архитектура системы и поток данных
+- 5-фазный план реализации (19 дней)
+- Структура backend сервисов (SOLID/GRASP)
+- Frontend компоненты и интеграция WebSocket
+- Интеграция Telegram бота
+- Стратегия тестирования и критические точки
+- Будущее масштабирование и поддержка мульти-мессенджеров
 
 #### [`guides/voice-ai/VOICE_AI_TESTING_STRATEGY.md`](guides/voice-ai/VOICE_AI_TESTING_STRATEGY.md)
-Testing strategy for Voice AI Assistant feature
+Стратегия тестирования для функции голосового AI ассистента
 
-**Key Topics:**
-- Unit tests for services (LLM, STT, Command Executor)
-- Integration tests for full voice command flow
-- Mocking strategies for AI services
-- Performance testing for voice processing
-- Edge cases and error handling tests
+**Ключевые Темы:**
+- Unit тесты для сервисов (LLM, STT, Command Executor)
+- Integration тесты для полного потока голосовых команд
+- Стратегии создания моков для AI сервисов
+- Тестирование производительности обработки голоса
+- Граничные случаи и тесты обработки ошибок
 
 #### [`guides/performance/PERFORMANCE_OPTIMIZATION_PLAN.md`](guides/performance/PERFORMANCE_OPTIMIZATION_PLAN.md)
-Backend performance optimization plan for 2M+ tasks (Enhanced by Opus 4.1)
+План оптимизации производительности Backend для 2M+ задач (Улучшено Opus 4.1)
 
-**Key Topics:**
-- Critical N+1 query problems identified
-- DTO lazy loading issues
-- Database indexing strategy (15+ composite indexes)
-- PostgreSQL optimization and connection pooling
-- Query result caching with Doctrine
-- 11-stage implementation plan (6-8 days)
-- Expected 100x performance improvement
-- Memory optimization strategies
+**Ключевые Темы:**
+- Критические проблемы N+1 запросов идентифицированы
+- Проблемы ленивой загрузки DTO
+- Стратегия индексирования базы данных (15+ составных индексов)
+- Оптимизация PostgreSQL и connection pooling
+- Кеширование результатов запросов с Doctrine
+- 11-этапный план реализации (6-8 дней)
+- Ожидаемое 100x улучшение производительности
+- Стратегии оптимизации памяти
 
 #### [`guides/performance/DOCTRINE_CACHING_SETUP.md`](guides/performance/DOCTRINE_CACHING_SETUP.md)
-**📊 NEW** - Detailed guide for setting up Doctrine caching (Dev + Prod)
+**📊 НОВОЕ** - Детальное руководство по настройке кеширования Doctrine (Dev + Prod)
 
-**Key Topics:**
-- Understanding Doctrine cache types (Query, Metadata, Result)
-- Environment-specific configurations (dev vs prod)
-- APCu setup and optimization for production
-- Step-by-step implementation guide
-- Testing and troubleshooting caching
-- Expected 4-10x performance improvement
-- Cache monitoring and statistics
+**Ключевые Темы:**
+- Понимание типов кеша Doctrine (Query, Metadata, Result)
+- Конфигурации специфичные для окружения (dev vs prod)
+- Настройка и оптимизация APCu для production
+- Пошаговое руководство по реализации
+- Тестирование и решение проблем с кешированием
+- Ожидаемое 4-10x улучшение производительности
+- Мониторинг кеша и статистика
 
 ---
 
-## 🔑 Critical Knowledge Areas
+## 🔑 Критические Области Знаний
 
-### For Backend Development
-**Must Read:**
-1. [`CODING_STANDARDS.md`](CODING_STANDARDS.md) - SOLID/GRASP principles
-2. [`backend/ARCHITECTURE.md`](backend/ARCHITECTURE.md) - Layered architecture
+### Для Backend Разработки
+**Обязательно Прочитать:**
+1. [`CODING_STANDARDS.md`](CODING_STANDARDS.md) - Принципы SOLID/GRASP
+2. [`backend/ARCHITECTURE.md`](backend/ARCHITECTURE.md) - Слоистая архитектура
 
-**Reference:**
-- [`backend/API_REFERENCE.md`](backend/API_REFERENCE.md) - API contracts
-- [`backend/DATABASE.md`](backend/DATABASE.md) - Schema design
-- [`backend/RECURRENCE_TASKS.md`](backend/RECURRENCE_TASKS.md) - Recurring tasks system
+**Справочник:**
+- [`backend/API_REFERENCE.md`](backend/API_REFERENCE.md) - API контракты
+- [`backend/DATABASE.md`](backend/DATABASE.md) - Дизайн схемы
+- [`backend/RECURRENCE_TASKS.md`](backend/RECURRENCE_TASKS.md) - Система повторяющихся задач
 
-**Testing:**
-- [`backend/TEST_COVERAGE.md`](backend/TEST_COVERAGE.md) - Current test coverage report
-- [`backend/MISSING_TEST_COVERAGE_PLAN.md`](backend/MISSING_TEST_COVERAGE_PLAN.md) - 🎯 **Implementation plan for writing tests**
+**Тестирование:**
+- [`backend/TEST_COVERAGE.md`](backend/TEST_COVERAGE.md) - Текущий отчет о покрытии тестами
+- [`backend/MISSING_TEST_COVERAGE_PLAN.md`](backend/MISSING_TEST_COVERAGE_PLAN.md) - 🎯 **План реализации написания тестов**
 
-### For Frontend Development
-**Must Read:**
-1. [`CODING_STANDARDS.md`](CODING_STANDARDS.md) - TypeScript/Vue conventions
-2. [`frontend/ARCHITECTURE.md`](frontend/ARCHITECTURE.md) - Component patterns
+### Для Frontend Разработки
+**Обязательно Прочитать:**
+1. [`CODING_STANDARDS.md`](CODING_STANDARDS.md) - TypeScript/Vue конвенции
+2. [`frontend/ARCHITECTURE.md`](frontend/ARCHITECTURE.md) - Паттерны компонентов
 3. [`frontend/STATE_MANAGEMENT.md`](frontend/STATE_MANAGEMENT.md) - Pinia stores
 
-**Reference:**
-- [`frontend/COMPONENTS.md`](frontend/COMPONENTS.md) - Component library
-- [`frontend/API_INTEGRATION.md`](frontend/API_INTEGRATION.md) - API calls
+**Справочник:**
+- [`frontend/COMPONENTS.md`](frontend/COMPONENTS.md) - Библиотека компонентов
+- [`frontend/API_INTEGRATION.md`](frontend/API_INTEGRATION.md) - API вызовы
 
-### For Troubleshooting
-**First Stop:**
-- [`guides/TROUBLESHOOTING.md`](guides/TROUBLESHOOTING.md) - All known issues & fixes
+### Для Решения Проблем
+**Первая Остановка:**
+- [`guides/TROUBLESHOOTING.md`](guides/TROUBLESHOOTING.md) - Все известные проблемы и исправления
 
-**If Issue Persists:**
-- [`guides/DEVELOPMENT_WORKFLOW.md`](guides/DEVELOPMENT_WORKFLOW.md) - Setup issues
+**Если Проблема Сохраняется:**
+- [`guides/DEVELOPMENT_WORKFLOW.md`](guides/DEVELOPMENT_WORKFLOW.md) - Проблемы с настройкой
 
 ---
 
-## 📊 Project Statistics
+## 📊 Статистика Проекта
 
 ```
 Backend:
-- Lines of Code: ~15,000
-- Controllers: 4 (Auth, Task, Tag, Analytics)
-- Services: 10+ (TaskService, RecurrenceService, AnalyticsService, etc.)
-- Entities: 6 (User, Task, Tag, Media, RefreshToken, RecurrenceRule)
-- Tests: PHPUnit (Unit + Integration)
+- Строк Кода: ~15,000
+- Контроллеры: 4 (Auth, Task, Tag, Analytics)
+- Сервисы: 10+ (TaskService, RecurrenceService, AnalyticsService, и т.д.)
+- Сущности: 6 (User, Task, Tag, Media, RefreshToken, RecurrenceRule)
+- Тесты: PHPUnit (Unit + Integration)
 
 Frontend:
-- Lines of Code: ~8,000
-- Components: 25+ (views, cards, modals, forms)
-- Composables: 8 (useTaskCompletion, useAuth, useTagSuggestions, etc.)
+- Строк Кода: ~8,000
+- Компоненты: 25+ (views, cards, modals, forms)
+- Composables: 8 (useTaskCompletion, useAuth, useTagSuggestions, и т.д.)
 - Stores: 3 (TaskStore, AuthStore, LoaderStore)
-- Tests: 115 (Vitest - 100% passing)
+- Тесты: 115 (Vitest - 100% проходят)
 ```
 
 ---
 
-## 🎓 Learning Path for New AI Assistants
+## 🎓 Путь Обучения для Новых AI Ассистентов
 
-### Phase 1: Understanding (30 minutes)
-1. Read `PROJECT_OVERVIEW.md` - What are we building?
-2. Read `TECH_STACK.md` - What technologies?
-3. Skim `CODING_STANDARDS.md` - How do we write code?
+### Фаза 1: Понимание (30 минут)
+1. Прочитайте `PROJECT_OVERVIEW.md` - Что мы строим?
+2. Прочитайте `TECH_STACK.md` - Какие технологии?
+3. Просмотрите `CODING_STANDARDS.md` - Как мы пишем код?
 
-### Phase 2: Backend Deep Dive (45 minutes)
-1. Study `backend/ARCHITECTURE.md` - How is backend structured?
-2. Reference `backend/API_REFERENCE.md` - Know all endpoints
-3. Read `backend/DATABASE.md` - Database schema and relationships
-4. Read `backend/RECURRENCE_TASKS.md` - Recurring tasks feature (optional)
+### Фаза 2: Глубокое Погружение в Backend (45 минут)
+1. Изучите `backend/ARCHITECTURE.md` - Как структурирован backend?
+2. Справка `backend/API_REFERENCE.md` - Знайте все эндпоинты
+3. Прочитайте `backend/DATABASE.md` - Схема базы данных и связи
+4. Прочитайте `backend/RECURRENCE_TASKS.md` - Функция повторяющихся задач (опционально)
 
-### Phase 3: Frontend Deep Dive (45 minutes)
-1. Study `frontend/ARCHITECTURE.md` - How is frontend structured?
-2. Read `frontend/STATE_MANAGEMENT.md` - How state works
-3. Read `frontend/API_INTEGRATION.md` - How frontend talks to backend
+### Фаза 3: Глубокое Погружение во Frontend (45 минут)
+1. Изучите `frontend/ARCHITECTURE.md` - Как структурирован frontend?
+2. Прочитайте `frontend/STATE_MANAGEMENT.md` - Как работает состояние
+3. Прочитайте `frontend/API_INTEGRATION.md` - Как frontend общается с backend
 
-### Phase 4: Practical Knowledge (30 minutes)
-1. Read `guides/DEVELOPMENT_WORKFLOW.md` - How to develop
-2. Bookmark `guides/TROUBLESHOOTING.md` - For when things break
+### Фаза 4: Практические Знания (30 минут)
+1. Прочитайте `guides/DEVELOPMENT_WORKFLOW.md` - Как разрабатывать
+2. Добавьте в закладки `guides/TROUBLESHOOTING.md` - Для случаев, когда что-то ломается
 
-**Total Time Investment:** ~2.5 hours for complete context
+**Общая Инвестиция Времени:** ~2.5 часа для полного контекста
 
 ---
 
-## 🚀 Quick Reference Commands
+## 🚀 Быстрые Справочные Команды
 
 ### Backend (Docker)
 
-**IMPORTANT**: Docker configuration is in `docker/docker-compose.yml`
+**ВАЖНО**: Конфигурация Docker находится в `docker/docker-compose.yml`
 
 ```bash
-# Start services (from docker/ directory or use -f flag)
+# Запустить сервисы (из docker/ директории или используя флаг -f)
 cd docker && docker-compose up -d
-# OR from anywhere:
+# ИЛИ из любого места:
 docker-compose -f docker/docker-compose.yml up -d
 
-# Stop services
+# Остановить сервисы
 cd docker && docker-compose down
 
-# Rebuild project completely
+# Полностью пересобрать проект
 cd docker
-docker-compose down -v  # Removes volumes (database!)
+docker-compose down -v  # Удаляет volumes (базу данных!)
 docker-compose build --no-cache
 docker-compose up -d
 docker exec backend-php83 composer install
 docker exec backend-php83 php bin/console doctrine:database:create
 docker exec backend-php83 php bin/console doctrine:migrations:migrate --no-interaction
 
-# Run Symfony commands
-docker exec backend-php83 php bin/console <command>
+# Запустить Symfony команды
+docker exec backend-php83 php bin/console <команда>
 
-# Database migrations
+# Миграции базы данных
 docker exec backend-php83 php bin/console make:migration
 docker exec backend-php83 php bin/console doctrine:migrations:migrate
 
-# Clear cache
+# Очистить кеш
 docker exec backend-php83 php bin/console cache:clear
 
-# PostgreSQL operations
+# Операции PostgreSQL
 docker exec -it backend-psql16 psql -U user -d backend-app
 docker exec backend-psql16 psql -U user -d backend-app -c "SELECT COUNT(*) FROM tasks;"
 
-# Container logs
+# Логи контейнеров
 docker logs -f backend-php83
 docker logs -f backend-nginx
 
-# Container health
-docker ps  # List running containers
-docker stats  # Resource usage
+# Здоровье контейнеров
+docker ps  # Список работающих контейнеров
+docker stats  # Использование ресурсов
 ```
 
 ### Frontend
 
-**Location**: `frontend/` directory
+**Расположение**: `frontend/` директория
 
 ```bash
-# Navigate to frontend
+# Перейти во frontend
 cd frontend
 
-# Install dependencies
+# Установить зависимости
 npm install
 
-# Development server (starts on http://localhost:3000)
+# Development сервер (запускается на http://localhost:3000)
 npm run dev
 
-# Type check
+# Проверка типов
 npm run type-check
 
-# Build for production
+# Сборка для production
 npm run build
 
-# Run tests
+# Запустить тесты
 npm run test:run
 ```
 
 ---
 
-## 📝 Documentation Conventions
+## 📝 Конвенции Документации
 
-### File Naming
-- All documentation files: `UPPERCASE_WITH_UNDERSCORES.md`
-- Backend-specific: `backend/FILE_NAME.md`
-- Frontend-specific: `frontend/FILE_NAME.md`
-- Guides: `guides/FILE_NAME.md`
+### Именование Файлов
+- Все файлы документации: `UPPERCASE_WITH_UNDERSCORES.md`
+- Backend-специфичные: `backend/FILE_NAME.md`
+- Frontend-специфичные: `frontend/FILE_NAME.md`
+- Руководства: `guides/FILE_NAME.md`
 
-### Document Structure
-Every document follows this pattern:
-1. **Title** with emoji
-2. **Quick Summary** (TL;DR)
-3. **Table of Contents** (for long docs)
-4. **Main Content** with clear headings
-5. **Examples** (code snippets)
-6. **Related Documents** (links)
+### Структура Документа
+Каждый документ следует этому паттерну:
+1. **Заголовок** с emoji
+2. **Краткое Резюме** (TL;DR)
+3. **Оглавление** (для длинных доков)
+4. **Основной Контент** с четкими заголовками
+5. **Примеры** (фрагменты кода)
+6. **Связанные Документы** (ссылки)
 
-### Code Examples
-- Always show both ❌ BAD and ✅ GOOD examples
-- Include file paths for context
-- Add comments explaining WHY
+### Примеры Кода
+- Всегда показывайте и ❌ ПЛОХИЕ и ✅ ХОРОШИЕ примеры
+- Включайте пути к файлам для контекста
+- Добавляйте комментарии объясняющие ПОЧЕМУ
 
 ---
 
-## 🔗 External Resources
+## 🔗 Внешние Ресурсы
 
-### Official Documentation
+### Официальная Документация
 - **Symfony**: https://symfony.com/doc/current/index.html
 - **Vue.js 3**: https://vuejs.org/guide/introduction.html
 - **TypeScript**: https://www.typescriptlang.org/docs/
 - **PrimeVue**: https://primevue.org/
 - **Pinia**: https://pinia.vuejs.org/
 
-### Books Referenced
+### Книги в Справочнике
 - **Clean Architecture** - Robert C. Martin
 - **Clean Code** - Robert C. Martin
 - **Code Complete** - Steve McConnell
@@ -518,53 +518,53 @@ Every document follows this pattern:
 
 ---
 
-## ⚠️ Important Notes for AI
+## ⚠️ Важные Заметки для AI
 
-### Always Remember
-1. **SOLID principles are non-negotiable** - Every class follows them
-2. **No business logic in controllers** - Controllers are thin coordinators
-3. **TypeScript strict mode** - No `any` types allowed
-4. **Optimistic UI updates** - No full list reloads
+### Всегда Помните
+1. **Принципы SOLID не подлежат обсуждению** - Каждый класс следует им
+2. **Никакой бизнес-логики в контроллерах** - Контроллеры - тонкие координаторы
+3. **TypeScript strict mode** - Типы `any` не разрешены
+4. **Оптимистичные обновления UI** - Никаких полных перезагрузок списков
 
-### Before Making Changes
-- [ ] Have you read the relevant docs?
-- [ ] Do you understand the SOLID principles applied?
-- [ ] Have you checked `TROUBLESHOOTING.md` for similar issues?
-- [ ] Are you maintaining the existing code patterns?
+### Перед Внесением Изменений
+- [ ] Вы прочитали релевантную документацию?
+- [ ] Вы понимаете применяемые принципы SOLID?
+- [ ] Вы проверили `TROUBLESHOOTING.md` на похожие проблемы?
+- [ ] Вы поддерживаете существующие паттерны кода?
 
-### When Stuck
-1. Check `guides/TROUBLESHOOTING.md` first
-2. Re-read the relevant architecture doc
-3. Review similar existing code
-4. Ask for clarification if truly ambiguous
-
----
-
-## 📅 Last Updated
-
-**Version:** 1.2.0
-**Date:** 2025-11-10
-**Maintainer:** Claude Code AI
-**Project Phase:** Production-Ready + Test Coverage Improvement
+### Когда Застряли
+1. Проверьте `guides/TROUBLESHOOTING.md` сначала
+2. Перечитайте релевантный документ по архитектуре
+3. Просмотрите похожий существующий код
+4. Попросите разъяснения, если действительно неоднозначно
 
 ---
 
-## 🎯 Next Steps
+## 📅 Последнее Обновление
 
-After reading this INDEX:
-
-**For Understanding Project:**
-→ Start with [`PROJECT_OVERVIEW.md`](PROJECT_OVERVIEW.md)
-
-**For Writing Backend Code:**
-→ Read [`CODING_STANDARDS.md`](CODING_STANDARDS.md) then [`backend/ARCHITECTURE.md`](backend/ARCHITECTURE.md)
-
-**For Writing Frontend Code:**
-→ Read [`CODING_STANDARDS.md`](CODING_STANDARDS.md) then [`frontend/ARCHITECTURE.md`](frontend/ARCHITECTURE.md)
-
-**For Fixing Issues:**
-→ Jump to [`guides/TROUBLESHOOTING.md`](guides/TROUBLESHOOTING.md)
+**Версия:** 1.2.0
+**Дата:** 2025-11-10
+**Сопровождающий:** Claude Code AI
+**Фаза Проекта:** Production-Ready + Улучшение Тестового Покрытия
 
 ---
 
-*This documentation is living and evolves with the project. When you make architectural decisions, update the relevant docs.*
+## 🎯 Следующие Шаги
+
+После прочтения этого ИНДЕКСА:
+
+**Для Понимания Проекта:**
+→ Начните с [`PROJECT_OVERVIEW.md`](PROJECT_OVERVIEW.md)
+
+**Для Написания Backend Кода:**
+→ Прочитайте [`CODING_STANDARDS.md`](CODING_STANDARDS.md) затем [`backend/ARCHITECTURE.md`](backend/ARCHITECTURE.md)
+
+**Для Написания Frontend Кода:**
+→ Прочитайте [`CODING_STANDARDS.md`](CODING_STANDARDS.md) затем [`frontend/ARCHITECTURE.md`](frontend/ARCHITECTURE.md)
+
+**Для Исправления Проблем:**
+→ Переходите к [`guides/TROUBLESHOOTING.md`](guides/TROUBLESHOOTING.md)
+
+---
+
+*Эта документация живая и развивается вместе с проектом. Когда вы принимаете архитектурные решения, обновляйте релевантную документацию.*
