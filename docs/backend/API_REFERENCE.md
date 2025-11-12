@@ -1,27 +1,27 @@
-# API Reference - Complete Documentation
+# API Справочник - Полная документация
 
-## Table of Contents
-1. [Authentication](#authentication)
-2. [Tasks](#tasks)
-3. [Tags](#tags)
-4. [Analytics](#analytics)
-5. [Error Handling](#error-handling)
-6. [Rate Limiting](#rate-limiting)
+## Содержание
+1. [Аутентификация](#authentication)
+2. [Задачи](#tasks)
+3. [Теги](#tags)
+4. [Аналитика](#analytics)
+5. [Обработка ошибок](#error-handling)
+6. [Ограничение частоты запросов](#rate-limiting)
 
 ---
 
-## Base URL
+## Базовый URL
 
 ```
 Development: http://localhost:8089/api
 Production:  https://your-domain.com/api
 ```
 
-## Authentication
+## Аутентификация
 
-All API endpoints (except registration and login) require JWT authentication.
+Все API эндпоинты (кроме регистрации и входа) требуют JWT аутентификацию.
 
-**Header Format**:
+**Формат заголовка**:
 ```http
 Authorization: Bearer <jwt_token>
 ```
@@ -30,11 +30,11 @@ Authorization: Bearer <jwt_token>
 
 ### POST /api/register
 
-Register a new user account.
+Регистрация нового пользователя.
 
-**Authentication:** Not required
+**Аутентификация:** Не требуется
 
-**Request Body:**
+**Тело запроса:**
 ```json
 {
   "email": "user@example.com",
@@ -43,7 +43,7 @@ Register a new user account.
 }
 ```
 
-**Response 201 (Created):**
+**Ответ 201 (Создано):**
 ```json
 {
   "id": 42,
@@ -53,7 +53,7 @@ Register a new user account.
 }
 ```
 
-**Error 400 (Validation Failed):**
+**Ошибка 400 (Ошибка валидации):**
 ```json
 {
   "errors": [
@@ -63,7 +63,7 @@ Register a new user account.
 }
 ```
 
-**Error 422 (Invalid Input):**
+**Ошибка 422 (Некорректный ввод):**
 ```json
 {
   "message": "Validation failed",
@@ -80,11 +80,11 @@ Register a new user account.
 
 ### POST /api/login
 
-Authenticate user and receive JWT token.
+Аутентификация пользователя и получение JWT токена.
 
-**Authentication:** Not required
+**Аутентификация:** Не требуется
 
-**Request Body:**
+**Тело запроса:**
 ```json
 {
   "email": "user@example.com",
@@ -92,7 +92,7 @@ Authenticate user and receive JWT token.
 }
 ```
 
-**Response 200 (Success):**
+**Ответ 200 (Успех):**
 ```json
 {
   "token": "eyJ0eXAiOiJKV1QiLCJhbGc...",
@@ -106,7 +106,7 @@ Authenticate user and receive JWT token.
 }
 ```
 
-**Error 401 (Invalid Credentials):**
+**Ошибка 401 (Неверные учетные данные):**
 ```json
 {
   "message": "Invalid credentials"
@@ -117,18 +117,18 @@ Authenticate user and receive JWT token.
 
 ### POST /api/token/refresh
 
-Refresh JWT token using refresh token.
+Обновление JWT токена с использованием refresh токена.
 
-**Authentication:** Not required (uses refresh token)
+**Аутентификация:** Не требуется (использует refresh токен)
 
-**Request Body:**
+**Тело запроса:**
 ```json
 {
   "refreshToken": "def50200a1b2c3d4e5f6..."
 }
 ```
 
-**Response 200 (Success):**
+**Ответ 200 (Успех):**
 ```json
 {
   "token": "eyJ0eXAiOiJKV1QiLCJhbGc...",
@@ -136,7 +136,7 @@ Refresh JWT token using refresh token.
 }
 ```
 
-**Error 401 (Invalid Refresh Token):**
+**Ошибка 401 (Неверный Refresh Token):**
 ```json
 {
   "message": "Invalid refresh token"
@@ -147,28 +147,28 @@ Refresh JWT token using refresh token.
 
 ### POST /api/logout
 
-Logout user (invalidate refresh token).
+Выход пользователя (инвалидация refresh токена).
 
-**Authentication:** Required (JWT)
+**Аутентификация:** Требуется (JWT)
 
-**Request Body:**
+**Тело запроса:**
 ```json
 {
   "refreshToken": "def50200a1b2c3d4e5f6..."
 }
 ```
 
-**Response 204 (No Content)**
+**Ответ 204 (Нет содержимого)**
 
 ---
 
 ### GET /api/users/me
 
-Get current authenticated user profile.
+Получение профиля текущего аутентифицированного пользователя.
 
-**Authentication:** Required (JWT)
+**Аутентификация:** Требуется (JWT)
 
-**Response 200 (Success):**
+**Ответ 200 (Успех):**
 ```json
 {
   "id": 42,
@@ -180,7 +180,7 @@ Get current authenticated user profile.
 }
 ```
 
-**Error 401 (Unauthorized):**
+**Ошибка 401 (Не авторизован):**
 ```json
 {
   "message": "JWT Token not found"
@@ -189,43 +189,43 @@ Get current authenticated user profile.
 
 ---
 
-## Tasks
+## Задачи
 
 ### GET /api/tasks
 
-Get list of tasks with optional filters.
+Получение списка задач с опциональными фильтрами.
 
-**Authentication:** Required (JWT)
+**Аутентификация:** Требуется (JWT)
 
-**Query Parameters:**
-- `view` (optional): Filter by view type
-  - Values: `today`, `overdue`, `upcoming`, `all`, `unscheduled`
-  - Default: `all`
-- `search` (optional): Search in title/description
-  - Type: `string`
-  - Example: `search=meeting`
-- `tags` (optional): Filter by tag IDs
-  - Type: `integer[]`
-  - Example: `tags[]=1&tags[]=2`
-- `completed` (optional): Filter by completion status
-  - Type: `boolean`
-  - Example: `completed=true`
-- `dateFrom` (optional): Filter tasks starting from date
-  - Type: `string` (format: `YYYY-MM-DD`)
-  - Example: `dateFrom=2025-01-01`
-- `dateTo` (optional): Filter tasks ending at date
-  - Type: `string` (format: `YYYY-MM-DD`)
-  - Example: `dateTo=2025-12-31`
-- `priorities` (optional): Filter by priority levels
-  - Type: `string[]`
-  - Values: `LOW`, `MEDIUM`, `HIGH`, `URGENT`
-  - Example: `priorities[]=HIGH&priorities[]=URGENT`
-- `statuses` (optional): Filter by task statuses
-  - Type: `string[]`
-  - Values: `PENDING`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED`
-  - Example: `statuses[]=PENDING&statuses[]=IN_PROGRESS`
+**Параметры запроса:**
+- `view` (опционально): Фильтр по типу представления
+  - Значения: `today`, `overdue`, `upcoming`, `all`, `unscheduled`
+  - По умолчанию: `all`
+- `search` (опционально): Поиск в заголовке/описании
+  - Тип: `string`
+  - Пример: `search=meeting`
+- `tags` (опционально): Фильтр по ID тегов
+  - Тип: `integer[]`
+  - Пример: `tags[]=1&tags[]=2`
+- `completed` (опционально): Фильтр по статусу завершения
+  - Тип: `boolean`
+  - Пример: `completed=true`
+- `dateFrom` (опционально): Фильтр задач начиная с даты
+  - Тип: `string` (формат: `YYYY-MM-DD`)
+  - Пример: `dateFrom=2025-01-01`
+- `dateTo` (опционально): Фильтр задач заканчивая датой
+  - Тип: `string` (формат: `YYYY-MM-DD`)
+  - Пример: `dateTo=2025-12-31`
+- `priorities` (опционально): Фильтр по уровням приоритета
+  - Тип: `string[]`
+  - Значения: `LOW`, `MEDIUM`, `HIGH`, `URGENT`
+  - Пример: `priorities[]=HIGH&priorities[]=URGENT`
+- `statuses` (опционально): Фильтр по статусам задач
+  - Тип: `string[]`
+  - Значения: `PENDING`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED`
+  - Пример: `statuses[]=PENDING&statuses[]=IN_PROGRESS`
 
-**Response 200 (Success):**
+**Ответ 200 (Успех):**
 ```json
 [
   {
@@ -270,14 +270,14 @@ Get list of tasks with optional filters.
 ]
 ```
 
-**Error 401 (Unauthorized):**
+**Ошибка 401 (Не авторизован):**
 ```json
 {
   "message": "JWT Token not found"
 }
 ```
 
-**Error 400 (Invalid Parameters):**
+**Ошибка 400 (Некорректные параметры):**
 ```json
 {
   "message": "Invalid filter parameters",
@@ -291,15 +291,15 @@ Get list of tasks with optional filters.
 
 ### GET /api/tasks/{id}
 
-Get single task with full details including subtasks.
+Получение одной задачи с полными деталями, включая подзадачи.
 
-**Authentication:** Required (JWT)
+**Аутентификация:** Требуется (JWT)
 
-**Path Parameters:**
-- `id` (required): Task ID
-  - Type: `integer`
+**Параметры пути:**
+- `id` (обязательно): ID задачи
+  - Тип: `integer`
 
-**Response 200 (Success):**
+**Ответ 200 (Успех):**
 ```json
 {
   "id": 123,
@@ -376,14 +376,14 @@ Get single task with full details including subtasks.
 }
 ```
 
-**Error 404 (Not Found):**
+**Ошибка 404 (Не найдено):**
 ```json
 {
   "message": "Task not found"
 }
 ```
 
-**Error 403 (Forbidden):**
+**Ошибка 403 (Запрещено):**
 ```json
 {
   "message": "Access denied. You do not own this task."
@@ -394,11 +394,11 @@ Get single task with full details including subtasks.
 
 ### POST /api/tasks
 
-Create a new task.
+Создание новой задачи.
 
-**Authentication:** Required (JWT)
+**Аутентификация:** Требуется (JWT)
 
-**Request Body:**
+**Тело запроса:**
 ```json
 {
   "title": "Complete documentation",
@@ -413,20 +413,20 @@ Create a new task.
 }
 ```
 
-**Required Fields:**
-- `title` (string, max 255 characters)
+**Обязательные поля:**
+- `title` (string, макс 255 символов)
 
-**Optional Fields:**
+**Опциональные поля:**
 - `description` (string, nullable)
-- `status` (enum: `PENDING`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED`, default: `PENDING`)
-- `priority` (enum: `LOW`, `MEDIUM`, `HIGH`, `URGENT`, default: `MEDIUM`)
+- `status` (enum: `PENDING`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED`, по умолчанию: `PENDING`)
+- `priority` (enum: `LOW`, `MEDIUM`, `HIGH`, `URGENT`, по умолчанию: `MEDIUM`)
 - `startDate` (ISO 8601 datetime, nullable)
 - `dueDate` (ISO 8601 datetime, nullable)
 - `parentTaskId` (integer, nullable)
 - `tagIds` (integer array, nullable)
-- `sortOrder` (integer, default: 0)
+- `sortOrder` (integer, по умолчанию: 0)
 
-**Response 201 (Created):**
+**Ответ 201 (Создано):**
 ```json
 {
   "id": 125,
@@ -461,7 +461,7 @@ Create a new task.
 }
 ```
 
-**Error 400 (Validation Failed):**
+**Ошибка 400 (Ошибка валидации):**
 ```json
 {
   "message": "Validation failed",
@@ -478,7 +478,7 @@ Create a new task.
 }
 ```
 
-**Error 404 (Parent Task Not Found):**
+**Ошибка 404 (Родительская задача не найдена):**
 ```json
 {
   "message": "Parent task with ID 999 not found"
@@ -489,14 +489,14 @@ Create a new task.
 
 ### PUT /api/tasks/{id}
 
-Update existing task (full update).
+Обновление существующей задачи (полное обновление).
 
-**Authentication:** Required (JWT)
+**Аутентификация:** Требуется (JWT)
 
-**Path Parameters:**
-- `id` (required): Task ID
+**Параметры пути:**
+- `id` (обязательно): ID задачи
 
-**Request Body:**
+**Тело запроса:**
 ```json
 {
   "title": "Complete documentation (updated)",
@@ -509,7 +509,7 @@ Update existing task (full update).
 }
 ```
 
-**Response 200 (Success):**
+**Ответ 200 (Успех):**
 ```json
 {
   "id": 123,
@@ -539,14 +539,14 @@ Update existing task (full update).
 }
 ```
 
-**Error 403 (Forbidden):**
+**Ошибка 403 (Запрещено):**
 ```json
 {
   "message": "Access denied. You do not own this task."
 }
 ```
 
-**Error 404 (Not Found):**
+**Ошибка 404 (Не найдено):**
 ```json
 {
   "message": "Task not found"
@@ -557,23 +557,23 @@ Update existing task (full update).
 
 ### DELETE /api/tasks/{id}
 
-Delete task and all its subtasks.
+Удаление задачи и всех её подзадач.
 
-**Authentication:** Required (JWT)
+**Аутентификация:** Требуется (JWT)
 
-**Path Parameters:**
-- `id` (required): Task ID
+**Параметры пути:**
+- `id` (обязательно): ID задачи
 
-**Response 204 (No Content)**
+**Ответ 204 (Нет содержимого)**
 
-**Error 403 (Forbidden):**
+**Ошибка 403 (Запрещено):**
 ```json
 {
   "message": "Access denied. You do not own this task."
 }
 ```
 
-**Error 404 (Not Found):**
+**Ошибка 404 (Не найдено):**
 ```json
 {
   "message": "Task not found"
@@ -584,14 +584,14 @@ Delete task and all its subtasks.
 
 ### POST /api/tasks/{id}/toggle
 
-Toggle task completion status (complete ↔ incomplete).
+Переключение статуса завершения задачи (завершить ↔ не завершена).
 
-**Authentication:** Required (JWT)
+**Аутентификация:** Требуется (JWT)
 
-**Path Parameters:**
-- `id` (required): Task ID
+**Параметры пути:**
+- `id` (обязательно): ID задачи
 
-**Response 200 (Success):**
+**Ответ 200 (Успех):**
 ```json
 {
   "id": 123,
@@ -604,23 +604,23 @@ Toggle task completion status (complete ↔ incomplete).
 }
 ```
 
-**Behavior:**
-- If task is `COMPLETED` → changes to previous status (default `IN_PROGRESS`)
-- If task is not `COMPLETED` → changes to `COMPLETED`
-- Sets/clears `completedAt` timestamp
+**Поведение:**
+- Если задача `COMPLETED` → меняется на предыдущий статус (по умолчанию `IN_PROGRESS`)
+- Если задача не `COMPLETED` → меняется на `COMPLETED`
+- Устанавливает/очищает временную метку `completedAt`
 
 ---
 
 ### POST /api/tasks/{id}/complete
 
-Mark task as completed.
+Отметить задачу как завершенную.
 
-**Authentication:** Required (JWT)
+**Аутентификация:** Требуется (JWT)
 
-**Path Parameters:**
-- `id` (required): Task ID
+**Параметры пути:**
+- `id` (обязательно): ID задачи
 
-**Response 200 (Success):**
+**Ответ 200 (Успех):**
 ```json
 {
   "id": 123,
@@ -637,14 +637,14 @@ Mark task as completed.
 
 ### POST /api/tasks/{id}/archive
 
-Archive task (hide from active lists).
+Архивировать задачу (скрыть из активных списков).
 
-**Authentication:** Required (JWT)
+**Аутентификация:** Требуется (JWT)
 
-**Path Parameters:**
-- `id` (required): Task ID
+**Параметры пути:**
+- `id` (обязательно): ID задачи
 
-**Response 200 (Success):**
+**Ответ 200 (Успех):**
 ```json
 {
   "id": 123,
@@ -658,14 +658,14 @@ Archive task (hide from active lists).
 
 ### POST /api/tasks/{id}/unarchive
 
-Unarchive task (restore to active lists).
+Разархивировать задачу (вернуть в активные списки).
 
-**Authentication:** Required (JWT)
+**Аутентификация:** Требуется (JWT)
 
-**Path Parameters:**
-- `id` (required): Task ID
+**Параметры пути:**
+- `id` (обязательно): ID задачи
 
-**Response 200 (Success):**
+**Ответ 200 (Успех):**
 ```json
 {
   "id": 123,
@@ -679,11 +679,11 @@ Unarchive task (restore to active lists).
 
 ### GET /api/tasks/statistics
 
-Get task statistics for current user.
+Получение статистики задач для текущего пользователя.
 
-**Authentication:** Required (JWT)
+**Аутентификация:** Требуется (JWT)
 
-**Response 200 (Success):**
+**Ответ 200 (Успех):**
 ```json
 {
   "total": 150,
@@ -699,36 +699,36 @@ Get task statistics for current user.
 }
 ```
 
-**Field Descriptions:**
-- `total`: Total number of tasks (excluding archived)
-- `pending`: Tasks with status `PENDING`
-- `in_progress`: Tasks with status `IN_PROGRESS`
-- `completed`: Tasks with status `COMPLETED`
-- `cancelled`: Tasks with status `CANCELLED`
-- `overdue`: Tasks past due date and not completed
-- `dueToday`: Tasks due today
-- `dueThisWeek`: Tasks due within 7 days
-- `completionRate`: Percentage of completed tasks
-- `avgCompletionTime`: Average days to complete tasks
+**Описание полей:**
+- `total`: Общее количество задач (исключая архивные)
+- `pending`: Задачи со статусом `PENDING`
+- `in_progress`: Задачи со статусом `IN_PROGRESS`
+- `completed`: Задачи со статусом `COMPLETED`
+- `cancelled`: Задачи со статусом `CANCELLED`
+- `overdue`: Задачи с истекшим сроком и не завершенные
+- `dueToday`: Задачи с дедлайном сегодня
+- `dueThisWeek`: Задачи с дедлайном в течение 7 дней
+- `completionRate`: Процент завершенных задач
+- `avgCompletionTime`: Среднее количество дней для завершения задач
 
 ---
 
 ### GET /api/tasks/overdue
 
-Get paginated list of overdue tasks.
+Получение постраничного списка просроченных задач.
 
-**Authentication:** Required (JWT)
+**Аутентификация:** Требуется (JWT)
 
-**Query Parameters:**
-- `page` (optional): Page number
-  - Type: `integer`
-  - Default: `1`
-- `limit` (optional): Items per page
-  - Type: `integer`
-  - Default: `20`
-  - Max: `100`
+**Параметры запроса:**
+- `page` (опционально): Номер страницы
+  - Тип: `integer`
+  - По умолчанию: `1`
+- `limit` (опционально): Элементов на странице
+  - Тип: `integer`
+  - По умолчанию: `20`
+  - Макс: `100`
 
-**Response 200 (Success):**
+**Ответ 200 (Успех):**
 ```json
 {
   "tasks": [
@@ -752,19 +752,19 @@ Get paginated list of overdue tasks.
 
 ### GET /api/tasks/calendar/week
 
-Get tasks for calendar week view.
+Получение задач для недельного календарного вида.
 
-**Authentication:** Required (JWT)
+**Аутентификация:** Требуется (JWT)
 
-**Query Parameters:**
-- `weekStart` (required): Week start date
-  - Type: `string` (format: `YYYY-MM-DD`)
-  - Example: `weekStart=2025-01-13` (Monday)
-- `includeCompleted` (optional): Include completed tasks
-  - Type: `boolean`
-  - Default: `true`
+**Параметры запроса:**
+- `weekStart` (обязательно): Дата начала недели
+  - Тип: `string` (формат: `YYYY-MM-DD`)
+  - Пример: `weekStart=2025-01-13` (Понедельник)
+- `includeCompleted` (опционально): Включить завершенные задачи
+  - Тип: `boolean`
+  - По умолчанию: `true`
 
-**Response 200 (Success):**
+**Ответ 200 (Успех):**
 ```json
 [
   {
@@ -781,22 +781,22 @@ Get tasks for calendar week view.
 
 ### GET /api/tasks/calendar/month
 
-Get tasks for calendar month view.
+Получение задач для месячного календарного вида.
 
-**Authentication:** Required (JWT)
+**Аутентификация:** Требуется (JWT)
 
-**Query Parameters:**
-- `year` (required): Year
-  - Type: `integer`
-  - Example: `year=2025`
-- `month` (required): Month (1-12)
-  - Type: `integer`
-  - Example: `month=1`
-- `includeCompleted` (optional): Include completed tasks
-  - Type: `boolean`
-  - Default: `true`
+**Параметры запроса:**
+- `year` (обязательно): Год
+  - Тип: `integer`
+  - Пример: `year=2025`
+- `month` (обязательно): Месяц (1-12)
+  - Тип: `integer`
+  - Пример: `month=1`
+- `includeCompleted` (опционально): Включить завершенные задачи
+  - Тип: `boolean`
+  - По умолчанию: `true`
 
-**Response 200 (Success):**
+**Ответ 200 (Успех):**
 ```json
 [
   {
@@ -813,19 +813,19 @@ Get tasks for calendar month view.
 
 ### GET /api/tasks/calendar/day
 
-Get tasks for specific day.
+Получение задач для определенного дня.
 
-**Authentication:** Required (JWT)
+**Аутентификация:** Требуется (JWT)
 
-**Query Parameters:**
-- `date` (required): Date
-  - Type: `string` (format: `YYYY-MM-DD`)
-  - Example: `date=2025-01-15`
-- `includeCompleted` (optional): Include completed tasks
-  - Type: `boolean`
-  - Default: `true`
+**Параметры запроса:**
+- `date` (обязательно): Дата
+  - Тип: `string` (формат: `YYYY-MM-DD`)
+  - Пример: `date=2025-01-15`
+- `includeCompleted` (опционально): Включить завершенные задачи
+  - Тип: `boolean`
+  - По умолчанию: `true`
 
-**Response 200 (Success):**
+**Ответ 200 (Успех):**
 ```json
 [
   {
@@ -842,42 +842,42 @@ Get tasks for specific day.
 
 ### POST /api/tasks/reorder
 
-Reorder tasks by providing new sort order.
+Изменение порядка задач путем указания нового порядка сортировки.
 
-**Authentication:** Required (JWT)
+**Аутентификация:** Требуется (JWT)
 
-**Request Body:**
+**Тело запроса:**
 ```json
 {
   "taskIds": [125, 123, 124, 126]
 }
 ```
 
-**Response 204 (No Content)**
+**Ответ 204 (Нет содержимого)**
 
-**Behavior:**
-- Updates `sortOrder` field for each task based on array position
-- Task at index 0 gets `sortOrder = 0`, index 1 gets `sortOrder = 1`, etc.
+**Поведение:**
+- Обновляет поле `sortOrder` для каждой задачи на основе позиции в массиве
+- Задача с индексом 0 получает `sortOrder = 0`, индекс 1 получает `sortOrder = 1`, и т.д.
 
 ---
 
-## Tags
+## Теги
 
 ### GET /api/tags
 
-Get list of user's tags.
+Получение списка тегов пользователя.
 
-**Authentication:** Required (JWT)
+**Аутентификация:** Требуется (JWT)
 
-**Query Parameters:**
-- `search` (optional): Search tags by name
-  - Type: `string`
-  - Example: `search=work`
-- `limit` (optional): Limit number of results
-  - Type: `integer`
-  - Example: `limit=10`
+**Параметры запроса:**
+- `search` (опционально): Поиск тегов по имени
+  - Тип: `string`
+  - Пример: `search=work`
+- `limit` (опционально): Ограничение количества результатов
+  - Тип: `integer`
+  - Пример: `limit=10`
 
-**Response 200 (Success):**
+**Ответ 200 (Успех):**
 ```json
 [
   {
@@ -903,14 +903,14 @@ Get list of user's tags.
 
 ### GET /api/tags/{id}
 
-Get single tag details.
+Получение деталей одного тега.
 
-**Authentication:** Required (JWT)
+**Аутентификация:** Требуется (JWT)
 
-**Path Parameters:**
-- `id` (required): Tag ID
+**Параметры пути:**
+- `id` (обязательно): ID тега
 
-**Response 200 (Success):**
+**Ответ 200 (Успех):**
 ```json
 {
   "id": 1,
@@ -923,7 +923,7 @@ Get single tag details.
 }
 ```
 
-**Error 404 (Not Found):**
+**Ошибка 404 (Не найдено):**
 ```json
 {
   "message": "Tag not found"
@@ -934,11 +934,11 @@ Get single tag details.
 
 ### POST /api/tags
 
-Create new tag.
+Создание нового тега.
 
-**Authentication:** Required (JWT)
+**Аутентификация:** Требуется (JWT)
 
-**Request Body:**
+**Тело запроса:**
 ```json
 {
   "name": "Urgent",
@@ -947,14 +947,14 @@ Create new tag.
 }
 ```
 
-**Required Fields:**
-- `name` (string, max 50 characters)
+**Обязательные поля:**
+- `name` (string, макс 50 символов)
 
-**Optional Fields:**
-- `color` (string, hex color, default: `#3B82F6`)
+**Опциональные поля:**
+- `color` (string, hex цвет, по умолчанию: `#3B82F6`)
 - `icon` (string, nullable)
 
-**Response 201 (Created):**
+**Ответ 201 (Создано):**
 ```json
 {
   "id": 10,
@@ -966,14 +966,14 @@ Create new tag.
 }
 ```
 
-**Error 409 (Conflict):**
+**Ошибка 409 (Конфликт):**
 ```json
 {
   "message": "Tag with this name already exists"
 }
 ```
 
-**Error 400 (Validation Failed):**
+**Ошибка 400 (Ошибка валидации):**
 ```json
 {
   "errors": [
@@ -987,14 +987,14 @@ Create new tag.
 
 ### PUT /api/tags/{id}
 
-Update existing tag.
+Обновление существующего тега.
 
-**Authentication:** Required (JWT)
+**Аутентификация:** Требуется (JWT)
 
-**Path Parameters:**
-- `id` (required): Tag ID
+**Параметры пути:**
+- `id` (обязательно): ID тега
 
-**Request Body:**
+**Тело запроса:**
 ```json
 {
   "name": "Super Urgent",
@@ -1003,7 +1003,7 @@ Update existing tag.
 }
 ```
 
-**Response 200 (Success):**
+**Ответ 200 (Успех):**
 ```json
 {
   "id": 10,
@@ -1015,7 +1015,7 @@ Update existing tag.
 }
 ```
 
-**Error 409 (Conflict):**
+**Ошибка 409 (Конфликт):**
 ```json
 {
   "message": "Tag with this name already exists"
@@ -1026,16 +1026,16 @@ Update existing tag.
 
 ### DELETE /api/tags/{id}
 
-Delete tag (removes tag from all tasks).
+Удаление тега (удаляет тег из всех задач).
 
-**Authentication:** Required (JWT)
+**Аутентификация:** Требуется (JWT)
 
-**Path Parameters:**
-- `id` (required): Tag ID
+**Параметры пути:**
+- `id` (обязательно): ID тега
 
-**Response 204 (No Content)**
+**Ответ 204 (Нет содержимого)**
 
-**Error 403 (Forbidden):**
+**Ошибка 403 (Запрещено):**
 ```json
 {
   "message": "Access denied. You do not own this tag."
@@ -1046,17 +1046,17 @@ Delete tag (removes tag from all tasks).
 
 ### GET /api/tags/most-used
 
-Get most frequently used tags.
+Получение наиболее часто используемых тегов.
 
-**Authentication:** Required (JWT)
+**Аутентификация:** Требуется (JWT)
 
-**Query Parameters:**
-- `limit` (optional): Number of tags to return
-  - Type: `integer`
-  - Default: `5`
-  - Max: `20`
+**Параметры запроса:**
+- `limit` (опционально): Количество тегов для возврата
+  - Тип: `integer`
+  - По умолчанию: `5`
+  - Макс: `20`
 
-**Response 200 (Success):**
+**Ответ 200 (Успех):**
 ```json
 [
   {
@@ -1080,17 +1080,17 @@ Get most frequently used tags.
 
 ---
 
-## Analytics
+## Аналитика
 
-All analytics endpoints are cached with INVALIDATE strategy. Cache is cleared when tasks are created/updated/deleted.
+Все эндпоинты аналитики кэшируются со стратегией INVALIDATE. Кэш очищается при создании/обновлении/удалении задач.
 
 ### GET /api/analytics/overview
 
-Get analytics overview with key metrics.
+Получение обзора аналитики с ключевыми метриками.
 
-**Authentication:** Required (JWT)
+**Аутентификация:** Требуется (JWT)
 
-**Response 200 (Success):**
+**Ответ 200 (Успех):**
 ```json
 {
   "totalTasks": 150,
@@ -1112,27 +1112,27 @@ Get analytics overview with key metrics.
 
 ### GET /api/analytics/dashboard
 
-Get complete analytics dashboard data (combines multiple endpoints).
+Получение полных данных панели аналитики (объединяет несколько эндпоинтов).
 
-**Authentication:** Required (JWT)
+**Аутентификация:** Требуется (JWT)
 
-**Query Parameters:**
-- `period` (optional): Timeline period in days
-  - Type: `integer`
-  - Default: `30`
-  - Example: `period=90`
-- `dateFrom` (optional): Timeline start date
-  - Type: `string` (format: `YYYY-MM-DD`)
-  - Example: `dateFrom=2025-01-01`
-- `dateTo` (optional): Timeline end date
-  - Type: `string` (format: `YYYY-MM-DD`)
-  - Example: `dateTo=2025-01-31`
-- `year` (optional): Heatmap year
-  - Type: `integer`
-  - Default: current year
-  - Example: `year=2025`
+**Параметры запроса:**
+- `period` (опционально): Период временной линии в днях
+  - Тип: `integer`
+  - По умолчанию: `30`
+  - Пример: `period=90`
+- `dateFrom` (опционально): Дата начала временной линии
+  - Тип: `string` (формат: `YYYY-MM-DD`)
+  - Пример: `dateFrom=2025-01-01`
+- `dateTo` (опционально): Дата окончания временной линии
+  - Тип: `string` (формат: `YYYY-MM-DD`)
+  - Пример: `dateTo=2025-01-31`
+- `year` (опционально): Год для тепловой карты
+  - Тип: `integer`
+  - По умолчанию: текущий год
+  - Пример: `year=2025`
 
-**Response 200 (Success):**
+**Ответ 200 (Успех):**
 ```json
 {
   "overview": {
@@ -1199,20 +1199,20 @@ Get complete analytics dashboard data (combines multiple endpoints).
 
 ### GET /api/analytics/completion-timeline
 
-Get task completion timeline data.
+Получение данных временной линии завершения задач.
 
-**Authentication:** Required (JWT)
+**Аутентификация:** Требуется (JWT)
 
-**Query Parameters:**
-- `period` (optional): Number of days
-  - Type: `integer`
-  - Default: `30`
-- `dateFrom` (optional): Start date (overrides period)
-  - Type: `string` (format: `YYYY-MM-DD`)
-- `dateTo` (optional): End date (required with dateFrom)
-  - Type: `string` (format: `YYYY-MM-DD`)
+**Параметры запроса:**
+- `period` (опционально): Количество дней
+  - Тип: `integer`
+  - По умолчанию: `30`
+- `dateFrom` (опционально): Дата начала (переопределяет period)
+  - Тип: `string` (формат: `YYYY-MM-DD`)
+- `dateTo` (опционально): Дата окончания (требуется с dateFrom)
+  - Тип: `string` (формат: `YYYY-MM-DD`)
 
-**Response 200 (Success):**
+**Ответ 200 (Успех):**
 ```json
 [
   {
@@ -1238,11 +1238,11 @@ Get task completion timeline data.
 
 ### GET /api/analytics/status-distribution
 
-Get task count distribution by status.
+Получение распределения количества задач по статусам.
 
-**Authentication:** Required (JWT)
+**Аутентификация:** Требуется (JWT)
 
-**Response 200 (Success):**
+**Ответ 200 (Успех):**
 ```json
 {
   "PENDING": {
@@ -1268,11 +1268,11 @@ Get task count distribution by status.
 
 ### GET /api/analytics/priority-breakdown
 
-Get task statistics grouped by priority.
+Получение статистики задач, сгруппированных по приоритету.
 
-**Authentication:** Required (JWT)
+**Аутентификация:** Требуется (JWT)
 
-**Response 200 (Success):**
+**Ответ 200 (Успех):**
 ```json
 {
   "LOW": {
@@ -1311,17 +1311,17 @@ Get task statistics grouped by priority.
 
 ### GET /api/analytics/productivity-heatmap
 
-Get GitHub-style productivity heatmap (daily task completion counts).
+Получение тепловой карты продуктивности в стиле GitHub (количество завершенных задач по дням).
 
-**Authentication:** Required (JWT)
+**Аутентификация:** Требуется (JWT)
 
-**Query Parameters:**
-- `year` (optional): Year for heatmap
-  - Type: `integer`
-  - Default: current year
-  - Example: `year=2025`
+**Параметры запроса:**
+- `year` (опционально): Год для тепловой карты
+  - Тип: `integer`
+  - По умолчанию: текущий год
+  - Пример: `year=2025`
 
-**Response 200 (Success):**
+**Ответ 200 (Успех):**
 ```json
 {
   "2025-01-01": 3,
@@ -1334,20 +1334,20 @@ Get GitHub-style productivity heatmap (daily task completion counts).
 }
 ```
 
-**Notes:**
-- Returns all 365 days of the year
-- Days with no completions have value `0`
-- Most expensive analytics query (30 second TTL)
+**Примечания:**
+- Возвращает все 365 дней года
+- Дни без завершений имеют значение `0`
+- Самый дорогой запрос аналитики (TTL 30 секунд)
 
 ---
 
 ### GET /api/analytics/weekday-productivity
 
-Get task completion statistics by day of week.
+Получение статистики завершения задач по дням недели.
 
-**Authentication:** Required (JWT)
+**Аутентификация:** Требуется (JWT)
 
-**Response 200 (Success):**
+**Ответ 200 (Успех):**
 ```json
 {
   "Monday": {
@@ -1392,17 +1392,17 @@ Get task completion statistics by day of week.
 
 ### GET /api/analytics/top-tags
 
-Get most used tags with completion statistics.
+Получение наиболее используемых тегов со статистикой завершения.
 
-**Authentication:** Required (JWT)
+**Аутентификация:** Требуется (JWT)
 
-**Query Parameters:**
-- `limit` (optional): Number of tags to return
-  - Type: `integer`
-  - Default: `5`
-  - Max: `20`
+**Параметры запроса:**
+- `limit` (опционально): Количество тегов для возврата
+  - Тип: `integer`
+  - По умолчанию: `5`
+  - Макс: `20`
 
-**Response 200 (Success):**
+**Ответ 200 (Успех):**
 ```json
 [
   {
@@ -1434,11 +1434,11 @@ Get most used tags with completion statistics.
 
 ### GET /api/analytics/insights
 
-Get AI-like insights and recommendations based on user data.
+Получение AI-подобных инсайтов и рекомендаций на основе данных пользователя.
 
-**Authentication:** Required (JWT)
+**Аутентификация:** Требуется (JWT)
 
-**Response 200 (Success):**
+**Ответ 200 (Успех):**
 ```json
 {
   "insights": [
@@ -1494,11 +1494,11 @@ Get AI-like insights and recommendations based on user data.
 
 ### GET /api/analytics/streak
 
-Get current and longest task completion streak.
+Получение текущей и самой длинной серии завершения задач.
 
-**Authentication:** Required (JWT)
+**Аутентификация:** Требуется (JWT)
 
-**Response 200 (Success):**
+**Ответ 200 (Успех):**
 ```json
 {
   "currentStreak": 7,
@@ -1510,50 +1510,50 @@ Get current and longest task completion streak.
 }
 ```
 
-**Field Descriptions:**
-- `currentStreak`: Number of consecutive days with completed tasks
-- `longestStreak`: Historical longest streak
-- `streakStartDate`: When current streak started
-- `streakEndDate`: When streak ended (null if active)
-- `isActive`: Whether streak is currently active
-- `daysUntilBreak`: Days since last completion (0 if active)
+**Описание полей:**
+- `currentStreak`: Количество последовательных дней с завершенными задачами
+- `longestStreak`: Историческая самая длинная серия
+- `streakStartDate`: Когда началась текущая серия
+- `streakEndDate`: Когда серия закончилась (null если активна)
+- `isActive`: Активна ли серия в данный момент
+- `daysUntilBreak`: Дней с последнего завершения (0 если активна)
 
 ---
 
-## Error Handling
+## Обработка ошибок
 
-### Standard Error Response Format
+### Стандартный формат ответа при ошибке
 
-All errors follow this structure:
+Все ошибки следуют этой структуре:
 
 ```json
 {
-  "message": "Human-readable error message",
+  "message": "Читаемое человеком сообщение об ошибке",
   "code": "ERROR_CODE",
   "errors": [],
   "timestamp": "2025-01-18T16:00:00+00:00"
 }
 ```
 
-### HTTP Status Codes
+### HTTP коды статуса
 
-| Code | Name | Description |
+| Код | Название | Описание |
 |------|------|-------------|
-| 200 | OK | Request successful |
-| 201 | Created | Resource created successfully |
-| 204 | No Content | Request successful, no content returned |
-| 400 | Bad Request | Invalid request parameters or body |
-| 401 | Unauthorized | Missing or invalid JWT token |
-| 403 | Forbidden | Authenticated but not authorized |
-| 404 | Not Found | Resource not found |
-| 409 | Conflict | Resource conflict (e.g., duplicate name) |
-| 422 | Unprocessable Entity | Validation failed |
-| 429 | Too Many Requests | Rate limit exceeded |
-| 500 | Internal Server Error | Server error |
+| 200 | OK | Запрос успешен |
+| 201 | Created | Ресурс успешно создан |
+| 204 | No Content | Запрос успешен, содержимое не возвращено |
+| 400 | Bad Request | Некорректные параметры запроса или тело |
+| 401 | Unauthorized | Отсутствует или невалидный JWT токен |
+| 403 | Forbidden | Аутентифицирован, но не авторизован |
+| 404 | Not Found | Ресурс не найден |
+| 409 | Conflict | Конфликт ресурсов (например, дублирование имени) |
+| 422 | Unprocessable Entity | Ошибка валидации |
+| 429 | Too Many Requests | Превышен лимит частоты запросов |
+| 500 | Internal Server Error | Ошибка сервера |
 
-### Common Error Responses
+### Частые ответы с ошибками
 
-**401 Unauthorized (Missing Token):**
+**401 Не авторизован (Отсутствует токен):**
 ```json
 {
   "message": "JWT Token not found",
@@ -1561,7 +1561,7 @@ All errors follow this structure:
 }
 ```
 
-**401 Unauthorized (Invalid Token):**
+**401 Не авторизован (Невалидный токен):**
 ```json
 {
   "message": "Invalid JWT Token",
@@ -1569,7 +1569,7 @@ All errors follow this structure:
 }
 ```
 
-**401 Unauthorized (Expired Token):**
+**401 Не авторизован (Истекший токен):**
 ```json
 {
   "message": "Expired JWT Token",
@@ -1577,7 +1577,7 @@ All errors follow this structure:
 }
 ```
 
-**403 Forbidden:**
+**403 Запрещено:**
 ```json
 {
   "message": "Access denied. You do not own this resource.",
@@ -1585,7 +1585,7 @@ All errors follow this structure:
 }
 ```
 
-**404 Not Found:**
+**404 Не найдено:**
 ```json
 {
   "message": "Resource not found",
@@ -1593,7 +1593,7 @@ All errors follow this structure:
 }
 ```
 
-**422 Validation Error:**
+**422 Ошибка валидации:**
 ```json
 {
   "message": "Validation failed",
@@ -1613,7 +1613,7 @@ All errors follow this structure:
 }
 ```
 
-**429 Rate Limit:**
+**429 Лимит частоты запросов:**
 ```json
 {
   "message": "Rate limit exceeded. Please try again later.",
@@ -1622,7 +1622,7 @@ All errors follow this structure:
 }
 ```
 
-**500 Internal Server Error:**
+**500 Внутренняя ошибка сервера:**
 ```json
 {
   "message": "An unexpected error occurred. Please try again later.",
@@ -1633,21 +1633,21 @@ All errors follow this structure:
 
 ---
 
-## Rate Limiting
+## Ограничение частоты запросов
 
-**Current Limits:**
-- Unauthenticated requests: 60 requests per hour
-- Authenticated requests: 1000 requests per hour
-- Analytics endpoints: 100 requests per hour
+**Текущие лимиты:**
+- Неаутентифицированные запросы: 60 запросов в час
+- Аутентифицированные запросы: 1000 запросов в час
+- Эндпоинты аналитики: 100 запросов в час
 
-**Headers:**
+**Заголовки:**
 ```http
 X-RateLimit-Limit: 1000
 X-RateLimit-Remaining: 995
 X-RateLimit-Reset: 1642521600
 ```
 
-**When Rate Limited:**
+**При ограничении частоты:**
 ```http
 HTTP/1.1 429 Too Many Requests
 Retry-After: 3600
@@ -1660,15 +1660,15 @@ Retry-After: 3600
 
 ---
 
-## Pagination
+## Пагинация
 
-Endpoints that return lists support pagination:
+Эндпоинты, возвращающие списки, поддерживают пагинацию:
 
-**Query Parameters:**
-- `page`: Page number (default: 1)
-- `limit`: Items per page (default: 20, max: 100)
+**Параметры запроса:**
+- `page`: Номер страницы (по умолчанию: 1)
+- `limit`: Элементов на странице (по умолчанию: 20, макс: 100)
 
-**Response Format:**
+**Формат ответа:**
 ```json
 {
   "data": [...],
@@ -1681,34 +1681,34 @@ Endpoints that return lists support pagination:
 
 ---
 
-## Date/Time Format
+## Формат даты/времени
 
-All dates use ISO 8601 format with timezone:
+Все даты используют формат ISO 8601 с временной зоной:
 
 ```
 2025-01-18T16:45:00+00:00
 ```
 
-**Timezone:** All timestamps in UTC
+**Временная зона:** Все временные метки в UTC
 
-**Parsing:** Use `new Date()` in JavaScript or `DateTimeImmutable` in PHP
+**Парсинг:** Используйте `new Date()` в JavaScript или `DateTimeImmutable` в PHP
 
 ---
 
-## Filtering & Searching
+## Фильтрация и поиск
 
-**Query String Format:**
+**Формат строки запроса:**
 ```
 GET /api/tasks?status=PENDING&priority=HIGH&tags[]=1&tags[]=2&search=meeting
 ```
 
-**Array Parameters:**
+**Параметры массивов:**
 ```
 tags[]=1&tags[]=2&tags[]=3
 priorities[]=HIGH&priorities[]=URGENT
 ```
 
-**Date Ranges:**
+**Диапазоны дат:**
 ```
 dateFrom=2025-01-01&dateTo=2025-01-31
 ```
