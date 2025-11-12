@@ -97,13 +97,12 @@ async function handleQuickFilterChange(filters: Array<{ id: string; view: string
     return
   }
 
-  // MULTIPLE filters selected - need to combine data
-  console.log('Multiple filters selected - combining data')
+  // MULTIPLE filters selected - combine them with INTERSECTION logic
+  console.log('Multiple filters selected - applying combined filters')
 
-  // Collect all unique priorities and statuses
+  // Collect all unique priorities and statuses (will be combined with AND logic)
   const allPriorities: string[] = []
   const allStatuses: string[] = []
-  const hasOverdueFilter = filters.some(f => f.view === 'overdue')
 
   filters.forEach(filter => {
     if (filter.priority && filter.priority.length > 0) {
@@ -117,85 +116,31 @@ async function handleQuickFilterChange(filters: Array<{ id: string; view: string
   const uniquePriorities = [...new Set(allPriorities)]
   const uniqueStatuses = [...new Set(allStatuses)]
 
-  try {
-    // Load tasks from ALL selected filters in parallel for better performance
-    console.log('Loading multiple filters in parallel...')
-    const allResults: Task[] = []
+  // Determine the base view (prioritize specific views over 'all')
+  // Priority: overdue > unscheduled > today > upcoming > all
+  const viewPriority = ['overdue', 'unscheduled', 'today', 'upcoming', 'all']
+  let selectedBaseView = 'all'
 
-    // Use Promise.all for parallel loading
-    const filterPromises = filters.map(async (filter) => {
-      const queryFilters = {
-        view: filter.view,
-        priorities: filter.priority || [],
-        statuses: filter.status || [],
-        tags: taskStore.activeFilters.tags,
-        completed: taskStore.activeFilters.completed,
-        dateFrom: taskStore.activeFilters.dateFrom,
-        dateTo: taskStore.activeFilters.dateTo,
-        onlyWithSubtasks: onlyWithSubtasks.value
-      }
-
-      console.log(`Loading filter "${filter.id}" with view "${filter.view}"`, queryFilters)
-
-      let filterTasks: Task[] = []
-
-      // Load based on view type
-      if (filter.view === 'overdue') {
-        await taskStore.fetchOverdueTasksPaginated(1, 1000, queryFilters)
-        filterTasks = [...taskStore.overdueTasksPaginated.tasks]
-        console.log(`✓ Loaded ${filterTasks.length} overdue tasks`)
-      } else if (filter.view === 'unscheduled') {
-        await taskStore.fetchUnscheduledTasksPaginated(1, 1000, queryFilters)
-        filterTasks = [...taskStore.unscheduledTasksPaginated.tasks]
-        console.log(`✓ Loaded ${filterTasks.length} unscheduled tasks`)
-      } else if (filter.view === 'today') {
-        await taskStore.fetchTasks(queryFilters)
-        filterTasks = [...taskStore.todayTasks]
-        console.log(`✓ Loaded ${filterTasks.length} today tasks`)
-      } else if (filter.view === 'upcoming') {
-        await taskStore.fetchTasks(queryFilters)
-        filterTasks = [...taskStore.upcomingTasks]
-        console.log(`✓ Loaded ${filterTasks.length} upcoming tasks`)
-      } else {
-        // view === 'all'
-        await taskStore.fetchTasks(queryFilters)
-        filterTasks = [...taskStore.tasks]
-        console.log(`✓ Loaded ${filterTasks.length} all tasks`)
-      }
-
-      return filterTasks
-    })
-
-    const resultsArrays = await Promise.all(filterPromises)
-    resultsArrays.forEach(tasks => allResults.push(...tasks))
-
-    console.log(`Total tasks collected: ${allResults.length}`)
-
-    // Remove duplicates by id
-    const uniqueTasks = Array.from(
-      new Map(allResults.map(task => [task.id, task])).values()
-    )
-
-    console.log(`After deduplication: ${uniqueTasks.length} unique tasks`)
-
-    // Store combined tasks in the main tasks array
-    taskStore.tasks = uniqueTasks
-
-    // Update active filters WITHOUT API call (data already loaded)
-    taskStore.activeFilters = {
-      ...taskStore.activeFilters,
-      priorities: uniquePriorities,
-      statuses: uniqueStatuses
+  for (const viewType of viewPriority) {
+    const hasView = filters.some(f => f.view === viewType)
+    if (hasView) {
+      selectedBaseView = viewType
+      break
     }
-
-    // Set view to 'all' to display combined data
-    selectedView.value = 'all'
-
-    console.log('✅ Combined filters loaded successfully!')
-  } catch (error) {
-    console.error('❌ Error loading combined filters:', error)
-    showError(t('errors.fetch_failed'))
   }
+
+  console.log(`Base view: ${selectedBaseView}, Priorities: ${uniquePriorities}, Statuses: ${uniqueStatuses}`)
+
+  // Update filters WITHOUT API call
+  taskStore.activeFilters = {
+    ...taskStore.activeFilters,
+    priorities: uniquePriorities as TaskPriority[],
+    statuses: uniqueStatuses as TaskStatus[]
+  }
+
+  // Make ONE API call with combined filters (INTERSECTION logic)
+  // selectView() will use activeFilters to filter results
+  selectView(selectedBaseView)
 }
 
 // Handle only with subtasks toggle
