@@ -1,256 +1,256 @@
-# 🎛️ EasyAdmin Panel - Enterprise Implementation Plan
+# 🎛️ Панель EasyAdmin - План корпоративной реализации
 
-> **Version**: 1.0
-> **Date**: 2025-11-10
-> **Status**: Ready for Implementation
-> **Estimated Time**: 12-15 hours (solo dev + AI assistance)
-
----
-
-## 📋 Executive Summary
-
-This document outlines a **complete enterprise-grade admin panel** implementation for the Task Management System using EasyAdmin 4.18. The admin panel will provide comprehensive CRUD operations, advanced filtering, system monitoring, user activity tracking, and technical support capabilities.
-
-### Current State
-- ✅ Basic admin panel with User CRUD (fully functional)
-- ✅ Authentication system with ROLE_ADMIN requirement
-- ✅ Modern custom login page
-- ✅ Security configured properly
-
-### Target State
-A **full-featured admin panel** with:
-- 🎯 **8 Entity CRUD Controllers** (User, Task, Tag, RecurrenceRule, MediaObject, TaskAttachment, RefreshToken, plus AuditLog)
-- 📊 **Dashboard with System Metrics** (users, tasks, storage, activity)
-- 🔍 **Advanced Search & Filtering** (across all entities)
-- 📈 **User Activity Monitoring** (audit trail for all actions)
-- 🛠️ **Technical Support Tools** (bulk operations, data export, user impersonation)
-- 🔐 **Permission System** (ROLE_ADMIN, ROLE_SUPER_ADMIN)
-- 📤 **Export Functionality** (CSV, Excel export for all entities)
+> **Версия**: 1.0
+> **Дата**: 2025-11-10
+> **Статус**: Готово к реализации
+> **Оценка времени**: 12-15 часов (соло разработка + помощь ИИ)
 
 ---
 
-## 📑 Table of Contents
+## 📋 Краткое резюме
 
-### Quick Navigation
+Этот документ описывает **полную реализацию корпоративной админ-панели** для системы управления задачами с использованием EasyAdmin 4.18. Админ-панель предоставит комплексные CRUD-операции, расширенную фильтрацию, мониторинг системы, отслеживание активности пользователей и возможности технической поддержки.
 
-#### 🎯 Planning & Design
-- [Goals and Requirements](#-goals-and-requirements)
-- [Architecture Design](#-architecture-design)
-- [Use Cases (Technical Support Scenarios)](#use-cases-technical-support-scenarios)
+### Текущее состояние
+- ✅ Базовая админ-панель с User CRUD (полностью функциональна)
+- ✅ Система аутентификации с требованием ROLE_ADMIN
+- ✅ Современная кастомная страница входа
+- ✅ Безопасность настроена правильно
 
-#### 📊 Implementation Phases
-
-- **[PHASE 1: Critical CRUD Controllers](#phase-1-critical-crud-controllers-6-8-hours)** (6-8 hours)
-  - [Step 1: TaskCrudController](#step-1-taskcrudcontroller-3-hours) - Core feature (3h)
-  - [Step 2: TagCrudController](#step-2-tagcrudcontroller-1-hour) - User categorization (1h)
-  - [Step 3: TaskAttachmentCrudController](#step-3-taskattachmentcrudcontroller-2-hours) - File management (2h)
-  - [Step 4: RecurrenceRuleCrudController](#step-4-recurrencerulecrudcontroller-2-hours) - Recurring tasks (2h)
-
-- **[PHASE 2: Supporting Entities](#phase-2-supporting-entities-3-4-hours)** ✅ **COMPLETED** (3-4 hours)
-  - [Step 5: MediaObjectCrudController](#step-5-mediaobjectcrudcontroller-15-hours) - Media library (1.5h) ✅
-  - [Step 6: RefreshTokenCrudController](#step-6-refreshtokencrudcontroller-05-hours) - Session management (0.5h) ✅
-  - [Step 7: AuditLogCrudController](#step-7-auditlogcrudcontroller-2-hours-new-entity) - Activity tracking (2h) ✅
-
-- **[PHASE 3: Dashboard & Enhancements](#phase-3-dashboard--enhancements-3-4-hours)** ✅ **COMPLETED** (3-4 hours)
-  - [Step 8: Enhanced Dashboard](#step-8-enhanced-dashboard-2-hours) - System overview (2h) ✅
-  - [Step 9: Menu Configuration](#step-9-menu-configuration-05-hours) - Navigation structure (0.5h) ✅
-  - [Step 10: Bulk Actions & Export](#step-10-bulk-actions--export-1-hour) - Batch operations (1h) ✅
-
-#### 🔐 Additional Sections
-- [Permission System (ROLE_ADMIN vs ROLE_SUPER_ADMIN)](#-permission-system-role_admin-vs-role_super_admin)
-- [Implementation Checklist](#-implementation-checklist)
-- [Expected Outcomes](#-expected-outcomes)
-- [Technical Implementation Notes](#-technical-implementation-notes)
-- [Go-Live Checklist](#-go-live-checklist)
-- [Support & Troubleshooting](#-support--troubleshooting)
+### Целевое состояние
+**Полнофункциональная админ-панель** с:
+- 🎯 **8 CRUD-контроллерами сущностей** (User, Task, Tag, RecurrenceRule, MediaObject, TaskAttachment, RefreshToken, плюс AuditLog)
+- 📊 **Дашбордом с системными метриками** (пользователи, задачи, хранилище, активность)
+- 🔍 **Расширенным поиском и фильтрацией** (по всем сущностям)
+- 📈 **Мониторингом активности пользователей** (аудит всех действий)
+- 🛠️ **Инструментами технической поддержки** (массовые операции, экспорт данных, имперсонация пользователей)
+- 🔐 **Системой прав доступа** (ROLE_ADMIN, ROLE_SUPER_ADMIN)
+- 📤 **Функциональностью экспорта** (экспорт CSV, Excel для всех сущностей)
 
 ---
 
-## 🎯 Goals and Requirements
+## 📑 Содержание
 
-### Business Goals
-1. **Support Team Efficiency**: Enable quick resolution of user issues without database access
-2. **Data Visibility**: Monitor all app activity and user actions in real-time
-3. **Content Moderation**: Ability to manage and moderate user-generated content
-4. **System Health**: Track system metrics and identify issues early
-5. **User Management**: Complete user lifecycle management (activation, suspension, deletion)
+### Быстрая навигация
 
-### Technical Requirements
-- **SOLID Principles**: Follow existing codebase patterns
-- **Type Safety**: Full PHP 8.3 type hints everywhere
-- **Security**: Role-based access with granular permissions
-- **Performance**: Optimized queries with proper indexing
-- **Maintainability**: Clear separation of concerns, DRY principle
-- **Documentation**: Comprehensive inline documentation
+#### 🎯 Планирование и проектирование
+- [Цели и требования](#-цели-и-требования)
+- [Архитектурный дизайн](#-архитектурный-дизайн)
+- [Сценарии использования (сценарии технической поддержки)](#сценарии-использования-сценарии-технической-поддержки)
 
-### Use Cases (Technical Support Scenarios)
+#### 📊 Фазы реализации
 
-#### Scenario 1: User Reports Bug with Tags
-**Issue**: "Help! I can't delete 2 tags from my task 'Buy Milk'"
+- **[ФАЗА 1: Критические CRUD-контроллеры](#фаза-1-критические-crud-контроллеры-6-8-часов)** (6-8 часов)
+  - [Шаг 1: TaskCrudController](#шаг-1-taskcrudcontroller-3-часа) - Основная функциональность (3ч)
+  - [Шаг 2: TagCrudController](#шаг-2-tagcrudcontroller-1-час) - Категоризация пользователей (1ч)
+  - [Шаг 3: TaskAttachmentCrudController](#шаг-3-taskattachmentcrudcontroller-2-часа) - Управление файлами (2ч)
+  - [Шаг 4: RecurrenceRuleCrudController](#шаг-4-recurrencerulecrudcontroller-2-часа) - Повторяющиеся задачи (2ч)
 
-**Admin Workflow**:
-1. Search for user by email in UserCrudController
-2. Click on user → View their tasks (associated field)
-3. Find task "Buy Milk" (search by title)
-4. Open Task details → View related Tags
-5. Remove problematic tags or delete/reassign them
-6. **Resolution Time**: < 2 minutes
+- **[ФАЗА 2: Поддерживающие сущности](#фаза-2-поддерживающие-сущности-3-4-часа)** ✅ **ЗАВЕРШЕНО** (3-4 часа)
+  - [Шаг 5: MediaObjectCrudController](#шаг-5-mediaobjectcrudcontroller-15-часа) - Медиа-библиотека (1.5ч) ✅
+  - [Шаг 6: RefreshTokenCrudController](#шаг-6-refreshtokencrudcontroller-05-часа) - Управление сессиями (0.5ч) ✅
+  - [Шаг 7: AuditLogCrudController](#шаг-7-auditlogcrudcontroller-2-часа-новая-сущность) - Отслеживание активности (2ч) ✅
 
-#### Scenario 2: User Lost Access to Tasks
-**Issue**: "All my tasks disappeared after login"
+- **[ФАЗА 3: Дашборд и улучшения](#фаза-3-дашборд-и-улучшения-3-4-часа)** ✅ **ЗАВЕРШЕНО** (3-4 часа)
+  - [Шаг 8: Расширенный дашборд](#шаг-8-расширенный-дашборд-2-часа) - Обзор системы (2ч) ✅
+  - [Шаг 9: Конфигурация меню](#шаг-9-конфигурация-меню-05-часа) - Структура навигации (0.5ч) ✅
+  - [Шаг 10: Массовые действия и экспорт](#шаг-10-массовые-действия-и-экспорт-1-час) - Пакетные операции (1ч) ✅
 
-**Admin Workflow**:
-1. Find user in UserCrudController
-2. View user's tasks (OneToMany relationship)
-3. Check if tasks are archived (`isArchived = true`)
-4. Bulk unarchive tasks using batch action
-5. Verify in frontend
-6. **Resolution Time**: < 1 minute
-
-#### Scenario 3: Recurring Task Not Generating
-**Issue**: "My daily task stopped creating automatically"
-
-**Admin Workflow**:
-1. Find user's RecurrenceRule in RecurrenceRuleCrudController
-2. Check `isActive` status (might be deactivated)
-3. View `currentOccurrences` vs `maxOccurrences` (might be reached)
-4. Check `nextOccurrenceDate` (might be in past due to cron failure)
-5. Manually update rule or trigger recurrence command
-6. **Resolution Time**: < 3 minutes
-
-#### Scenario 4: System Performance Analysis
-**Admin Workflow**:
-1. Go to Dashboard
-2. View system metrics (task count, user count, media storage)
-3. Check AuditLog for suspicious activity (mass deletions, errors)
-4. Identify heavy users (TaskCrudController → filter by user → count)
-5. Optimize or contact user
-6. **Resolution Time**: < 5 minutes
+#### 🔐 Дополнительные разделы
+- [Система прав доступа (ROLE_ADMIN vs ROLE_SUPER_ADMIN)](#-система-прав-доступа-role_admin-vs-role_super_admin)
+- [Чек-лист реализации](#-чек-лист-реализации)
+- [Ожидаемые результаты](#-ожидаемые-результаты)
+- [Технические заметки по реализации](#-технические-заметки-по-реализации)
+- [Чек-лист запуска](#-чек-лист-запуска)
+- [Поддержка и устранение неполадок](#-поддержка-и-устранение-неполадок)
 
 ---
 
-## 🏗️ Architecture Design
+## 🎯 Цели и требования
 
-### Entity Hierarchy (by Priority)
+### Бизнес-цели
+1. **Эффективность команды поддержки**: Обеспечить быстрое решение проблем пользователей без доступа к базе данных
+2. **Видимость данных**: Мониторить всю активность приложения и действия пользователей в реальном времени
+3. **Модерация контента**: Возможность управлять и модерировать пользовательский контент
+4. **Здоровье системы**: Отслеживать системные метрики и выявлять проблемы на ранней стадии
+5. **Управление пользователями**: Полное управление жизненным циклом пользователей (активация, блокировка, удаление)
 
-#### **Phase 1: Critical Entities** (6-8 hours)
-1. **TaskCrudController** - Core feature (30% of work)
-2. **TagCrudController** - User categorization (10% of work)
-3. **TaskAttachmentCrudController** - File management (15% of work)
-4. **RecurrenceRuleCrudController** - Recurring tasks (15% of work)
+### Технические требования
+- **Принципы SOLID**: Следовать существующим паттернам кодовой базы
+- **Типобезопасность**: Полная типизация PHP 8.3 везде
+- **Безопасность**: Доступ на основе ролей с детальными правами
+- **Производительность**: Оптимизированные запросы с правильными индексами
+- **Поддерживаемость**: Четкое разделение ответственности, принцип DRY
+- **Документация**: Комплексная встроенная документация
 
-#### **Phase 2: Supporting Entities** (3-4 hours)
-5. **MediaObjectCrudController** - Media library (10% of work)
-6. **RefreshTokenCrudController** - Session management (5% of work)
-7. **AuditLogCrudController** - Activity tracking (NEW - 15% of work)
+### Сценарии использования (сценарии технической поддержки)
 
-#### **Phase 3: Dashboard & Enhancements** (3-4 hours)
-8. **Dashboard Metrics** - System overview (10% of work)
-9. **Bulk Actions** - Batch operations (5% of work)
-10. **Export Functionality** - Data export (5% of work)
+#### Сценарий 1: Пользователь сообщает об ошибке с тегами
+**Проблема**: "Помогите! Я не могу удалить 2 тега из задачи 'Купить молоко'"
 
-### Entity Relationship Map for Admin
+**Рабочий процесс администратора**:
+1. Поиск пользователя по email в UserCrudController
+2. Клик на пользователя → Просмотр его задач (связанное поле)
+3. Поиск задачи "Купить молоко" (поиск по названию)
+4. Открыть детали задачи → Просмотр связанных тегов
+5. Удалить проблемные теги или удалить/переназначить их
+6. **Время решения**: < 2 минут
+
+#### Сценарий 2: Пользователь потерял доступ к задачам
+**Проблема**: "Все мои задачи исчезли после входа"
+
+**Рабочий процесс администратора**:
+1. Найти пользователя в UserCrudController
+2. Просмотреть задачи пользователя (связь OneToMany)
+3. Проверить, заархивированы ли задачи (`isArchived = true`)
+4. Массово разархивировать задачи используя пакетное действие
+5. Проверить во фронтенде
+6. **Время решения**: < 1 минуты
+
+#### Сценарий 3: Повторяющаяся задача не создается
+**Проблема**: "Моя ежедневная задача перестала создаваться автоматически"
+
+**Рабочий процесс администратора**:
+1. Найти RecurrenceRule пользователя в RecurrenceRuleCrudController
+2. Проверить статус `isActive` (может быть деактивировано)
+3. Просмотреть `currentOccurrences` vs `maxOccurrences` (может быть достигнуто)
+4. Проверить `nextOccurrenceDate` (может быть в прошлом из-за сбоя cron)
+5. Вручную обновить правило или запустить команду recurrence
+6. **Время решения**: < 3 минут
+
+#### Сценарий 4: Анализ производительности системы
+**Рабочий процесс администратора**:
+1. Перейти на дашборд
+2. Просмотреть системные метрики (количество задач, пользователей, хранилище медиа)
+3. Проверить AuditLog на подозрительную активность (массовые удаления, ошибки)
+4. Определить активных пользователей (TaskCrudController → фильтр по пользователю → подсчет)
+5. Оптимизировать или связаться с пользователем
+6. **Время решения**: < 5 минут
+
+---
+
+## 🏗️ Архитектурный дизайн
+
+### Иерархия сущностей (по приоритету)
+
+#### **Фаза 1: Критические сущности** (6-8 часов)
+1. **TaskCrudController** - Основная функция (30% работы)
+2. **TagCrudController** - Категоризация пользователей (10% работы)
+3. **TaskAttachmentCrudController** - Управление файлами (15% работы)
+4. **RecurrenceRuleCrudController** - Повторяющиеся задачи (15% работы)
+
+#### **Фаза 2: Поддерживающие сущности** (3-4 часа)
+5. **MediaObjectCrudController** - Медиа-библиотека (10% работы)
+6. **RefreshTokenCrudController** - Управление сессиями (5% работы)
+7. **AuditLogCrudController** - Отслеживание активности (НОВОЕ - 15% работы)
+
+#### **Фаза 3: Дашборд и улучшения** (3-4 часа)
+8. **Dashboard Metrics** - Обзор системы (10% работы)
+9. **Bulk Actions** - Пакетные операции (5% работы)
+10. **Export Functionality** - Экспорт данных (5% работы)
+
+### Карта связей сущностей для админки
 
 ```
 DashboardController
-├── UserCrudController [EXISTING ✅]
-│   ├── 1:N → TaskCrudController [NEW]
-│   ├── 1:N → TagCrudController [NEW]
-│   ├── 1:N → MediaObjectCrudController [NEW]
-│   ├── 1:N → RecurrenceRuleCrudController [NEW]
-│   └── 1:N → AuditLogCrudController [NEW]
+├── UserCrudController [СУЩЕСТВУЮЩИЙ ✅]
+│   ├── 1:N → TaskCrudController [НОВЫЙ]
+│   ├── 1:N → TagCrudController [НОВЫЙ]
+│   ├── 1:N → MediaObjectCrudController [НОВЫЙ]
+│   ├── 1:N → RecurrenceRuleCrudController [НОВЫЙ]
+│   └── 1:N → AuditLogCrudController [НОВЫЙ]
 │
-├── TaskCrudController [NEW]
-│   ├── N:1 → UserCrudController (owner)
-│   ├── 1:N → TaskCrudController (subtasks - self-referencing)
-│   ├── M:N → TagCrudController (tags)
-│   ├── 1:N → TaskAttachmentCrudController (attachments)
-│   ├── 1:1 → RecurrenceRuleCrudController (template)
-│   └── N:1 → RecurrenceRuleCrudController (generated_from)
+├── TaskCrudController [НОВЫЙ]
+│   ├── N:1 → UserCrudController (владелец)
+│   ├── 1:N → TaskCrudController (подзадачи - самоссылка)
+│   ├── M:N → TagCrudController (теги)
+│   ├── 1:N → TaskAttachmentCrudController (вложения)
+│   ├── 1:1 → RecurrenceRuleCrudController (шаблон)
+│   └── N:1 → RecurrenceRuleCrudController (создано_из)
 │
-├── TagCrudController [NEW]
-│   ├── N:1 → UserCrudController (owner)
-│   └── M:N → TaskCrudController (tasks)
+├── TagCrudController [НОВЫЙ]
+│   ├── N:1 → UserCrudController (владелец)
+│   └── M:N → TaskCrudController (задачи)
 │
-├── RecurrenceRuleCrudController [NEW]
-│   ├── N:1 → UserCrudController (created_by)
-│   └── 1:1 → TaskCrudController (template_task)
+├── RecurrenceRuleCrudController [НОВЫЙ]
+│   ├── N:1 → UserCrudController (создано)
+│   └── 1:1 → TaskCrudController (шаблонная_задача)
 │
-├── TaskAttachmentCrudController [NEW]
-│   ├── N:1 → TaskCrudController (task)
-│   └── N:1 → UserCrudController (uploaded_by)
+├── TaskAttachmentCrudController [НОВЫЙ]
+│   ├── N:1 → TaskCrudController (задача)
+│   └── N:1 → UserCrudController (загрузил)
 │
-├── MediaObjectCrudController [NEW]
-│   └── N:1 → UserCrudController (uploaded_by)
+├── MediaObjectCrudController [НОВЫЙ]
+│   └── N:1 → UserCrudController (загрузил)
 │
-├── RefreshTokenCrudController [NEW]
-│   └── N:1 → UserCrudController (via username)
+├── RefreshTokenCrudController [НОВЫЙ]
+│   └── N:1 → UserCrudController (через username)
 │
-└── AuditLogCrudController [NEW]
-    ├── N:1 → UserCrudController (user who performed action)
-    └── Polymorphic → Any Entity (entity_type + entity_id)
+└── AuditLogCrudController [НОВЫЙ]
+    ├── N:1 → UserCrudController (пользователь, выполнивший действие)
+    └── Polymorphic → Любая сущность (entity_type + entity_id)
 ```
 
 ---
 
-## 📊 Implementation Plan - Step-by-Step
+## 📊 План реализации - пошагово
 
-### **PHASE 1: Critical CRUD Controllers** (6-8 hours)
+### **ФАЗА 1: Критические CRUD-контроллеры** (6-8 часов)
 
-#### **Step 1: TaskCrudController** (3 hours)
+#### **Шаг 1: TaskCrudController** (3 часа)
 
-**Entity**: `App\Entity\Task`
+**Сущность**: `App\Entity\Task`
 
-**Complexity**: **HIGH** (most complex due to nested relationships)
+**Сложность**: **ВЫСОКАЯ** (самая сложная из-за вложенных связей)
 
-##### Fields Configuration
+##### Конфигурация полей
 
-| Field | Type | Visible On | Sortable | Searchable | Notes |
+| Поле | Тип | Видимо на | Сортируемо | Поиск | Заметки |
 |-------|------|------------|----------|------------|-------|
-| `id` | IdField | Index | ✅ | ❌ | Auto-generated |
-| `user` | AssociationField | All | ✅ | ✅ | Required, autocomplete |
-| `parentTask` | AssociationField | All | ✅ | ✅ | Nullable, self-ref |
-| `title` | TextField | All | ✅ | ✅ | Required, max 255 |
-| `description` | TextareaField | Detail/Form | ❌ | ✅ | Nullable, max 5000 |
+| `id` | IdField | Index | ✅ | ❌ | Автогенерируемое |
+| `user` | AssociationField | All | ✅ | ✅ | Обязательное, автозаполнение |
+| `parentTask` | AssociationField | All | ✅ | ✅ | Nullable, самоссылка |
+| `title` | TextField | All | ✅ | ✅ | Обязательное, макс 255 |
+| `description` | TextareaField | Detail/Form | ❌ | ✅ | Nullable, макс 5000 |
 | `status` | ChoiceField | All | ✅ | ✅ | Enum: PENDING/IN_PROGRESS/COMPLETED/CANCELLED |
 | `priority` | ChoiceField | All | ✅ | ✅ | Enum: LOW/MEDIUM/HIGH/URGENT |
 | `startDate` | DateTimeField | All | ✅ | ❌ | Nullable |
 | `dueDate` | DateTimeField | All | ✅ | ❌ | Nullable |
-| `completedAt` | DateTimeField | Detail | ✅ | ❌ | Auto-set, nullable |
-| `sortOrder` | IntegerField | Detail | ✅ | ❌ | Default 0 |
-| `isArchived` | BooleanField | All | ✅ | ✅ | Default false |
-| `isRecurringTemplate` | BooleanField | Detail | ✅ | ✅ | Default false |
-| `tags` | AssociationField | All | ❌ | ❌ | M:N, autocomplete |
-| `subtasks` | CollectionField | Detail | ❌ | ❌ | 1:N, readonly |
-| `attachments` | CollectionField | Detail | ❌ | ❌ | 1:N, readonly |
+| `completedAt` | DateTimeField | Detail | ✅ | ❌ | Автоустановка, nullable |
+| `sortOrder` | IntegerField | Detail | ✅ | ❌ | По умолчанию 0 |
+| `isArchived` | BooleanField | All | ✅ | ✅ | По умолчанию false |
+| `isRecurringTemplate` | BooleanField | Detail | ✅ | ✅ | По умолчанию false |
+| `tags` | AssociationField | All | ❌ | ❌ | M:N, автозаполнение |
+| `subtasks` | CollectionField | Detail | ❌ | ❌ | 1:N, только чтение |
+| `attachments` | CollectionField | Detail | ❌ | ❌ | 1:N, только чтение |
 | `recurrenceRule` | AssociationField | Detail | ❌ | ❌ | 1:1, nullable |
 | `generatedFromRule` | AssociationField | Detail | ❌ | ❌ | N:1, nullable |
-| `createdAt` | DateTimeField | Detail | ✅ | ❌ | Auto |
-| `updatedAt` | DateTimeField | Detail | ✅ | ❌ | Auto |
+| `createdAt` | DateTimeField | Detail | ✅ | ❌ | Авто |
+| `updatedAt` | DateTimeField | Detail | ✅ | ❌ | Авто |
 
-##### Filters
-- **User** (EntityFilter): Filter by owner
-- **Status** (ChoiceFilter): Multiple selection
-- **Priority** (ChoiceFilter): Multiple selection
+##### Фильтры
+- **User** (EntityFilter): Фильтр по владельцу
+- **Status** (ChoiceFilter): Множественный выбор
+- **Priority** (ChoiceFilter): Множественный выбор
 - **Is Archived** (BooleanFilter): True/False/All
 - **Is Recurring Template** (BooleanFilter): True/False/All
-- **Tags** (EntityFilter): Filter by associated tags
-- **Due Date Range** (DateTimeFilter): From/To
-- **Created At Range** (DateTimeFilter): From/To
-- **Has Subtasks** (BooleanFilter): Tasks with/without subtasks
-- **Parent Task** (EntityFilter): Filter by parent
+- **Tags** (EntityFilter): Фильтр по связанным тегам
+- **Due Date Range** (DateTimeFilter): От/До
+- **Created At Range** (DateTimeFilter): От/До
+- **Has Subtasks** (BooleanFilter): Задачи с/без подзадач
+- **Parent Task** (EntityFilter): Фильтр по родительской задаче
 
-##### Actions
-- **NEW**: Create task (icon: plus)
-- **EDIT**: Edit task (icon: edit)
-- **DELETE**: Delete task and all subtasks (icon: trash, confirmation required)
-- **DETAIL**: View full details (icon: eye)
-- **BATCH_COMPLETE**: Mark multiple tasks as completed (batch action)
-- **BATCH_ARCHIVE**: Archive multiple tasks (batch action)
-- **BATCH_DELETE**: Delete multiple tasks (batch action, confirmation required)
-- **EXPORT**: Export selected tasks to CSV/Excel (batch action)
+##### Действия
+- **NEW**: Создать задачу (иконка: plus)
+- **EDIT**: Редактировать задачу (иконка: edit)
+- **DELETE**: Удалить задачу и все подзадачи (иконка: trash, требуется подтверждение)
+- **DETAIL**: Просмотр полных деталей (иконка: eye)
+- **BATCH_COMPLETE**: Отметить несколько задач как завершенные (пакетное действие)
+- **BATCH_ARCHIVE**: Архивировать несколько задач (пакетное действие)
+- **BATCH_DELETE**: Удалить несколько задач (пакетное действие, требуется подтверждение)
+- **EXPORT**: Экспортировать выбранные задачи в CSV/Excel (пакетное действие)
 
-##### Business Logic Hooks
+##### Хуки бизнес-логики
 
 ```php
 public function configureActions(Actions $actions): Actions
@@ -280,7 +280,7 @@ public function completeTask(AdminContext $context): Response
 
     $this->entityManager->flush();
 
-    $this->addFlash('success', "Task '{$task->getTitle()}' completed!");
+    $this->addFlash('success', "Задача '{$task->getTitle()}' завершена!");
 
     return $this->redirect($context->getReferrer());
 }
@@ -292,7 +292,7 @@ public function archiveTask(AdminContext $context): Response
 
     $this->entityManager->flush();
 
-    $this->addFlash('success', "Task '{$task->getTitle()}' archived!");
+    $this->addFlash('success', "Задача '{$task->getTitle()}' заархивирована!");
 
     return $this->redirect($context->getReferrer());
 }
@@ -306,12 +306,12 @@ public function createIndexQueryBuilder(/* ... */): QueryBuilder
         ->addSelect('t')
         ->leftJoin('entity.subtasks', 's')
         ->addSelect('s')
-        // Eager load to avoid N+1 queries
+        // Жадная загрузка для предотвращения N+1 запросов
         ->orderBy('entity.createdAt', 'DESC');
 }
 ```
 
-##### Custom Form Validation
+##### Кастомная валидация форм
 
 ```php
 public function persistEntity(EntityManagerInterface $em, $entityInstance): void
@@ -319,17 +319,17 @@ public function persistEntity(EntityManagerInterface $em, $entityInstance): void
     /** @var Task $task */
     $task = $entityInstance;
 
-    // Validation: startDate < dueDate
+    // Валидация: startDate < dueDate
     if ($task->getStartDate() && $task->getDueDate()) {
         if ($task->getStartDate() > $task->getDueDate()) {
-            $this->addFlash('error', 'Start date must be before due date!');
+            $this->addFlash('error', 'Дата начала должна быть раньше срока выполнения!');
             throw new \RuntimeException('Invalid dates');
         }
     }
 
-    // Validation: Parent task cannot be itself
+    // Валидация: Родительская задача не может быть самой собой
     if ($task->getParentTask() && $task->getParentTask()->getId() === $task->getId()) {
-        $this->addFlash('error', 'Task cannot be its own parent!');
+        $this->addFlash('error', 'Задача не может быть родителем самой себя!');
         throw new \RuntimeException('Invalid parent');
     }
 
@@ -337,12 +337,12 @@ public function persistEntity(EntityManagerInterface $em, $entityInstance): void
 }
 ```
 
-##### Display Optimization
+##### Оптимизация отображения
 
 ```php
 public function configureFields(string $pageName): iterable
 {
-    // Optimize field display based on page
+    // Оптимизация отображения полей в зависимости от страницы
     $id = IdField::new('id');
     $user = AssociationField::new('user')
         ->autocomplete()
@@ -350,14 +350,14 @@ public function configureFields(string $pageName): iterable
         ->formatValue(fn ($value, Task $task) => $task->getUser()->getEmail());
 
     $title = TextField::new('title')
-        ->setMaxLength(50); // Truncate on index
+        ->setMaxLength(50); // Обрезать на index
 
     $status = ChoiceField::new('status')
         ->setChoices([
-            'Pending' => TaskStatus::PENDING,
-            'In Progress' => TaskStatus::IN_PROGRESS,
-            'Completed' => TaskStatus::COMPLETED,
-            'Cancelled' => TaskStatus::CANCELLED,
+            'Ожидает' => TaskStatus::PENDING,
+            'В работе' => TaskStatus::IN_PROGRESS,
+            'Завершена' => TaskStatus::COMPLETED,
+            'Отменена' => TaskStatus::CANCELLED,
         ])
         ->renderAsBadges([
             TaskStatus::PENDING->value => 'secondary',
@@ -368,10 +368,10 @@ public function configureFields(string $pageName): iterable
 
     $priority = ChoiceField::new('priority')
         ->setChoices([
-            'Low' => TaskPriority::LOW,
-            'Medium' => TaskPriority::MEDIUM,
-            'High' => TaskPriority::HIGH,
-            'Urgent' => TaskPriority::URGENT,
+            'Низкий' => TaskPriority::LOW,
+            'Средний' => TaskPriority::MEDIUM,
+            'Высокий' => TaskPriority::HIGH,
+            'Срочный' => TaskPriority::URGENT,
         ])
         ->renderAsBadges([
             TaskPriority::LOW->value => 'secondary',
@@ -404,58 +404,58 @@ public function configureFields(string $pageName): iterable
         ->setFormat('dd.MM.yyyy HH:mm')
         ->onlyOnDetail();
 
-    // Return fields based on page
+    // Возврат полей в зависимости от страницы
     if (Crud::PAGE_INDEX === $pageName) {
         return [$id, $user, $title, $status, $priority, $dueDate, $isArchived, $tags, $subtaskCount];
     }
 
     if (Crud::PAGE_DETAIL === $pageName) {
-        return [/* all fields with associations */];
+        return [/* все поля со связями */];
     }
 
-    return [/* form fields */];
+    return [/* поля формы */];
 }
 ```
 
 ---
 
-#### **Step 2: TagCrudController** (1 hour)
+#### **Шаг 2: TagCrudController** (1 час)
 
-**Entity**: `App\Entity\Tag`
+**Сущность**: `App\Entity\Tag`
 
-**Complexity**: **LOW** (simple entity with basic M:N relationship)
+**Сложность**: **НИЗКАЯ** (простая сущность с базовой связью M:N)
 
-##### Fields Configuration
+##### Конфигурация полей
 
-| Field | Type | Visible On | Sortable | Searchable | Notes |
+| Поле | Тип | Видимо на | Сортируемо | Поиск | Заметки |
 |-------|------|------------|----------|------------|-------|
-| `id` | IdField | Index | ✅ | ❌ | Auto-generated |
-| `user` | AssociationField | All | ✅ | ✅ | Required, autocomplete |
-| `name` | TextField | All | ✅ | ✅ | Required, max 50, unique per user |
-| `color` | ColorField | All | ✅ | ❌ | Hex color (#RRGGBB), default #3B82F6 |
-| `icon` | TextField | All | ❌ | ✅ | Nullable, icon name |
-| `usageCount` | IntegerField | All | ✅ | ❌ | Counter, readonly |
-| `tasks` | AssociationField | Detail | ❌ | ❌ | M:N, readonly collection |
-| `createdAt` | DateTimeField | Detail | ✅ | ❌ | Auto |
-| `updatedAt` | DateTimeField | Detail | ✅ | ❌ | Auto |
+| `id` | IdField | Index | ✅ | ❌ | Автогенерируемое |
+| `user` | AssociationField | All | ✅ | ✅ | Обязательное, автозаполнение |
+| `name` | TextField | All | ✅ | ✅ | Обязательное, макс 50, уникальное на пользователя |
+| `color` | ColorField | All | ✅ | ❌ | Hex цвет (#RRGGBB), по умолчанию #3B82F6 |
+| `icon` | TextField | All | ❌ | ✅ | Nullable, имя иконки |
+| `usageCount` | IntegerField | All | ✅ | ❌ | Счетчик, только чтение |
+| `tasks` | AssociationField | Detail | ❌ | ❌ | M:N, коллекция только для чтения |
+| `createdAt` | DateTimeField | Detail | ✅ | ❌ | Авто |
+| `updatedAt` | DateTimeField | Detail | ✅ | ❌ | Авто |
 
-##### Filters
-- **User** (EntityFilter): Filter by owner
-- **Name** (TextFilter): Partial match
-- **Usage Count Range** (NumberFilter): Min/Max
-- **Created At Range** (DateTimeFilter): From/To
-- **Has Tasks** (BooleanFilter): Tags with/without associated tasks
+##### Фильтры
+- **User** (EntityFilter): Фильтр по владельцу
+- **Name** (TextFilter): Частичное совпадение
+- **Usage Count Range** (NumberFilter): Мин/Макс
+- **Created At Range** (DateTimeFilter): От/До
+- **Has Tasks** (BooleanFilter): Теги со/без связанных задач
 
-##### Actions
-- **NEW**: Create tag (icon: plus, color picker)
-- **EDIT**: Edit tag (icon: edit)
-- **DELETE**: Delete tag (icon: trash, confirmation with task count warning)
-- **DETAIL**: View full details including task list (icon: eye)
-- **MERGE**: Merge multiple tags into one (batch action, custom modal)
-- **BATCH_DELETE**: Delete multiple tags (batch action, confirmation required)
-- **EXPORT**: Export tags with usage stats to CSV (batch action)
+##### Действия
+- **NEW**: Создать тег (иконка: plus, палитра цветов)
+- **EDIT**: Редактировать тег (иконка: edit)
+- **DELETE**: Удалить тег (иконка: trash, подтверждение с предупреждением о количестве задач)
+- **DETAIL**: Просмотр полных деталей включая список задач (иконка: eye)
+- **MERGE**: Объединить несколько тегов в один (пакетное действие, кастомная модалка)
+- **BATCH_DELETE**: Удалить несколько тегов (пакетное действие, требуется подтверждение)
+- **EXPORT**: Экспорт тегов со статистикой использования в CSV (пакетное действие)
 
-##### Business Logic Hooks
+##### Хуки бизнес-логики
 
 ```php
 public function persistEntity(EntityManagerInterface $em, $entityInstance): void
@@ -463,20 +463,20 @@ public function persistEntity(EntityManagerInterface $em, $entityInstance): void
     /** @var Tag $tag */
     $tag = $entityInstance;
 
-    // Validation: Name + User must be unique
+    // Валидация: Имя + Пользователь должны быть уникальными
     $existingTag = $em->getRepository(Tag::class)->findOneBy([
         'name' => $tag->getName(),
         'user' => $tag->getUser(),
     ]);
 
     if ($existingTag && $existingTag->getId() !== $tag->getId()) {
-        $this->addFlash('error', "Tag '{$tag->getName()}' already exists for this user!");
+        $this->addFlash('error', "Тег '{$tag->getName()}' уже существует для этого пользователя!");
         throw new \RuntimeException('Duplicate tag name');
     }
 
-    // Validation: Color format
+    // Валидация: Формат цвета
     if (!preg_match('/^#[0-9A-Fa-f]{6}$/', $tag->getColor())) {
-        $this->addFlash('error', 'Invalid color format! Use hex format (#RRGGBB)');
+        $this->addFlash('error', 'Неверный формат цвета! Используйте hex формат (#RRGGBB)');
         throw new \RuntimeException('Invalid color');
     }
 
@@ -491,19 +491,19 @@ public function deleteEntity(EntityManagerInterface $em, $entityInstance): void
     $taskCount = $tag->getTasks()->count();
 
     if ($taskCount > 0) {
-        $this->addFlash('warning', "Tag '{$tag->getName()}' removed from {$taskCount} tasks.");
+        $this->addFlash('warning', "Тег '{$tag->getName()}' удален из {$taskCount} задач.");
     }
 
     parent::deleteEntity($em, $entityInstance);
 }
 ```
 
-##### Custom Action: Merge Tags
+##### Кастомное действие: Объединение тегов
 
 ```php
 public function configureActions(Actions $actions): Actions
 {
-    $mergeAction = Action::new('mergeTags', 'Merge Tags')
+    $mergeAction = Action::new('mergeTags', 'Объединить теги')
         ->linkToCrudAction('mergeTags')
         ->addCssClass('btn btn-warning')
         ->setIcon('fa fa-compress-alt')
@@ -518,11 +518,11 @@ public function mergeTags(BatchActionDto $batchActionDto): Response
     $tagIds = $batchActionDto->getEntityIds();
 
     if (count($tagIds) < 2) {
-        $this->addFlash('error', 'Select at least 2 tags to merge!');
+        $this->addFlash('error', 'Выберите минимум 2 тега для объединения!');
         return $this->redirect($batchActionDto->getReferrerUrl());
     }
 
-    // Render custom merge form
+    // Отрисовка кастомной формы объединения
     $form = $this->createForm(TagMergeType::class, [
         'source_tags' => $tagIds,
     ]);
@@ -536,7 +536,7 @@ public function mergeTags(BatchActionDto $batchActionDto): Response
         $targetTag = $this->entityManager->find(Tag::class, $targetTagId);
         $sourceTags = $this->entityManager->getRepository(Tag::class)->findBy(['id' => $tagIds]);
 
-        // Move all tasks from source tags to target tag
+        // Перенос всех задач из исходных тегов в целевой тег
         foreach ($sourceTags as $sourceTag) {
             if ($sourceTag->getId() === $targetTag->getId()) {
                 continue;
@@ -554,7 +554,7 @@ public function mergeTags(BatchActionDto $batchActionDto): Response
 
         $this->entityManager->flush();
 
-        $this->addFlash('success', 'Tags merged successfully!');
+        $this->addFlash('success', 'Теги успешно объединены!');
 
         return $this->redirect($batchActionDto->getReferrerUrl());
     }
@@ -568,44 +568,44 @@ public function mergeTags(BatchActionDto $batchActionDto): Response
 
 ---
 
-#### **Step 3: TaskAttachmentCrudController** (2 hours)
+#### **Шаг 3: TaskAttachmentCrudController** (2 часа)
 
-**Entity**: `App\Entity\TaskAttachment`
+**Сущность**: `App\Entity\TaskAttachment`
 
-**Complexity**: **MEDIUM** (file handling, storage management)
+**Сложность**: **СРЕДНЯЯ** (обработка файлов, управление хранилищем)
 
-##### Fields Configuration
+##### Конфигурация полей
 
-| Field | Type | Visible On | Sortable | Searchable | Notes |
+| Поле | Тип | Видимо на | Сортируемо | Поиск | Заметки |
 |-------|------|------------|----------|------------|-------|
-| `id` | IdField | Index | ✅ | ❌ | Auto-generated |
-| `task` | AssociationField | All | ✅ | ✅ | Required |
-| `uploadedBy` | AssociationField | All | ✅ | ✅ | Required |
-| `fileName` | TextField | All | ✅ | ✅ | Generated filename |
-| `originalName` | TextField | All | ✅ | ✅ | Original filename |
-| `mimeType` | TextField | All | ✅ | ✅ | File MIME type |
+| `id` | IdField | Index | ✅ | ❌ | Автогенерируемое |
+| `task` | AssociationField | All | ✅ | ✅ | Обязательное |
+| `uploadedBy` | AssociationField | All | ✅ | ✅ | Обязательное |
+| `fileName` | TextField | All | ✅ | ✅ | Сгенерированное имя файла |
+| `originalName` | TextField | All | ✅ | ✅ | Исходное имя файла |
+| `mimeType` | TextField | All | ✅ | ✅ | MIME-тип файла |
 | `fileType` | ChoiceField | All | ✅ | ✅ | image/document/video/other |
-| `fileSize` | IntegerField | All | ✅ | ❌ | In bytes, formatted display |
-| `filePath` | TextField | Detail | ❌ | ❌ | Storage path, readonly |
-| `uploadedAt` | DateTimeField | All | ✅ | ❌ | Auto |
+| `fileSize` | IntegerField | All | ✅ | ❌ | В байтах, форматированный вывод |
+| `filePath` | TextField | Detail | ❌ | ❌ | Путь хранения, только чтение |
+| `uploadedAt` | DateTimeField | All | ✅ | ❌ | Авто |
 
-##### Filters
-- **Task** (EntityFilter): Filter by parent task
-- **Uploaded By** (EntityFilter): Filter by uploader
+##### Фильтры
+- **Task** (EntityFilter): Фильтр по родительской задаче
+- **Uploaded By** (EntityFilter): Фильтр по загрузившему
 - **File Type** (ChoiceFilter): image/document/video/other
-- **MIME Type** (TextFilter): Partial match
-- **File Size Range** (NumberFilter): Min/Max (MB)
-- **Uploaded At Range** (DateTimeFilter): From/To
+- **MIME Type** (TextFilter): Частичное совпадение
+- **File Size Range** (NumberFilter): Мин/Макс (МБ)
+- **Uploaded At Range** (DateTimeFilter): От/До
 
-##### Actions
-- **NEW**: Upload attachment (icon: upload)
-- **DETAIL**: View details with preview (icon: eye)
-- **DELETE**: Delete attachment and file from storage (icon: trash, confirmation)
-- **DOWNLOAD**: Download file (action button)
-- **BATCH_DELETE**: Delete multiple attachments (batch action, confirmation)
-- **EXPORT**: Export attachment metadata to CSV (batch action)
+##### Действия
+- **NEW**: Загрузить вложение (иконка: upload)
+- **DETAIL**: Просмотр деталей с предпросмотром (иконка: eye)
+- **DELETE**: Удалить вложение и файл из хранилища (иконка: trash, подтверждение)
+- **DOWNLOAD**: Скачать файл (кнопка действия)
+- **BATCH_DELETE**: Удалить несколько вложений (пакетное действие, подтверждение)
+- **EXPORT**: Экспорт метаданных вложений в CSV (пакетное действие)
 
-##### Custom Display
+##### Кастомное отображение
 
 ```php
 public function configureFields(string $pageName): iterable
@@ -639,10 +639,10 @@ public function configureFields(string $pageName): iterable
 
     $fileType = ChoiceField::new('fileType')
         ->setChoices([
-            'Image' => 'image',
-            'Document' => 'document',
-            'Video' => 'video',
-            'Other' => 'other',
+            'Изображение' => 'image',
+            'Документ' => 'document',
+            'Видео' => 'video',
+            'Прочее' => 'other',
         ])
         ->renderAsBadges([
             'image' => 'success',
@@ -651,16 +651,16 @@ public function configureFields(string $pageName): iterable
             'other' => 'secondary',
         ]);
 
-    $preview = ImageField::new('filePath', 'Preview')
+    $preview = ImageField::new('filePath', 'Предпросмотр')
         ->setBasePath('/uploads/tasks/')
         ->onlyWhen('image' === $pageData['fileType'] ?? null)
         ->onlyOnDetail();
 
-    $downloadLink = Field::new('download', 'Download')
+    $downloadLink = Field::new('download', 'Скачать')
         ->formatValue(function ($value, TaskAttachment $attachment) {
             return sprintf(
                 '<a href="/uploads/tasks/%s" download="%s" class="btn btn-sm btn-primary">
-                    <i class="fa fa-download"></i> Download
+                    <i class="fa fa-download"></i> Скачать
                 </a>',
                 $attachment->getFileName(),
                 $attachment->getOriginalName()
@@ -672,11 +672,11 @@ public function configureFields(string $pageName): iterable
         return [$id, $task, $uploadedBy, $originalName, $fileType, $fileSize, $uploadedAt];
     }
 
-    return [/* all fields */];
+    return [/* все поля */];
 }
 ```
 
-##### File Upload Handling
+##### Обработка загрузки файлов
 
 ```php
 public function persistEntity(EntityManagerInterface $em, $entityInstance): void
@@ -684,21 +684,21 @@ public function persistEntity(EntityManagerInterface $em, $entityInstance): void
     /** @var TaskAttachment $attachment */
     $attachment = $entityInstance;
 
-    // Handle file upload (assumes UploadedFile in form)
+    // Обработка загрузки файла (предполагается UploadedFile в форме)
     $uploadedFile = $this->requestStack->getCurrentRequest()->files->get('file');
 
     if (!$uploadedFile) {
-        $this->addFlash('error', 'No file uploaded!');
+        $this->addFlash('error', 'Файл не загружен!');
         throw new \RuntimeException('Missing file');
     }
 
-    // Validate file size (max 10MB)
+    // Валидация размера файла (макс 10МБ)
     if ($uploadedFile->getSize() > 10 * 1024 * 1024) {
-        $this->addFlash('error', 'File too large! Max 10MB allowed.');
+        $this->addFlash('error', 'Файл слишком большой! Максимум 10МБ.');
         throw new \RuntimeException('File too large');
     }
 
-    // Validate MIME type (whitelist)
+    // Валидация MIME-типа (белый список)
     $allowedMimeTypes = [
         'image/jpeg', 'image/png', 'image/gif',
         'application/pdf', 'application/msword',
@@ -706,26 +706,26 @@ public function persistEntity(EntityManagerInterface $em, $entityInstance): void
     ];
 
     if (!in_array($uploadedFile->getMimeType(), $allowedMimeTypes, true)) {
-        $this->addFlash('error', 'Invalid file type!');
+        $this->addFlash('error', 'Недопустимый тип файла!');
         throw new \RuntimeException('Invalid file type');
     }
 
-    // Generate unique filename
+    // Генерация уникального имени файла
     $fileName = md5(uniqid()) . '.' . $uploadedFile->guessExtension();
 
-    // Move file to storage
+    // Перемещение файла в хранилище
     $uploadedFile->move(
         $this->getParameter('uploads_directory') . '/tasks',
         $fileName
     );
 
-    // Set attachment properties
+    // Установка свойств вложения
     $attachment->setFileName($fileName);
     $attachment->setOriginalName($uploadedFile->getClientOriginalName());
     $attachment->setMimeType($uploadedFile->getMimeType());
     $attachment->setFileSize($uploadedFile->getSize());
     $attachment->setFilePath('/uploads/tasks/' . $fileName);
-    $attachment->determineFileType(); // Auto-detect from MIME
+    $attachment->determineFileType(); // Автоопределение из MIME
     $attachment->setUploadedAt(new \DateTimeImmutable());
 
     parent::persistEntity($em, $entityInstance);
@@ -736,12 +736,12 @@ public function deleteEntity(EntityManagerInterface $em, $entityInstance): void
     /** @var TaskAttachment $attachment */
     $attachment = $entityInstance;
 
-    // Delete file from storage
+    // Удаление файла из хранилища
     $filePath = $this->getParameter('kernel.project_dir') . '/public' . $attachment->getFilePath();
 
     if (file_exists($filePath)) {
         unlink($filePath);
-        $this->addFlash('success', "File '{$attachment->getOriginalName()}' deleted from storage.");
+        $this->addFlash('success', "Файл '{$attachment->getOriginalName()}' удален из хранилища.");
     }
 
     parent::deleteEntity($em, $entityInstance);
@@ -750,54 +750,54 @@ public function deleteEntity(EntityManagerInterface $em, $entityInstance): void
 
 ---
 
-#### **Step 4: RecurrenceRuleCrudController** (2 hours)
+#### **Шаг 4: RecurrenceRuleCrudController** (2 часа)
 
-**Entity**: `App\Entity\RecurrenceRule`
+**Сущность**: `App\Entity\RecurrenceRule`
 
-**Complexity**: **MEDIUM** (complex recurrence logic visualization)
+**Сложность**: **СРЕДНЯЯ** (сложная визуализация логики повторения)
 
-##### Fields Configuration
+##### Конфигурация полей
 
-| Field | Type | Visible On | Sortable | Searchable | Notes |
+| Поле | Тип | Видимо на | Сортируемо | Поиск | Заметки |
 |-------|------|------------|----------|------------|-------|
-| `id` | IdField | Index | ✅ | ❌ | Auto-generated |
-| `createdBy` | AssociationField | All | ✅ | ✅ | Required |
-| `templateTask` | AssociationField | All | ✅ | ✅ | Required, 1:1 |
+| `id` | IdField | Index | ✅ | ❌ | Автогенерируемое |
+| `createdBy` | AssociationField | All | ✅ | ✅ | Обязательное |
+| `templateTask` | AssociationField | All | ✅ | ✅ | Обязательное, 1:1 |
 | `recurrenceType` | ChoiceField | All | ✅ | ✅ | daily/weekly/monthly/yearly/custom |
-| `interval` | IntegerField | Detail | ✅ | ❌ | For custom type |
-| `daysOfWeek` | ArrayField | Detail | ❌ | ❌ | JSON, for weekly [1,2,3,4,5] |
-| `dayOfMonth` | IntegerField | Detail | ✅ | ❌ | For monthly (1-31) |
-| `monthOfYear` | IntegerField | Detail | ✅ | ❌ | For yearly (1-12) |
-| `endDate` | DateField | All | ✅ | ❌ | Nullable, stop after date |
-| `maxOccurrences` | IntegerField | All | ✅ | ❌ | Nullable, max times to occur |
-| `currentOccurrences` | IntegerField | All | ✅ | ❌ | Counter, readonly |
-| `nextOccurrenceDate` | DateTimeField | All | ✅ | ❌ | Next generation date |
-| `timeOfDay` | TimeField | Detail | ❌ | ❌ | Time when task created |
-| `isActive` | BooleanField | All | ✅ | ✅ | Active/Inactive toggle |
-| `createdAt` | DateTimeField | Detail | ✅ | ❌ | Auto |
-| `updatedAt` | DateTimeField | Detail | ✅ | ❌ | Auto |
+| `interval` | IntegerField | Detail | ✅ | ❌ | Для кастомного типа |
+| `daysOfWeek` | ArrayField | Detail | ❌ | ❌ | JSON, для еженедельного [1,2,3,4,5] |
+| `dayOfMonth` | IntegerField | Detail | ✅ | ❌ | Для ежемесячного (1-31) |
+| `monthOfYear` | IntegerField | Detail | ✅ | ❌ | Для ежегодного (1-12) |
+| `endDate` | DateField | All | ✅ | ❌ | Nullable, остановить после даты |
+| `maxOccurrences` | IntegerField | All | ✅ | ❌ | Nullable, макс количество повторений |
+| `currentOccurrences` | IntegerField | All | ✅ | ❌ | Счетчик, только чтение |
+| `nextOccurrenceDate` | DateTimeField | All | ✅ | ❌ | Дата следующей генерации |
+| `timeOfDay` | TimeField | Detail | ❌ | ❌ | Время создания задачи |
+| `isActive` | BooleanField | All | ✅ | ✅ | Переключатель Активно/Неактивно |
+| `createdAt` | DateTimeField | Detail | ✅ | ❌ | Авто |
+| `updatedAt` | DateTimeField | Detail | ✅ | ❌ | Авто |
 
-##### Filters
-- **Created By** (EntityFilter): Filter by user
-- **Template Task** (EntityFilter): Filter by task
+##### Фильтры
+- **Created By** (EntityFilter): Фильтр по пользователю
+- **Template Task** (EntityFilter): Фильтр по задаче
 - **Recurrence Type** (ChoiceFilter): daily/weekly/monthly/yearly/custom
-- **Is Active** (BooleanFilter): Active/Inactive/All
-- **End Date Range** (DateTimeFilter): From/To
-- **Next Occurrence Range** (DateTimeFilter): From/To
+- **Is Active** (BooleanFilter): Активно/Неактивно/Все
+- **End Date Range** (DateTimeFilter): От/До
+- **Next Occurrence Range** (DateTimeFilter): От/До
 - **Has Reached Max** (BooleanFilter): currentOccurrences >= maxOccurrences
 
-##### Actions
-- **NEW**: Create rule (icon: plus, complex form)
-- **EDIT**: Edit rule (icon: edit)
-- **DELETE**: Delete rule (icon: trash, confirmation)
-- **DETAIL**: View full details with generation history (icon: eye)
-- **TOGGLE_ACTIVE**: Activate/Deactivate rule (action button)
-- **TRIGGER_NOW**: Manually trigger rule to generate task (action button)
-- **BATCH_ACTIVATE**: Activate multiple rules (batch action)
-- **BATCH_DEACTIVATE**: Deactivate multiple rules (batch action)
-- **EXPORT**: Export rules with stats to CSV (batch action)
+##### Действия
+- **NEW**: Создать правило (иконка: plus, сложная форма)
+- **EDIT**: Редактировать правило (иконка: edit)
+- **DELETE**: Удалить правило (иконка: trash, подтверждение)
+- **DETAIL**: Просмотр полных деталей с историей генерации (иконка: eye)
+- **TOGGLE_ACTIVE**: Активировать/Деактивировать правило (кнопка действия)
+- **TRIGGER_NOW**: Вручную запустить правило для генерации задачи (кнопка действия)
+- **BATCH_ACTIVATE**: Активировать несколько правил (пакетное действие)
+- **BATCH_DEACTIVATE**: Деактивировать несколько правил (пакетное действие)
+- **EXPORT**: Экспорт правил со статистикой в CSV (пакетное действие)
 
-##### Custom Display
+##### Кастомное отображение
 
 ```php
 public function configureFields(string $pageName): iterable
@@ -820,11 +820,11 @@ public function configureFields(string $pageName): iterable
 
     $recurrenceType = ChoiceField::new('recurrenceType')
         ->setChoices([
-            'Daily' => RecurrenceRule::TYPE_DAILY,
-            'Weekly' => RecurrenceRule::TYPE_WEEKLY,
-            'Monthly' => RecurrenceRule::TYPE_MONTHLY,
-            'Yearly' => RecurrenceRule::TYPE_YEARLY,
-            'Custom' => RecurrenceRule::TYPE_CUSTOM,
+            'Ежедневно' => RecurrenceRule::TYPE_DAILY,
+            'Еженедельно' => RecurrenceRule::TYPE_WEEKLY,
+            'Ежемесячно' => RecurrenceRule::TYPE_MONTHLY,
+            'Ежегодно' => RecurrenceRule::TYPE_YEARLY,
+            'Кастомное' => RecurrenceRule::TYPE_CUSTOM,
         ])
         ->renderAsBadges([
             RecurrenceRule::TYPE_DAILY => 'primary',
@@ -837,7 +837,7 @@ public function configureFields(string $pageName): iterable
     $isActive = BooleanField::new('isActive')
         ->renderAsSwitch(true);
 
-    $progress = Field::new('progress', 'Progress')
+    $progress = Field::new('progress', 'Прогресс')
         ->formatValue(function ($value, RecurrenceRule $rule) {
             if (!$rule->getMaxOccurrences()) {
                 return $rule->getCurrentOccurrences() . ' / ∞';
@@ -869,8 +869,8 @@ public function configureFields(string $pageName): iterable
             }
 
             $daysMap = [
-                1 => 'Mon', 2 => 'Tue', 3 => 'Wed',
-                4 => 'Thu', 5 => 'Fri', 6 => 'Sat', 7 => 'Sun'
+                1 => 'Пн', 2 => 'Вт', 3 => 'Ср',
+                4 => 'Чт', 5 => 'Пт', 6 => 'Сб', 7 => 'Вс'
             ];
 
             $days = array_map(fn ($day) => $daysMap[$day], $rule->getDaysOfWeek());
@@ -883,21 +883,21 @@ public function configureFields(string $pageName): iterable
         return [$id, $createdBy, $templateTask, $recurrenceType, $progress, $nextOccurrenceDate, $isActive];
     }
 
-    return [/* all fields */];
+    return [/* все поля */];
 }
 ```
 
-##### Custom Actions
+##### Кастомные действия
 
 ```php
 public function configureActions(Actions $actions): Actions
 {
-    $toggleActiveAction = Action::new('toggleActive', 'Toggle Active')
+    $toggleActiveAction = Action::new('toggleActive', 'Переключить активность')
         ->linkToCrudAction('toggleActive')
         ->displayIf(static fn (RecurrenceRule $rule) => true)
         ->setIcon('fa fa-power-off');
 
-    $triggerNowAction = Action::new('triggerNow', 'Generate Task Now')
+    $triggerNowAction = Action::new('triggerNow', 'Сгенерировать задачу сейчас')
         ->linkToCrudAction('triggerNow')
         ->displayIf(static fn (RecurrenceRule $rule) => $rule->isActive())
         ->setIcon('fa fa-play')
@@ -916,8 +916,8 @@ public function toggleActive(AdminContext $context): Response
 
     $this->entityManager->flush();
 
-    $status = $rule->isActive() ? 'activated' : 'deactivated';
-    $this->addFlash('success', "Rule {$status}!");
+    $status = $rule->isActive() ? 'активировано' : 'деактивировано';
+    $this->addFlash('success', "Правило {$status}!");
 
     return $this->redirect($context->getReferrer());
 }
@@ -930,9 +930,9 @@ public function triggerNow(AdminContext $context, RecurrenceService $recurrenceS
     try {
         $task = $recurrenceService->generateTaskFromRule($rule);
 
-        $this->addFlash('success', "Task '{$task->getTitle()}' generated successfully! (ID: {$task->getId()})");
+        $this->addFlash('success', "Задача '{$task->getTitle()}' успешно сгенерирована! (ID: {$task->getId()})");
     } catch (\Exception $e) {
-        $this->addFlash('error', "Failed to generate task: {$e->getMessage()}");
+        $this->addFlash('error', "Не удалось сгенерировать задачу: {$e->getMessage()}");
     }
 
     return $this->redirect($context->getReferrer());
@@ -941,69 +941,69 @@ public function triggerNow(AdminContext $context, RecurrenceService $recurrenceS
 
 ---
 
-### **PHASE 2: Supporting Entities** ✅ **COMPLETED** (3-4 hours)
+### **ФАЗА 2: Поддерживающие сущности** ✅ **ЗАВЕРШЕНО** (3-4 часа)
 
-**Completion Date**: 2025-11-11
-**Implementation Notes**: All three controllers (MediaObject, RefreshToken, AuditLog) have been successfully implemented with full CRUD functionality, filters, and custom actions. AuditLog entity was created from scratch with auto-logging event listener.
+**Дата завершения**: 2025-11-11
+**Заметки по реализации**: Все три контроллера (MediaObject, RefreshToken, AuditLog) успешно реализованы с полной CRUD-функциональностью, фильтрами и кастомными действиями. Сущность AuditLog создана с нуля с автоматическим логгированием через event listener.
 
-#### **Step 5: MediaObjectCrudController** (1.5 hours) ✅
+#### **Шаг 5: MediaObjectCrudController** (1.5 часа) ✅
 
-**Entity**: `App\Entity\MediaObject`
+**Сущность**: `App\Entity\MediaObject`
 
-**Complexity**: **MEDIUM** (similar to TaskAttachment but system-wide)
+**Сложность**: **СРЕДНЯЯ** (аналогично TaskAttachment, но системная)
 
-##### Fields Configuration
+##### Конфигурация полей
 
-| Field | Type | Visible On | Sortable | Searchable | Notes |
+| Поле | Тип | Видимо на | Сортируемо | Поиск | Заметки |
 |-------|------|------------|----------|------------|-------|
-| `id` | IdField | Index | ✅ | ❌ | Auto-generated |
-| `uploadedBy` | AssociationField | All | ✅ | ✅ | Required |
-| `fileName` | TextField | All | ✅ | ✅ | Generated filename |
-| `originalName` | TextField | All | ✅ | ✅ | Original filename |
-| `mimeType` | TextField | All | ✅ | ✅ | File MIME type |
+| `id` | IdField | Index | ✅ | ❌ | Автогенерируемое |
+| `uploadedBy` | AssociationField | All | ✅ | ✅ | Обязательное |
+| `fileName` | TextField | All | ✅ | ✅ | Сгенерированное имя файла |
+| `originalName` | TextField | All | ✅ | ✅ | Исходное имя файла |
+| `mimeType` | TextField | All | ✅ | ✅ | MIME-тип файла |
 | `fileType` | ChoiceField | All | ✅ | ✅ | image/document/video/other |
-| `fileSize` | IntegerField | All | ✅ | ❌ | In bytes, formatted display |
-| `filePath` | TextField | Detail | ❌ | ❌ | Storage path, readonly |
-| `thumbnailPath` | TextField | Detail | ❌ | ❌ | Optional thumbnail |
-| `createdAt` | DateTimeField | All | ✅ | ❌ | Auto |
+| `fileSize` | IntegerField | All | ✅ | ❌ | В байтах, форматированный вывод |
+| `filePath` | TextField | Detail | ❌ | ❌ | Путь хранения, только чтение |
+| `thumbnailPath` | TextField | Detail | ❌ | ❌ | Опциональная миниатюра |
+| `createdAt` | DateTimeField | All | ✅ | ❌ | Авто |
 
-*(Similar implementation to TaskAttachmentCrudController, omitted for brevity)*
+*(Аналогичная реализация TaskAttachmentCrudController, опущена для краткости)*
 
 ---
 
-#### **Step 6: RefreshTokenCrudController** (0.5 hours) ✅
+#### **Шаг 6: RefreshTokenCrudController** (0.5 часа) ✅
 
-**Entity**: `App\Entity\RefreshToken`
+**Сущность**: `App\Entity\RefreshToken`
 
-**Complexity**: **LOW** (mostly read-only view)
+**Сложность**: **НИЗКАЯ** (в основном просмотр в режиме только чтения)
 
-##### Fields Configuration
+##### Конфигурация полей
 
-| Field | Type | Visible On | Sortable | Searchable | Notes |
+| Поле | Тип | Видимо на | Сортируемо | Поиск | Заметки |
 |-------|------|------------|----------|------------|-------|
-| `id` | IdField | Index | ✅ | ❌ | Auto-generated |
-| `username` | TextField | All | ✅ | ✅ | User email (FK constraint) |
-| `refreshToken` | TextField | Detail | ❌ | ❌ | Hashed token, readonly |
-| `valid` | DateTimeField | All | ✅ | ❌ | Expiration datetime |
-| `isValid` | BooleanField | All | ✅ | ✅ | Computed: valid > now |
+| `id` | IdField | Index | ✅ | ❌ | Автогенерируемое |
+| `username` | TextField | All | ✅ | ✅ | Email пользователя (FK ограничение) |
+| `refreshToken` | TextField | Detail | ❌ | ❌ | Хешированный токен, только чтение |
+| `valid` | DateTimeField | All | ✅ | ❌ | Дата истечения |
+| `isValid` | BooleanField | All | ✅ | ✅ | Вычисляемое: valid > now |
 
-##### Filters
-- **Username** (TextFilter): Partial match
-- **Is Valid** (BooleanFilter): Valid/Expired/All
-- **Valid Until Range** (DateTimeFilter): From/To
+##### Фильтры
+- **Username** (TextFilter): Частичное совпадение
+- **Is Valid** (BooleanFilter): Действителен/Истек/Все
+- **Valid Until Range** (DateTimeFilter): От/До
 
-##### Actions
-- **DETAIL**: View token details (icon: eye)
-- **DELETE**: Revoke token (icon: trash, force logout)
-- **BATCH_DELETE**: Revoke multiple tokens (batch action)
-- **CLEANUP_EXPIRED**: Delete all expired tokens (global action)
+##### Действия
+- **DETAIL**: Просмотр деталей токена (иконка: eye)
+- **DELETE**: Отозвать токен (иконка: trash, принудительный выход)
+- **BATCH_DELETE**: Отозвать несколько токенов (пакетное действие)
+- **CLEANUP_EXPIRED**: Удалить все истекшие токены (глобальное действие)
 
-##### Business Logic
+##### Бизнес-логика
 
 ```php
 public function configureActions(Actions $actions): Actions
 {
-    $cleanupExpiredAction = Action::new('cleanupExpired', 'Cleanup Expired Tokens')
+    $cleanupExpiredAction = Action::new('cleanupExpired', 'Очистить истекшие токены')
         ->linkToCrudAction('cleanupExpired')
         ->createAsGlobalAction()
         ->setIcon('fa fa-broom')
@@ -1023,7 +1023,7 @@ public function cleanupExpired(AdminContext $context): Response
         ->getQuery()
         ->execute();
 
-    $this->addFlash('success', "{$count} expired tokens deleted!");
+    $this->addFlash('success', "{$count} истекших токенов удалено!");
 
     return $this->redirect($context->getReferrer());
 }
@@ -1031,15 +1031,15 @@ public function cleanupExpired(AdminContext $context): Response
 
 ---
 
-#### **Step 7: AuditLogCrudController** (2 hours) [NEW ENTITY] ✅
+#### **Шаг 7: AuditLogCrudController** (2 часа) [НОВАЯ СУЩНОСТЬ] ✅
 
-**Entity**: `App\Entity\AuditLog` *(Created successfully)*
+**Сущность**: `App\Entity\AuditLog` *(Успешно создана)*
 
-**Purpose**: Track all admin actions for security and troubleshooting
+**Назначение**: Отслеживать все действия администратора для безопасности и устранения неполадок
 
-**Complexity**: **MEDIUM** (new entity, event listeners)
+**Сложность**: **СРЕДНЯЯ** (новая сущность, event listeners)
 
-##### Entity Definition
+##### Определение сущности
 
 ```php
 <?php
@@ -1072,19 +1072,19 @@ class AuditLog
     private string $action;  // CREATE, UPDATE, DELETE, LOGIN, LOGOUT
 
     #[ORM\Column(length: 100)]
-    private string $entityType;  // Task, Tag, User, etc.
+    private string $entityType;  // Task, Tag, User, и т.д.
 
     #[ORM\Column(nullable: true)]
     private ?int $entityId = null;
 
     #[ORM\Column(type: 'json', nullable: true)]
-    private ?array $oldData = null;  // Before state (JSON)
+    private ?array $oldData = null;  // Состояние до (JSON)
 
     #[ORM\Column(type: 'json', nullable: true)]
-    private ?array $newData = null;  // After state (JSON)
+    private ?array $newData = null;  // Состояние после (JSON)
 
     #[ORM\Column(type: 'json', nullable: true)]
-    private ?array $metadata = null;  // IP, user agent, etc.
+    private ?array $metadata = null;  // IP, user agent, и т.д.
 
     #[ORM\Column(type: 'datetime_immutable')]
     private \DateTimeImmutable $createdAt;
@@ -1094,18 +1094,18 @@ class AuditLog
         $this->createdAt = new \DateTimeImmutable();
     }
 
-    // Getters/Setters...
+    // Геттеры/Сеттеры...
 }
 ```
 
-##### Migration
+##### Миграция
 
 ```bash
 docker exec backend-php83 php bin/console make:migration
 docker exec backend-php83 php bin/console doctrine:migrations:migrate
 ```
 
-##### Event Listener (Auto-logging)
+##### Event Listener (Автологирование)
 
 ```php
 <?php
@@ -1153,12 +1153,12 @@ class AuditLogListener
 
     private function logAction(string $action, object $entity, array $changeSet = []): void
     {
-        // Skip logging for AuditLog itself (prevent recursion)
+        // Пропустить логирование для самого AuditLog (предотвратить рекурсию)
         if ($entity instanceof AuditLog) {
             return;
         }
 
-        // Only log admin actions (from /admin routes)
+        // Логировать только действия администратора (из маршрутов /admin)
         $request = $this->requestStack->getCurrentRequest();
         if (!$request || !str_starts_with($request->getPathInfo(), '/admin')) {
             return;
@@ -1191,7 +1191,7 @@ class AuditLogListener
 
     private function serializeEntity(object $entity): array
     {
-        // Serialize entity to array (simplified)
+        // Сериализация сущности в массив (упрощенно)
         $data = [];
         $reflection = new \ReflectionClass($entity);
 
@@ -1199,7 +1199,7 @@ class AuditLogListener
             $property->setAccessible(true);
             $value = $property->getValue($entity);
 
-            // Simplify value (avoid circular references)
+            // Упростить значение (избежать циклических ссылок)
             if (is_object($value)) {
                 $data[$property->getName()] = method_exists($value, 'getId')
                     ? $value->getId()
@@ -1214,7 +1214,7 @@ class AuditLogListener
 }
 ```
 
-##### CRUD Controller
+##### CRUD контроллер
 
 ```php
 public function configureFields(string $pageName): iterable
@@ -1223,16 +1223,16 @@ public function configureFields(string $pageName): iterable
 
     $user = AssociationField::new('user')
         ->formatValue(fn ($value, AuditLog $log) =>
-            $log->getUser() ? $log->getUser()->getEmail() : 'System'
+            $log->getUser() ? $log->getUser()->getEmail() : 'Система'
         );
 
     $action = ChoiceField::new('action')
         ->setChoices([
-            'Create' => 'CREATE',
-            'Update' => 'UPDATE',
-            'Delete' => 'DELETE',
-            'Login' => 'LOGIN',
-            'Logout' => 'LOGOUT',
+            'Создание' => 'CREATE',
+            'Обновление' => 'UPDATE',
+            'Удаление' => 'DELETE',
+            'Вход' => 'LOGIN',
+            'Выход' => 'LOGOUT',
         ])
         ->renderAsBadges([
             'CREATE' => 'success',
@@ -1251,7 +1251,7 @@ public function configureFields(string $pageName): iterable
                 return '-';
             }
 
-            // Generate link to entity
+            // Генерация ссылки на сущность
             return sprintf(
                 '<a href="/admin?crudAction=detail&crudControllerFqcn=%sCrudController&entityId=%d">
                     #%d
@@ -1286,18 +1286,18 @@ public function configureFields(string $pageName): iterable
         return [$id, $user, $action, $entityType, $entityId, $metadata, $createdAt];
     }
 
-    return [/* all fields */];
+    return [/* все поля */];
 }
 
 public function configureCrud(Crud $crud): Crud
 {
     return $crud
-        ->setEntityLabelInSingular('Audit Log')
-        ->setEntityLabelInPlural('Audit Logs')
+        ->setEntityLabelInSingular('Запись аудита')
+        ->setEntityLabelInPlural('Записи аудита')
         ->setDefaultSort(['createdAt' => 'DESC'])
         ->setPaginatorPageSize(50)
         ->setPaginatorRangeSize(4)
-        ->setPageTitle(Crud::PAGE_INDEX, 'Activity Audit Trail')
+        ->setPageTitle(Crud::PAGE_INDEX, 'Журнал активности')
         ->setSearchFields(['action', 'entityType', 'user.email'])
         ->setDateTimeFormat('dd.MM.yyyy HH:mm:ss')
         ->showEntityActionsInlined();
@@ -1305,7 +1305,7 @@ public function configureCrud(Crud $crud): Crud
 
 public function configureActions(Actions $actions): Actions
 {
-    // Read-only: Only DETAIL action
+    // Только чтение: Только действие DETAIL
     return $actions
         ->disable(Action::NEW, Action::EDIT, Action::DELETE)
         ->add(Crud::PAGE_INDEX, Action::DETAIL);
@@ -1314,30 +1314,30 @@ public function configureActions(Actions $actions): Actions
 
 ---
 
-### **PHASE 3: Dashboard & Enhancements** ✅ **COMPLETED** (3-4 hours)
+### **ФАЗА 3: Дашборд и улучшения** ✅ **ЗАВЕРШЕНО** (3-4 часа)
 
-**Completion Date**: 2025-11-11
-**Implementation Notes**: Enhanced dashboard with metrics, charts, alerts. Menu updated with dynamic badges. Export to CSV functionality added to TaskCrudController.
+**Дата завершения**: 2025-11-11
+**Заметки по реализации**: Расширенный дашборд с метриками, графиками, уведомлениями. Меню обновлено с динамическими бейджами. Добавлена функциональность экспорта в CSV для TaskCrudController.
 
-#### **Step 8: Enhanced Dashboard** (2 hours) ✅
+#### **Шаг 8: Расширенный дашборд** (2 часа) ✅
 
-**File**: `src/Controller/Admin/DashboardController.php`
+**Файл**: `src/Controller/Admin/DashboardController.php`
 
-**Purpose**: System overview with key metrics, charts, and quick actions
+**Назначение**: Обзор системы с ключевыми метриками, графиками и быстрыми действиями
 
-##### Dashboard Widgets
+##### Виджеты дашборда
 
-**1. Overview Statistics Cards** (4 cards)
+**1. Обзорные карточки статистики** (4 карточки)
 
 ```php
 public function index(): Response
 {
-    // Fetch metrics
+    // Получение метрик
     $userCount = $this->entityManager->getRepository(User::class)->count([]);
     $taskCount = $this->entityManager->getRepository(Task::class)->count([]);
     $activeRulesCount = $this->entityManager->getRepository(RecurrenceRule::class)->count(['isActive' => true]);
 
-    // Calculate total storage
+    // Расчет общего хранилища
     $qb = $this->entityManager->createQueryBuilder();
     $totalStorage = $qb->select('SUM(m.fileSize)')
         ->from(MediaObject::class, 'm')
@@ -1346,7 +1346,7 @@ public function index(): Response
 
     $totalStorageMB = round($totalStorage / 1024 / 1024, 2);
 
-    // User activity (last 24h)
+    // Активность пользователей (последние 24ч)
     $yesterday = new \DateTimeImmutable('-24 hours');
     $activeUsersCount = $this->entityManager->createQueryBuilder()
         ->select('COUNT(DISTINCT al.user)')
@@ -1356,7 +1356,7 @@ public function index(): Response
         ->getQuery()
         ->getSingleScalarResult();
 
-    // Task completion rate (last 30 days)
+    // Процент завершенных задач (последние 30 дней)
     $thirtyDaysAgo = new \DateTimeImmutable('-30 days');
     $completedTasks = $this->entityManager->createQueryBuilder()
         ->select('COUNT(t.id)')
@@ -1380,7 +1380,7 @@ public function index(): Response
         ? round(($completedTasks / $totalTasksLast30Days) * 100, 1)
         : 0;
 
-    // Overdue tasks count
+    // Количество просроченных задач
     $overdueTasksCount = $this->entityManager->createQueryBuilder()
         ->select('COUNT(t.id)')
         ->from(Task::class, 't')
@@ -1406,10 +1406,10 @@ public function index(): Response
 }
 ```
 
-**2. Activity Chart** (Last 7 days)
+**2. График активности** (Последние 7 дней)
 
 ```php
-// In DashboardController::index()
+// В DashboardController::index()
 
 $activityData = [];
 for ($i = 6; $i >= 0; $i--) {
@@ -1436,7 +1436,7 @@ return $this->render('admin/dashboard.html.twig', [
 ]);
 ```
 
-**3. Recent Activity Feed** (Last 20 actions)
+**3. Лента последней активности** (Последние 20 действий)
 
 ```php
 $recentActivity = $this->entityManager->getRepository(AuditLog::class)
@@ -1455,12 +1455,12 @@ return $this->render('admin/dashboard.html.twig', [
 ]);
 ```
 
-**4. System Alerts** (Issues requiring attention)
+**4. Системные уведомления** (Проблемы, требующие внимания)
 
 ```php
 $alerts = [];
 
-// Alert: Expired refresh tokens
+// Уведомление: Истекшие refresh токены
 $expiredTokensCount = $this->entityManager->createQueryBuilder()
     ->select('COUNT(rt.id)')
     ->from(RefreshToken::class, 'rt')
@@ -1472,36 +1472,36 @@ $expiredTokensCount = $this->entityManager->createQueryBuilder()
 if ($expiredTokensCount > 100) {
     $alerts[] = [
         'type' => 'warning',
-        'message' => "{$expiredTokensCount} expired refresh tokens need cleanup",
+        'message' => "{$expiredTokensCount} истекших токенов требуют очистки",
         'action' => [
             'url' => $this->adminUrlGenerator->setController(RefreshTokenCrudController::class)->generateUrl(),
-            'label' => 'Cleanup Now',
+            'label' => 'Очистить сейчас',
         ],
     ];
 }
 
-// Alert: High storage usage
+// Уведомление: Высокое использование хранилища
 if ($totalStorageMB > 500) {
     $alerts[] = [
         'type' => 'danger',
-        'message' => "Storage usage is high: {$totalStorageMB} MB",
+        'message' => "Использование хранилища высокое: {$totalStorageMB} МБ",
         'action' => [
             'url' => $this->adminUrlGenerator->setController(MediaObjectCrudController::class)->generateUrl(),
-            'label' => 'View Files',
+            'label' => 'Просмотреть файлы',
         ],
     ];
 }
 
-// Alert: Inactive recurrence rules
+// Уведомление: Неактивные правила повторения
 $inactiveRulesCount = $this->entityManager->getRepository(RecurrenceRule::class)->count(['isActive' => false]);
 
 if ($inactiveRulesCount > 10) {
     $alerts[] = [
         'type' => 'info',
-        'message' => "{$inactiveRulesCount} recurrence rules are inactive",
+        'message' => "{$inactiveRulesCount} правил повторения неактивны",
         'action' => [
             'url' => $this->adminUrlGenerator->setController(RecurrenceRuleCrudController::class)->generateUrl(),
-            'label' => 'Review Rules',
+            'label' => 'Проверить правила',
         ],
     ];
 }
@@ -1514,22 +1514,22 @@ return $this->render('admin/dashboard.html.twig', [
 ]);
 ```
 
-##### Dashboard Template
+##### Шаблон дашборда
 
 ```twig
 {# templates/admin/dashboard.html.twig #}
 {% extends '@EasyAdmin/page/content.html.twig' %}
 
 {% block content_title %}
-    <h1>📊 Admin Dashboard</h1>
-    <p class="text-muted">System Overview & Metrics</p>
+    <h1>📊 Панель администратора</h1>
+    <p class="text-muted">Обзор и метрики системы</p>
 {% endblock %}
 
 {% block main %}
-    {# System Alerts #}
+    {# Системные уведомления #}
     {% if alerts is not empty %}
         <div class="mb-4">
-            <h3>⚠️ System Alerts</h3>
+            <h3>⚠️ Системные уведомления</h3>
             {% for alert in alerts %}
                 <div class="alert alert-{{ alert.type }} d-flex justify-content-between align-items-center">
                     <span>{{ alert.message }}</span>
@@ -1543,12 +1543,12 @@ return $this->render('admin/dashboard.html.twig', [
         </div>
     {% endif %}
 
-    {# Overview Cards #}
+    {# Обзорные карточки #}
     <div class="row mb-4">
         <div class="col-md-3">
             <div class="card bg-primary text-white">
                 <div class="card-body">
-                    <h5 class="card-title">👥 Total Users</h5>
+                    <h5 class="card-title">👥 Всего пользователей</h5>
                     <p class="card-text display-4">{{ metrics.users }}</p>
                 </div>
             </div>
@@ -1556,7 +1556,7 @@ return $this->render('admin/dashboard.html.twig', [
         <div class="col-md-3">
             <div class="card bg-success text-white">
                 <div class="card-body">
-                    <h5 class="card-title">📝 Total Tasks</h5>
+                    <h5 class="card-title">📝 Всего задач</h5>
                     <p class="card-text display-4">{{ metrics.tasks }}</p>
                 </div>
             </div>
@@ -1564,7 +1564,7 @@ return $this->render('admin/dashboard.html.twig', [
         <div class="col-md-3">
             <div class="card bg-info text-white">
                 <div class="card-body">
-                    <h5 class="card-title">🔄 Active Rules</h5>
+                    <h5 class="card-title">🔄 Активных правил</h5>
                     <p class="card-text display-4">{{ metrics.activeRules }}</p>
                 </div>
             </div>
@@ -1572,19 +1572,19 @@ return $this->render('admin/dashboard.html.twig', [
         <div class="col-md-3">
             <div class="card bg-warning text-white">
                 <div class="card-body">
-                    <h5 class="card-title">💾 Storage (MB)</h5>
+                    <h5 class="card-title">💾 Хранилище (МБ)</h5>
                     <p class="card-text display-4">{{ metrics.storage }}</p>
                 </div>
             </div>
         </div>
     </div>
 
-    {# Secondary Metrics #}
+    {# Вторичные метрики #}
     <div class="row mb-4">
         <div class="col-md-4">
             <div class="card">
                 <div class="card-body">
-                    <h6 class="card-title">👤 Active Users (24h)</h6>
+                    <h6 class="card-title">👤 Активных пользователей (24ч)</h6>
                     <p class="display-6">{{ metrics.activeUsers24h }}</p>
                 </div>
             </div>
@@ -1592,7 +1592,7 @@ return $this->render('admin/dashboard.html.twig', [
         <div class="col-md-4">
             <div class="card">
                 <div class="card-body">
-                    <h6 class="card-title">✅ Completion Rate (30d)</h6>
+                    <h6 class="card-title">✅ Процент завершения (30д)</h6>
                     <p class="display-6">{{ metrics.completionRate }}%</p>
                 </div>
             </div>
@@ -1600,19 +1600,19 @@ return $this->render('admin/dashboard.html.twig', [
         <div class="col-md-4">
             <div class="card">
                 <div class="card-body">
-                    <h6 class="card-title">⏰ Overdue Tasks</h6>
+                    <h6 class="card-title">⏰ Просроченных задач</h6>
                     <p class="display-6">{{ metrics.overdueTasks }}</p>
                 </div>
             </div>
         </div>
     </div>
 
-    {# Activity Chart #}
+    {# График активности #}
     <div class="row mb-4">
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    <h5>📈 Admin Activity (Last 7 Days)</h5>
+                    <h5>📈 Активность администратора (Последние 7 дней)</h5>
                 </div>
                 <div class="card-body">
                     <canvas id="activityChart"></canvas>
@@ -1621,28 +1621,28 @@ return $this->render('admin/dashboard.html.twig', [
         </div>
     </div>
 
-    {# Recent Activity Feed #}
+    {# Лента последней активности #}
     <div class="row">
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    <h5>🕒 Recent Activity</h5>
+                    <h5>🕒 Последняя активность</h5>
                 </div>
                 <div class="card-body">
                     <table class="table table-sm table-hover">
                         <thead>
                             <tr>
-                                <th>Time</th>
-                                <th>User</th>
-                                <th>Action</th>
-                                <th>Entity</th>
+                                <th>Время</th>
+                                <th>Пользователь</th>
+                                <th>Действие</th>
+                                <th>Сущность</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for log in recentActivity %}
                                 <tr>
                                     <td>{{ log.createdAt|date('H:i:s') }}</td>
-                                    <td>{{ log.user ? log.user.email : 'System' }}</td>
+                                    <td>{{ log.user ? log.user.email : 'Система' }}</td>
                                     <td>
                                         <span class="badge bg-{{ log.action == 'CREATE' ? 'success' : (log.action == 'DELETE' ? 'danger' : 'info') }}">
                                             {{ log.action }}
@@ -1669,7 +1669,7 @@ return $this->render('admin/dashboard.html.twig', [
             data: {
                 labels: {{ activityChart|map(a => a.date)|json_encode|raw }},
                 datasets: [{
-                    label: 'Admin Actions',
+                    label: 'Действия администратора',
                     data: {{ activityChart|map(a => a.count)|json_encode|raw }},
                     borderColor: 'rgb(75, 192, 192)',
                     backgroundColor: 'rgba(75, 192, 192, 0.2)',
@@ -1691,77 +1691,77 @@ return $this->render('admin/dashboard.html.twig', [
 
 ---
 
-#### **Step 9: Menu Configuration** (0.5 hours)
+#### **Шаг 9: Конфигурация меню** (0.5 часа)
 
-**File**: `src/Controller/Admin/DashboardController.php`
+**Файл**: `src/Controller/Admin/DashboardController.php`
 
 ```php
 public function configureMenuItems(): iterable
 {
-    yield MenuItem::linkToDashboard('Dashboard', 'fa fa-home');
+    yield MenuItem::linkToDashboard('Дашборд', 'fa fa-home');
 
-    yield MenuItem::section('User Management');
-    yield MenuItem::linkToCrud('Users', 'fa fa-users', User::class)
+    yield MenuItem::section('Управление пользователями');
+    yield MenuItem::linkToCrud('Пользователи', 'fa fa-users', User::class)
         ->setPermission('ROLE_ADMIN');
 
-    yield MenuItem::section('Task Management');
-    yield MenuItem::linkToCrud('Tasks', 'fa fa-tasks', Task::class)
+    yield MenuItem::section('Управление задачами');
+    yield MenuItem::linkToCrud('Задачи', 'fa fa-tasks', Task::class)
         ->setPermission('ROLE_ADMIN')
         ->setBadge(
             fn () => $this->entityManager->getRepository(Task::class)->count([]),
             'info'
         );
-    yield MenuItem::linkToCrud('Tags', 'fa fa-tags', Tag::class)
+    yield MenuItem::linkToCrud('Теги', 'fa fa-tags', Tag::class)
         ->setPermission('ROLE_ADMIN');
-    yield MenuItem::linkToCrud('Recurring Tasks', 'fa fa-sync', RecurrenceRule::class)
+    yield MenuItem::linkToCrud('Повторяющиеся задачи', 'fa fa-sync', RecurrenceRule::class)
         ->setPermission('ROLE_ADMIN')
         ->setBadge(
             fn () => $this->entityManager->getRepository(RecurrenceRule::class)->count(['isActive' => true]),
             'success'
         );
 
-    yield MenuItem::section('Media & Files');
-    yield MenuItem::linkToCrud('Task Attachments', 'fa fa-paperclip', TaskAttachment::class)
+    yield MenuItem::section('Медиа и файлы');
+    yield MenuItem::linkToCrud('Вложения задач', 'fa fa-paperclip', TaskAttachment::class)
         ->setPermission('ROLE_ADMIN');
-    yield MenuItem::linkToCrud('Media Library', 'fa fa-images', MediaObject::class)
+    yield MenuItem::linkToCrud('Медиа-библиотека', 'fa fa-images', MediaObject::class)
         ->setPermission('ROLE_ADMIN');
 
-    yield MenuItem::section('System');
-    yield MenuItem::linkToCrud('Audit Logs', 'fa fa-history', AuditLog::class)
+    yield MenuItem::section('Система');
+    yield MenuItem::linkToCrud('Журнал аудита', 'fa fa-history', AuditLog::class)
         ->setPermission('ROLE_SUPER_ADMIN');
-    yield MenuItem::linkToCrud('Refresh Tokens', 'fa fa-key', RefreshToken::class)
+    yield MenuItem::linkToCrud('Токены обновления', 'fa fa-key', RefreshToken::class)
         ->setPermission('ROLE_SUPER_ADMIN');
 
-    yield MenuItem::section('Quick Actions');
-    yield MenuItem::linkToRoute('Process Recurrence Rules', 'fa fa-play-circle', 'admin_process_recurrence_rules')
+    yield MenuItem::section('Быстрые действия');
+    yield MenuItem::linkToRoute('Обработать правила повторения', 'fa fa-play-circle', 'admin_process_recurrence_rules')
         ->setPermission('ROLE_ADMIN');
-    yield MenuItem::linkToRoute('Cleanup Expired Tokens', 'fa fa-broom', 'admin_cleanup_tokens')
+    yield MenuItem::linkToRoute('Очистить истекшие токены', 'fa fa-broom', 'admin_cleanup_tokens')
         ->setPermission('ROLE_SUPER_ADMIN');
 
     yield MenuItem::section('');
-    yield MenuItem::linkToUrl('Back to Main Site', 'fa fa-home', '/')
+    yield MenuItem::linkToUrl('Вернуться на сайт', 'fa fa-home', '/')
         ->setLinkTarget('_blank');
-    yield MenuItem::linkToLogout('Logout', 'fa fa-sign-out-alt');
+    yield MenuItem::linkToLogout('Выход', 'fa fa-sign-out-alt');
 }
 ```
 
 ---
 
-#### **Step 10: Bulk Actions & Export** (1 hour)
+#### **Шаг 10: Массовые действия и экспорт** (1 час)
 
-**File**: Custom batch actions in each CRUD controller
+**Файл**: Кастомные пакетные действия в каждом CRUD-контроллере
 
-##### Example: Bulk Complete Tasks
+##### Пример: Массовое завершение задач
 
 ```php
 public function configureActions(Actions $actions): Actions
 {
-    $batchComplete = BatchAction::new('batchComplete', 'Complete Selected')
+    $batchComplete = BatchAction::new('batchComplete', 'Завершить выбранные')
         ->linkToCrudAction('batchCompleteAction')
         ->addCssClass('btn btn-success')
         ->setIcon('fa fa-check');
 
-    $batchArchive = BatchAction::new('batchArchive', 'Archive Selected')
+    $batchArchive = BatchAction::new('batchArchive', 'Архивировать выбранные')
         ->linkToCrudAction('batchArchiveAction')
         ->addCssClass('btn btn-warning')
         ->setIcon('fa fa-archive');
@@ -1787,7 +1787,7 @@ public function batchCompleteAction(BatchActionDto $batchActionDto): Response
         ->getQuery()
         ->execute();
 
-    $this->addFlash('success', count($taskIds) . ' tasks completed!');
+    $this->addFlash('success', count($taskIds) . ' задач завершено!');
 
     return $this->redirect($batchActionDto->getReferrerUrl());
 }
@@ -1806,18 +1806,18 @@ public function batchArchiveAction(BatchActionDto $batchActionDto): Response
         ->getQuery()
         ->execute();
 
-    $this->addFlash('success', count($taskIds) . ' tasks archived!');
+    $this->addFlash('success', count($taskIds) . ' задач заархивировано!');
 
     return $this->redirect($batchActionDto->getReferrerUrl());
 }
 ```
 
-##### Export to CSV (Generic)
+##### Экспорт в CSV (Универсальный)
 
 ```php
 public function configureActions(Actions $actions): Actions
 {
-    $exportAction = Action::new('export', 'Export CSV')
+    $exportAction = Action::new('export', 'Экспорт CSV')
         ->linkToCrudAction('exportAction')
         ->createAsGlobalAction()
         ->addCssClass('btn btn-success')
@@ -1831,11 +1831,11 @@ public function exportAction(AdminContext $context): Response
 {
     $filters = $this->getFilters($context);
 
-    // Build query with filters
+    // Построение запроса с фильтрами
     $repository = $this->entityManager->getRepository(Task::class);
     $qb = $repository->createQueryBuilder('t');
 
-    // Apply filters (simplified)
+    // Применение фильтров (упрощенно)
     if ($filters['status'] ?? null) {
         $qb->andWhere('t.status = :status')
            ->setParameter('status', $filters['status']);
@@ -1843,7 +1843,7 @@ public function exportAction(AdminContext $context): Response
 
     $tasks = $qb->getQuery()->getResult();
 
-    // Generate CSV
+    // Генерация CSV
     $csv = $this->generateCsv($tasks);
 
     $response = new Response($csv);
@@ -1857,10 +1857,10 @@ private function generateCsv(array $tasks): string
 {
     $output = fopen('php://temp', 'r+');
 
-    // Header
-    fputcsv($output, ['ID', 'Title', 'Status', 'Priority', 'Due Date', 'User', 'Created At']);
+    // Заголовок
+    fputcsv($output, ['ID', 'Название', 'Статус', 'Приоритет', 'Срок выполнения', 'Пользователь', 'Создано']);
 
-    // Data
+    // Данные
     foreach ($tasks as $task) {
         fputcsv($output, [
             $task->getId(),
@@ -1883,9 +1883,9 @@ private function generateCsv(array $tasks): string
 
 ---
 
-## 🔐 Permission System (ROLE_ADMIN vs ROLE_SUPER_ADMIN)
+## 🔐 Система прав доступа (ROLE_ADMIN vs ROLE_SUPER_ADMIN)
 
-### Role Hierarchy
+### Иерархия ролей
 
 ```yaml
 # config/packages/security.yaml
@@ -1895,32 +1895,32 @@ security:
         ROLE_SUPER_ADMIN: [ROLE_ADMIN, ROLE_ALLOWED_TO_SWITCH]
 ```
 
-### Permission Matrix
+### Матрица прав доступа
 
-| Feature | ROLE_ADMIN | ROLE_SUPER_ADMIN |
+| Функция | ROLE_ADMIN | ROLE_SUPER_ADMIN |
 |---------|------------|------------------|
-| **Dashboard** | ✅ View | ✅ View |
-| **Users CRUD** | ✅ View, Edit | ✅ Full CRUD + Delete |
-| **Tasks CRUD** | ✅ Full CRUD | ✅ Full CRUD |
-| **Tags CRUD** | ✅ Full CRUD | ✅ Full CRUD |
-| **Attachments CRUD** | ✅ Full CRUD | ✅ Full CRUD |
-| **Recurrence CRUD** | ✅ Full CRUD | ✅ Full CRUD |
-| **Media CRUD** | ✅ View, Delete | ✅ Full CRUD |
-| **Audit Logs** | ❌ No Access | ✅ View Only |
-| **Refresh Tokens** | ❌ No Access | ✅ View, Delete, Cleanup |
-| **System Settings** | ❌ No Access | ✅ Full Access |
+| **Дашборд** | ✅ Просмотр | ✅ Просмотр |
+| **Users CRUD** | ✅ Просмотр, Редактирование | ✅ Полный CRUD + Удаление |
+| **Tasks CRUD** | ✅ Полный CRUD | ✅ Полный CRUD |
+| **Tags CRUD** | ✅ Полный CRUD | ✅ Полный CRUD |
+| **Attachments CRUD** | ✅ Полный CRUD | ✅ Полный CRUD |
+| **Recurrence CRUD** | ✅ Полный CRUD | ✅ Полный CRUD |
+| **Media CRUD** | ✅ Просмотр, Удаление | ✅ Полный CRUD |
+| **Audit Logs** | ❌ Нет доступа | ✅ Только просмотр |
+| **Refresh Tokens** | ❌ Нет доступа | ✅ Просмотр, Удаление, Очистка |
+| **Настройки системы** | ❌ Нет доступа | ✅ Полный доступ |
 
-### Implementation
+### Реализация
 
 ```php
-// In each CrudController
+// В каждом CrudController
 public function configureCrud(Crud $crud): Crud
 {
     return $crud
-        ->setEntityPermission('ROLE_ADMIN'); // Minimum required role
+        ->setEntityPermission('ROLE_ADMIN'); // Минимально требуемая роль
 }
 
-// Restrict specific actions to SUPER_ADMIN
+// Ограничение конкретных действий для SUPER_ADMIN
 public function configureActions(Actions $actions): Actions
 {
     return $actions
@@ -1928,134 +1928,134 @@ public function configureActions(Actions $actions): Actions
         ->setPermission(Action::BATCH_DELETE, 'ROLE_SUPER_ADMIN');
 }
 
-// In menu configuration
-yield MenuItem::linkToCrud('Audit Logs', 'fa fa-history', AuditLog::class)
+// В конфигурации меню
+yield MenuItem::linkToCrud('Журнал аудита', 'fa fa-history', AuditLog::class)
     ->setPermission('ROLE_SUPER_ADMIN');
 ```
 
 ---
 
-## 📦 Implementation Checklist
+## 📦 Чек-лист реализации
 
-### Phase 1: Critical CRUD Controllers (6-8 hours)
-- [ ] **Step 1**: TaskCrudController (3h)
-  - [ ] Create controller class
-  - [ ] Configure all fields (20 fields)
-  - [ ] Add 10 filters
-  - [ ] Implement custom actions (complete, archive)
-  - [ ] Add batch actions (complete, archive, delete)
-  - [ ] Optimize queries (eager loading)
-  - [ ] Test all CRUD operations
+### Фаза 1: Критические CRUD-контроллеры (6-8 часов)
+- [ ] **Шаг 1**: TaskCrudController (3ч)
+  - [ ] Создать класс контроллера
+  - [ ] Настроить все поля (20 полей)
+  - [ ] Добавить 10 фильтров
+  - [ ] Реализовать кастомные действия (завершить, архивировать)
+  - [ ] Добавить пакетные действия (завершить, архивировать, удалить)
+  - [ ] Оптимизировать запросы (жадная загрузка)
+  - [ ] Протестировать все CRUD операции
 
-- [ ] **Step 2**: TagCrudController (1h)
-  - [ ] Create controller class
-  - [ ] Configure fields (9 fields)
-  - [ ] Add 5 filters
-  - [ ] Implement merge action
-  - [ ] Add validation (unique name per user)
-  - [ ] Test merge functionality
+- [ ] **Шаг 2**: TagCrudController (1ч)
+  - [ ] Создать класс контроллера
+  - [ ] Настроить поля (9 полей)
+  - [ ] Добавить 5 фильтров
+  - [ ] Реализовать действие объединения
+  - [ ] Добавить валидацию (уникальное имя на пользователя)
+  - [ ] Протестировать функциональность объединения
 
-- [ ] **Step 3**: TaskAttachmentCrudController (2h)
-  - [ ] Create controller class
-  - [ ] Configure fields (10 fields)
-  - [ ] Add file upload handling
-  - [ ] Implement file preview
-  - [ ] Add download action
-  - [ ] Implement file deletion from storage
-  - [ ] Test upload/download/delete
+- [ ] **Шаг 3**: TaskAttachmentCrudController (2ч)
+  - [ ] Создать класс контроллера
+  - [ ] Настроить поля (10 полей)
+  - [ ] Добавить обработку загрузки файлов
+  - [ ] Реализовать предпросмотр файлов
+  - [ ] Добавить действие скачивания
+  - [ ] Реализовать удаление файла из хранилища
+  - [ ] Протестировать загрузку/скачивание/удаление
 
-- [ ] **Step 4**: RecurrenceRuleCrudController (2h)
-  - [ ] Create controller class
-  - [ ] Configure fields (14 fields)
-  - [ ] Add 8 filters
-  - [ ] Implement toggle active action
-  - [ ] Implement trigger now action
-  - [ ] Add progress display
-  - [ ] Test recurrence logic integration
+- [ ] **Шаг 4**: RecurrenceRuleCrudController (2ч)
+  - [ ] Создать класс контроллера
+  - [ ] Настроить поля (14 полей)
+  - [ ] Добавить 8 фильтров
+  - [ ] Реализовать действие переключения активности
+  - [ ] Реализовать действие запуска сейчас
+  - [ ] Добавить отображение прогресса
+  - [ ] Протестировать интеграцию логики повторения
 
-### Phase 2: Supporting Entities (3-4 hours)
-- [ ] **Step 5**: MediaObjectCrudController (1.5h)
-  - [ ] Create controller class
-  - [ ] Configure fields
-  - [ ] Implement file handling
-  - [ ] Add thumbnail support
-  - [ ] Test media operations
+### Фаза 2: Поддерживающие сущности (3-4 часа)
+- [ ] **Шаг 5**: MediaObjectCrudController (1.5ч)
+  - [ ] Создать класс контроллера
+  - [ ] Настроить поля
+  - [ ] Реализовать обработку файлов
+  - [ ] Добавить поддержку миниатюр
+  - [ ] Протестировать операции с медиа
 
-- [ ] **Step 6**: RefreshTokenCrudController (0.5h)
-  - [ ] Create controller class
-  - [ ] Configure read-only fields
-  - [ ] Implement cleanup action
-  - [ ] Test token revocation
+- [ ] **Шаг 6**: RefreshTokenCrudController (0.5ч)
+  - [ ] Создать класс контроллера
+  - [ ] Настроить поля только для чтения
+  - [ ] Реализовать действие очистки
+  - [ ] Протестировать отзыв токенов
 
-- [ ] **Step 7**: AuditLogCrudController (2h)
-  - [ ] Create AuditLog entity
-  - [ ] Create migration
-  - [ ] Implement event listener
-  - [ ] Create controller class
-  - [ ] Configure read-only display
-  - [ ] Test auto-logging
-  - [ ] Verify activity feed
+- [ ] **Шаг 7**: AuditLogCrudController (2ч)
+  - [ ] Создать сущность AuditLog
+  - [ ] Создать миграцию
+  - [ ] Реализовать event listener
+  - [ ] Создать класс контроллера
+  - [ ] Настроить отображение только для чтения
+  - [ ] Протестировать автоматическое логирование
+  - [ ] Проверить ленту активности
 
-### Phase 3: Dashboard & Enhancements (3-4 hours)
-- [ ] **Step 8**: Enhanced Dashboard (2h)
-  - [ ] Implement metrics calculation
-  - [ ] Create dashboard template
-  - [ ] Add Chart.js integration
-  - [ ] Build activity feed
-  - [ ] Create system alerts
-  - [ ] Test dashboard rendering
+### Фаза 3: Дашборд и улучшения (3-4 часа)
+- [ ] **Шаг 8**: Расширенный дашборд (2ч)
+  - [ ] Реализовать расчет метрик
+  - [ ] Создать шаблон дашборда
+  - [ ] Добавить интеграцию Chart.js
+  - [ ] Построить ленту активности
+  - [ ] Создать системные уведомления
+  - [ ] Протестировать рендеринг дашборда
 
-- [ ] **Step 9**: Menu Configuration (0.5h)
-  - [ ] Update menu structure
-  - [ ] Add section dividers
-  - [ ] Configure permissions
-  - [ ] Add badge counters
-  - [ ] Test menu navigation
+- [ ] **Шаг 9**: Конфигурация меню (0.5ч)
+  - [ ] Обновить структуру меню
+  - [ ] Добавить разделители секций
+  - [ ] Настроить права доступа
+  - [ ] Добавить счетчики бейджей
+  - [ ] Протестировать навигацию по меню
 
-- [ ] **Step 10**: Bulk Actions & Export (1h)
-  - [ ] Implement bulk complete
-  - [ ] Implement bulk archive
-  - [ ] Implement bulk delete
-  - [ ] Create CSV export
-  - [ ] Test batch operations
+- [ ] **Шаг 10**: Массовые действия и экспорт (1ч)
+  - [ ] Реализовать массовое завершение
+  - [ ] Реализовать массовое архивирование
+  - [ ] Реализовать массовое удаление
+  - [ ] Создать экспорт CSV
+  - [ ] Протестировать пакетные операции
 
-### Final Steps
-- [ ] Update docs/backend/INDEX.md with admin panel documentation
-- [ ] Create admin user guide (optional)
-- [ ] Test all features end-to-end
-- [ ] Security audit (permission checks)
-- [ ] Performance optimization (query analysis)
-- [ ] Git commit with comprehensive message
+### Финальные шаги
+- [ ] Обновить docs/backend/INDEX.md с документацией админ-панели
+- [ ] Создать руководство пользователя для администратора (опционально)
+- [ ] Протестировать все функции end-to-end
+- [ ] Аудит безопасности (проверки прав доступа)
+- [ ] Оптимизация производительности (анализ запросов)
+- [ ] Git commit с подробным сообщением
 
 ---
 
-## 📈 Expected Outcomes
+## 📈 Ожидаемые результаты
 
-### Metrics After Implementation
+### Метрики после реализации
 
-| Metric | Before | After | Improvement |
+| Метрика | До | После | Улучшение |
 |--------|--------|-------|-------------|
-| **Managed Entities** | 1 (User) | 8 (All entities) | +700% |
-| **CRUD Operations** | Basic | Full CRUD + Bulk | +200% |
-| **Support Resolution Time** | 10+ min | < 3 min | -70% |
-| **System Visibility** | None | Complete | 100% |
-| **Admin Efficiency** | Low | High | +300% |
+| **Управляемых сущностей** | 1 (User) | 8 (Все сущности) | +700% |
+| **CRUD операций** | Базовый | Полный CRUD + Массовые | +200% |
+| **Время решения поддержки** | 10+ мин | < 3 мин | -70% |
+| **Видимость системы** | Нет | Полная | 100% |
+| **Эффективность администратора** | Низкая | Высокая | +300% |
 
-### Business Impact
+### Бизнес-влияние
 
-1. **Support Team**: Can resolve user issues in < 3 minutes (was 10+ minutes)
-2. **System Health**: Proactive monitoring via dashboard alerts
-3. **Data Integrity**: Audit trail for all admin actions
-4. **Scalability**: Ready for 10K+ users, 100K+ tasks
-5. **Maintainability**: Clean code following SOLID principles
+1. **Команда поддержки**: Может решать проблемы пользователей за < 3 минуты (было 10+ минут)
+2. **Здоровье системы**: Проактивный мониторинг через уведомления дашборда
+3. **Целостность данных**: Журнал аудита всех действий администратора
+4. **Масштабируемость**: Готово для 10К+ пользователей, 100К+ задач
+5. **Поддерживаемость**: Чистый код, следующий принципам SOLID
 
 ---
 
-## 🛠️ Technical Implementation Notes
+## 🛠️ Технические заметки по реализации
 
-### Query Optimization
+### Оптимизация запросов
 
-All list queries use **eager loading** to avoid N+1 problems:
+Все списковые запросы используют **жадную загрузку** для избежания проблем N+1:
 
 ```php
 public function createIndexQueryBuilder(/* ... */): QueryBuilder
@@ -2065,117 +2065,117 @@ public function createIndexQueryBuilder(/* ... */): QueryBuilder
         ->addSelect('u')
         ->leftJoin('entity.tags', 't')
         ->addSelect('t')
-        // Eager load all associations displayed on index
+        // Жадная загрузка всех связей, отображаемых на index
         ->orderBy('entity.createdAt', 'DESC');
 }
 ```
 
-### Security Best Practices
+### Лучшие практики безопасности
 
-1. **CSRF Protection**: Enabled on all forms
-2. **Role-Based Access**: Granular permissions per action
-3. **Audit Trail**: All admin actions logged automatically
-4. **Input Validation**: Server-side validation for all fields
-5. **XSS Prevention**: Twig auto-escapes all output
-6. **SQL Injection**: Doctrine ORM prevents SQL injection
+1. **Защита CSRF**: Включена на всех формах
+2. **Доступ на основе ролей**: Детальные права на действие
+3. **Журнал аудита**: Все действия администратора логируются автоматически
+4. **Валидация ввода**: Серверная валидация для всех полей
+5. **Предотвращение XSS**: Twig автоматически экранирует весь вывод
+6. **SQL-инъекции**: Doctrine ORM предотвращает SQL-инъекции
 
-### Performance Considerations
+### Соображения производительности
 
-1. **Pagination**: All lists paginated (20-50 items/page)
-2. **Indexed Queries**: Use existing composite indexes
-3. **Eager Loading**: Avoid N+1 queries on associations
-4. **Caching**: Consider Redis for dashboard metrics (optional)
-5. **Background Jobs**: Heavy operations (export) via async queue (optional)
-
----
-
-## 🎓 Learning Resources
-
-### EasyAdmin 4 Documentation
-- **Official Docs**: https://symfony.com/bundles/EasyAdminBundle/current/index.html
-- **Field Types**: https://symfony.com/bundles/EasyAdminBundle/current/fields.html
-- **Actions**: https://symfony.com/bundles/EasyAdminBundle/current/actions.html
-- **Filters**: https://symfony.com/bundles/EasyAdminBundle/current/filters.html
-
-### Symfony Best Practices
-- **SOLID in Symfony**: https://symfony.com/doc/current/service_container.html
-- **Security**: https://symfony.com/doc/current/security.html
-- **Doctrine Performance**: https://www.doctrine-project.org/projects/doctrine-orm/en/latest/reference/improving-performance.html
+1. **Пагинация**: Все списки пагинированы (20-50 элементов/страница)
+2. **Индексированные запросы**: Использование существующих составных индексов
+3. **Жадная загрузка**: Избежание N+1 запросов на связях
+4. **Кеширование**: Рассмотреть Redis для метрик дашборда (опционально)
+5. **Фоновые задачи**: Тяжелые операции (экспорт) через асинхронную очередь (опционально)
 
 ---
 
-## 🚀 Go-Live Checklist
+## 🎓 Обучающие ресурсы
 
-Before deploying to production:
+### Документация EasyAdmin 4
+- **Официальная документация**: https://symfony.com/bundles/EasyAdminBundle/current/index.html
+- **Типы полей**: https://symfony.com/bundles/EasyAdminBundle/current/fields.html
+- **Действия**: https://symfony.com/bundles/EasyAdminBundle/current/actions.html
+- **Фильтры**: https://symfony.com/bundles/EasyAdminBundle/current/filters.html
 
-- [ ] All CRUD controllers tested
-- [ ] Dashboard metrics verified
-- [ ] Audit logging working
-- [ ] Export functionality tested
-- [ ] Batch actions tested
-- [ ] Permission system verified
-- [ ] N+1 queries eliminated
-- [ ] Security audit passed
-- [ ] Documentation updated
-- [ ] Admin user created with ROLE_SUPER_ADMIN
-- [ ] Backup database before first use
+### Лучшие практики Symfony
+- **SOLID в Symfony**: https://symfony.com/doc/current/service_container.html
+- **Безопасность**: https://symfony.com/doc/current/security.html
+- **Производительность Doctrine**: https://www.doctrine-project.org/projects/doctrine-orm/en/latest/reference/improving-performance.html
 
 ---
 
-## 📞 Support & Troubleshooting
+## 🚀 Чек-лист запуска
 
-### Common Issues
+Перед развертыванием в продакшн:
 
-**1. "Undefined index" errors in Field configuration**
-- **Cause**: Accessing array without checking existence
-- **Fix**: Use `$pageData['key'] ?? null` instead of `$pageData['key']`
-
-**2. N+1 query performance**
-- **Cause**: Missing eager loading in QueryBuilder
-- **Fix**: Add `leftJoin()` + `addSelect()` for all associations
-
-**3. Permission denied errors**
-- **Cause**: Missing ROLE_ADMIN role
-- **Fix**: Update user roles in database or via UserCrudController
-
-**4. File upload fails**
-- **Cause**: Missing uploads directory or wrong permissions
-- **Fix**: Create directory and set 755 permissions: `mkdir -p public/uploads/tasks && chmod 755 public/uploads/tasks`
-
-**5. Dashboard metrics slow**
-- **Cause**: Complex aggregation queries
-- **Fix**: Add indexes or implement caching (Redis)
+- [ ] Все CRUD-контроллеры протестированы
+- [ ] Метрики дашборда проверены
+- [ ] Логирование аудита работает
+- [ ] Функциональность экспорта протестирована
+- [ ] Пакетные действия протестированы
+- [ ] Система прав доступа проверена
+- [ ] N+1 запросы устранены
+- [ ] Аудит безопасности пройден
+- [ ] Документация обновлена
+- [ ] Создан пользователь-администратор с ROLE_SUPER_ADMIN
+- [ ] Резервная копия базы данных перед первым использованием
 
 ---
 
-## 🎯 Success Criteria
+## 📞 Поддержка и устранение неполадок
 
-✅ **MVP (Minimum Viable Product):**
-- All 8 CRUD controllers functional
-- Dashboard with basic metrics
-- User can create/edit/delete all entities
-- No N+1 query problems
+### Распространенные проблемы
 
-✅ **Complete Implementation:**
-- All custom actions working (complete, archive, merge, etc.)
-- Audit logging functional
-- Bulk actions working
-- Export to CSV working
-- Permission system enforced
-- Dashboard with charts and alerts
+**1. Ошибки "Undefined index" в конфигурации Field**
+- **Причина**: Доступ к массиву без проверки существования
+- **Исправление**: Использовать `$pageData['key'] ?? null` вместо `$pageData['key']`
 
-✅ **Enterprise-Grade:**
-- Performance optimized (< 100ms avg query time)
-- Security audit passed
-- Documentation complete
-- Production-ready
+**2. Проблемы производительности N+1 запросов**
+- **Причина**: Отсутствует жадная загрузка в QueryBuilder
+- **Исправление**: Добавить `leftJoin()` + `addSelect()` для всех связей
+
+**3. Ошибки отказа в доступе**
+- **Причина**: Отсутствует роль ROLE_ADMIN
+- **Исправление**: Обновить роли пользователя в базе данных или через UserCrudController
+
+**4. Не удается загрузить файл**
+- **Причина**: Отсутствует директория uploads или неправильные права доступа
+- **Исправление**: Создать директорию и установить права 755: `mkdir -p public/uploads/tasks && chmod 755 public/uploads/tasks`
+
+**5. Медленные метрики дашборда**
+- **Причина**: Сложные агрегационные запросы
+- **Исправление**: Добавить индексы или реализовать кеширование (Redis)
 
 ---
 
-**Document Version**: 1.0
-**Last Updated**: 2025-11-10
-**Total Estimated Time**: 12-15 hours
-**Complexity**: Medium-High
-**Technology**: Symfony 7.1, EasyAdmin 4.18, PHP 8.3, PostgreSQL 16
+## 🎯 Критерии успеха
 
-**Ready for Implementation!** 🚀
+✅ **MVP (Минимально жизнеспособный продукт):**
+- Все 8 CRUD-контроллеров функциональны
+- Дашборд с базовыми метриками
+- Пользователь может создавать/редактировать/удалять все сущности
+- Нет проблем N+1 запросов
+
+✅ **Полная реализация:**
+- Все кастомные действия работают (завершить, архивировать, объединить и т.д.)
+- Логирование аудита функционально
+- Массовые действия работают
+- Экспорт в CSV работает
+- Система прав доступа применяется
+- Дашборд с графиками и уведомлениями
+
+✅ **Корпоративный уровень:**
+- Производительность оптимизирована (< 100мс среднее время запроса)
+- Аудит безопасности пройден
+- Документация завершена
+- Готово к продакшн
+
+---
+
+**Версия документа**: 1.0
+**Последнее обновление**: 2025-11-10
+**Общее оценочное время**: 12-15 часов
+**Сложность**: Средне-высокая
+**Технологии**: Symfony 7.1, EasyAdmin 4.18, PHP 8.3, PostgreSQL 16
+
+**Готово к реализации!** 🚀
