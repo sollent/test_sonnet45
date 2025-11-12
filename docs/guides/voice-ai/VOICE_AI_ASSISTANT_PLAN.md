@@ -36,19 +36,19 @@
 
 ```mermaid
 graph TD
-    A[Frontend/Telegram] -->|Audio/Text| B[API Gateway]
+    A[Frontend/Telegram] -->|Аудио/Текст| B[API Gateway]
     B --> C[Voice Command Controller]
-    C --> D[Queue - RabbitMQ]
+    C --> D[Очередь - RabbitMQ]
     D --> E[Voice Processing Service]
     E --> F[Whisper STT]
-    F --> G[Text Command]
+    F --> G[Текстовая команда]
     G --> H[LLM Service - Ollama]
-    H --> I[JSON Command]
+    H --> I[JSON команда]
     I --> J[Command Executor Service]
     J --> K[Domain Services]
-    K --> L[Database]
+    K --> L[База данных]
     J --> M[Centrifugo]
-    M --> N[Frontend Updates]
+    M --> N[Обновления Frontend]
 ```
 
 ### Компоненты системы:
@@ -170,11 +170,11 @@ interface SmartSearchServiceInterface {
 ```typescript
 // composables/useVoiceRecording.ts
 interface VoiceRecordingComposable {
-    isRecording: Ref<boolean>
-    audioBlob: Ref<Blob | null>
-    startRecording(): Promise<void>
-    stopRecording(): Promise<void>
-    sendToBackend(): Promise<VoiceCommandResult>
+    isRecording: Ref<boolean>  // идет запись
+    audioBlob: Ref<Blob | null>  // аудио данные
+    startRecording(): Promise<void>  // начать запись
+    stopRecording(): Promise<void>  // остановить запись
+    sendToBackend(): Promise<VoiceCommandResult>  // отправить на backend
 }
 ```
 
@@ -182,9 +182,9 @@ interface VoiceRecordingComposable {
 ```typescript
 // services/centrifugo.service.ts
 interface CentrifugoService {
-    connect(token: string): Promise<void>
-    subscribe(channel: string, handler: (data: any) => void): void
-    disconnect(): void
+    connect(token: string): Promise<void>  // подключение к WebSocket
+    subscribe(channel: string, handler: (data: any) => void): void  // подписка на канал
+    disconnect(): void  // отключение
 }
 ```
 
@@ -198,11 +198,11 @@ interface CentrifugoService {
 ```typescript
 // stores/voiceAssistant.store.ts
 interface VoiceAssistantStore {
-    commands: VoiceCommand[]
-    isProcessing: boolean
-    currentTranscription: string
-    processVoiceCommand(audio: Blob): Promise<void>
-    processTextCommand(text: string): Promise<void>
+    commands: VoiceCommand[]  // история команд
+    isProcessing: boolean  // идет обработка
+    currentTranscription: string  // текущая транскрипция
+    processVoiceCommand(audio: Blob): Promise<void>  // обработать голосовую команду
+    processTextCommand(text: string): Promise<void>  // обработать текстовую команду
 }
 ```
 
@@ -335,41 +335,41 @@ user_prompt: |
 ```typescript
 // Типы WebSocket событий
 enum VoiceAssistantEvent {
-  COMMAND_RECEIVED = 'voice.command.received',
-  PROCESSING_STARTED = 'voice.processing.started',
-  TRANSCRIPTION_READY = 'voice.transcription.ready',
-  COMMAND_PARSED = 'voice.command.parsed',
-  ACTION_EXECUTED = 'voice.action.executed',
-  ERROR_OCCURRED = 'voice.error',
+  COMMAND_RECEIVED = 'voice.command.received',  // команда получена
+  PROCESSING_STARTED = 'voice.processing.started',  // начата обработка
+  TRANSCRIPTION_READY = 'voice.transcription.ready',  // транскрипция готова
+  COMMAND_PARSED = 'voice.command.parsed',  // команда распознана
+  ACTION_EXECUTED = 'voice.action.executed',  // действие выполнено
+  ERROR_OCCURRED = 'voice.error',  // произошла ошибка
 }
 
 interface WebSocketMessage<T = any> {
-  event: VoiceAssistantEvent
-  timestamp: number
-  data: T
-  userId: string
+  event: VoiceAssistantEvent  // тип события
+  timestamp: number  // время события
+  data: T  // данные события
+  userId: string  // ID пользователя
 }
 ```
 
 ### 4. Database Schema
 
 ```sql
--- Voice Commands History
+-- История голосовых команд
 CREATE TABLE voice_commands (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id),
-    audio_file_path VARCHAR(255),
-    transcription TEXT NOT NULL,
-    parsed_command JSONB NOT NULL,
-    command_result JSONB,
-    status VARCHAR(50) NOT NULL, -- pending, processing, completed, failed
-    source VARCHAR(50) NOT NULL, -- web, telegram, whatsapp, etc
-    processing_time_ms INTEGER,
+    audio_file_path VARCHAR(255),  -- путь к аудио файлу
+    transcription TEXT NOT NULL,  -- текст транскрипции
+    parsed_command JSONB NOT NULL,  -- распознанная команда в JSON
+    command_result JSONB,  -- результат выполнения
+    status VARCHAR(50) NOT NULL,  -- pending, processing, completed, failed
+    source VARCHAR(50) NOT NULL,  -- web, telegram, whatsapp, и т.д.
+    processing_time_ms INTEGER,  -- время обработки в мс
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
--- User Telegram Links
+-- Связь пользователей с Telegram
 CREATE TABLE user_telegram_links (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id),
@@ -383,7 +383,7 @@ CREATE TABLE user_telegram_links (
     last_used_at TIMESTAMP
 );
 
--- Indexes for performance
+-- Индексы для производительности
 CREATE INDEX idx_voice_commands_user_status ON voice_commands(user_id, status);
 CREATE INDEX idx_voice_commands_created ON voice_commands(created_at DESC);
 CREATE INDEX idx_telegram_links_telegram_id ON user_telegram_links(telegram_id);
@@ -423,20 +423,20 @@ CREATE INDEX idx_telegram_links_telegram_id ON user_telegram_links(telegram_id);
 ### Test Coverage Strategy:
 
 ```php
-// Unit Tests (70% coverage)
-- Services logic
-- Command handlers
-- DTO transformations
+// Unit Tests (70% покрытие)
+// - Логика сервисов
+// - Обработчики команд
+// - Трансформации DTO
 
-// Integration Tests (20% coverage)
-- API endpoints
-- Database operations
-- External services mocking
+// Integration Tests (20% покрытие)
+// - API endpoints
+// - Операции с БД
+// - Мокирование внешних сервисов
 
-// Functional Tests (10% coverage)
-- Complete voice command flow
-- WebSocket real-time updates
-- Telegram bot interactions
+// Functional Tests (10% покрытие)
+// - Полный flow голосовых команд
+// - Real-time обновления через WebSocket
+// - Взаимодействие с Telegram bot
 ```
 
 ---
