@@ -9,14 +9,14 @@
 1. [Критические Компоненты для Тестирования](#критические-компоненты-для-тестирования)
 2. [Стратегия Тестирования по Уровням](#стратегия-тестирования-по-уровням)
 3. [Примеры Тестов для Каждого Компонента](#примеры-тестов-для-каждого-компонента)
-4. [Performance Testing](#performance-testing)
-5. [Integration Testing Strategy](#integration-testing-strategy)
+4. [Тестирование Производительности](#тестирование-производительности)
+5. [Стратегия Интеграционного Тестирования](#стратегия-интеграционного-тестирования)
 
 ---
 
 ## 🎯 Критические Компоненты для Тестирования
 
-### Priority 1: Core Business Logic (MUST TEST)
+### Приоритет 1: Основная Бизнес-Логика (ОБЯЗАТЕЛЬНО ТЕСТИРОВАТЬ)
 
 #### 1. CommandExecutorService
 **Почему критично**: Центральный компонент, выполняющий все действия
@@ -94,7 +94,7 @@ class LLMServiceTest extends TestCase
 }
 ```
 
-### Priority 2: Integration Points
+### Приоритет 2: Точки Интеграции
 
 #### 4. WebSocketPublisherService
 **Почему критично**: Real-time обновления UI
@@ -139,88 +139,88 @@ class VoiceProcessingServiceTest extends TestCase
 
 ## 📊 Стратегия Тестирования по Уровням
 
-### Unit Tests (70% coverage)
+### Модульные Тесты (70% покрытие)
 
 ```yaml
-Focus Areas:
-  Services:
-    - Business logic isolation
-    - Mocking external dependencies
-    - Edge cases handling
+Области Фокуса:
+  Сервисы:
+    - Изоляция бизнес-логики
+    - Мокирование внешних зависимостей
+    - Обработка граничных случаев
 
-  Command Handlers:
-    - Input validation
-    - Output formatting
-    - Error scenarios
+  Обработчики Команд:
+    - Валидация входных данных
+    - Форматирование вывода
+    - Сценарии ошибок
 
-  DTOs:
-    - Serialization/deserialization
-    - Validation rules
-    - Type safety
+  DTO:
+    - Сериализация/десериализация
+    - Правила валидации
+    - Типобезопасность
 
-Tools:
+Инструменты:
   - PHPUnit 9.6
-  - Mockery for mocking
-  - Faker for test data
+  - Mockery для мокирования
+  - Faker для тестовых данных
 ```
 
-### Integration Tests (20% coverage)
+### Интеграционные Тесты (20% покрытие)
 
 ```yaml
-Focus Areas:
-  API Endpoints:
-    - Request/Response format
-    - Authentication
-    - Error responses
+Области Фокуса:
+  API Эндпоинты:
+    - Формат Request/Response
+    - Аутентификация
+    - Ответы об ошибках
 
-  Database:
-    - Repository methods
-    - Transaction integrity
-    - Query performance
+  База Данных:
+    - Методы репозиториев
+    - Целостность транзакций
+    - Производительность запросов
 
-  External Services:
-    - Ollama API calls
+  Внешние Сервисы:
+    - Вызовы Ollama API
     - Whisper STT
-    - Centrifugo publishing
+    - Публикация в Centrifugo
 
-Tools:
+Инструменты:
   - Symfony WebTestCase
-  - Test database with fixtures
-  - WireMock for external APIs
+  - Тестовая база данных с фикстурами
+  - WireMock для внешних API
 ```
 
-### Functional Tests (10% coverage)
+### Функциональные Тесты (10% покрытие)
 
 ```yaml
-Critical User Journeys:
-  1. Complete Voice Command Flow:
-     - Upload audio
-     - STT processing
-     - LLM parsing
-     - Command execution
-     - WebSocket notification
+Критические Пользовательские Сценарии:
+  1. Полный Поток Голосовой Команды:
+     - Загрузка аудио
+     - Обработка STT
+     - Парсинг LLM
+     - Выполнение команды
+     - Уведомление через WebSocket
 
-  2. Telegram Bot Interaction:
-     - Receive voice message
-     - Process command
-     - Send response
+  2. Взаимодействие с Telegram Ботом:
+     - Получение голосового сообщения
+     - Обработка команды
+     - Отправка ответа
 
-  3. Error Recovery:
-     - Handle service failures
-     - Retry mechanisms
-     - User feedback
+  3. Восстановление после Ошибок:
+     - Обработка отказов сервисов
+     - Механизмы повтора
+     - Обратная связь с пользователем
 
-Tools:
+Инструменты:
   - Symfony Functional Tests
-  - Real services (staging env)
-  - Selenium for UI tests
+  - Реальные сервисы (staging окружение)
+  - Selenium для UI тестов
 ```
 
 ---
 
 ## 🔬 Примеры Тестов для Каждого Компонента
 
-### 1. VoiceCommandController Test
+### 1. Тест VoiceCommandController
 
 ```php
 namespace Tests\Functional\Controller;
@@ -252,19 +252,19 @@ class VoiceCommandControllerTest extends WebTestCase
 
     public function testInvalidAudioFormat(): void
     {
-        // Upload .txt file as audio
-        // Assert 400 Bad Request with clear error message
+        // Загрузка .txt файла как аудио
+        // Проверка 400 Bad Request с понятным сообщением об ошибке
     }
 
     public function testRateLimiting(): void
     {
-        // Send 10 requests in 1 second
-        // Assert 429 Too Many Requests after limit
+        // Отправка 10 запросов за 1 секунду
+        // Проверка 429 Too Many Requests после превышения лимита
     }
 }
 ```
 
-### 2. CommandParser Test
+### 2. Тест CommandParser
 
 ```php
 namespace Tests\Unit\Service\VoiceAssistant;
@@ -313,7 +313,7 @@ class CommandParserTest extends TestCase
 }
 ```
 
-### 3. Smart Search Test
+### 3. Тест Smart Search
 
 ```php
 namespace Tests\Integration\Service;
@@ -331,7 +331,7 @@ class SmartSearchServiceTest extends KernelTestCase
         $this->searchService = $container->get(SmartSearchService::class);
         $this->taskRepository = $container->get(TaskRepository::class);
 
-        // Load fixtures
+        // Загрузка фикстур
         $this->loadFixtures([TaskFixtures::class]);
     }
 
@@ -339,12 +339,12 @@ class SmartSearchServiceTest extends KernelTestCase
     {
         $user = $this->createUser();
 
-        // Create tasks with similar names
+        // Создание задач с похожими названиями
         $this->createTask($user, 'Написать отчет по проекту');
         $this->createTask($user, 'Написать email клиенту');
         $this->createTask($user, 'Прочитать отчет');
 
-        // Search with partial match
+        // Поиск с частичным совпадением
         $results = $this->searchService->findSimilarTasks(
             'написать отчёт', // с ё вместо е
             $user,
@@ -375,34 +375,34 @@ class SmartSearchServiceTest extends KernelTestCase
 
 ---
 
-## ⚡ Performance Testing
+## ⚡ Тестирование Производительности
 
-### Critical Performance Metrics
+### Критические Метрики Производительности
 
 ```yaml
-Voice Processing Pipeline:
-  STT Processing:
-    Target: < 2s for 30s audio
-    Max: 5s
+Конвейер Обработки Голоса:
+  Обработка STT:
+    Цель: < 2с для 30с аудио
+    Максимум: 5с
 
-  LLM Command Parsing:
-    Target: < 500ms
-    Max: 2s
+  Парсинг Команд LLM:
+    Цель: < 500мс
+    Максимум: 2с
 
-  Command Execution:
-    Target: < 100ms
-    Max: 500ms
+  Выполнение Команды:
+    Цель: < 100мс
+    Максимум: 500мс
 
-  WebSocket Delivery:
-    Target: < 50ms
-    Max: 200ms
+  Доставка через WebSocket:
+    Цель: < 50мс
+    Максимум: 200мс
 
-Total End-to-End:
-  Target: < 3s
-  Max: 8s
+Общее Время End-to-End:
+  Цель: < 3с
+  Максимум: 8с
 ```
 
-### Load Testing Scenarios
+### Сценарии Нагрузочного Тестирования
 
 ```php
 namespace Tests\Performance;
@@ -411,7 +411,7 @@ class VoiceAssistantLoadTest extends PerformanceTestCase
 {
     public function testConcurrentVoiceCommands(): void
     {
-        // Simulate 100 concurrent users
+        // Симуляция 100 одновременных пользователей
         $this->runConcurrent(100, function ($userId) {
             $response = $this->sendVoiceCommand(
                 $this->generateAudioFile(),
@@ -424,7 +424,7 @@ class VoiceAssistantLoadTest extends PerformanceTestCase
 
     public function testSustainedLoad(): void
     {
-        // 10 requests per second for 5 minutes
+        // 10 запросов в секунду в течение 5 минут
         $this->runSustained(
             requestsPerSecond: 10,
             duration: 300,
@@ -439,12 +439,12 @@ class VoiceAssistantLoadTest extends PerformanceTestCase
 
 ---
 
-## 🔄 Integration Testing Strategy
+## 🔄 Стратегия Интеграционного Тестирования
 
-### External Service Mocking
+### Мокирование Внешних Сервисов
 
 ```php
-// Mock Ollama responses
+// Мокирование ответов Ollama
 class OllamaMockService implements LLMServiceInterface
 {
     private array $responses = [
@@ -453,7 +453,7 @@ class OllamaMockService implements LLMServiceInterface
             'parameters' => ['title' => 'New Task'],
             'confidence' => 0.95
         ],
-        // ... more mock responses
+        // ... больше мок-ответов
     ];
 
     public function parseCommand(string $text, array $context): CommandDto
@@ -469,10 +469,10 @@ class OllamaMockService implements LLMServiceInterface
 }
 ```
 
-### WebSocket Testing
+### Тестирование WebSocket
 
 ```javascript
-// Frontend WebSocket integration tests
+// Интеграционные тесты WebSocket на фронтенде
 describe('VoiceAssistant WebSocket', () => {
     let centrifugo: CentrifugoClient;
 
@@ -483,7 +483,7 @@ describe('VoiceAssistant WebSocket', () => {
         });
     });
 
-    it('receives command execution updates', async () => {
+    it('получает обновления о выполнении команд', async () => {
         const updates = [];
 
         centrifugo.on('voice.action.executed', (data) => {
@@ -503,30 +503,30 @@ describe('VoiceAssistant WebSocket', () => {
 
 ---
 
-## 📈 Coverage Goals
+## 📈 Цели по Покрытию Тестами
 
-### Minimum Coverage Requirements
+### Минимальные Требования к Покрытию
 
 ```yaml
-Overall: 75%
+Общее: 75%
 
-By Component:
+По Компонентам:
   CommandExecutorService: 95%
   SmartSearchService: 90%
   LLMService: 85%
   WebSocketPublisherService: 80%
   VoiceProcessingService: 85%
-  Command Handlers: 90%
-  DTOs: 100%
-  Controllers: 70%
+  Обработчики Команд: 90%
+  DTO: 100%
+  Контроллеры: 70%
 
-By Test Type:
-  Unit Tests: 80%
-  Integration Tests: 60%
-  Functional Tests: 40%
+По Типу Тестов:
+  Модульные Тесты: 80%
+  Интеграционные Тесты: 60%
+  Функциональные Тесты: 40%
 ```
 
-### CI/CD Integration
+### Интеграция с CI/CD
 
 ```yaml
 # .github/workflows/test.yml
@@ -541,20 +541,20 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Unit Tests
+      - name: Модульные Тесты
         run: |
           docker-compose -f docker/docker-compose.test.yml up -d
           docker exec test-php bin/phpunit --testsuite unit
 
-      - name: Integration Tests
+      - name: Интеграционные Тесты
         run: |
           docker exec test-php bin/phpunit --testsuite integration
 
-      - name: Coverage Report
+      - name: Отчет о Покрытии
         run: |
           docker exec test-php bin/phpunit --coverage-html coverage
 
-      - name: Performance Tests
+      - name: Тесты Производительности
         if: github.ref == 'refs/heads/main'
         run: |
           docker exec test-php bin/phpunit --testsuite performance
