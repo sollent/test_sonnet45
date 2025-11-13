@@ -2,14 +2,23 @@
 import { ref, onMounted, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth.store'
 import { useLoaderStore } from '@/stores/loader.store'
+import { useOfflineDetection } from '@/composables/useOfflineDetection'
 import Toast from 'primevue/toast'
 import ConfirmDialog from 'primevue/confirmdialog'
 import GlobalLanguageSwitcher from '@/components/ui/GlobalLanguageSwitcher.vue'
 import AppLoader from '@/components/AppLoader.vue'
+import OfflineModal from '@/components/common/OfflineModal.vue'
 
 const authStore = useAuthStore()
 const loaderStore = useLoaderStore()
 const isAppLoaded = ref(false)
+
+// Offline detection
+const { isOnline, isModalVisible } = useOfflineDetection({
+  showToast: true,
+  showModal: true,
+  checkServiceWorker: true
+})
 
 // Проверяем, нужно ли пропустить лоадер (при разлогине)
 const skipInitialLoader = sessionStorage.getItem('skip_loader') === 'true'
@@ -59,6 +68,9 @@ const loaderKey = computed(() => {
     </router-view>
     <!-- Global Language Switcher -->
     <GlobalLanguageSwitcher />
+
+    <!-- Offline Modal -->
+    <OfflineModal v-model="isModalVisible" />
     </template>
   </div>
 </template>

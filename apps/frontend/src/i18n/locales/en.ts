@@ -38,6 +38,22 @@ export default {
     add: 'Add',
   },
 
+  offline: {
+    modal: {
+      title: 'Content Unavailable',
+      message: 'Connect to network to load this content',
+      button: 'Got it',
+      statusOnline: 'Network detected',
+      statusOffline: 'No connection'
+    },
+    toast: {
+      connectionRestored: 'Connection Restored',
+      backOnline: 'You are back online!',
+      connectionLost: 'Connection Lost',
+      workingOffline: 'You are now working offline'
+    }
+  },
+
   loader: {
     tasks: {
       init_system: 'System Initialization',

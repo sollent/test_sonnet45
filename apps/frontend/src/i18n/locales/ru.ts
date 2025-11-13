@@ -38,6 +38,22 @@ export default {
     add: 'Добавить',
   },
 
+  offline: {
+    modal: {
+      title: 'Контент недоступен',
+      message: 'Подключитесь к сети для загрузки',
+      button: 'Понятно',
+      statusOnline: 'Сеть обнаружена',
+      statusOffline: 'Нет соединения'
+    },
+    toast: {
+      connectionRestored: 'Соединение восстановлено',
+      backOnline: 'Вы снова онлайн!',
+      connectionLost: 'Соединение потеряно',
+      workingOffline: 'Вы работаете офлайн'
+    }
+  },
+
   loader: {
     tasks: {
       init_system: 'Инициализация системы',
