@@ -245,6 +245,18 @@ Pinia stores и паттерны состояния
 - Рабочий процесс тестирования
 - Git рабочий процесс и коммиты
 
+#### [`guides/DOCKER_ARCHITECTURE_EXPLAINED.md`](guides/DOCKER_ARCHITECTURE_EXPLAINED.md)
+**🆕 НОВОЕ 2025-11-13** - Полное объяснение Docker инфраструктуры
+
+**Ключевые Темы:**
+- **Модульная структура** Docker Compose (base + dev/prod overrides)
+- **Как работает `make init`** - пошаговое объяснение всех шагов
+- **Dev vs Prod режимы** - Hot Reload vs Immutable, fallback vs Fail-Fast
+- **Fail-Fast принцип безопасности** - почему это критически важно
+- **Makefile команды** - все 40+ команд с подробным описанием
+- **FAQ по Docker** - HMR, multi-stage build, volumes, порты, node_modules конфликт
+- **Шпаргалка** - первый запуск, ежедневная разработка, решение проблем
+
 #### [`guides/CODE_QUALITY.md`](guides/CODE_QUALITY.md)
 Инструменты качества кода и автоматические проверки
 

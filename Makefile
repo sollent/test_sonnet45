@@ -1,37 +1,119 @@
 .DEFAULT_GOAL := help
 
+# Docker Compose файлы (модульная структура)
+COMPOSE_BASE = docker-compose.yml
+COMPOSE_DEV = infrastructure/docker/docker-compose.dev.yml
+COMPOSE_FRONTEND_DEV = infrastructure/docker/docker-compose.frontend-dev.yml
+COMPOSE_PROD = infrastructure/docker/docker-compose-prod.yml
+COMPOSE_FRONTEND_PROD = infrastructure/docker/docker-compose.frontend-prod.yml
+
+# Полные команды для разных окружений
+COMPOSE_DEV_FULL = docker compose -f $(COMPOSE_BASE) -f $(COMPOSE_DEV) -f $(COMPOSE_FRONTEND_DEV)
+COMPOSE_PROD_FULL = docker compose -f $(COMPOSE_BASE) -f $(COMPOSE_PROD) -f $(COMPOSE_FRONTEND_PROD)
+
 help: ## Show this help message
-	@echo "Available commands:"
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@echo "🚀 Available commands:"
+	@echo ""
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-25s\033[0m %s\n", $$1, $$2}'
 
-init: down build up ## Initialize environment
+## 🏗️  Development Environment Commands
 
-build: ## Build services.
-	docker compose build
+init: down build up migrate ## 🎯 Initialize full DEV environment (backend + frontend)
+	@echo ""
+	@echo "✅ Development environment ready!"
+	@echo "   Backend:  http://localhost:8089"
+	@echo "   Frontend: http://localhost:3000"
+	@echo ""
+	@echo "📝 Useful commands:"
+	@echo "   make logs          - View all logs"
+	@echo "   make logs-backend  - View backend logs"
+	@echo "   make logs-frontend - View frontend logs"
+	@echo "   make console       - Enter backend container"
+	@echo "   make down          - Stop all services"
 
-up: ## Create and start services.
-	docker compose up -d
+build: ## Build all services (dev mode)
+	@echo "🔨 Building services..."
+	$(COMPOSE_DEV_FULL) build
 
-stop: ## Stop services.
-	docker compose stop
+up: ## Start all services (dev mode: backend + frontend)
+	@echo "🚀 Starting development environment..."
+	$(COMPOSE_DEV_FULL) up -d
+	@echo "⏳ Waiting for services to be ready..."
+	@sleep 5
 
-down: ## Stop and remove containers
-	docker compose down
+stop: ## Stop all services
+	@echo "⏸️  Stopping services..."
+	$(COMPOSE_DEV_FULL) stop
 
-remove:
-	docker compose down --rmi all --remove-orphans
+down: ## Stop and remove all containers
+	@echo "🛑 Stopping and removing containers..."
+	$(COMPOSE_DEV_FULL) down
 
-logs: ## Display logs.
-	docker compose logs --tail=100 -f
+restart: down up ## Restart all services
 
-console: ## Login in console.
+remove: ## Remove containers, images, and volumes
+	@echo "🗑️  Removing containers, images, and volumes..."
+	$(COMPOSE_DEV_FULL) down --rmi all --volumes --remove-orphans
+
+## 🔍 Logs Commands
+
+logs: ## Display logs for all services
+	$(COMPOSE_DEV_FULL) logs --tail=100 -f
+
+logs-backend: ## Display backend (PHP-FPM + Nginx) logs
+	$(COMPOSE_DEV_FULL) logs --tail=100 -f php83-fpm nginx
+
+logs-frontend: ## Display frontend logs
+	$(COMPOSE_DEV_FULL) logs --tail=100 -f frontend
+
+logs-db: ## Display database logs
+	$(COMPOSE_DEV_FULL) logs --tail=100 -f psql16
+
+## 🐚 Shell Access Commands
+
+console: ## Enter backend PHP container
 	docker exec -it backend-php83 bash
 
-psql:
+console-frontend: ## Enter frontend container
+	docker exec -it frontend-dev sh
+
+psql: ## Enter PostgreSQL container
 	docker exec -it backend-psql16 bash
 
-## Frontend commands
-kill-frontend: ## Kill frontend dev server on port 3000
+db-cli: ## Connect to PostgreSQL CLI
+	docker exec -it backend-psql16 psql -U user -d backend-app
+
+## 🗄️  Database Commands
+
+migrate: ## Run database migrations
+	@echo "🗄️  Running migrations..."
+	docker exec backend-php83 php bin/console doctrine:migrations:migrate --no-interaction
+
+migrate-create: ## Create new migration
+	docker exec backend-php83 php bin/console make:migration
+
+db-reset: ## Reset database (drop + create + migrate)
+	@echo "⚠️  Resetting database..."
+	docker exec backend-php83 php bin/console doctrine:database:drop --force --if-exists
+	docker exec backend-php83 php bin/console doctrine:database:create
+	docker exec backend-php83 php bin/console doctrine:migrations:migrate --no-interaction
+
+## 🎨 Frontend Commands (Local - без Docker)
+
+frontend-install: ## Install frontend dependencies locally
+	cd apps/frontend && npm install
+
+frontend-dev-local: ## Start frontend dev server LOCALLY (без Docker)
+	@echo "🎨 Starting frontend locally on http://localhost:3000"
+	@echo "⚠️  Note: Backend должен быть запущен в Docker!"
+	cd apps/frontend && npm run dev
+
+frontend-build: ## Build frontend for production
+	cd apps/frontend && npm run build
+
+## 🔧 Utility Commands
+
+kill-frontend: ## Kill local frontend process on port 3000
 	@echo "Killing process on port 3000..."
 	@lsof -ti:3000 | xargs kill -9 2>/dev/null && echo "✓ Process killed" || echo "✗ No process found on port 3000"
 
@@ -43,38 +125,85 @@ kill-port: ## Kill process on specific port (usage: make kill-port PORT=3000)
 	@echo "Killing process on port $(PORT)..."
 	@lsof -ti:$(PORT) | xargs kill -9 2>/dev/null && echo "✓ Process on port $(PORT) killed" || echo "✗ No process found on port $(PORT)"
 
-frontend-dev: ## Start frontend dev server
-	cd apps/frontend && npm run dev
+## 🏭 Production Environment Commands
 
-frontend-install: ## Install frontend dependencies
-	cd apps/frontend && npm install
+prod-build: ## Build production images
+	@echo "🔨 Building production images..."
+	$(COMPOSE_PROD_FULL) build
 
-frontend-build: ## Build frontend for production
-	cd apps/frontend && npm run build
+prod-up: ## Start production environment
+	@echo "🚀 Starting production environment..."
+	@echo "⚠️  Make sure .env.docker.prod is configured!"
+	$(COMPOSE_PROD_FULL) up -d
+	@echo ""
+	@echo "✅ Production environment started!"
+	@echo "   Backend:  http://localhost:8089"
+	@echo "   Frontend: http://localhost:8080"
 
-## Backend Quality Tools
+prod-down: ## Stop production environment
+	@echo "🛑 Stopping production environment..."
+	$(COMPOSE_PROD_FULL) down
+
+prod-logs: ## View production logs
+	$(COMPOSE_PROD_FULL) logs --tail=100 -f
+
+## ✅ Backend Quality Tools
+
 cs-fixer-check: ## Check PHP code style (dry-run)
+	@echo "🔍 Checking PHP code style..."
 	docker exec backend-php83 vendor/bin/php-cs-fixer fix --dry-run --diff --verbose
 
 cs-fixer-fix: ## Fix PHP code style automatically
+	@echo "🔧 Fixing PHP code style..."
 	docker exec backend-php83 vendor/bin/php-cs-fixer fix --verbose
 
 phpstan: ## Run PHPStan static analysis
+	@echo "🔬 Running PHPStan analysis..."
 	docker exec backend-php83 vendor/bin/phpstan analyse --memory-limit=1G
 
 phpstan-baseline: ## Generate PHPStan baseline
 	docker exec backend-php83 vendor/bin/phpstan analyse --generate-baseline
 
 quality-check: ## Run all quality checks (cs-fixer + phpstan)
-	@echo "Running PHP-CS-Fixer check..."
+	@echo "🔍 Running all quality checks..."
+	@echo ""
+	@echo "📝 PHP-CS-Fixer check..."
 	@docker exec backend-php83 vendor/bin/php-cs-fixer fix --dry-run --diff --verbose
-	@echo "\nRunning PHPStan analysis..."
+	@echo ""
+	@echo "🔬 PHPStan analysis..."
 	@docker exec backend-php83 vendor/bin/phpstan analyse --memory-limit=1G
-	@echo "\n✓ All quality checks completed!"
+	@echo ""
+	@echo "✅ All quality checks completed!"
 
 quality-fix: ## Fix code style and re-run checks
-	@echo "Fixing PHP code style..."
+	@echo "🔧 Fixing code style..."
 	@docker exec backend-php83 vendor/bin/php-cs-fixer fix --verbose
-	@echo "\nRunning PHPStan analysis..."
+	@echo ""
+	@echo "🔬 Running PHPStan analysis..."
 	@docker exec backend-php83 vendor/bin/phpstan analyse --memory-limit=1G
-	@echo "\n✓ Code fixed and analyzed!"
+	@echo ""
+	@echo "✅ Code fixed and analyzed!"
+
+## 🧪 Testing Commands
+
+test: ## Run all backend tests
+	@echo "🧪 Running all tests..."
+	docker exec backend-php83 php bin/phpunit
+
+test-unit: ## Run unit tests only
+	docker exec backend-php83 php bin/phpunit --testsuite unit
+
+test-integration: ## Run integration tests only
+	docker exec backend-php83 php bin/phpunit --testsuite integration
+
+test-coverage: ## Generate test coverage report
+	docker exec backend-php83 php bin/phpunit --coverage-html coverage
+
+## 📊 Status Commands
+
+status: ## Show status of all services
+	@echo "📊 Services status:"
+	@echo ""
+	$(COMPOSE_DEV_FULL) ps
+
+ps: status ## Alias for status
