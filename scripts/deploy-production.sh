@@ -249,10 +249,24 @@ sleep 15
 print_success "Контейнеры запущены!"
 
 # ================================================================
-# Шаг 7: Применение миграций
+# Шаг 7: Установка зависимостей
 # ================================================================
 
-print_header "Шаг 7: Настройка базы данных"
+print_header "Шаг 7: Установка зависимостей"
+
+print_step "Установка PHP зависимостей (composer install)..."
+docker exec backend-php83 composer install --no-dev --optimize-autoloader --no-interaction || {
+    print_error "Ошибка при установке composer зависимостей!"
+    exit 1
+}
+
+print_success "Зависимости установлены!"
+
+# ================================================================
+# Шаг 8: Настройка базы данных
+# ================================================================
+
+print_header "Шаг 8: Настройка базы данных"
 
 print_step "Создание базы данных (если не существует)..."
 docker exec backend-php83 php bin/console doctrine:database:create --if-not-exists --env=prod || true
@@ -265,10 +279,10 @@ docker exec backend-php83 php bin/console doctrine:migrations:migrate --no-inter
 print_success "База данных настроена!"
 
 # ================================================================
-# Шаг 8: Проверка статуса
+# Шаг 9: Проверка статуса
 # ================================================================
 
-print_header "Шаг 8: Проверка статуса сервисов"
+print_header "Шаг 9: Проверка статуса сервисов"
 
 print_step "Статус контейнеров:"
 docker ps --filter "name=backend-" --filter "name=frontend-" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
