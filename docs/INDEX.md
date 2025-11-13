@@ -205,6 +205,22 @@ Pinia stores и паттерны состояния
 - Ожидаемое улучшение производительности: **60-70%**
 - Целевые метрики: Initial bundle ~300KB (gzip ~100KB), Lighthouse 90+
 
+#### [`ci-cd-plans/FRONTEND_DOCKERIZATION_PLAN.md`](ci-cd-plans/FRONTEND_DOCKERIZATION_PLAN.md)
+**🐳 НОВОЕ** - План докеризации Frontend с разделением dev/prod окружений
+
+**Ключевые Темы:**
+- Анализ текущего состояния (локальный npm run dev)
+- Архитектура решения: Dev (Vite dev server) vs Prod (Nginx + статика)
+- Dockerfile.dev - Vite dev server с HMR и Hot Reload
+- Dockerfile.prod - Multi-stage build (Node.js build → Nginx)
+- Nginx конфигурация для SPA (fallback на index.html, proxy /api)
+- Интеграция с существующей docker-compose структурой
+- Следование Fail-Fast принципу (prod БЕЗ fallback)
+- Environment переменные (.env.docker расширение)
+- Детальный пошаговый чек-лист реализации
+- Ожидаемые результаты: Dev ~1GB, Prod ~30MB
+- Команды для запуска полного стека (Backend + Frontend)
+
 ---
 
 ### 📘 Руководства (`project/docs/guides/`)
