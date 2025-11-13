@@ -256,7 +256,7 @@ print_success "Контейнеры запущены!"
 print_header "Шаг 7: Установка зависимостей"
 
 print_step "Установка PHP зависимостей (composer install)..."
-docker exec backend-php83 composer install --no-dev --optimize-autoloader --no-interaction || {
+docker exec backend-php83 composer install --optimize-autoloader --no-interaction || {
     print_error "Ошибка при установке composer зависимостей!"
     exit 1
 }
