@@ -192,10 +192,11 @@ fi
 
 print_success ".env.docker.prod настроен"
 
-# Создаем symlink для Docker Compose
-print_step "Создание symlink .env -> .env.docker.prod..."
+# Создаем symlinks для Docker Compose
+print_step "Создание symlinks для Docker Compose..."
+ln -sf .env.docker.prod .env.docker
 ln -sf .env.docker.prod .env
-print_success "Symlink создан"
+print_success "Symlinks созданы (.env.docker и .env)"
 
 # ================================================================
 # Шаг 4: Остановка старых контейнеров
