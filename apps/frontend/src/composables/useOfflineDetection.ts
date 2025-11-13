@@ -23,13 +23,11 @@ export function useOfflineDetection(options: OfflineOptions = {}) {
 
   // Track failed requests
   const trackFailedRequest = (url: string) => {
-    if (!isOnline.value) {
-      failedRequests.value.add(url)
+    failedRequests.value.add(url)
 
-      // Show modal only if not already visible
-      if (showModal && !isModalVisible.value && failedRequests.value.size > 0) {
-        isModalVisible.value = true
-      }
+    // Show modal on first failed request
+    if (showModal && !isModalVisible.value && failedRequests.value.size > 0) {
+      isModalVisible.value = true
     }
   }
 
@@ -66,6 +64,11 @@ export function useOfflineDetection(options: OfflineOptions = {}) {
         detail: t('offline.toast.workingOffline'),
         life: 5000
       })
+    }
+
+    // Show modal when going offline
+    if (showModal && !isModalVisible.value) {
+      isModalVisible.value = true
     }
   }
 
