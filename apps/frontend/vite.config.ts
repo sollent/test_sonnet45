@@ -14,6 +14,20 @@ export default defineConfig(({ mode }) => {
     plugins: [
       vue(),
 
+      // Custom plugin to inject API URL into HTML (for preconnect/dns-prefetch)
+      {
+        name: 'html-transform',
+        transformIndexHtml(html) {
+          const apiUrl = env.VITE_API_BASE_URL || 'http://localhost:8089'
+          return html.replace(
+            '<!-- API_RESOURCE_HINTS -->',
+            `<!-- Preconnect to API (DNS prefetch + preconnect for faster API calls) -->
+    <link rel="preconnect" href="${apiUrl}" crossorigin>
+    <link rel="dns-prefetch" href="${apiUrl}">`
+          )
+        }
+      },
+
       // PWA Plugin (Service Worker + Web App Manifest)
       VitePWA({
         registerType: 'autoUpdate',
@@ -142,7 +156,7 @@ export default defineConfig(({ mode }) => {
       port: 3000,
       proxy: {
         '/api': {
-          target: env.VITE_API_URL || 'http://localhost:8089',
+          target: env.VITE_API_BASE_URL || 'http://localhost:8089',
           changeOrigin: true
         }
       }
