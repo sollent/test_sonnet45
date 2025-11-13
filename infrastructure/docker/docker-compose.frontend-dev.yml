@@ -1,0 +1,46 @@
+# Frontend Development Overrides
+# Используется вместе с docker-compose.app.yml для dev окружения
+#
+# Команда запуска (только frontend):
+# docker-compose -f ../../docker-compose.yml \
+#   -f docker-compose.dev.yml \
+#   -f docker-compose.frontend-dev.yml up -d frontend
+#
+# Команда запуска (полный стек):
+# docker-compose -f ../../docker-compose.yml \
+#   -f docker-compose.dev.yml \
+#   -f docker-compose.frontend-dev.yml up -d
+
+version: '2'
+
+services:
+  frontend:
+    # Build из Dockerfile.dev
+    build:
+      context: ../../apps/frontend
+      dockerfile: Dockerfile.dev
+
+    container_name: frontend-dev
+
+    # Порт Vite dev server (с fallback для удобства dev!)
+    ports:
+      - "${FRONTEND_DEV_PORT:-3000}:3000"
+
+    # Volume mount для live code changes
+    # ВАЖНО: /app/node_modules - не перезаписываем из host!
+    volumes:
+      - ../../apps/frontend:/app
+      - /app/node_modules  # Anonymous volume - node_modules из контейнера
+
+    # Environment переменные с fallback (удобство для dev)
+    environment:
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:8089}
+      - NODE_ENV=development
+
+    # Подключаемся к backend network
+    networks:
+      - nginx-php83-psql16
+
+    # Зависимости
+    depends_on:
+      - nginx  # Backend nginx должен запуститься первым

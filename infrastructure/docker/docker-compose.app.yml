@@ -90,7 +90,20 @@ services:
       - psql16
     networks:
       - nginx-php83-psql16
-      
+
+  # ============================================
+  # Frontend Service (Placeholder)
+  # ============================================
+  # Переопределяется в docker-compose.frontend-dev.yml или docker-compose.frontend-prod.yml
+  frontend:
+    image: placeholder
+    container_name: frontend
+    networks:
+      - nginx-php83-psql16
+    depends_on:
+      - nginx  # Backend nginx должен запуститься первым
+    # Порты, build, volumes и environment определены в dev/prod overrides
+
 networks:
   nginx-php83-psql16:
 volumes:

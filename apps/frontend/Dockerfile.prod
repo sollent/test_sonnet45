@@ -1,0 +1,63 @@
+# Production Dockerfile для Frontend
+# Multi-stage build: build (Node.js) → production (Nginx)
+# Финальный размер: ~30MB (только nginx + dist/)
+
+# ============================================
+# Stage 1: Builder - Сборка приложения
+# ============================================
+FROM node:20-alpine AS builder
+
+# Рабочая директория
+WORKDIR /app
+
+# Копируем package.json и package-lock.json
+COPY package.json package-lock.json ./
+
+# Устанавливаем ВСЕ зависимости (включая devDependencies)
+# Они нужны для build (vite, rollup, typescript, etc.)
+# В финальном образе их не будет - только nginx + dist/
+RUN npm ci --prefer-offline
+
+# Копируем весь исходный код
+COPY . .
+
+# Production build
+# Vite создаст оптимизированную сборку в директории dist/
+# - Минификация JS/CSS
+# - Tree-shaking
+# - Code splitting
+# - Hashed filenames для кеширования
+RUN npm run build
+
+# Проверка что сборка прошла успешно
+# Если dist/ не создан, build failed
+RUN test -d dist || (echo "ERROR: dist/ directory not created! Build failed." && exit 1)
+
+# ============================================
+# Stage 2: Production - Nginx сервер
+# ============================================
+FROM nginx:alpine
+
+# Копируем ТОЛЬКО собранные файлы из builder stage
+# Вся остальная инфраструктура (node_modules, src/, etc.) выбрасывается!
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Копируем кастомную nginx конфигурацию
+# Конфигурация оптимизирована для SPA:
+# - Fallback на index.html для всех routes
+# - Gzip compression
+# - Cache headers для статических файлов
+# - Proxy /api к backend
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Health check для мониторинга
+# Проверяет что nginx отвечает на запросы
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget --quiet --tries=1 --spider http://localhost/ || exit 1
+
+# Открываем порт 80 для HTTP трафика
+EXPOSE 80
+
+# Запускаем nginx в foreground режиме
+# daemon off - nginx не уходит в background
+CMD ["nginx", "-g", "daemon off;"]

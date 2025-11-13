@@ -1,0 +1,50 @@
+# Frontend Production Overrides
+# Используется вместе с docker-compose.app.yml для production окружения
+#
+# Команда запуска (только frontend):
+# docker-compose -f ../../docker-compose.yml \
+#   -f docker-compose-prod.yml \
+#   -f docker-compose.frontend-prod.yml up -d frontend
+#
+# Команда запуска (полный стек):
+# docker-compose -f ../../docker-compose.yml \
+#   -f docker-compose-prod.yml \
+#   -f docker-compose.frontend-prod.yml up -d
+
+version: '2'
+
+services:
+  frontend:
+    # Build из Dockerfile.prod (Multi-stage: Node.js build → Nginx)
+    build:
+      context: ../../apps/frontend
+      dockerfile: Dockerfile.prod
+      # Build args передаются во время сборки
+      args:
+        - VITE_API_BASE_URL=${VITE_API_BASE_URL}
+
+    container_name: frontend-prod
+
+    # Порт Nginx (БЕЗ fallback - Fail-Fast принцип!)
+    ports:
+      - "${FRONTEND_PROD_PORT}:80"
+
+    # НЕТ volumes в production - immutable контейнер!
+    # Всё уже встроено в образ при сборке
+
+    # Environment переменные БЕЗ fallback (Fail-Fast!)
+    # Если переменная не задана - контейнер упадет с ошибкой
+    environment:
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL}
+      - NODE_ENV=production
+
+    # Подключаемся к backend network
+    networks:
+      - nginx-php83-psql16
+
+    # Зависимости
+    depends_on:
+      - nginx  # Backend nginx должен запуститься первым
+
+    # Автоматический перезапуск в production
+    restart: unless-stopped

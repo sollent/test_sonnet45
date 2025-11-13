@@ -1,0 +1,28 @@
+# Development Dockerfile для Frontend
+# Использует Vite dev server с HMR (Hot Module Replacement)
+# Размер: ~1GB (Node.js + node_modules + dev tools)
+
+FROM node:20-alpine
+
+# Устанавливаем рабочую директорию
+WORKDIR /app
+
+# Копируем package.json и package-lock.json для кеширования слоя зависимостей
+# Если эти файлы не изменились, Docker использует кешированный слой
+COPY package.json package-lock.json ./
+
+# Устанавливаем зависимости
+# npm install включает как production, так и devDependencies (нужны для dev)
+RUN npm install && npm cache clean --force
+
+# НЕ копируем исходный код здесь!
+# В dev режиме используем volume mount для live reload
+# Код будет доступен через volume: ../../apps/frontend:/app
+
+# Открываем порт для Vite dev server
+EXPOSE 3000
+
+# Запускаем Vite dev server
+# --host 0.0.0.0 - позволяет подключаться снаружи контейнера
+# (по умолчанию Vite слушает только 127.0.0.1)
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

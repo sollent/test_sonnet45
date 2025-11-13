@@ -16,6 +16,12 @@
 /apps/backend/.env.prod.local
 # Note: .env, .env.dev, .env.prod, .env.test, .env.example are tracked
 
+# Frontend Docker environment files (SENSITIVE!)
+/apps/frontend/.env.docker
+/apps/frontend/.env.docker.prod
+/apps/frontend/.env.docker.test
+# Allow: /apps/frontend/.env.docker.example
+
 # Docker volumes and data
 /docker/dev/psql/
 /infrastructure/docker/dev/psql/
