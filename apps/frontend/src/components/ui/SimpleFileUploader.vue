@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { TaskAttachment } from '@/types/task.types'
 import Button from 'primevue/button'
+import { API_BASE_URL } from '@/config/constants'
 
 const { t } = useI18n()
 
@@ -118,7 +119,7 @@ function getFileIcon(fileType: string): string {
           @click="handleView(file)"
         >
           <div class="image-preview">
-            <img :src="`http://localhost:8089${file.filePath}`" :alt="file.originalName" />
+            <img :src="`${API_BASE_URL}${file.filePath}`" :alt="file.originalName" />
             <button @click.stop="handleDelete(file.id)" class="delete-overlay">
               <i class="pi pi-trash"></i>
             </button>

@@ -21,6 +21,11 @@ RUN npm ci --prefer-offline
 # Копируем весь исходный код
 COPY . .
 
+# Принимаем build argument из docker-compose
+ARG VITE_API_BASE_URL
+# Делаем доступным как environment variable для Vite
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
+
 # Production build
 # Vite создаст оптимизированную сборку в директории dist/
 # - Минификация JS/CSS
