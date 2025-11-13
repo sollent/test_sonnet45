@@ -3,6 +3,7 @@ import vue from '@vitejs/plugin-vue'
 import { fileURLToPath, URL } from 'node:url'
 import { visualizer } from 'rollup-plugin-visualizer'
 import viteCompression from 'vite-plugin-compression'
+import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -12,6 +13,95 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [
       vue(),
+
+      // PWA Plugin (Service Worker + Web App Manifest)
+      VitePWA({
+        registerType: 'autoUpdate',
+        includeAssets: ['favicon.ico', 'vite.svg'],
+        manifest: {
+          name: 'TaskFlow - Система Управления Задачами',
+          short_name: 'TaskFlow',
+          description: 'Современная система управления задачами с поддержкой подзадач, тегов, календаря и аналитики',
+          theme_color: '#3B82F6',
+          background_color: '#ffffff',
+          display: 'standalone',
+          orientation: 'portrait',
+          scope: '/',
+          start_url: '/',
+          icons: [
+            {
+              src: '/vite.svg',
+              sizes: '192x192',
+              type: 'image/svg+xml',
+              purpose: 'any'
+            },
+            {
+              src: '/vite.svg',
+              sizes: '512x512',
+              type: 'image/svg+xml',
+              purpose: 'any'
+            }
+          ]
+          // TODO: Создать настоящие PNG иконки для production:
+          // - pwa-192x192.png, pwa-512x512.png (purpose: 'any')
+          // - pwa-maskable-192x192.png, pwa-maskable-512x512.png (purpose: 'maskable')
+        },
+        workbox: {
+          // Glob patterns для файлов которые нужно кешировать
+          globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+
+          // Runtime caching strategies
+          runtimeCaching: [
+            {
+              // API calls - Network First strategy
+              urlPattern: /^https?:\/\/.*\/api\/.*/i,
+              handler: 'NetworkFirst',
+              options: {
+                cacheName: 'api-cache',
+                expiration: {
+                  maxEntries: 100,
+                  maxAgeSeconds: 60 * 60 // 1 hour
+                },
+                cacheableResponse: {
+                  statuses: [0, 200]
+                }
+              }
+            },
+            {
+              // Static assets - Cache First strategy
+              urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp)$/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'images-cache',
+                expiration: {
+                  maxEntries: 60,
+                  maxAgeSeconds: 30 * 24 * 60 * 60 // 30 days
+                }
+              }
+            },
+            {
+              // Fonts - Cache First strategy
+              urlPattern: /\.(?:woff|woff2|ttf|eot)$/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'fonts-cache',
+                expiration: {
+                  maxEntries: 30,
+                  maxAgeSeconds: 365 * 24 * 60 * 60 // 1 year
+                }
+              }
+            }
+          ],
+
+          // Skip waiting and claim clients immediately
+          skipWaiting: true,
+          clientsClaim: true
+        },
+
+        devOptions: {
+          enabled: false // Disable in development
+        }
+      }),
 
       // Gzip compression for production
       isProduction && viteCompression({
