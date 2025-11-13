@@ -117,7 +117,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 interface Props {
@@ -131,6 +131,7 @@ const emit = defineEmits<{
 
 const modalContainer = ref<HTMLElement>()
 const isOnline = ref(navigator.onLine)
+let autoCloseTimer: ReturnType<typeof setTimeout> | null = null
 
 // Visibility control
 const isVisible = computed({
@@ -143,8 +144,29 @@ const { t } = useI18n()
 
 // Close modal
 const close = () => {
+  // Очищаем таймер автозакрытия
+  if (autoCloseTimer) {
+    clearTimeout(autoCloseTimer)
+    autoCloseTimer = null
+  }
   isVisible.value = false
 }
+
+// Автозакрытие через 6 секунд
+watch(isVisible, (newValue) => {
+  if (newValue) {
+    // Модалка открылась - запускаем таймер
+    autoCloseTimer = setTimeout(() => {
+      close()
+    }, 6000) // 6 секунд
+  } else {
+    // Модалка закрылась - очищаем таймер
+    if (autoCloseTimer) {
+      clearTimeout(autoCloseTimer)
+      autoCloseTimer = null
+    }
+  }
+})
 
 // Particle styles generator
 const getParticleStyle = (index: number) => {
@@ -203,6 +225,12 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  // Очищаем таймер при размонтировании компонента
+  if (autoCloseTimer) {
+    clearTimeout(autoCloseTimer)
+    autoCloseTimer = null
+  }
+
   window.removeEventListener('online', updateOnlineStatus)
   window.removeEventListener('offline', updateOnlineStatus)
 })
@@ -594,6 +622,8 @@ onUnmounted(() => {
   transition: all 0.3s ease;
   text-transform: uppercase;
   letter-spacing: 1px;
+  z-index: 10;
+  pointer-events: auto;
 }
 
 .button-text {
@@ -620,12 +650,20 @@ onUnmounted(() => {
   z-index: -1;
 }
 
+.offline-button:hover .button-bg,
 .offline-button.hover .button-bg {
   opacity: 1;
 }
 
+.offline-button:hover .button-glow,
 .offline-button.hover .button-glow {
   opacity: 0.5;
+}
+
+.offline-button:hover {
+  border-color: #60A5FA;
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+  transform: translateY(-2px);
 }
 
 .offline-button:active {
