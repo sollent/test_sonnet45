@@ -248,6 +248,19 @@ Pinia stores и паттерны состояния
 - Runtime переопределение переменных в production
 - Troubleshooting частых проблем с credentials
 
+#### [`guides/PWA_TESTING_GUIDE.md`](guides/PWA_TESTING_GUIDE.md)
+**🧪 НОВОЕ** - Руководство по тестированию PWA и Offline кеширования
+
+**Ключевые Темы:**
+- Проверка Service Worker регистрации и статуса
+- Тестирование Precache (40+ статических файлов)
+- Проверка Runtime кеширования API (NetworkFirst стратегия)
+- Тест offline режима (работа без интернета)
+- Проверка автоматического обновления кеша
+- Пошаговые инструкции с примерами
+- Troubleshooting частых проблем с PWA
+- Чеклист успешного тестирования
+
 #### [`guides/TROUBLESHOOTING.md`](guides/TROUBLESHOOTING.md)
 Частые проблемы и их решения
 
