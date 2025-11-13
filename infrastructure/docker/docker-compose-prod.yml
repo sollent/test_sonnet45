@@ -20,9 +20,8 @@ services:
       - APP_ENV=prod
       - APP_DEBUG=false
     volumes:
-      # Production: Mount only necessary files (no cached, read-only where possible)
-      - ../../apps/backend:/var/www/backend-app:ro
-      - ./prod/php/php.ini-production:/usr/local/etc/php/php.ini:ro
+      # Production: Mount code for local testing (in real prod, code would be COPY'd in Dockerfile)
+      - ./apps/backend:/var/www/backend-app
 
   psql16:
     restart: always
