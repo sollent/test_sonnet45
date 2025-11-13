@@ -17,7 +17,7 @@ services:
   frontend:
     # Build из Dockerfile.prod (Multi-stage: Node.js build → Nginx)
     build:
-      context: ../../apps/frontend
+      context: ./apps/frontend
       dockerfile: Dockerfile.prod
       # Build args передаются во время сборки
       args:

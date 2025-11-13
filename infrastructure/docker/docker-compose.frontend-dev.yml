@@ -17,7 +17,7 @@ services:
   frontend:
     # Build из Dockerfile.dev
     build:
-      context: ../../apps/frontend
+      context: ./apps/frontend
       dockerfile: Dockerfile.dev
 
     container_name: frontend-dev
@@ -29,7 +29,7 @@ services:
     # Volume mount для live code changes
     # ВАЖНО: /app/node_modules - не перезаписываем из host!
     volumes:
-      - ../../apps/frontend:/app
+      - ./apps/frontend:/app
       - /app/node_modules  # Anonymous volume - node_modules из контейнера
 
     # Environment переменные с fallback (удобство для dev)

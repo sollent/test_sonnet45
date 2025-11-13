@@ -31,7 +31,7 @@ services:
       - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-password}
     volumes:
       # Enable hot reload for development (cached for better performance on macOS)
-      - ../../apps/backend:/var/www/backend-app:cached
+      - ./apps/backend:/var/www/backend-app:cached
 
   psql16:
     ports:
