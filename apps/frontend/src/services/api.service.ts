@@ -1,6 +1,7 @@
 import axios, { type AxiosInstance, type AxiosError, type InternalAxiosRequestConfig } from 'axios'
 import { API_BASE_URL, STORAGE_KEYS } from '@/config/constants'
 import type { ErrorResponse } from '@/types/api.types'
+import { triggerOfflineModal } from '@/composables/useOfflineDetection'
 
 class ApiService {
   private axiosInstance: AxiosInstance
@@ -63,6 +64,13 @@ class ApiService {
       (response) => response,
       async (error: AxiosError<ErrorResponse>) => {
         const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean }
+
+        // Проверяем сетевые ошибки (нет ответа от сервера)
+        if (!error.response && error.code === 'ERR_NETWORK') {
+          // Это сетевая ошибка - показываем модалку
+          const url = originalRequest?.url || 'unknown'
+          triggerOfflineModal(url)
+        }
 
         if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
           // Не пытаемся refresh для refresh/auth endpoints

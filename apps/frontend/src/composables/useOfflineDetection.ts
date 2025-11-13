@@ -8,6 +8,19 @@ export interface OfflineOptions {
   checkServiceWorker?: boolean
 }
 
+// Глобальный обработчик для Axios перехватчика
+let globalTrackFailedRequest: ((url: string) => void) | null = null
+
+export function setGlobalOfflineHandler(handler: (url: string) => void) {
+  globalTrackFailedRequest = handler
+}
+
+export function triggerOfflineModal(url: string) {
+  if (globalTrackFailedRequest) {
+    globalTrackFailedRequest(url)
+  }
+}
+
 export function useOfflineDetection(options: OfflineOptions = {}) {
   const {
     showToast = true,
@@ -113,6 +126,9 @@ export function useOfflineDetection(options: OfflineOptions = {}) {
 
     // Intercept fetch for offline detection
     interceptFetch()
+
+    // Регистрируем глобальный обработчик для Axios
+    setGlobalOfflineHandler(trackFailedRequest)
   })
 
   onUnmounted(() => {
@@ -122,6 +138,9 @@ export function useOfflineDetection(options: OfflineOptions = {}) {
     if (checkServiceWorker && 'serviceWorker' in navigator) {
       navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessage)
     }
+
+    // Очищаем глобальный обработчик
+    setGlobalOfflineHandler(() => {})
   })
 
   return {
