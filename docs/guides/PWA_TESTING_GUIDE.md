@@ -24,15 +24,29 @@
 
 PWA работает **только в production mode**!
 
-```bash
-# 1. Перейти в корень проекта
-cd /Users/pavellaikov/Desktop/Projects/ai_sandbox/CURSOR/ULTRA/test_sonnet45
+**Вариант A: Локальная Сборка (npm)**
 
-# 2. Собрать frontend для production
+```bash
+# 1. Перейти в директорию frontend
+cd apps/frontend
+
+# 2. Собрать для production
 npm run build
 
 # ИЛИ если нужен кастомный API URL:
 VITE_API_BASE_URL=http://localhost:8089 npm run build
+```
+
+**Вариант B: Docker Production Build (рекомендуется)**
+
+```bash
+# Собрать production образ с nginx
+docker build -f apps/frontend/Dockerfile.prod -t frontend-prod ./apps/frontend
+
+# Образ содержит:
+# - Оптимизированный dist/ (~400KB gzip)
+# - Nginx для serving
+# - Service Worker и PWA манифест
 ```
 
 **Результат:**
@@ -50,7 +64,20 @@ dist/
 
 Service Worker **НЕ работает** на `npm run dev`! Нужен production сервер.
 
-**Вариант 1: npx serve (рекомендуется)**
+**Вариант 1: Docker (рекомендуется для реального production окружения)**
+
+```bash
+# Запустить весь стек (backend + frontend) в production режиме
+docker-compose -f docker-compose.yml \
+  -f infrastructure/docker/docker-compose-prod.yml \
+  -f infrastructure/docker/docker-compose.frontend-prod.yml up -d
+
+# Доступ:
+# - Frontend: http://localhost:8080
+# - Backend API: http://localhost:8089/api
+```
+
+**Вариант 2: npx serve (локальное тестирование)**
 
 ```bash
 # Установить serve глобально (один раз)
@@ -59,22 +86,21 @@ npm install -g serve
 # Запустить production build
 cd apps/frontend
 serve -s dist -l 3000
+
+# Доступ: http://localhost:3000
 ```
 
-**Вариант 2: http-server**
+**Вариант 3: http-server**
 
 ```bash
 npm install -g http-server
 cd apps/frontend
 http-server dist -p 3000 -c-1
+
+# Доступ: http://localhost:3000
 ```
 
-**Вариант 3: Docker Nginx (production-like)**
-
-```bash
-# Запустить весь стек с production конфигом
-docker-compose -f docker-compose.yml -f infrastructure/docker/docker-compose-prod.yml up -d
-```
+**Примечание:** Docker вариант идентичен production окружению (Nginx + Gzip + правильные заголовки)
 
 ### 3. Открыть Chrome DevTools
 

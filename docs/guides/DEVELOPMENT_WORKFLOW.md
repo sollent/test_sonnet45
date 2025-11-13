@@ -1,6 +1,6 @@
 # 🛠 Процесс разработки - Руководство для ежедневной работы
 
-> **Кратко**: Docker для бэкенда (Symfony + PostgreSQL) через `docker-compose.yml` в корне, npm для фронтенда (Vue + Vite). Миграции БД через Doctrine. Git workflow с feature-ветками.
+> **Кратко**: Docker для бэкенда (Symfony + PostgreSQL) и фронтенда (Vue + Vite) через `docker-compose.yml` в корне. Frontend можно запускать локально (npm) или в Docker. Миграции БД через Doctrine. Git workflow с feature-ветками.
 
 ---
 
@@ -19,16 +19,19 @@ test_sonnet45/
 │       ├── src/                    # TypeScript исходный код
 │       └── ...
 ├── infrastructure/
-│   ├── docker/                     # Docker конфигурация
-│   │   ├── docker-compose.app.yml  # Сервисы приложения
-│   │   ├── docker-compose.ai.yml   # AI сервисы (заглушка)
-│   │   ├── docker-compose.dev.yml  # Dev переопределения
+│   ├── docker/                              # Docker конфигурация
+│   │   ├── docker-compose.app.yml           # Базовые сервисы (backend + frontend placeholder)
+│   │   ├── docker-compose.dev.yml           # Backend dev переопределения
+│   │   ├── docker-compose-prod.yml          # Backend prod переопределения
+│   │   ├── docker-compose.frontend-dev.yml  # Frontend dev (Vite dev server) 🆕
+│   │   ├── docker-compose.frontend-prod.yml # Frontend prod (Nginx + статика) 🆕
+│   │   ├── docker-compose.ai.yml            # AI сервисы (заглушка)
 │   │   ├── dev/
-│   │   │   ├── nginx/              # Nginx конфигурация
-│   │   │   └── php/                # PHP-FPM конфигурация
-│   │   └── cron/                   # Cron задачи
-│   └── ai-services/                # AI инфраструктура (заглушка)
-└── scripts/                        # Утилитные скрипты
+│   │   │   ├── nginx/                       # Nginx конфигурация для backend API
+│   │   │   └── php/                         # PHP-FPM конфигурация
+│   │   └── cron/                            # Cron задачи
+│   └── ai-services/                         # AI инфраструктура (заглушка)
+└── scripts/                                 # Утилитные скрипты
 ```
 
 ---
@@ -85,6 +88,19 @@ docker exec backend-php83 php bin/console doctrine:fixtures:load
 
 ### 3. Настройка фронтенда
 
+**Вариант A: Docker (рекомендуется)** 🐳
+
+```bash
+# Создаем .env.docker файл (опционально - fallback значения работают)
+# Frontend уже настроен и запускается вместе с backend через docker-compose
+# См. раздел "Запуск сервисов" ниже
+
+# Проверка что frontend сервис добавлен в docker-compose:
+grep -A 5 "frontend:" infrastructure/docker/docker-compose.frontend-dev.yml
+```
+
+**Вариант B: Локально (без Docker)**
+
 ```bash
 cd apps/frontend
 
@@ -102,9 +118,16 @@ VITE_GOOGLE_CLIENT_ID=your-google-client-id
 npm run dev
 ```
 
+**Преимущества Docker варианта:**
+- ✅ Не нужен Node.js на хост-машине
+- ✅ Одинаковое окружение для всех разработчиков
+- ✅ Запуск всего стека одной командой
+- ✅ Hot Module Replacement (HMR) работает через Docker!
+
 ### 4. Доступ к приложению
 
-- **Фронтенд:** http://localhost:3000 (Vite dev server)
+- **Фронтенд (Docker):** http://localhost:3000 (Vite dev server в контейнере)
+- **Фронтенд (локально):** http://localhost:3000 (Vite dev server, если запущен через npm)
 - **Backend API:** http://localhost:8089/api (Nginx)
 - **PostgreSQL:** localhost:15432 (credentials из `.env.docker`: `${POSTGRES_USER}/${POSTGRES_PASSWORD}`)
 - **RabbitMQ Management:** http://localhost:15672 (credentials из `.env.docker`: `${RABBITMQ_USER}/${RABBITMQ_PASSWORD}`)
@@ -128,30 +151,67 @@ bash scripts/install-git-hooks.sh
 
 ### Запуск сервисов
 
+#### Вариант A: Полный стек в Docker (рекомендуется) 🐳
+
 ```bash
-# Запуск бэкенда в development режиме (из корня проекта)
-# ⚠️ Явно указываем dev конфигурацию с fallback для удобства
+# Запуск Backend + Frontend в development режиме (из корня проекта)
+docker-compose -f docker-compose.yml \
+  -f infrastructure/docker/docker-compose.dev.yml \
+  -f infrastructure/docker/docker-compose.frontend-dev.yml up -d
+
+# Проверка статуса контейнеров
+docker ps
+
+# Просмотр логов
+docker logs -f frontend-dev   # Frontend логи
+docker logs -f backend-php83  # Backend логи
+```
+
+**Результат:**
+- ✅ Backend API: http://localhost:8089/api
+- ✅ Frontend: http://localhost:3000 (Hot Reload работает!)
+- ✅ Изменения в `apps/frontend/src/` видны мгновенно (volume mount)
+
+#### Вариант B: Backend в Docker, Frontend локально
+
+```bash
+# Запуск только бэкенда (из корня проекта)
 docker-compose -f docker-compose.yml -f infrastructure/docker/docker-compose.dev.yml up -d
 
-# Запуск фронтенда
+# Запуск фронтенда локально
 cd apps/frontend
 npm run dev
+```
+
+#### Вариант C: Только Frontend в Docker (Backend уже запущен)
+
+```bash
+# Если backend уже работает, запустить только frontend
+docker-compose -f docker-compose.yml \
+  -f infrastructure/docker/docker-compose.dev.yml \
+  -f infrastructure/docker/docker-compose.frontend-dev.yml up -d frontend
 ```
 
 ### Остановка сервисов
 
 ```bash
-# Остановка бэкенда (из корня проекта)
+# Остановка всех сервисов (из корня проекта)
 docker-compose down
 
-# Остановка фронтенда
+# Остановка только frontend (если backend нужен)
+docker stop frontend-dev
+docker rm frontend-dev
+
+# Остановка фронтенда (локальный npm)
 Ctrl+C в терминале (где запущен npm run dev)
 ```
 
 ### Пересборка Docker контейнеров
 
+#### Backend контейнеры
+
 ```bash
-# Пересборка всех контейнеров (при изменении Dockerfile)
+# Пересборка всех backend контейнеров (при изменении Dockerfile)
 # ⚠️ Из корня проекта
 docker-compose -f docker-compose.yml -f infrastructure/docker/docker-compose.dev.yml down
 docker-compose -f docker-compose.yml -f infrastructure/docker/docker-compose.dev.yml build --no-cache
@@ -162,16 +222,43 @@ docker-compose -f docker-compose.yml -f infrastructure/docker/docker-compose.dev
 docker-compose -f docker-compose.yml -f infrastructure/docker/docker-compose.dev.yml up -d php83-fpm
 ```
 
+#### Frontend контейнеры 🆕
+
+```bash
+# Пересборка frontend dev образа (при изменении Dockerfile.dev или package.json)
+docker-compose -f docker-compose.yml \
+  -f infrastructure/docker/docker-compose.dev.yml \
+  -f infrastructure/docker/docker-compose.frontend-dev.yml build --no-cache frontend
+docker-compose -f docker-compose.yml \
+  -f infrastructure/docker/docker-compose.dev.yml \
+  -f infrastructure/docker/docker-compose.frontend-dev.yml up -d frontend
+
+# Пересборка frontend production образа (для тестирования)
+docker-compose -f docker-compose.yml \
+  -f infrastructure/docker/docker-compose-prod.yml \
+  -f infrastructure/docker/docker-compose.frontend-prod.yml build --no-cache frontend
+```
+
+**Когда нужна пересборка frontend:**
+- ✅ Изменился `package.json` (добавлены/удалены зависимости)
+- ✅ Изменился `Dockerfile.dev` или `Dockerfile.prod`
+- ✅ Изменился `nginx.conf` (только для prod)
+- ❌ НЕ нужна при изменении кода в `src/` (volume mount)
+
 ### Просмотр логов Docker
 
 ```bash
 # Все сервисы (из корня проекта)
 docker-compose logs -f
 
-# Конкретный сервис
-docker-compose logs -f php83-fpm
-docker-compose logs -f nginx
-docker-compose logs -f psql16
+# Конкретный сервис - Backend
+docker-compose logs -f backend-php83
+docker-compose logs -f backend-nginx
+docker-compose logs -f backend-psql16
+
+# Конкретный сервис - Frontend 🆕
+docker-compose logs -f frontend-dev  # Dev режим
+docker-compose logs -f frontend-prod # Production режим
 ```
 
 ---
@@ -513,6 +600,88 @@ docker-compose restart
 
 ---
 
+## 🚀 Production Deployment (Frontend)
+
+### Запуск Frontend в Production режиме
+
+**Production использует Multi-stage Docker build:**
+- Stage 1: Node.js для сборки (npm run build)
+- Stage 2: Nginx для раздачи статики (~56MB финальный образ)
+
+```bash
+# Production режим (из корня проекта)
+docker-compose -f docker-compose.yml \
+  -f infrastructure/docker/docker-compose-prod.yml \
+  -f infrastructure/docker/docker-compose.frontend-prod.yml up -d
+
+# Проверка статуса
+docker ps | grep frontend-prod
+
+# Проверка логов
+docker logs -f frontend-prod
+```
+
+**Результат:**
+- ✅ Frontend: http://localhost:8080 (Nginx serving static files)
+- ✅ Gzip + Brotli compression активна
+- ✅ SPA routing работает (fallback на index.html)
+- ✅ Proxy /api → backend-nginx:80
+- ✅ Immutable кеширование для файлов с хешами
+
+### Production Environment переменные
+
+**ВАЖНО**: Production требует настройки переменных БЕЗ fallback (Fail-Fast принцип!)
+
+```bash
+# Создайте .env.docker.prod в корне проекта
+cat > .env.docker.prod << EOF
+# Frontend Production Configuration
+FRONTEND_PROD_PORT=80
+VITE_API_BASE_URL=https://api.production.com  # БЕЗ fallback!
+EOF
+
+# Запуск с production credentials
+docker-compose -f docker-compose.yml \
+  -f infrastructure/docker/docker-compose-prod.yml \
+  -f infrastructure/docker/docker-compose.frontend-prod.yml up -d
+```
+
+### Проверка Production сборки локально
+
+```bash
+# Build production образа
+docker-compose -f docker-compose.yml \
+  -f infrastructure/docker/docker-compose-prod.yml \
+  -f infrastructure/docker/docker-compose.frontend-prod.yml build frontend
+
+# Проверка размера образа (должен быть ~50-60MB)
+docker images | grep frontend-prod
+
+# Тест production сборки
+docker-compose -f docker-compose.yml \
+  -f infrastructure/docker/docker-compose-prod.yml \
+  -f infrastructure/docker/docker-compose.frontend-prod.yml up frontend
+
+# Проверка compression в браузере (Network tab):
+# - Content-Encoding: gzip или br
+# - Cache-Control: public, immutable (для *.js, *.css)
+```
+
+### Отличия Dev vs Prod
+
+| Аспект | Development | Production |
+|--------|-------------|------------|
+| **Технология** | Vite dev server | Nginx |
+| **Размер образа** | ~456MB | ~56MB |
+| **Hot Reload** | ✅ Да | ❌ Нет |
+| **Volumes** | ✅ Volume mount | ❌ Immutable |
+| **Порт** | 3000 | 80/443 |
+| **Compression** | ❌ Нет | ✅ Gzip + Brotli |
+| **Env fallback** | ✅ Да | ❌ Нет (Fail-Fast!) |
+| **Sourcemaps** | ✅ Да | ❌ Нет |
+
+---
+
 ## Git Workflow
 
 ### Feature Branch
@@ -535,10 +704,12 @@ git push -u origin feature/my-feature
 
 ## Связанные документы
 
-- **[Архитектура](../backend/ARCHITECTURE.md)** - Организация кода
-- **[Тестирование](TESTING.md)** - Написание тестов
+- **[Архитектура Backend](../backend/ARCHITECTURE.md)** - Организация кода backend
+- **[Архитектура Frontend](../frontend/ARCHITECTURE.md)** - Организация кода frontend
+- **[Тестирование](testing/TESTING.md)** - Написание тестов
+- **[Frontend Dockerization Plan](../ci-cd-plans/FRONTEND_DOCKERIZATION_PLAN.md)** - Детальный план докеризации frontend
 
 ---
 
-*Последнее обновление: 2025-11-12*
+*Последнее обновление: 2025-11-13*
 *Версия: 2.0 - Обновлено для новой структуры docker-compose и переменных окружения*

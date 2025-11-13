@@ -226,12 +226,17 @@ Pinia stores и паттерны состояния
 ### 📘 Руководства (`project/docs/guides/`)
 
 #### [`guides/DEVELOPMENT_WORKFLOW.md`](guides/DEVELOPMENT_WORKFLOW.md)
-Процесс ежедневной разработки
+Процесс ежедневной разработки ⚡ **Обновлено 2025-11-13** - добавлена докеризация frontend
 
 **Ключевые Темы:**
 - **Настройка Docker** - `docker-compose.yml` в корне + `infrastructure/docker/*.yml` конфиги
 - Запуск backend (Symfony через Docker с dev конфигурацией)
-- Запуск frontend (Vite: `cd apps/frontend && npm run dev`)
+- **Запуск frontend (3 варианта):** 🆕
+  - Docker (рекомендуется): Vite dev server в контейнере с HMR
+  - Локально: `cd apps/frontend && npm run dev`
+  - Только frontend: docker-compose frontend-dev.yml
+- **Frontend Production режим:** Multi-stage build (Node.js → Nginx ~56MB) 🆕
+- Пересборка Docker контейнеров (backend + frontend) 🆕
 - Команды полной пересборки проекта
 - Миграции базы данных и операции
 - Операции PostgreSQL
@@ -603,10 +608,10 @@ npm run test:run
 
 ## 📅 Последнее Обновление
 
-**Версия:** 1.3.0
-**Дата:** 2025-11-12
+**Версия:** 1.4.0
+**Дата:** 2025-11-13
 **Сопровождающий:** Claude Code AI
-**Фаза Проекта:** Production-Ready + Fail-Fast Security Implementation
+**Фаза Проекта:** Production-Ready + Frontend Dockerization Complete
 
 ---
 

@@ -641,38 +641,43 @@ docker-compose up -d
 ### Конфликты портов
 
 **Распространенные порты:**
-- 8089 - Backend (PHP-FPM)
-- 3000 - Frontend (Vite)
-- 5432 - PostgreSQL
+- 8089 - Backend Nginx
+- 15432 - PostgreSQL
+- 3000 - Frontend Dev (Vite)
+- 8080 - Frontend Prod (Nginx)
+- 9009 - PHP-FPM
+- 5672 - RabbitMQ
+- 15672 - RabbitMQ Management
 
 **Проверка всех портов:**
 ```bash
 # macOS/Linux
-lsof -i :8089 -i :3000 -i :5432
+lsof -i :8089 -i :3000 -i :8080 -i :15432
 
 # Windows
-netstat -ano | findstr "8089 3000 5432"
+netstat -ano | findstr "8089 3000 8080 15432"
 ```
 
 **Исправление конфликтов портов:**
 
-Отредактируйте `docker-compose.yml`:
-```yaml
-services:
-  backend:
-    ports:
-      - "8090:80"  # Изменено с 8089
+Отредактируйте `.env.docker`:
+```bash
+# Backend
+NGINX_PORT=8090           # Изменено с 8089
+POSTGRES_PORT=15433       # Изменено с 15432
 
-  frontend:
-    ports:
-      - "3001:3000"  # Изменено с 3000
-
-  postgres:
-    ports:
-      - "5433:5432"  # Изменено с 5432
+# Frontend
+FRONTEND_DEV_PORT=3001    # Изменено с 3000
+FRONTEND_PROD_PORT=8081   # Изменено с 8080
 ```
 
-Не забудьте обновить файлы `.env`!
+Перезапустите контейнеры:
+```bash
+docker-compose down
+docker-compose up -d
+```
+
+Не забудьте обновить `VITE_API_BASE_URL` если изменили `NGINX_PORT`!
 
 ---
 
@@ -730,6 +735,299 @@ services:
 
 # Перезапустить
 docker-compose up -d
+```
+
+---
+
+### Frontend контейнер не запускается
+
+**Ошибка:**
+```
+ERROR: for frontend-dev  Cannot start service frontend: driver failed programming external connectivity
+Error starting userland proxy: listen tcp4 0.0.0.0:3000: bind: address already in use
+```
+
+**Диагностика:**
+```bash
+# Проверить занятые порты
+lsof -i :3000
+lsof -i :8080
+
+# Проверить логи контейнера
+docker logs frontend-dev
+# или
+docker logs frontend-prod
+```
+
+**Решение:**
+
+```bash
+# Вариант 1: Остановить процесс на порту
+lsof -ti :3000 | xargs kill -9
+
+# Вариант 2: Изменить порт в .env.docker
+FRONTEND_DEV_PORT=3001
+FRONTEND_PROD_PORT=8081
+
+# Перезапустить
+docker-compose down
+docker-compose -f docker-compose.yml \
+  -f infrastructure/docker/docker-compose.frontend-dev.yml up -d
+```
+
+---
+
+### HMR (Hot Module Replacement) не работает в Docker
+
+**Проблема:** Изменения в коде не отражаются в браузере, требуется ручное обновление
+
+**Симптомы:**
+- Изменения файлов не вызывают перезагрузку браузера
+- В консоли нет сообщений HMR
+- Vite не отслеживает изменения файлов
+
+**Корневая причина:**
+
+Docker volume mount имеет проблемы с file watching на некоторых системах (особенно macOS)
+
+**Решение:**
+
+**1. Проверьте конфигурацию Vite (`apps/frontend/vite.config.ts`):**
+
+```typescript
+export default defineConfig({
+  server: {
+    host: '0.0.0.0',  // ✅ Обязательно для Docker!
+    port: 3000,
+    watch: {
+      usePolling: true,  // ✅ Включить polling для Docker
+      interval: 1000,    // Проверка каждую секунду
+    },
+    hmr: {
+      host: 'localhost',  // ✅ Для доступа с хоста
+    }
+  }
+});
+```
+
+**2. Проверьте volume mount в docker-compose:**
+
+```yaml
+# infrastructure/docker/docker-compose.frontend-dev.yml
+services:
+  frontend:
+    volumes:
+      - ../../apps/frontend:/app       # ✅ Монтирует весь код
+      - /app/node_modules              # ✅ Anonymous volume!
+```
+
+**Важно:** Anonymous volume `/app/node_modules` предотвращает перезапись контейнерных node_modules хостовыми файлами!
+
+**3. Перезапустите с чистой сборкой:**
+
+```bash
+docker-compose down
+docker-compose -f docker-compose.yml \
+  -f infrastructure/docker/docker-compose.frontend-dev.yml up -d --build
+```
+
+**Проверка:**
+
+```bash
+# Откройте браузер на http://localhost:3000
+# Измените файл apps/frontend/src/App.vue
+# Должно произойти автоматическое обновление через 1-2 секунды
+```
+
+---
+
+### node_modules конфликт между хостом и контейнером
+
+**Проблема:** После запуска Docker контейнера локальный `npm run dev` не работает
+
+**Ошибка:**
+```bash
+# На хосте (macOS/Windows)
+cd apps/frontend
+npm run dev
+
+# Ошибка:
+Error: Cannot find module '@rollup/rollup-darwin-arm64'
+# или
+Error: The module was compiled against a different Node.js version
+```
+
+**Корневая причина:**
+
+Docker контейнер (Linux) создает node_modules для Linux, которые несовместимы с хостовой системой (macOS/Windows)
+
+**Решение:**
+
+```bash
+# Удалить node_modules на хосте
+rm -rf apps/frontend/node_modules
+
+# Переустановить для вашей платформы
+cd apps/frontend
+npm install
+
+# Теперь локальный dev будет работать
+npm run dev
+
+# Docker dev будет использовать свои node_modules (anonymous volume!)
+docker-compose -f docker-compose.yml \
+  -f infrastructure/docker/docker-compose.frontend-dev.yml up -d
+```
+
+**Предотвращение:**
+
+Добавьте `node_modules` в `.dockerignore`:
+
+```bash
+# apps/frontend/.dockerignore
+node_modules
+dist
+.git
+.env.local
+```
+
+Это предотвращает копирование хостовых node_modules в контейнер!
+
+---
+
+### Production build fails: Cannot find module '@rollup/rollup-linux-x64-musl'
+
+**Ошибка:**
+```
+ERROR [builder 5/6] RUN npm run build
+#0 12.45 Error: Cannot find module '@rollup/rollup-linux-x64-musl'
+#0 12.45 Require stack:
+#0 12.45 - /app/node_modules/rollup/dist/native.js
+```
+
+**Корневая причина:**
+
+Использование `npm ci --only=production` в Dockerfile.prod, что исключает devDependencies. Но `vite`, `rollup`, `typescript` и другие инструменты сборки находятся в devDependencies!
+
+**Решение:**
+
+Исправьте `apps/frontend/Dockerfile.prod`:
+
+```dockerfile
+# ❌ НЕПРАВИЛЬНО
+RUN npm ci --only=production --prefer-offline
+
+# ✅ ПРАВИЛЬНО
+RUN npm ci --prefer-offline
+
+# В multi-stage build это безопасно:
+# - Builder stage нужны ВСЕ зависимости для сборки
+# - Production stage (nginx) вообще не содержит node_modules
+# - Финальный образ содержит только dist/ + nginx (~57MB)
+```
+
+**Полный Dockerfile.prod:**
+
+```dockerfile
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --prefer-offline  # ✅ Устанавливает ВСЕ зависимости
+COPY . .
+RUN npm run build
+RUN test -d dist || (echo "ERROR: dist/ not created!" && exit 1)
+
+FROM nginx:alpine
+COPY --from=builder /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+**Проверка:**
+
+```bash
+# Собрать production образ
+docker build -f apps/frontend/Dockerfile.prod -t frontend-prod ./apps/frontend
+
+# Должно завершиться успешно
+# Проверить размер
+docker images | grep frontend-prod
+# frontend-prod    latest    abc123    2 minutes ago    56.9MB ✅
+```
+
+---
+
+### Nginx 404 для всех маршрутов кроме /
+
+**Проблема:** Production frontend работает на `/`, но `/tasks`, `/calendar` возвращают 404
+
+**Симптомы:**
+- Главная страница загружается
+- Навигация по ссылкам работает
+- Прямой доступ к URL (F5) возвращает 404
+- Nginx возвращает стандартную страницу ошибки 404
+
+**Корневая причина:**
+
+Vue Router использует HTML5 History mode, который требует серверной конфигурации для fallback на `index.html`
+
+**Решение:**
+
+Проверьте `apps/frontend/nginx.conf`:
+
+```nginx
+server {
+    listen 80;
+    server_name localhost;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # ✅ КРИТИЧЕСКИ ВАЖНО для SPA!
+    location / {
+        try_files $uri $uri/ /index.html;
+        add_header Cache-Control "no-cache, no-store, must-revalidate";
+    }
+
+    # Proxy API к backend
+    location /api {
+        proxy_pass http://backend-nginx:80;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+```
+
+**Ключевой момент:** `try_files $uri $uri/ /index.html;`
+
+Это означает:
+1. Попытаться найти файл (например `/tasks`)
+2. Попытаться найти директорию
+3. Если не найдено - вернуть `/index.html` (где Vue Router обработает маршрут)
+
+**Пересоберите production контейнер:**
+
+```bash
+docker-compose -f docker-compose.yml \
+  -f infrastructure/docker/docker-compose-prod.yml \
+  -f infrastructure/docker/docker-compose.frontend-prod.yml down
+
+docker-compose -f docker-compose.yml \
+  -f infrastructure/docker/docker-compose-prod.yml \
+  -f infrastructure/docker/docker-compose.frontend-prod.yml up -d --build
+```
+
+**Проверка:**
+
+```bash
+# Откройте http://localhost:8080/tasks
+# Должна загрузиться страница задач (не 404!)
+
+# Проверьте логи nginx
+docker logs frontend-prod
+
+# Должны видеть:
+# "GET /tasks HTTP/1.1" 200  (не 404!)
 ```
 
 ---

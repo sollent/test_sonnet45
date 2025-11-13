@@ -1212,23 +1212,17 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cd frontend
+          cd apps/frontend
           npm ci
 
       - name: Install Playwright
         run: npx playwright install --with-deps
 
-      - name: Start backend
+      - name: Start backend & frontend (Docker)
         run: |
-          cd docker
-          docker-compose up -d
-
-      - name: Start frontend
-        run: |
-          cd frontend
-          npm run dev &
-        env:
-          VITE_API_URL: http://localhost:8089
+          docker-compose -f docker-compose.yml \
+            -f infrastructure/docker/docker-compose.dev.yml \
+            -f infrastructure/docker/docker-compose.frontend-dev.yml up -d
 
       - name: Wait for services
         run: |
@@ -1236,7 +1230,7 @@ jobs:
 
       - name: Run E2E tests
         run: |
-          cd frontend
+          cd apps/frontend
           npm run test:e2e
 
       - name: Upload test results

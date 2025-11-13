@@ -698,8 +698,32 @@ services:
 - **Согласованность**: Одинаковое окружение для dev, staging, prod
 - **Изоляция**: Каждый сервис в своем контейнере
 - **Переносимость**: Работает везде, где работает Docker
-- **Простая настройка**: `docker-compose -f docker-compose.yml -f infrastructure/docker/docker-compose.dev.yml up -d` (dev режим)
+- **Простая настройка**: Полный стек одной командой
 - **Контроль версий**: Инфраструктура как код
+
+**Докеризованные сервисы:**
+- **Backend**: Symfony + PHP-FPM + Nginx (development)
+- **Frontend**: Vite dev server (development ~456MB) или Nginx (production ~56MB) 🆕
+- **Database**: PostgreSQL 16
+- **Queue**: RabbitMQ
+- **Cron**: Background tasks
+
+**Команды запуска:**
+```bash
+# Development (Backend + Frontend)
+docker-compose -f docker-compose.yml \
+  -f infrastructure/docker/docker-compose.dev.yml \
+  -f infrastructure/docker/docker-compose.frontend-dev.yml up -d
+
+# Production (Backend + Frontend)
+docker-compose -f docker-compose.yml \
+  -f infrastructure/docker/docker-compose-prod.yml \
+  -f infrastructure/docker/docker-compose.frontend-prod.yml up -d
+```
+
+**Frontend Docker:**
+- **Dev**: Volume mount для Hot Reload (изменения видны мгновенно)
+- **Prod**: Multi-stage build (Node.js → Nginx) - 8x меньше размер!
 
 ---
 
