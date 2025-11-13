@@ -68,10 +68,10 @@ const loaderKey = computed(() => {
     </router-view>
     <!-- Global Language Switcher -->
     <GlobalLanguageSwitcher />
-
-    <!-- Offline Modal -->
-    <OfflineModal v-model="isModalVisible" />
     </template>
+
+    <!-- Offline Modal - Always rendered -->
+    <OfflineModal v-model="isModalVisible" />
   </div>
 </template>
 
