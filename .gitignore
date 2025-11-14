@@ -51,3 +51,9 @@ frontend/e2e/test-results.json
 # OS files
 .DS_Store
 Thumbs.db
+
+# Git Worktree
+# Worktree directories are stored outside the main repo
+# But we ignore any potential worktree metadata that might leak
+.git/worktrees/
+ACTIVE_WORKTREES.txt

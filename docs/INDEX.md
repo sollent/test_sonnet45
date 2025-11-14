@@ -661,3 +661,54 @@ npm run test:run
 ---
 
 *Эта документация живая и развивается вместе с проектом. Когда вы принимаете архитектурные решения, обновляйте релевантную документацию.*
+
+---
+
+## 🎯 Новые Документы - Backend Architecture (2025-11-14)
+
+### [`BACKEND_ARCHITECTURE_MAP.md`](BACKEND_ARCHITECTURE_MAP.md)
+**🏗️ ПОЛНАЯ карта backend архитектуры** - 9K+ строк детального анализа
+
+**Содержит:**
+- Полная структура `/src` (15 директорий, 17K LOC)
+- Все 9 сущностей с полями и отношениями
+- 8 API контроллеров с таблицами
+- 11 Core Services с описанием функций
+- 7 Database Repositories с примерами
+- JWT + Google OAuth 2.0 поток аутентификации
+- CORS конфигурация (regex домены, preflight кеширование)
+- Production Doctrine конфигурация (APCu кеширование)
+- Environment variables (Fail-Fast принцип)
+- DTO структура (Request/Response)
+- Слоистая архитектура (Presentation → Business → Data → DB)
+- Request/Response flow example (создание задачи)
+- 11 compound indexes для оптимизации
+- Все эндпоинты (Authentication, Tasks, Tags, Analytics, Profile)
+
+**Для кого**: Разработчикам, которым нужен **полный контекст** backend архитектуры
+
+### [`BACKEND_QUICK_REFERENCE.md`](BACKEND_QUICK_REFERENCE.md)
+**⚡ БЫСТРАЯ справка** - 2K строк для быстрого поиска информации
+
+**Содержит:**
+- 5 ключевых сущностей (1 таблица)
+- 8 API контроллеров (структурированный список)
+- 3 способа аутентификации (примеры)
+- 11 Core Services (список + размер файлов)
+- 7 Repositories (методы)
+- Поток создания задачи (пошаговый)
+- Security Architecture (диаграмма)
+- Performance Tips (DO/DON'T)
+- DTOs structure (Request/Response примеры)
+- Enums (современный PHP 8.1+)
+- Environment variables (production)
+- Testing структура
+- Common Issues таблица
+- Key Files to Know
+- One-Minute Answers (FAQ)
+- Best Practices Checklist
+
+**Для кого**: Разработчикам, которым нужна **быстрая справка** для дневной работы
+
+---
+
