@@ -353,6 +353,21 @@ Pinia stores и паттерны состояния
 - Настройка SSL/HTTPS
 - Мониторинг и логи
 
+#### [`deployment/HTTPS_SETUP.md`](deployment/HTTPS_SETUP.md)
+**🆕 НОВОЕ** - Детальное руководство по настройке HTTPS и SSL на production VDS
+
+**Ключевые Темы:**
+- Настройка DNS A-записей для доменов
+- Генерация Let's Encrypt SSL сертификатов с Certbot
+- Полные конфигурации Nginx для frontend и backend
+- HTTPS редиректы и www редиректы
+- CORS конфигурация для API
+- Security headers (HSTS, X-Frame-Options, etc.)
+- Обновление Docker контейнеров с новыми доменами
+- Автоматическое обновление сертификатов (certbot timer)
+- Troubleshooting SSL проблем
+- Checklist для production deployment
+
 #### [`guides/voice-ai/VOICE_AI_ASSISTANT_PLAN.md`](guides/voice-ai/VOICE_AI_ASSISTANT_PLAN.md)
 План реализации голосового AI ассистента с интеграцией LLM
 
@@ -620,10 +635,10 @@ npm run test:run
 
 ## 📅 Последнее Обновление
 
-**Версия:** 1.4.0
-**Дата:** 2025-11-13
+**Версия:** 1.5.0
+**Дата:** 2025-11-14
 **Сопровождающий:** Claude Code AI
-**Фаза Проекта:** Production-Ready + Frontend Dockerization Complete
+**Фаза Проекта:** Production-Ready + HTTPS/SSL Setup Complete
 
 ---
 
