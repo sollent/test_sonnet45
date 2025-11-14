@@ -1,7 +1,7 @@
 # 🔐 Настройка HTTPS и SSL на Production VDS
 
 > **Руководство по настройке Let's Encrypt SSL сертификатов и Nginx для production deployment**
-> **Версия**: 1.0
+> **Версия**: 1.2
 > **Дата**: 2025-11-14
 
 ---
@@ -106,14 +106,15 @@ HTTP Request (port 80)
 VDS IP: 45.129.186.88
     ↓
 Docker Containers:
-    - frontend-prod (port 3001)
-    - backend-nginx (port 80)
+    - frontend-prod (localhost:8000)
+    - backend-nginx (localhost:8089)
 ```
 
 **Проблемы:**
 - ❌ Незащищенное соединение
 - ❌ PWA не работает (требует HTTPS)
 - ❌ Браузеры показывают "Not Secure"
+- ❌ Доступ только по IP адресу (http://45.129.186.88)
 
 ### После Настройки HTTPS
 
@@ -123,8 +124,8 @@ HTTPS Request (port 443)
 Nginx (VDS) + SSL Termination
     ↓
 Proxy Pass:
-    - task.nesty.by → localhost:3001 (frontend-prod)
-    - api.task.nesty.by → localhost:80 (backend-nginx)
+    - task.nesty.by → localhost:8000 (frontend-prod)
+    - api.task.nesty.by → localhost:8089 (backend-nginx)
     ↓
 Docker Containers (внутренняя сеть)
 ```
@@ -340,9 +341,9 @@ server {
         return 301 https://task.nesty.by$request_uri;
     }
 
-    # Proxy к Docker Frontend контейнеру (frontend-prod на порту 3001)
+    # Proxy к Docker Frontend контейнеру (frontend-prod на порту 8000)
     location / {
-        proxy_pass http://localhost:3001;
+        proxy_pass http://localhost:8000;
         proxy_http_version 1.1;
 
         # Заголовки для корректной работы приложения
@@ -383,7 +384,16 @@ server {
 sudo nano /etc/nginx/sites-available/api.task.nesty.by.conf
 ```
 
-**Содержимое (упрощённая версия БЕЗ проблем):**
+**⚠️ ВАЖНО: CORS Headers**
+
+**НЕ добавляйте CORS headers в nginx!** Они должны управляться **только** в Symfony через `nelmio_cors` bundle. Добавление CORS headers в оба места (nginx + Symfony) приведет к дублированию и ошибке:
+
+```
+The 'Access-Control-Allow-Origin' header contains multiple values
+'https://task.nesty.by, https://task.nesty.by', but only one is allowed.
+```
+
+**Рекомендуемая конфигурация (БЕЗ CORS headers):**
 
 ```nginx
 # HTTP → HTTPS редирект для api.task.nesty.by
@@ -424,22 +434,14 @@ server {
         return 301 https://api.task.nesty.by$request_uri;
     }
 
-    # CORS заголовки на уровне сервера (работает для всех запросов)
-    add_header 'Access-Control-Allow-Origin' 'https://task.nesty.by' always;
-    add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, PATCH, OPTIONS' always;
-    add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization' always;
-    add_header 'Access-Control-Expose-Headers' 'Content-Length,Content-Range' always;
-    add_header 'Access-Control-Allow-Credentials' 'true' always;
-    add_header 'Access-Control-Max-Age' 1728000 always;
-
-    # Security headers
+    # Security headers (НЕ CORS!)
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-XSS-Protection "1; mode=block" always;
 
-    # Proxy к Docker Backend контейнеру (backend-nginx на порту 80)
+    # Proxy к Docker Backend контейнеру (backend-nginx на порту 8089)
     location / {
-        proxy_pass http://localhost:80;
+        proxy_pass http://localhost:8089;
         proxy_http_version 1.1;
 
         # Заголовки для корректной работы Symfony
@@ -464,77 +466,12 @@ server {
 }
 ```
 
-**⚠️ Важное Примечание о CORS:**
+**Почему CORS в Symfony, а не в Nginx?**
 
-Эта конфигурация использует **упрощённый подход** с CORS headers на уровне сервера вместо обработки OPTIONS внутри location блока. Это избегает проблемы nginx с `add_header` внутри `if` блоков.
-
-**Альтернативная версия (если нужна явная обработка OPTIONS):**
-
-```nginx
-# ... (HTTP server такой же)
-
-# HTTPS сервер с явной обработкой OPTIONS
-server {
-    listen 443 ssl http2;
-    listen [::]:443 ssl http2;
-    server_name api.task.nesty.by www.api.task.nesty.by;
-
-    ssl_certificate /etc/letsencrypt/live/api.task.nesty.by/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/api.task.nesty.by/privkey.pem;
-    ssl_trusted_certificate /etc/letsencrypt/live/api.task.nesty.by/chain.pem;
-    include snippets/ssl.conf;
-
-    access_log /var/log/nginx/api.task.nesty.by.access.log;
-    error_log /var/log/nginx/api.task.nesty.by.error.log;
-
-    if ($host = www.api.task.nesty.by) {
-        return 301 https://api.task.nesty.by$request_uri;
-    }
-
-    location / {
-        # Обработка OPTIONS preflight requests ДО proxy_pass
-        if ($request_method = 'OPTIONS') {
-            add_header 'Access-Control-Allow-Origin' 'https://task.nesty.by' always;
-            add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, PATCH, OPTIONS' always;
-            add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization' always;
-            add_header 'Access-Control-Max-Age' 1728000 always;
-            add_header 'Content-Type' 'text/plain; charset=utf-8' always;
-            add_header 'Content-Length' 0 always;
-            return 204;
-        }
-
-        proxy_pass http://localhost:80;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_set_header X-Forwarded-Host $host;
-        proxy_set_header X-Forwarded-Port $server_port;
-        proxy_connect_timeout 120s;
-        proxy_send_timeout 120s;
-        proxy_read_timeout 120s;
-        proxy_buffering on;
-        proxy_buffer_size 4k;
-        proxy_buffers 8 4k;
-        proxy_busy_buffers_size 8k;
-
-        # CORS для обычных запросов (после proxy_pass)
-        add_header 'Access-Control-Allow-Origin' 'https://task.nesty.by' always;
-        add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, PATCH, OPTIONS' always;
-        add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization' always;
-        add_header 'Access-Control-Expose-Headers' 'Content-Length,Content-Range' always;
-        add_header 'Access-Control-Allow-Credentials' 'true' always;
-    }
-
-    # Security headers
-    add_header X-Frame-Options "SAMEORIGIN" always;
-    add_header X-Content-Type-Options "nosniff" always;
-    add_header X-XSS-Protection "1; mode=block" always;
-}
-```
-
-**Рекомендация:** Используйте **упрощённую версию** (первую) - она проще и работает надёжнее.
+1. **Symfony nelmio_cors** правильно обрабатывает preflight OPTIONS запросы
+2. **Избегается дублирование** headers (nginx + Symfony = ошибка браузера)
+3. **Централизованное управление** CORS политикой в коде приложения
+4. **Меньше конфигурации** в nginx (проще поддерживать)
 
 ### Активация Конфигураций
 
@@ -582,12 +519,12 @@ POSTGRES_PASSWORD=your_secure_password  # Из generate-secrets.sh
 RABBITMQ_USER=prod_user
 RABBITMQ_PASSWORD=your_secure_password  # Из generate-secrets.sh
 
-# Nginx Configuration
-NGINX_PORT=80
-PHP_FPM_PORT=9000
+# Nginx Configuration (Docker internal ports exposed to host)
+NGINX_PORT=8089
+PHP_FPM_PORT=9009
 
-# Frontend Production Configuration
-FRONTEND_PROD_PORT=3001
+# Frontend Production Configuration (Docker internal port exposed to host)
+FRONTEND_PROD_PORT=8000
 
 # ВАЖНО! Новый API URL с HTTPS
 VITE_API_BASE_URL=https://api.task.nesty.by
@@ -764,7 +701,7 @@ docker ps | grep frontend-prod
 
 ### Обновление CORS в Backend
 
-**ВАЖНО:** После изменения домена frontend необходимо обновить CORS настройки.
+**ВАЖНО:** CORS должен управляться **ТОЛЬКО** в Symfony через `nelmio_cors` bundle. **НЕ добавляйте** CORS headers в nginx конфигурацию!
 
 **Отредактируйте конфигурацию:**
 
@@ -772,21 +709,40 @@ docker ps | grep frontend-prod
 nano apps/backend/config/packages/nelmio_cors.yaml
 ```
 
-**Обновите `allow_origin`:**
+**Обновите конфигурацию:**
 
 ```yaml
 nelmio_cors:
     defaults:
         origin_regex: true
-        allow_origin: ['https://task.nesty.by']  # ← Новый домен с HTTPS
+        # Production: Только разрешенные домены (НЕ *)
+        # Development: localhost:3000 для локальной разработки
+        # Production: task.nesty.by для боевого сервера
+        allow_origin:
+            - '^https?://localhost(:[0-9]+)?$'  # Local dev
+            - '^https://task\.nesty\.by$'        # Production frontend
         allow_methods: ['GET', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']
-        allow_headers: ['Content-Type', 'Authorization', 'X-Requested-With']
-        expose_headers: ['Link']
-        max_age: 3600
+        allow_headers: ['Content-Type', 'Authorization', 'X-Requested-With', 'Cache-Control']
+        expose_headers: ['Link', 'Content-Length', 'Content-Range']
         allow_credentials: true
+        max_age: 3600
     paths:
-        '^/api/': ~
+        '^/api':
+            allow_origin:
+                - '^https?://localhost(:[0-9]+)?$'
+                - '^https://task\.nesty\.by$'
+            allow_headers: ['*']
+            allow_methods: ['GET', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']
+            allow_credentials: true
+            max_age: 3600
 ```
+
+**Ключевые изменения:**
+
+- ✅ `allow_origin` использует regex паттерны для localhost и production
+- ✅ `allow_credentials: true` для поддержки cookies/JWT
+- ✅ `expose_headers` расширен для корректной работы API
+- ✅ Отдельная секция `paths` для `/api` с дополнительными правилами
 
 **Перезапустите backend контейнеры:**
 
@@ -797,6 +753,9 @@ nelmio_cors:
 docker compose -f docker-compose.yml \
   -f infrastructure/docker/docker-compose-prod.yml \
   restart php83-fpm nginx
+
+# Очистите cache
+docker exec backend-php83 php bin/console cache:clear --env=prod
 ```
 
 ### Проверка Успешной Пересборки
@@ -1132,38 +1091,107 @@ nginx: [emerg] SSL: error:02001002:system library:fopen:No such file or director
 
 3. Убедитесь что пути совпадают
 
-### ❌ CORS Error в Браузере
+### ❌ CORS Error: Duplicate Headers
 
 **Проблема в Console:**
 ```
-Access to XMLHttpRequest at 'https://api.task.nesty.by/api/tasks'
-from origin 'https://task.nesty.by' has been blocked by CORS policy
+Access to XMLHttpRequest at 'https://api.task.nesty.by/api/auth/google'
+from origin 'https://task.nesty.by' has been blocked by CORS policy:
+The 'Access-Control-Allow-Origin' header contains multiple values
+'https://task.nesty.by, https://task.nesty.by', but only one is allowed.
 ```
+
+**Причина:** CORS headers добавляются **дважды** - в nginx И в Symfony (nelmio_cors).
 
 **Решение:**
 
-1. **Проверьте nginx конфигурацию API:**
+1. **Удалите CORS headers из nginx конфигурации:**
    ```bash
    sudo nano /etc/nginx/sites-available/api.task.nesty.by.conf
    ```
 
-   Убедитесь что есть CORS заголовки:
+   **УДАЛИТЕ все строки** с `Access-Control-*`:
    ```nginx
+   # УДАЛИТЬ ЭТИ СТРОКИ! ↓
    add_header 'Access-Control-Allow-Origin' 'https://task.nesty.by' always;
+   add_header 'Access-Control-Allow-Methods' ...
+   add_header 'Access-Control-Allow-Headers' ...
+   # И т.д.
    ```
 
-2. **Обновите CORS в Symfony:**
+   **Оставьте только Security headers** (НЕ CORS):
+   ```nginx
+   add_header X-Frame-Options "SAMEORIGIN" always;
+   add_header X-Content-Type-Options "nosniff" always;
+   add_header X-XSS-Protection "1; mode=block" always;
+   ```
+
+2. **Проверьте CORS в Symfony:**
+   ```bash
+   nano apps/backend/config/packages/nelmio_cors.yaml
+   ```
+
+   Убедитесь что конфигурация правильная:
    ```yaml
-   # apps/backend/config/packages/nelmio_cors.yaml
    nelmio_cors:
        defaults:
-           allow_origin: ['https://task.nesty.by']
+           origin_regex: true
+           allow_origin:
+               - '^https?://localhost(:[0-9]+)?$'
+               - '^https://task\.nesty\.by$'
+           allow_credentials: true
    ```
 
 3. **Перезагрузите nginx и backend:**
    ```bash
    sudo systemctl reload nginx
+   docker compose -f docker-compose.yml \
+     -f infrastructure/docker/docker-compose-prod.yml \
+     restart php83-fpm nginx
+   docker exec backend-php83 php bin/console cache:clear --env=prod
+   ```
+
+4. **Проверьте что headers идут только один раз:**
+   ```bash
+   curl -I -X OPTIONS https://api.task.nesty.by/api/auth/google \
+     -H "Origin: https://task.nesty.by" \
+     -H "Access-Control-Request-Method: POST"
+
+   # Должен быть ОДИН access-control-allow-origin header!
+   ```
+
+### ❌ CORS Error: No Access-Control-Allow-Origin
+
+**Проблема в Console:**
+```
+Access to XMLHttpRequest at 'https://api.task.nesty.by/api/tasks'
+from origin 'https://task.nesty.by' has been blocked by CORS policy:
+No 'Access-Control-Allow-Origin' header is present
+```
+
+**Причина:** CORS не настроен в Symfony или неправильный домен.
+
+**Решение:**
+
+1. **Обновите CORS в Symfony:**
+   ```bash
+   nano apps/backend/config/packages/nelmio_cors.yaml
+   ```
+
+   ```yaml
+   nelmio_cors:
+       defaults:
+           origin_regex: true
+           allow_origin:
+               - '^https?://localhost(:[0-9]+)?$'
+               - '^https://task\.nesty\.by$'  # ← Ваш домен с HTTPS!
+           allow_credentials: true
+   ```
+
+2. **Перезапустите backend:**
+   ```bash
    docker compose restart php83-fpm nginx
+   docker exec backend-php83 php bin/console cache:clear --env=prod
    ```
 
 ### ❌ PWA Service Worker Не Регистрируется
@@ -1315,8 +1343,18 @@ nginx: [emerg] bind() to 0.0.0.0:443 failed (98: Address already in use)
 ---
 
 **Последнее обновление:** 2025-11-14
-**Версия:** 1.1
+**Версия:** 1.2
 **Автор:** Claude Code AI
+
+**Изменения v1.2:**
+- ✅ **КРИТИЧНО**: Удалены CORS headers из nginx конфигурации (дублирование с Symfony)
+- ✅ Обновлена Backend API конфигурация - БЕЗ CORS headers в nginx
+- ✅ Добавлено предупреждение: CORS только в Symfony (nelmio_cors bundle)
+- ✅ Обновлена секция "Обновление CORS в Backend" с правильной конфигурацией
+- ✅ Исправлены порты: `proxy_pass http://localhost:8089` (было 80)
+- ✅ Добавлен новый Troubleshooting: "CORS Error: Duplicate Headers"
+- ✅ Обновлен Troubleshooting: "CORS Error: No Access-Control-Allow-Origin"
+- ✅ Удалена устаревшая "альтернативная версия" с CORS в nginx
 
 **Изменения v1.1:**
 - ✅ Исправлена конфигурация API с CORS (убрана проблема с add_header в if блоке)
