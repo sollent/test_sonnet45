@@ -294,6 +294,17 @@ Pinia stores и паттерны состояния
 - Troubleshooting частых проблем с PWA
 - Чеклист успешного тестирования
 
+#### [`guides/GIT_WORKTREE_STRATEGY.md`](guides/GIT_WORKTREE_STRATEGY.md)
+**🌳 НОВОЕ 2025-11-14** - Стратегия параллельной разработки в нескольких ветках
+
+**Ключевые Темы:**
+- Git Worktree для одновременной работы в разных ветках
+- Изоляция Docker контейнеров через уникальные порты
+- Bash скрипты для автоматизации (create, remove, list, stop-all)
+- Работа с несколькими сессиями Claude Code параллельно
+- Best practices и troubleshooting
+- Полная автоматизация через `COMPOSE_PROJECT_NAME`
+
 #### [`guides/TROUBLESHOOTING.md`](guides/TROUBLESHOOTING.md)
 Частые проблемы и их решения
 
