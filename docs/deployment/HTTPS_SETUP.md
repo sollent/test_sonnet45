@@ -383,7 +383,7 @@ server {
 sudo nano /etc/nginx/sites-available/api.task.nesty.by.conf
 ```
 
-**Содержимое:**
+**Содержимое (упрощённая версия БЕЗ проблем):**
 
 ```nginx
 # HTTP → HTTPS редирект для api.task.nesty.by
@@ -424,23 +424,18 @@ server {
         return 301 https://api.task.nesty.by$request_uri;
     }
 
-    # CORS заголовки для API (ВАЖНО!)
+    # CORS заголовки на уровне сервера (работает для всех запросов)
     add_header 'Access-Control-Allow-Origin' 'https://task.nesty.by' always;
     add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, PATCH, OPTIONS' always;
     add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization' always;
     add_header 'Access-Control-Expose-Headers' 'Content-Length,Content-Range' always;
     add_header 'Access-Control-Allow-Credentials' 'true' always;
+    add_header 'Access-Control-Max-Age' 1728000 always;
 
-    # Preflight requests (OPTIONS)
-    if ($request_method = 'OPTIONS') {
-        add_header 'Access-Control-Allow-Origin' 'https://task.nesty.by' always;
-        add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, PATCH, OPTIONS' always;
-        add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization' always;
-        add_header 'Access-Control-Max-Age' 1728000;
-        add_header 'Content-Type' 'text/plain; charset=utf-8';
-        add_header 'Content-Length' 0;
-        return 204;
-    }
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
 
     # Proxy к Docker Backend контейнеру (backend-nginx на порту 80)
     location / {
@@ -466,13 +461,80 @@ server {
         proxy_buffers 8 4k;
         proxy_busy_buffers_size 8k;
     }
+}
+```
 
-    # Дополнительные security headers
+**⚠️ Важное Примечание о CORS:**
+
+Эта конфигурация использует **упрощённый подход** с CORS headers на уровне сервера вместо обработки OPTIONS внутри location блока. Это избегает проблемы nginx с `add_header` внутри `if` блоков.
+
+**Альтернативная версия (если нужна явная обработка OPTIONS):**
+
+```nginx
+# ... (HTTP server такой же)
+
+# HTTPS сервер с явной обработкой OPTIONS
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name api.task.nesty.by www.api.task.nesty.by;
+
+    ssl_certificate /etc/letsencrypt/live/api.task.nesty.by/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/api.task.nesty.by/privkey.pem;
+    ssl_trusted_certificate /etc/letsencrypt/live/api.task.nesty.by/chain.pem;
+    include snippets/ssl.conf;
+
+    access_log /var/log/nginx/api.task.nesty.by.access.log;
+    error_log /var/log/nginx/api.task.nesty.by.error.log;
+
+    if ($host = www.api.task.nesty.by) {
+        return 301 https://api.task.nesty.by$request_uri;
+    }
+
+    location / {
+        # Обработка OPTIONS preflight requests ДО proxy_pass
+        if ($request_method = 'OPTIONS') {
+            add_header 'Access-Control-Allow-Origin' 'https://task.nesty.by' always;
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, PATCH, OPTIONS' always;
+            add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization' always;
+            add_header 'Access-Control-Max-Age' 1728000 always;
+            add_header 'Content-Type' 'text/plain; charset=utf-8' always;
+            add_header 'Content-Length' 0 always;
+            return 204;
+        }
+
+        proxy_pass http://localhost:80;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Port $server_port;
+        proxy_connect_timeout 120s;
+        proxy_send_timeout 120s;
+        proxy_read_timeout 120s;
+        proxy_buffering on;
+        proxy_buffer_size 4k;
+        proxy_buffers 8 4k;
+        proxy_busy_buffers_size 8k;
+
+        # CORS для обычных запросов (после proxy_pass)
+        add_header 'Access-Control-Allow-Origin' 'https://task.nesty.by' always;
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, PATCH, OPTIONS' always;
+        add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization' always;
+        add_header 'Access-Control-Expose-Headers' 'Content-Length,Content-Range' always;
+        add_header 'Access-Control-Allow-Credentials' 'true' always;
+    }
+
+    # Security headers
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-XSS-Protection "1; mode=block" always;
 }
 ```
+
+**Рекомендация:** Используйте **упрощённую версию** (первую) - она проще и работает надёжнее.
 
 ### Активация Конфигураций
 
@@ -756,6 +818,54 @@ DNS problem: NXDOMAIN looking up A for www.task.nesty.by
 
 4. Повторите certbot команду
 
+### ❌ Nginx: "add_header directive is not allowed here"
+
+**Проблема:**
+```
+nginx: [emerg] "add_header" directive is not allowed here in /etc/nginx/sites-enabled/api.task.nesty.by.conf:48
+nginx: configuration file /etc/nginx/nginx.conf test failed
+```
+
+**Причина:** Нельзя использовать `add_header` внутри блока `if` на уровне сервера (только внутри location)
+
+**Решение:**
+
+Используйте **упрощённую конфигурацию** с CORS headers на уровне сервера:
+
+```nginx
+server {
+    # ... ssl конфигурация ...
+
+    # CORS на уровне сервера (ПРАВИЛЬНО!)
+    add_header 'Access-Control-Allow-Origin' 'https://task.nesty.by' always;
+    add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, PATCH, OPTIONS' always;
+    # ... остальные headers ...
+
+    location / {
+        # НЕ используйте if внутри location для CORS!
+        proxy_pass http://localhost:80;
+    }
+}
+```
+
+**Альтернатива:** Если нужна обработка OPTIONS, переместите `if` блок **внутрь location**:
+
+```nginx
+location / {
+    # CORS preflight внутри location (РАБОТАЕТ!)
+    if ($request_method = 'OPTIONS') {
+        add_header 'Access-Control-Allow-Origin' 'https://task.nesty.by' always;
+        # ... остальные headers ...
+        return 204;
+    }
+
+    proxy_pass http://localhost:80;
+
+    # CORS для обычных запросов
+    add_header 'Access-Control-Allow-Origin' 'https://task.nesty.by' always;
+}
+```
+
 ### ❌ Nginx: "nginx: [emerg] SSL error"
 
 **Проблема:**
@@ -962,8 +1072,14 @@ nginx: [emerg] bind() to 0.0.0.0:443 failed (98: Address already in use)
 ---
 
 **Последнее обновление:** 2025-11-14
-**Версия:** 1.0
+**Версия:** 1.1
 **Автор:** Claude Code AI
+
+**Изменения v1.1:**
+- ✅ Исправлена конфигурация API с CORS (убрана проблема с add_header в if блоке)
+- ✅ Добавлена упрощённая версия конфигурации API (рекомендуемая)
+- ✅ Добавлена альтернативная версия с явной обработкой OPTIONS
+- ✅ Обновлён Troubleshooting: добавлена проблема "add_header directive is not allowed"
 
 **Связанные документы:**
 - [DEPLOYMENT.md](DEPLOYMENT.md) - Общее руководство по deployment
