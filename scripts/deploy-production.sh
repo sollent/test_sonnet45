@@ -280,10 +280,53 @@ docker exec backend-php83 php bin/console doctrine:migrations:migrate --no-inter
 print_success "База данных настроена!"
 
 # ================================================================
-# Шаг 9: Проверка статуса
+# Шаг 9: Генерация JWT ключей
 # ================================================================
 
-print_header "Шаг 9: Проверка статуса сервисов"
+print_header "Шаг 9: Генерация JWT ключей"
+
+print_step "Проверка существующих JWT ключей..."
+if docker exec backend-php83 test -f config/jwt/private.pem && docker exec backend-php83 test -f config/jwt/public.pem; then
+    print_success "JWT ключи уже существуют"
+    print_info "Пропускаем генерацию (используем существующие ключи)"
+else
+    print_step "JWT ключи не найдены, генерируем новые..."
+
+    # Генерация JWT ключей через Symfony команду
+    docker exec backend-php83 php bin/console lexik:jwt:generate-keypair --skip-if-exists || {
+        print_warning "Команда lexik:jwt:generate-keypair не сработала, используем OpenSSL..."
+
+        # Fallback: генерация через OpenSSL
+        print_step "Генерация ключей через OpenSSL..."
+        docker exec backend-php83 bash -c "
+            mkdir -p config/jwt && \
+            openssl genpkey -out config/jwt/private.pem -aes256 -algorithm rsa -pkeyopt rsa_keygen_bits:4096 -pass pass:\${JWT_PASSPHRASE:-changeme} && \
+            openssl pkey -in config/jwt/private.pem -passin pass:\${JWT_PASSPHRASE:-changeme} -out config/jwt/public.pem -pubout && \
+            chown www-data:www-data config/jwt/private.pem config/jwt/public.pem && \
+            chmod 600 config/jwt/private.pem && \
+            chmod 644 config/jwt/public.pem
+        " || {
+            print_error "Ошибка при генерации JWT ключей!"
+            exit 1
+        }
+    }
+
+    print_success "JWT ключи успешно сгенерированы!"
+fi
+
+# Проверка прав доступа
+print_step "Проверка прав доступа на JWT ключи..."
+docker exec backend-php83 bash -c "
+    chmod 600 config/jwt/private.pem 2>/dev/null || true
+    chmod 644 config/jwt/public.pem 2>/dev/null || true
+"
+print_success "Права доступа настроены корректно!"
+
+# ================================================================
+# Шаг 10: Проверка статуса
+# ================================================================
+
+print_header "Шаг 10: Проверка статуса сервисов"
 
 print_step "Статус контейнеров:"
 docker ps --filter "name=backend-" --filter "name=frontend-" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
