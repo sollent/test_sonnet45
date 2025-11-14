@@ -2,35 +2,81 @@
 
 > **Быстрый старт для работы с Git Worktree**
 
+## ⚡ Make Команды (Рекомендуется!)
+
+Все операции с worktree доступны через **короткие Make команды**:
+
+```bash
+# Создание worktree
+make wt-create BRANCH=feature/name NAME=feature-name
+
+# Список всех worktrees
+make wt-list
+
+# Удаление worktree
+make wt-remove NAME=feature-name
+
+# Остановка всех Docker контейнеров
+make wt-stop
+
+# Помощь по всем командам
+make help
+```
+
+**Полные названия команд:**
+- `make worktree-create` (alias: `wt-create`)
+- `make worktree-list` (aliases: `wt-list`, `wt-ls`)
+- `make worktree-remove` (aliases: `wt-remove`, `wt-rm`)
+- `make worktree-stop-all` (alias: `wt-stop`)
+
+---
+
 ## 🚀 Основные Команды
 
 ### Создание Worktree
 
 ```bash
-# Автоматически (рекомендуется) - использует скрипт для настройки портов
+# Через Make (рекомендуется) ⚡
+make worktree-create BRANCH=feature/new-feature NAME=feature-new-feature
+# Или короткий alias:
+make wt-create BRANCH=feature/new-feature NAME=feature-new-feature
+
+# Через скрипт напрямую
 ./scripts/worktree/worktree-create.sh feature/new-feature feature-new-feature
 
-# Вручную
+# Вручную (для продвинутых)
 git worktree add -b feature/new-feature ../CLAUDE-worktrees/feature-new-feature
 ```
 
 ### Список Worktrees
 
 ```bash
-# Показать все worktrees с Docker контейнерами и портами
+# Через Make (рекомендуется) ⚡
+make worktree-list
+# Или короткие aliases:
+make wt-list
+make wt-ls
+
+# Через скрипт напрямую
 ./scripts/worktree/worktree-list.sh
 
-# Простой список
+# Простой список (только Git, без Docker info)
 git worktree list
 ```
 
 ### Удаление Worktree
 
 ```bash
-# Автоматически (рекомендуется) - останавливает Docker контейнеры
+# Через Make (рекомендуется) ⚡
+make worktree-remove NAME=feature-new-feature
+# Или короткие aliases:
+make wt-remove NAME=feature-new-feature
+make wt-rm NAME=feature-new-feature
+
+# Через скрипт напрямую
 ./scripts/worktree/worktree-remove.sh feature-new-feature
 
-# Вручную
+# Вручную (для продвинутых)
 cd /Users/sollent/Desktop/Projects/CLAUDE
 git worktree remove ../CLAUDE-worktrees/feature-new-feature
 ```
@@ -38,7 +84,12 @@ git worktree remove ../CLAUDE-worktrees/feature-new-feature
 ### Остановка Всех Docker Контейнеров
 
 ```bash
-# Останавливает Docker во всех worktrees
+# Через Make (рекомендуется) ⚡
+make worktree-stop-all
+# Или короткий alias:
+make wt-stop
+
+# Через скрипт напрямую
 ./scripts/worktree/worktree-stop-all.sh
 ```
 
@@ -49,6 +100,10 @@ git worktree remove ../CLAUDE-worktrees/feature-new-feature
 ### 1. Создать новый feature worktree
 
 ```bash
+# Через Make ⚡
+make wt-create BRANCH=feature/caching NAME=feature-caching
+
+# Или через скрипт
 ./scripts/worktree/worktree-create.sh feature/caching feature-caching
 ```
 
@@ -76,6 +131,10 @@ claude-code
 ### 5. После завершения работы - удалить worktree
 
 ```bash
+# Через Make ⚡
+make wt-remove NAME=feature-caching
+
+# Или через скрипт
 ./scripts/worktree/worktree-remove.sh feature-caching
 ```
 
@@ -99,6 +158,10 @@ claude-code
 ### Проверить статус всех worktrees
 
 ```bash
+# Через Make ⚡
+make wt-list
+
+# Или через скрипт
 ./scripts/worktree/worktree-list.sh
 ```
 

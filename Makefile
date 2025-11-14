@@ -207,3 +207,45 @@ status: ## Show status of all services
 	$(COMPOSE_DEV_FULL) ps
 
 ps: status ## Alias for status
+
+## 🌳 Git Worktree Commands
+
+worktree-create: ## Create new worktree (usage: make worktree-create BRANCH=feature/name NAME=feature-name)
+	@if [ -z "$(BRANCH)" ] || [ -z "$(NAME)" ]; then \
+		echo "❌ Error: BRANCH and NAME parameters required"; \
+		echo ""; \
+		echo "Usage:"; \
+		echo "  make worktree-create BRANCH=feature/new-api NAME=feature-new-api"; \
+		echo ""; \
+		echo "Examples:"; \
+		echo "  make worktree-create BRANCH=feature/caching NAME=feature-caching"; \
+		echo "  make worktree-create BRANCH=bugfix/cors NAME=bugfix-cors"; \
+		exit 1; \
+	fi
+	@./scripts/worktree/worktree-create.sh $(BRANCH) $(NAME)
+
+worktree-list: ## Show all worktrees with Docker containers and ports
+	@./scripts/worktree/worktree-list.sh
+
+worktree-remove: ## Remove worktree (usage: make worktree-remove NAME=feature-name)
+	@if [ -z "$(NAME)" ]; then \
+		echo "❌ Error: NAME parameter required"; \
+		echo ""; \
+		echo "Usage:"; \
+		echo "  make worktree-remove NAME=feature-new-api"; \
+		echo ""; \
+		echo "Available worktrees:"; \
+		git worktree list; \
+		exit 1; \
+	fi
+	@./scripts/worktree/worktree-remove.sh $(NAME)
+
+worktree-stop-all: ## Stop Docker containers in all worktrees
+	@./scripts/worktree/worktree-stop-all.sh
+
+wt-create: worktree-create ## Alias for worktree-create
+wt-list: worktree-list ## Alias for worktree-list
+wt-ls: worktree-list ## Alias for worktree-list
+wt-remove: worktree-remove ## Alias for worktree-remove
+wt-rm: worktree-remove ## Alias for worktree-remove
+wt-stop: worktree-stop-all ## Alias for worktree-stop-all
