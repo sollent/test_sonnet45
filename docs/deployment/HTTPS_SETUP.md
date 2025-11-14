@@ -555,32 +555,189 @@ sudo systemctl reload nginx
 
 ---
 
-## Обновление Docker Контейнеров
+## Полная Пересборка Проекта
 
-### Обновление .env.docker.prod
+После настройки HTTPS и обновления доменов необходимо пересобрать проект с новыми переменными окружения.
+
+### Подготовка: Обновление Переменных Окружения
 
 **На VDS в директории проекта:**
 
 ```bash
-cd /var/www/test_sonnet45  # или ваша директория
+cd /var/www/test_sonnet45  # или ваша директория проекта
 
+# Отредактируйте .env.docker.prod
 nano .env.docker.prod
 ```
 
-**Измените VITE_API_BASE_URL:**
+**Обновите VITE_API_BASE_URL и порты:**
 
 ```bash
-# БЫЛО:
-VITE_API_BASE_URL=http://45.129.186.88
+# PostgreSQL Configuration
+POSTGRES_DB=backend_prod
+POSTGRES_USER=prod_user
+POSTGRES_PASSWORD=your_secure_password  # Из generate-secrets.sh
 
-# ДОЛЖНО БЫТЬ:
-VITE_API_BASE_URL=https://api.task.nesty.by
+# RabbitMQ Configuration
+RABBITMQ_USER=prod_user
+RABBITMQ_PASSWORD=your_secure_password  # Из generate-secrets.sh
 
-# Также убедитесь что порт правильный:
+# Nginx Configuration
+NGINX_PORT=80
+PHP_FPM_PORT=9000
+
+# Frontend Production Configuration
 FRONTEND_PROD_PORT=3001
+
+# ВАЖНО! Новый API URL с HTTPS
+VITE_API_BASE_URL=https://api.task.nesty.by
 ```
 
-### Пересборка Frontend
+**Создайте symlink для Docker Compose:**
+
+```bash
+# Docker Compose будет использовать .env.docker.prod
+ln -sf .env.docker.prod .env.docker
+```
+
+### Вариант 1: Автоматическая Пересборка (Рекомендуется)
+
+**Используйте готовый скрипт `deploy-production.sh`:**
+
+```bash
+# Запустите deployment скрипт
+./scripts/deploy-production.sh
+```
+
+**Скрипт автоматически выполнит:**
+
+1. ✅ Проверку окружения (Docker, Docker Compose)
+2. ✅ Создание/проверку `.env.docker.prod`
+3. ✅ Остановку старых контейнеров
+4. ✅ Сборку production образов (backend + frontend)
+5. ✅ Запуск всех сервисов
+6. ✅ Установку зависимостей (`composer install --no-dev`)
+7. ✅ Применение миграций базы данных
+8. ✅ Генерацию JWT ключей (если отсутствуют)
+9. ✅ Проверку здоровья сервисов
+
+**Ожидаемый вывод:**
+
+```
+================================================
+Развертывание завершено! 🎉
+================================================
+
+✓ Frontend:  https://task.nesty.by
+✓ Backend:   https://api.task.nesty.by
+```
+
+### Вариант 2: Пошаговая Пересборка (Ручной Контроль)
+
+**Если нужен больший контроль над процессом:**
+
+#### Шаг 1: Остановка Всех Контейнеров
+
+```bash
+# Остановить весь стек
+docker compose -f docker-compose.yml \
+  -f infrastructure/docker/docker-compose-prod.yml \
+  -f infrastructure/docker/docker-compose.frontend-prod.yml \
+  down
+```
+
+#### Шаг 2: Пересборка Backend
+
+```bash
+# Собрать backend образ
+docker compose -f docker-compose.yml \
+  -f infrastructure/docker/docker-compose-prod.yml \
+  build --no-cache php83-fpm nginx
+```
+
+#### Шаг 3: Пересборка Frontend
+
+```bash
+# Собрать frontend образ с новым VITE_API_BASE_URL
+docker compose -f docker-compose.yml \
+  -f infrastructure/docker/docker-compose-prod.yml \
+  -f infrastructure/docker/docker-compose.frontend-prod.yml \
+  build --no-cache frontend
+```
+
+**⚠️ Важно:** Frontend использует `VITE_API_BASE_URL` **во время сборки** (build-time variable). Vite встраивает его в JavaScript bundle.
+
+#### Шаг 4: Запуск Всех Сервисов
+
+```bash
+# Запустить весь стек
+docker compose -f docker-compose.yml \
+  -f infrastructure/docker/docker-compose-prod.yml \
+  -f infrastructure/docker/docker-compose.frontend-prod.yml \
+  up -d
+
+# Подождать инициализации
+sleep 15
+```
+
+#### Шаг 5: Установка Зависимостей
+
+```bash
+# Composer для backend
+docker exec backend-php83 composer install \
+  --optimize-autoloader \
+  --no-dev \
+  --no-interaction
+```
+
+#### Шаг 6: Миграции Базы Данных
+
+```bash
+# Создать базу данных (если не существует)
+docker exec backend-php83 php bin/console \
+  doctrine:database:create \
+  --if-not-exists \
+  --env=prod
+
+# Применить миграции
+docker exec backend-php83 php bin/console \
+  doctrine:migrations:migrate \
+  --no-interaction \
+  --env=prod
+```
+
+#### Шаг 7: Генерация JWT Ключей
+
+```bash
+# Проверка существующих ключей
+docker exec backend-php83 test -f config/jwt/private.pem && \
+docker exec backend-php83 test -f config/jwt/public.pem && \
+echo "JWT ключи уже существуют" || \
+echo "JWT ключи отсутствуют - нужна генерация"
+
+# Если отсутствуют - сгенерировать
+docker exec backend-php83 php bin/console \
+  lexik:jwt:generate-keypair \
+  --skip-if-exists
+```
+
+#### Шаг 8: Проверка Статуса
+
+```bash
+# Статус всех контейнеров
+docker ps --filter "name=backend-" --filter "name=frontend-"
+
+# Должны увидеть:
+# frontend-prod   Up X seconds (healthy)
+# backend-php83   Up X seconds (healthy)
+# backend-nginx   Up X seconds (healthy)
+# backend-psql16  Up X seconds (healthy)
+# backend-rabbitmq Up X seconds (healthy)
+```
+
+### Вариант 3: Пересборка Только Frontend (Быстрое Обновление)
+
+**Если изменился только API URL или frontend код:**
 
 ```bash
 # Остановить frontend
@@ -607,7 +764,9 @@ docker ps | grep frontend-prod
 
 ### Обновление CORS в Backend
 
-**Отредактируйте конфигурацию CORS:**
+**ВАЖНО:** После изменения домена frontend необходимо обновить CORS настройки.
+
+**Отредактируйте конфигурацию:**
 
 ```bash
 nano apps/backend/config/packages/nelmio_cors.yaml
@@ -619,7 +778,7 @@ nano apps/backend/config/packages/nelmio_cors.yaml
 nelmio_cors:
     defaults:
         origin_regex: true
-        allow_origin: ['https://task.nesty.by']
+        allow_origin: ['https://task.nesty.by']  # ← Новый домен с HTTPS
         allow_methods: ['GET', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']
         allow_headers: ['Content-Type', 'Authorization', 'X-Requested-With']
         expose_headers: ['Link']
@@ -632,9 +791,93 @@ nelmio_cors:
 **Перезапустите backend контейнеры:**
 
 ```bash
+# Если использовали Вариант 1 (скрипт) - не нужно, уже перезапущено
+
+# Если использовали Вариант 2/3 - перезапустите
 docker compose -f docker-compose.yml \
   -f infrastructure/docker/docker-compose-prod.yml \
   restart php83-fpm nginx
+```
+
+### Проверка Успешной Пересборки
+
+**1. Проверьте что контейнеры запущены:**
+
+```bash
+docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+```
+
+**2. Проверьте переменные окружения frontend:**
+
+```bash
+docker exec frontend-prod env | grep VITE_API_BASE_URL
+# Должно вернуть: VITE_API_BASE_URL=https://api.task.nesty.by
+```
+
+**3. Проверьте CORS настройки backend:**
+
+```bash
+docker exec backend-php83 cat config/packages/nelmio_cors.yaml | grep allow_origin
+# Должно содержать: https://task.nesty.by
+```
+
+**4. Проверьте логи контейнеров:**
+
+```bash
+# Frontend логи
+docker logs frontend-prod --tail 20
+
+# Backend логи
+docker logs backend-php83 --tail 20
+docker logs backend-nginx --tail 20
+```
+
+**5. Проверьте доступность приложения:**
+
+```bash
+# Frontend должен вернуть HTML
+curl -I https://task.nesty.by
+
+# Backend API должен вернуть JSON
+curl https://api.task.nesty.by/api/tasks
+# Ожидаемо: 401 Unauthorized (это нормально - требуется авторизация)
+```
+
+### Troubleshooting Пересборки
+
+**❌ Frontend показывает старый API URL:**
+
+```bash
+# Проблема: frontend не пересобрался с новым .env
+# Решение: принудительная пересборка БЕЗ кеша
+docker compose build --no-cache frontend
+```
+
+**❌ CORS ошибки в браузере:**
+
+```bash
+# Проблема: backend не обновил CORS конфигурацию
+# Решение: проверьте nelmio_cors.yaml и перезапустите
+docker compose restart php83-fpm nginx
+```
+
+**❌ JWT ошибки при авторизации:**
+
+```bash
+# Проблема: JWT ключи не сгенерированы
+# Решение: сгенерируйте ключи вручную
+docker exec backend-php83 php bin/console lexik:jwt:generate-keypair
+```
+
+**❌ Контейнеры не запускаются:**
+
+```bash
+# Проверьте логи конкретного контейнера
+docker logs frontend-prod
+docker logs backend-php83
+
+# Проверьте что порты не заняты
+sudo netstat -tlnp | grep -E ':(80|3001|5432)'
 ```
 
 ---
