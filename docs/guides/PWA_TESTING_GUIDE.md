@@ -1,20 +1,117 @@
 # 🧪 Руководство по Тестированию PWA и Offline Кеширования
 
 > **Цель**: Проверить работу Service Worker, кеширования и offline режима
-> **Версия**: 1.0
-> **Дата**: 2025-11-13
+> **Версия**: 1.1
+> **Дата**: 2025-11-14
 
 ---
 
 ## 📋 Оглавление
 
-1. [Подготовка к Тестированию](#подготовка-к-тестированию)
-2. [Тест 1: Проверка Service Worker](#тест-1-проверка-service-worker)
-3. [Тест 2: Проверка Precache](#тест-2-проверка-precache)
-4. [Тест 3: Проверка Runtime Кеширования API](#тест-3-проверка-runtime-кеширования-api)
-5. [Тест 4: Проверка Offline Режима](#тест-4-проверка-offline-режима)
-6. [Тест 5: Проверка Обновления Кеша](#тест-5-проверка-обновления-кеша)
-7. [Troubleshooting](#troubleshooting)
+1. [Как Работает PWA в Проекте](#как-работает-pwa-в-проекте)
+2. [Подготовка к Тестированию](#подготовка-к-тестированию)
+3. [Тест 1: Проверка Service Worker](#тест-1-проверка-service-worker)
+4. [Тест 2: Проверка Precache](#тест-2-проверка-precache)
+5. [Тест 3: Проверка Runtime Кеширования API](#тест-3-проверка-runtime-кеширования-api)
+6. [Тест 4: Проверка Offline Режима](#тест-4-проверка-offline-режима)
+7. [Тест 5: Проверка Обновления Кеша](#тест-5-проверка-обновления-кеша)
+8. [Troubleshooting](#troubleshooting)
+
+---
+
+## Как Работает PWA в Проекте
+
+### Компоненты PWA
+
+**1. VitePWA Плагин** (`apps/frontend/vite.config.ts`):
+
+```typescript
+VitePWA({
+  registerType: 'autoUpdate',  // Автоматическое обновление SW
+  includeAssets: ['favicon.ico', 'vite.svg'],
+  manifest: {
+    name: 'TaskFlow - Система Управления Задачами',
+    short_name: 'TaskFlow',
+    theme_color: '#3B82F6',
+    display: 'standalone',
+    // ...
+  },
+  workbox: {
+    globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+    runtimeCaching: [
+      // API calls - NetworkFirst
+      { urlPattern: /\/api\//, handler: 'NetworkFirst' },
+      // Static assets - CacheFirst
+      { urlPattern: /\.(png|jpg|jpeg|svg)$/i, handler: 'CacheFirst' }
+    ],
+    skipWaiting: true,
+    clientsClaim: true
+  },
+  devOptions: {
+    enabled: false  // Отключено в dev режиме!
+  }
+})
+```
+
+**2. Регистрация Service Worker** (`apps/frontend/src/main.ts`):
+
+```typescript
+import { registerSW } from 'virtual:pwa-register'
+
+const updateSW = registerSW({
+  onNeedRefresh() {
+    console.log('[PWA] New content available, updating...')
+  },
+  onOfflineReady() {
+    console.log('[PWA] App ready to work offline')
+  },
+  onRegistered(registration) {
+    console.log('[PWA] Service Worker registered successfully')
+    // Проверяем обновления каждые 60 минут
+    setInterval(() => {
+      registration.update()
+    }, 60 * 60 * 1000)
+  },
+  onRegisterError(error) {
+    console.error('[PWA] Service Worker registration failed:', error)
+  }
+})
+```
+
+**3. Nginx Конфигурация** (`apps/frontend/nginx.conf`):
+
+```nginx
+# Service Worker НЕ кешируется (для автоматических обновлений)
+location ~* \.(?:sw\.js|workbox.*\.js|manifest\.webmanifest)$ {
+    expires -1;
+    add_header Cache-Control "no-cache, no-store, must-revalidate";
+}
+```
+
+### Что Кешируется?
+
+**Precache (автоматически при установке SW):**
+- Все JS файлы (`js/*.js`)
+- Все CSS файлы (`css/*.css`)
+- HTML файлы (`index.html`)
+- Иконки, SVG, шрифты
+
+**Runtime Cache (при использовании):**
+- API запросы (`/api/*`) - NetworkFirst стратегия (1 час TTL)
+- Изображения - CacheFirst стратегия (30 дней TTL)
+- Шрифты - CacheFirst стратегия (1 год TTL)
+
+### Почему PWA Работает Только в Production?
+
+**Development режим (`npm run dev`):**
+- `devOptions.enabled: false` в vite.config.ts
+- Service Worker не генерируется
+- PWA функциональность отключена
+
+**Production режим (`npm run build`):**
+- VitePWA генерирует `sw.js` и `manifest.webmanifest`
+- Service Worker регистрируется в `main.ts`
+- PWA полностью работает
 
 ---
 
@@ -429,24 +526,47 @@ Application → Service Workers → "No service workers found"
 
 **Решения:**
 
-1. **Проверьте что используете production build:**
+1. **Проверьте регистрацию в main.ts:**
+
+Service Worker должен быть **явно зарегистрирован** в коде:
+
+```typescript
+// apps/frontend/src/main.ts
+import { registerSW } from 'virtual:pwa-register'
+
+const updateSW = registerSW({
+  onRegistered(registration) {
+    console.log('[PWA] Service Worker registered')
+  }
+})
+```
+
+**Если импорта нет → Service Worker НЕ будет работать!**
+
+2. **Проверьте что используете production build:**
 
 ```bash
 npm run build
 # НЕ npm run dev!
 ```
 
-2. **Проверьте что сервер запущен правильно:**
+PWA **отключен в development** режиме (`devOptions.enabled: false` в vite.config.ts).
+
+3. **Проверьте что сервер запущен правильно:**
 
 ```bash
-# ✅ Правильно:
+# ✅ Правильно (production):
 serve -s dist -l 3000
+# ИЛИ
+docker-compose -f docker-compose.yml \
+  -f infrastructure/docker/docker-compose-prod.yml \
+  -f infrastructure/docker/docker-compose.frontend-prod.yml up -d
 
-# ❌ Неправильно:
-npm run dev  # Service Worker НЕ работает в dev режиме!
+# ❌ Неправильно (dev - PWA не работает):
+npm run dev
 ```
 
-3. **Проверьте HTTPS / localhost:**
+4. **Проверьте HTTPS / localhost:**
 
 Service Worker работает только на:
 - `https://` (production)
@@ -455,7 +575,21 @@ Service Worker работает только на:
 
 ❌ НЕ работает на `http://192.168.x.x` или других HTTP!
 
-4. **Очистите кеш браузера:**
+5. **Проверьте консоль на ошибки:**
+
+```javascript
+// Откройте Console в DevTools
+// Должны увидеть:
+[PWA] Service Worker registered successfully
+```
+
+**Если видите ошибку:**
+```
+Failed to register a ServiceWorker: ...
+```
+→ Проверьте импорт в main.ts (пункт 1)
+
+6. **Очистите кеш браузера:**
 
 ```
 DevTools → Application → Storage → Clear site data
@@ -620,6 +754,12 @@ DevTools → Network → Найдите запрос → Size колонка
 
 ---
 
-**Последнее обновление:** 2025-11-13
-**Версия:** 1.0
+**Последнее обновление:** 2025-11-14
+**Версия:** 1.1
 **Автор:** Claude Code AI
+
+**Изменения v1.1:**
+- ✅ Добавлен раздел "Как Работает PWA в Проекте" с объяснением всех компонентов
+- ✅ Добавлена информация о регистрации Service Worker в main.ts
+- ✅ Обновлен Troubleshooting с проверкой импорта registerSW
+- ✅ Добавлены примеры кода из vite.config.ts и main.ts
