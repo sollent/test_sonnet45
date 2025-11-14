@@ -1,0 +1,234 @@
+name: Rollback Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit_sha:
+        description: 'Commit SHA to rollback to'
+        required: true
+        type: string
+      reason:
+        description: 'Reason for rollback'
+        required: true
+        type: string
+
+jobs:
+  rollback:
+    name: 🔄 Rollback Production
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.commit_sha }}
+
+      - name: 📢 Send Telegram notification (start)
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          format: markdown
+          message: |
+            🔄 *Откат начался*
+
+            📦 *Repository:* `${{ github.repository }}`
+            🔙 *Откат к коммиту:* `${{ github.event.inputs.commit_sha }}`
+            👤 *Инициатор:* `${{ github.actor }}`
+            📝 *Причина:* ${{ github.event.inputs.reason }}
+
+      - name: 🔐 Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VDS_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.VDS_HOST }} >> ~/.ssh/known_hosts
+
+      - name: 📝 Create rollback script
+        run: |
+          cat > rollback.sh << 'EOF'
+          #!/bin/bash
+          set -e
+
+          echo "🔄 Starting rollback..."
+
+          # Переход в директорию проекта
+          cd ${{ secrets.VDS_PROJECT_PATH }}
+
+          # Сохранение текущего состояния
+          echo "💾 Saving current state..."
+          git rev-parse HEAD > /tmp/rollback_from_$(date +%Y%m%d_%H%M%S).txt
+
+          # Откат к указанному коммиту
+          echo "🔙 Rolling back to commit ${{ github.event.inputs.commit_sha }}..."
+          git fetch origin
+          git reset --hard ${{ github.event.inputs.commit_sha }}
+
+          # Создание production .env файлов (на случай если структура изменилась)
+          echo "🔧 Recreating production env files..."
+
+          # Docker env
+          cat > .env.docker.prod << EOL
+          POSTGRES_DB=backend_prod
+          POSTGRES_USER=prod_user
+          POSTGRES_PASSWORD=${{ secrets.PROD_POSTGRES_PASSWORD }}
+          POSTGRES_PORT=5432
+
+          RABBITMQ_USER=prod_user
+          RABBITMQ_PASSWORD=${{ secrets.PROD_RABBITMQ_PASSWORD }}
+          RABBITMQ_PORT=5672
+          RABBITMQ_MANAGEMENT_PORT=15672
+
+          NGINX_PORT=80
+          PHP_FPM_PORT=9000
+          EOL
+
+          # Symfony env
+          cat > apps/backend/.env.prod << EOL
+          APP_ENV=prod
+          APP_SECRET=${{ secrets.PROD_APP_SECRET }}
+          APP_DEBUG=false
+
+          DATABASE_URL="postgresql://prod_user:${{ secrets.PROD_POSTGRES_PASSWORD }}@psql16:5432/backend_prod?serverVersion=16&charset=utf8"
+
+          JWT_PASSPHRASE=${{ secrets.PROD_JWT_PASSPHRASE }}
+
+          MESSENGER_TRANSPORT_DSN=amqp://prod_user:${{ secrets.PROD_RABBITMQ_PASSWORD }}@rabbitmq:5672/%2f/messages
+
+          GOOGLE_CLIENT_ID=${{ secrets.PROD_GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET=${{ secrets.PROD_GOOGLE_CLIENT_SECRET }}
+          EOL
+
+          # Пересборка и перезапуск контейнеров
+          echo "🐳 Rebuilding and restarting Docker containers..."
+          docker-compose -f docker-compose.yml \
+                        -f infrastructure/docker/docker-compose-prod.yml \
+                        down
+
+          docker-compose -f docker-compose.yml \
+                        -f infrastructure/docker/docker-compose-prod.yml \
+                        build --no-cache
+
+          docker-compose -f docker-compose.yml \
+                        -f infrastructure/docker/docker-compose-prod.yml \
+                        up -d
+
+          # Ожидание запуска контейнеров
+          echo "⏳ Waiting for containers to start..."
+          sleep 10
+
+          # Установка зависимостей
+          echo "📦 Installing dependencies..."
+          docker exec backend-php83 composer install --no-dev --optimize-autoloader
+
+          # ВАЖНО: При откате НЕ запускаем новые миграции, только проверяем статус
+          echo "🔍 Checking migration status..."
+          docker exec backend-php83 php bin/console doctrine:migrations:status
+
+          # Очистка кеша
+          echo "🧹 Clearing cache..."
+          docker exec backend-php83 php bin/console cache:clear --env=prod
+          docker exec backend-php83 php bin/console cache:warmup --env=prod
+
+          echo "✅ Rollback completed!"
+          EOF
+
+          chmod +x rollback.sh
+
+      - name: 🔄 Execute rollback on VDS
+        run: |
+          scp rollback.sh ${{ secrets.VDS_USER }}@${{ secrets.VDS_HOST }}:/tmp/rollback.sh
+          ssh ${{ secrets.VDS_USER }}@${{ secrets.VDS_HOST }} "bash /tmp/rollback.sh"
+          ssh ${{ secrets.VDS_USER }}@${{ secrets.VDS_HOST }} "rm /tmp/rollback.sh"
+
+      - name: 🏥 Health Check - HTTP
+        run: |
+          echo "Checking frontend HTTP status..."
+          max_attempts=30
+          attempt=0
+
+          while [ $attempt -lt $max_attempts ]; do
+            if curl -f -s -o /dev/null -w "%{http_code}" https://task.nesty.by | grep -q "200"; then
+              echo "✅ Frontend is responding"
+              break
+            fi
+
+            attempt=$((attempt + 1))
+            echo "Attempt $attempt/$max_attempts failed, waiting..."
+            sleep 10
+          done
+
+          if [ $attempt -eq $max_attempts ]; then
+            echo "❌ Frontend health check failed"
+            exit 1
+          fi
+
+      - name: 🏥 Health Check - API
+        run: |
+          echo "Checking backend API..."
+          if curl -f -s https://api.task.nesty.by/api/health | grep -q "ok"; then
+            echo "✅ API is healthy"
+          else
+            echo "❌ API health check failed"
+            exit 1
+          fi
+
+      - name: 🏥 Health Check - Database
+        run: |
+          ssh ${{ secrets.VDS_USER }}@${{ secrets.VDS_HOST }} << 'EOF'
+          echo "Checking database connection..."
+          if docker exec backend-php83 php -r "
+            try {
+              \$pdo = new PDO('postgresql:host=psql16;port=5432;dbname=backend_prod', 'prod_user', getenv('POSTGRES_PASSWORD'));
+              echo '✅ Database connection successful\n';
+              exit(0);
+            } catch (Exception \$e) {
+              echo '❌ Database connection failed: ' . \$e->getMessage() . '\n';
+              exit(1);
+            }
+          "; then
+            echo "Database check passed"
+          else
+            echo "Database check failed"
+            exit 1
+          fi
+          EOF
+
+      - name: 📢 Send Telegram notification (success)
+        if: success()
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          format: markdown
+          message: |
+            ✅ *Откат успешно завершен!*
+
+            📦 *Repository:* `${{ github.repository }}`
+            🔙 *Откат к коммиту:* `${{ github.event.inputs.commit_sha }}`
+            👤 *Инициатор:* `${{ github.actor }}`
+            📝 *Причина:* ${{ github.event.inputs.reason }}
+
+            🌐 *Frontend:* [task.nesty.by](https://task.nesty.by)
+            🔌 *API:* [api.task.nesty.by](https://api.task.nesty.by)
+
+            ⏱️ *Duration:* ${{ job.duration }}
+
+      - name: 📢 Send Telegram notification (failure)
+        if: failure()
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          format: markdown
+          message: |
+            ❌ *Откат завершился с ошибкой!*
+
+            📦 *Repository:* `${{ github.repository }}`
+            🔙 *Откат к коммиту:* `${{ github.event.inputs.commit_sha }}`
+            👤 *Инициатор:* `${{ github.actor }}`
+
+            🔗 *Actions:* [View logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+            ⚠️ *КРИТИЧЕСКАЯ СИТУАЦИЯ! Требуется немедленное вмешательство!*

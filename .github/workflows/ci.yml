@@ -1,0 +1,232 @@
+name: CI Tests
+
+on:
+  push:
+    branches: [ main, 'feature/**' ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  PHP_VERSION: '8.3'
+  NODE_VERSION: '20'
+
+jobs:
+  # ========================================
+  # Backend Tests
+  # ========================================
+  backend-tests:
+    name: Backend Tests (PHP ${{ matrix.php-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php-version: ['8.3']
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: test_db
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_pass
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐘 Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_pgsql, dom, filter, gd, json, opcache
+          coverage: pcov
+          tools: composer:v2
+
+      - name: 📦 Cache Composer dependencies
+        uses: actions/cache@v3
+        with:
+          path: apps/backend/vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
+      - name: 📥 Install dependencies
+        working-directory: apps/backend
+        run: composer install --no-progress --prefer-dist --optimize-autoloader
+
+      - name: 🔍 Run PHPStan
+        working-directory: apps/backend
+        run: vendor/bin/phpstan analyse --memory-limit=1G
+
+      - name: 🎨 Check code style (PHP-CS-Fixer)
+        working-directory: apps/backend
+        run: vendor/bin/php-cs-fixer fix --dry-run --diff
+
+      - name: 🧪 Run PHPUnit tests
+        working-directory: apps/backend
+        env:
+          DATABASE_URL: postgresql://test_user:test_pass@127.0.0.1:5432/test_db?serverVersion=16&charset=utf8
+          APP_ENV: test
+          APP_DEBUG: true
+        run: |
+          php bin/console doctrine:schema:create --env=test
+          vendor/bin/phpunit --coverage-text
+
+  # ========================================
+  # Frontend Tests
+  # ========================================
+  frontend-tests:
+    name: Frontend Tests (Node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: ['20']
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: 💾 Cache npm dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: 📥 Install dependencies
+        working-directory: apps/frontend
+        run: npm ci
+
+      - name: 🔍 TypeScript check
+        working-directory: apps/frontend
+        run: npm run type-check
+
+      - name: 🧪 Run Vitest tests
+        working-directory: apps/frontend
+        run: npm run test:run
+
+      - name: 🏗️ Build production bundle
+        working-directory: apps/frontend
+        run: npm run build
+
+      - name: 📊 Check bundle size
+        working-directory: apps/frontend
+        run: |
+          echo "Bundle size report:"
+          du -sh dist/
+          find dist -name "*.js" -o -name "*.css" | xargs ls -lh
+
+  # ========================================
+  # E2E Tests (Full Stack)
+  # ========================================
+  e2e-tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: [backend-tests, frontend-tests]
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: e2e_db
+          POSTGRES_USER: e2e_user
+          POSTGRES_PASSWORD: e2e_pass
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐘 Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_pgsql
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 🐳 Start backend services
+        run: |
+          cd apps/backend
+          composer install --no-progress
+          php bin/console doctrine:schema:create --env=test
+          php -S localhost:8089 -t public &
+        env:
+          DATABASE_URL: postgresql://e2e_user:e2e_pass@127.0.0.1:5432/e2e_db?serverVersion=16&charset=utf8
+          APP_ENV: test
+
+      - name: 🚀 Start frontend dev server
+        working-directory: apps/frontend
+        run: |
+          npm ci
+          npm run dev &
+        env:
+          VITE_API_BASE_URL: http://localhost:8089
+
+      - name: 🎭 Install Playwright
+        working-directory: apps/frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: 🧪 Run E2E tests
+        working-directory: apps/frontend
+        run: npm run test:e2e
+        env:
+          BASE_URL: http://localhost:3000
+
+      - name: 📸 Upload test artifacts
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: e2e-screenshots
+          path: apps/frontend/test-results/
+
+  # ========================================
+  # Security Scan (SAST)
+  # ========================================
+  security-scan:
+    name: Security Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🛡️ PHP Security Checker
+        uses: symfonycorp/security-checker-action@v4
+        with:
+          composer-lock: apps/backend/composer.lock
+
+      - name: 🔍 Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: 📤 Upload Trivy results
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'

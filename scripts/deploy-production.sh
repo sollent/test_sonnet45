@@ -7,6 +7,7 @@
 #
 # Использование:
 #   ./scripts/deploy-production.sh
+#   CI=true ./scripts/deploy-production.sh  # Для CI/CD (без интерактивных prompt'ов)
 #
 # Требования:
 #   - Docker установлен и запущен
@@ -14,9 +15,16 @@
 #   - Git установлен (если клонируем репозиторий)
 #   - Root/sudo доступ для Docker команд
 #
+# Environment Variables:
+#   CI=true - запуск в CI/CD режиме (пропускает все интерактивные запросы)
+#   PROJECT_DIR=/path/to/project - путь к проекту (по умолчанию /opt/taskflow в CI режиме)
+#
 # ================================================================
 
 set -e  # Останавливаемся при первой ошибке
+
+# Определяем режим работы (CI/CD или интерактивный)
+IS_CI="${CI:-false}"
 
 # Цвета для вывода
 RED='\033[0;31m'
@@ -102,31 +110,43 @@ if [ -f "docker-compose.yml" ] && [ -d "apps" ]; then
     PROJECT_DIR="$(pwd)"
     print_success "Текущая директория - корень проекта: $PROJECT_DIR"
 else
-    print_info "Текущая директория не является корнем проекта"
-    echo -n "Введите путь к проекту (или нажмите Enter для /opt/taskflow): "
-    read PROJECT_PATH
+    if [ "$IS_CI" = "true" ]; then
+        # В CI режиме используем переменную окружения или дефолтный путь
+        PROJECT_DIR="${PROJECT_DIR:-/opt/taskflow}"
+        print_info "CI режим: используем PROJECT_DIR=$PROJECT_DIR"
 
-    if [ -z "$PROJECT_PATH" ]; then
-        PROJECT_DIR="/opt/taskflow"
-    else
-        PROJECT_DIR="$PROJECT_PATH"
-    fi
-
-    if [ ! -d "$PROJECT_DIR" ]; then
-        print_warning "Директория $PROJECT_DIR не существует"
-        echo -n "Клонировать проект из Git? (y/n): "
-        read CLONE_REPO
-
-        if [ "$CLONE_REPO" = "y" ]; then
-            echo -n "Введите URL репозитория: "
-            read REPO_URL
-
-            print_step "Клонирование репозитория..."
-            git clone "$REPO_URL" "$PROJECT_DIR"
-            print_success "Репозиторий склонирован в $PROJECT_DIR"
-        else
-            print_error "Директория проекта не найдена. Выход."
+        if [ ! -d "$PROJECT_DIR" ]; then
+            print_error "Директория проекта $PROJECT_DIR не существует в CI режиме!"
             exit 1
+        fi
+    else
+        # Интерактивный режим
+        print_info "Текущая директория не является корнем проекта"
+        echo -n "Введите путь к проекту (или нажмите Enter для /opt/taskflow): "
+        read PROJECT_PATH
+
+        if [ -z "$PROJECT_PATH" ]; then
+            PROJECT_DIR="/opt/taskflow"
+        else
+            PROJECT_DIR="$PROJECT_PATH"
+        fi
+
+        if [ ! -d "$PROJECT_DIR" ]; then
+            print_warning "Директория $PROJECT_DIR не существует"
+            echo -n "Клонировать проект из Git? (y/n): "
+            read CLONE_REPO
+
+            if [ "$CLONE_REPO" = "y" ]; then
+                echo -n "Введите URL репозитория: "
+                read REPO_URL
+
+                print_step "Клонирование репозитория..."
+                git clone "$REPO_URL" "$PROJECT_DIR"
+                print_success "Репозиторий склонирован в $PROJECT_DIR"
+            else
+                print_error "Директория проекта не найдена. Выход."
+                exit 1
+            fi
         fi
     fi
 
@@ -140,45 +160,56 @@ fi
 
 print_header "Шаг 3: Настройка переменных окружения"
 
-if [ -f ".env.docker.prod" ]; then
-    print_warning ".env.docker.prod уже существует"
-    echo -n "Пересоздать? (y/n): "
-    read RECREATE_ENV
-
-    if [ "$RECREATE_ENV" != "y" ]; then
-        print_info "Используем существующий .env.docker.prod"
-    else
-        rm .env.docker.prod
-    fi
-fi
-
-if [ ! -f ".env.docker.prod" ]; then
-    print_step "Создание .env.docker.prod..."
-
-    if [ ! -f ".env.docker.example" ]; then
-        print_error ".env.docker.example не найден!"
+if [ "$IS_CI" = "true" ]; then
+    # В CI режиме .env.docker.prod должен быть создан заранее через GitHub Actions
+    if [ ! -f ".env.docker.prod" ]; then
+        print_error ".env.docker.prod не найден в CI режиме!"
+        print_info "Файл должен быть создан через GitHub Actions"
         exit 1
     fi
+    print_info "CI режим: используем существующий .env.docker.prod"
+else
+    # Интерактивный режим
+    if [ -f ".env.docker.prod" ]; then
+        print_warning ".env.docker.prod уже существует"
+        echo -n "Пересоздать? (y/n): "
+        read RECREATE_ENV
 
-    cp .env.docker.example .env.docker.prod
+        if [ "$RECREATE_ENV" != "y" ]; then
+            print_info "Используем существующий .env.docker.prod"
+        else
+            rm .env.docker.prod
+        fi
+    fi
 
-    print_warning "ВАЖНО: Необходимо настроить credentials в .env.docker.prod!"
-    echo ""
-    echo "Используйте скрипт для генерации паролей:"
-    echo "  ./scripts/generate-secrets.sh"
-    echo ""
-    echo -n "Открыть .env.docker.prod для редактирования? (y/n): "
-    read EDIT_ENV
+    if [ ! -f ".env.docker.prod" ]; then
+        print_step "Создание .env.docker.prod..."
 
-    if [ "$EDIT_ENV" = "y" ]; then
-        ${EDITOR:-nano} .env.docker.prod
-    else
-        print_warning "Не забудьте настроить .env.docker.prod перед запуском!"
-        echo -n "Продолжить с текущими значениями? (y/n): "
-        read CONTINUE
-        if [ "$CONTINUE" != "y" ]; then
-            print_info "Выход. Настройте .env.docker.prod и запустите скрипт снова."
-            exit 0
+        if [ ! -f ".env.docker.example" ]; then
+            print_error ".env.docker.example не найден!"
+            exit 1
+        fi
+
+        cp .env.docker.example .env.docker.prod
+
+        print_warning "ВАЖНО: Необходимо настроить credentials в .env.docker.prod!"
+        echo ""
+        echo "Используйте скрипт для генерации паролей:"
+        echo "  ./scripts/generate-secrets.sh"
+        echo ""
+        echo -n "Открыть .env.docker.prod для редактирования? (y/n): "
+        read EDIT_ENV
+
+        if [ "$EDIT_ENV" = "y" ]; then
+            ${EDITOR:-nano} .env.docker.prod
+        else
+            print_warning "Не забудьте настроить .env.docker.prod перед запуском!"
+            echo -n "Продолжить с текущими значениями? (y/n): "
+            read CONTINUE
+            if [ "$CONTINUE" != "y" ]; then
+                print_info "Выход. Настройте .env.docker.prod и запустите скрипт снова."
+                exit 0
+            fi
         fi
     fi
 fi
