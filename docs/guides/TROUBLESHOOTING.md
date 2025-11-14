@@ -19,6 +19,8 @@
 
 ### 1. Ошибки CORS
 
+**⚠️ ВАЖНО:** CORS должен управляться **ТОЛЬКО** в Symfony через `nelmio_cors` bundle. **НЕ добавляйте** CORS headers в nginx конфигурацию - это приведет к дублированию headers и ошибкам браузера!
+
 **Проблема:**
 ```
 Access to XMLHttpRequest at 'http://localhost:8089/api/tasks' from origin
