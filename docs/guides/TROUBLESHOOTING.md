@@ -52,14 +52,23 @@ nelmio_cors:
 nelmio_cors:
     defaults:
         origin_regex: true
-        allow_origin: ['*']
+        # Production: Только разрешенные домены (НЕ *)
+        # Development: localhost для локальной разработки
+        # Production: task.nesty.by для боевого сервера
+        allow_origin:
+            - '^https?://localhost(:[0-9]+)?$'  # Local dev
+            - '^https://task\.nesty\.by$'        # Production frontend
         allow_methods: ['GET', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']
-        allow_headers: ['Content-Type', 'Authorization']
-        expose_headers: ['Link']
+        allow_headers: ['Content-Type', 'Authorization', 'X-Requested-With', 'Cache-Control']
+        expose_headers: ['Link', 'Content-Length', 'Content-Range']
+        allow_credentials: true
         max_age: 3600
     paths:
         '^/api':
-            allow_origin: ['*']
+            allow_origin:
+                - '^https?://localhost(:[0-9]+)?$'
+                - '^https://task\.nesty\.by$'
+            allow_headers: ['*']
             allow_methods: ['GET', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']
             allow_headers: ['Content-Type', 'Authorization']
             max_age: 3600
