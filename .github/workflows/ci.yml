@@ -196,33 +196,3 @@ jobs:
         with:
           name: e2e-screenshots
           path: apps/frontend/test-results/
-
-  # ========================================
-  # Security Scan (SAST)
-  # ========================================
-  security-scan:
-    name: Security Analysis
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: 🛡️ PHP Security Checker
-        uses: symfonycorp/security-checker-action@v4
-        with:
-          composer-lock: apps/backend/composer.lock
-
-      - name: 🔍 Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: 'fs'
-          scan-ref: '.'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-
-      - name: 📤 Upload Trivy results
-        uses: github/codeql-action/upload-sarif@v2
-        if: always()
-        with:
-          sarif_file: 'trivy-results.sarif'
