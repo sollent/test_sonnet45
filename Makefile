@@ -17,7 +17,7 @@ COMPOSE_PROD_FULL = $(DOCKER_COMPOSE) -f $(COMPOSE_BASE) -f $(COMPOSE_PROD) -f $
 help: ## Show this help message
 	@echo "🚀 Available commands:"
 	@echo ""
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-25s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z0-9_-]+:.*## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  \033[36m%-25s\033[0m %s\n", $$1, $$2}'
 
 ## 🏗️  Development Environment Commands
 
@@ -201,6 +201,40 @@ test-integration: ## Run integration tests only
 
 test-coverage: ## Generate test coverage report
 	$(COMPOSE_DEV_FULL) exec php83-fpm sh -c "APP_ENV=test php bin/phpunit --coverage-html coverage"
+
+test-frontend: ## Run frontend unit tests (Vitest)
+	@echo "🎨 Running frontend unit tests..."
+	cd apps/frontend && npm run test:run
+
+test-frontend-ui: ## Run frontend tests with UI
+	@echo "🎨 Running frontend tests with UI..."
+	cd apps/frontend && npm run test:ui
+
+test-frontend-coverage: ## Generate frontend test coverage
+	@echo "📊 Generating frontend test coverage..."
+	cd apps/frontend && npm run test:coverage
+
+test-e2e: ## Run E2E tests (Playwright)
+	@echo "🎭 Running E2E tests..."
+	@echo "⚠️  Make sure backend and frontend are running!"
+	cd apps/frontend && npm run test:e2e
+
+test-e2e-ui: ## Run E2E tests with UI mode
+	@echo "🎭 Running E2E tests in UI mode..."
+	@echo "⚠️  Make sure backend and frontend are running!"
+	cd apps/frontend && npm run test:e2e:ui
+
+test-e2e-debug: ## Run E2E tests in debug mode
+	@echo "🐛 Running E2E tests in debug mode..."
+	@echo "⚠️  Make sure backend and frontend are running!"
+	cd apps/frontend && npm run test:e2e:debug
+
+test-e2e-headed: ## Run E2E tests in headed mode (see browser)
+	@echo "🎭 Running E2E tests in headed mode..."
+	@echo "⚠️  Make sure backend and frontend are running!"
+	cd apps/frontend && npm run test:e2e:headed
+
+test-all: test test-frontend ## Run all tests (backend + frontend unit)
 
 ## 📊 Status Commands
 
