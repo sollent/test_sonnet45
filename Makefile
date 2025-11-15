@@ -72,31 +72,31 @@ logs-db: ## Display database logs
 ## 🐚 Shell Access Commands
 
 console: ## Enter backend PHP container
-	docker exec -it backend-php83 bash
+	$(COMPOSE_DEV_FULL) exec php83-fpm bash
 
 console-frontend: ## Enter frontend container
-	docker exec -it frontend-dev sh
+	$(COMPOSE_DEV_FULL) exec frontend sh
 
 psql: ## Enter PostgreSQL container
-	docker exec -it backend-psql16 bash
+	$(COMPOSE_DEV_FULL) exec psql16 bash
 
 db-cli: ## Connect to PostgreSQL CLI
-	docker exec -it backend-psql16 psql -U user -d backend-app
+	$(COMPOSE_DEV_FULL) exec psql16 psql -U user -d backend-app
 
 ## 🗄️  Database Commands
 
 migrate: ## Run database migrations
 	@echo "🗄️  Running migrations..."
-	docker exec backend-php83 php bin/console doctrine:migrations:migrate --no-interaction
+	$(COMPOSE_DEV_FULL) exec php83-fpm php bin/console doctrine:migrations:migrate --no-interaction
 
 migrate-create: ## Create new migration
-	docker exec backend-php83 php bin/console make:migration
+	$(COMPOSE_DEV_FULL) exec php83-fpm php bin/console make:migration
 
 db-reset: ## Reset database (drop + create + migrate)
 	@echo "⚠️  Resetting database..."
-	docker exec backend-php83 php bin/console doctrine:database:drop --force --if-exists
-	docker exec backend-php83 php bin/console doctrine:database:create
-	docker exec backend-php83 php bin/console doctrine:migrations:migrate --no-interaction
+	$(COMPOSE_DEV_FULL) exec php83-fpm php bin/console doctrine:database:drop --force --if-exists
+	$(COMPOSE_DEV_FULL) exec php83-fpm php bin/console doctrine:database:create
+	$(COMPOSE_DEV_FULL) exec php83-fpm php bin/console doctrine:migrations:migrate --no-interaction
 
 ## 🎨 Frontend Commands (Local - без Docker)
 
@@ -151,36 +151,36 @@ prod-logs: ## View production logs
 
 cs-fixer-check: ## Check PHP code style (dry-run)
 	@echo "🔍 Checking PHP code style..."
-	docker exec backend-php83 vendor/bin/php-cs-fixer fix --dry-run --diff --verbose
+	$(COMPOSE_DEV_FULL) exec php83-fpm vendor/bin/php-cs-fixer fix --dry-run --diff --verbose
 
 cs-fixer-fix: ## Fix PHP code style automatically
 	@echo "🔧 Fixing PHP code style..."
-	docker exec backend-php83 vendor/bin/php-cs-fixer fix --verbose
+	$(COMPOSE_DEV_FULL) exec php83-fpm vendor/bin/php-cs-fixer fix --verbose
 
 phpstan: ## Run PHPStan static analysis
 	@echo "🔬 Running PHPStan analysis..."
-	docker exec backend-php83 vendor/bin/phpstan analyse --memory-limit=1G
+	$(COMPOSE_DEV_FULL) exec php83-fpm vendor/bin/phpstan analyse --memory-limit=1G
 
 phpstan-baseline: ## Generate PHPStan baseline
-	docker exec backend-php83 vendor/bin/phpstan analyse --generate-baseline
+	$(COMPOSE_DEV_FULL) exec php83-fpm vendor/bin/phpstan analyse --generate-baseline
 
 quality-check: ## Run all quality checks (cs-fixer + phpstan)
 	@echo "🔍 Running all quality checks..."
 	@echo ""
 	@echo "📝 PHP-CS-Fixer check..."
-	@docker exec backend-php83 vendor/bin/php-cs-fixer fix --dry-run --diff --verbose
+	@$(COMPOSE_DEV_FULL) exec php83-fpm vendor/bin/php-cs-fixer fix --dry-run --diff --verbose
 	@echo ""
 	@echo "🔬 PHPStan analysis..."
-	@docker exec backend-php83 vendor/bin/phpstan analyse --memory-limit=1G
+	@$(COMPOSE_DEV_FULL) exec php83-fpm vendor/bin/phpstan analyse --memory-limit=1G
 	@echo ""
 	@echo "✅ All quality checks completed!"
 
 quality-fix: ## Fix code style and re-run checks
 	@echo "🔧 Fixing code style..."
-	@docker exec backend-php83 vendor/bin/php-cs-fixer fix --verbose
+	@$(COMPOSE_DEV_FULL) exec php83-fpm vendor/bin/php-cs-fixer fix --verbose
 	@echo ""
 	@echo "🔬 Running PHPStan analysis..."
-	@docker exec backend-php83 vendor/bin/phpstan analyse --memory-limit=1G
+	@$(COMPOSE_DEV_FULL) exec php83-fpm vendor/bin/phpstan analyse --memory-limit=1G
 	@echo ""
 	@echo "✅ Code fixed and analyzed!"
 
@@ -188,16 +188,16 @@ quality-fix: ## Fix code style and re-run checks
 
 test: ## Run all backend tests
 	@echo "🧪 Running all tests..."
-	docker exec backend-php83 php bin/phpunit
+	$(COMPOSE_DEV_FULL) exec php83-fpm php bin/phpunit
 
 test-unit: ## Run unit tests only
-	docker exec backend-php83 php bin/phpunit --testsuite unit
+	$(COMPOSE_DEV_FULL) exec php83-fpm php bin/phpunit --testsuite unit
 
 test-integration: ## Run integration tests only
-	docker exec backend-php83 php bin/phpunit --testsuite integration
+	$(COMPOSE_DEV_FULL) exec php83-fpm php bin/phpunit --testsuite integration
 
 test-coverage: ## Generate test coverage report
-	docker exec backend-php83 php bin/phpunit --coverage-html coverage
+	$(COMPOSE_DEV_FULL) exec php83-fpm php bin/phpunit --coverage-html coverage
 
 ## 📊 Status Commands
 

@@ -2,7 +2,7 @@ version: '2'
 
 services:
   nginx:
-    container_name: backend-nginx
+    container_name: ${COMPOSE_PROJECT_NAME:-backend}-nginx
     image: nginx:stable-alpine
     ports:
       - "${NGINX_PORT}:80"
@@ -14,7 +14,7 @@ services:
     networks:
       - nginx-php83-psql16
   php83-fpm:
-    container_name: backend-php83
+    container_name: ${COMPOSE_PROJECT_NAME:-backend}-php83
     build:
       context: .
       dockerfile: ./dev/php/Dockerfile
@@ -42,7 +42,7 @@ services:
     networks:
       - nginx-php83-psql16
   psql16:
-    container_name: backend-psql16
+    container_name: ${COMPOSE_PROJECT_NAME:-backend}-psql16
     image: postgres:16.0-alpine
     environment:
       # БЕЗ fallback - если credentials не заданы, контейнер НЕ запустится!
@@ -57,7 +57,7 @@ services:
       - pgdata:/var/lib/postgresql/data
   rabbitmq:
     image: rabbitmq:management
-    container_name: backend-rabbitmq
+    container_name: ${COMPOSE_PROJECT_NAME:-backend}-rabbitmq
     ports:
       - "${RABBITMQ_PORT}:5672"   # порт для AMQP
       - "${RABBITMQ_MANAGEMENT_PORT}:15672" # порт для веб-интерфейса (management plugin)
@@ -69,7 +69,7 @@ services:
       - nginx-php83-psql16
   
   cron:
-    container_name: backend-cron
+    container_name: ${COMPOSE_PROJECT_NAME:-backend}-cron
     build:
       context: .
       dockerfile: ./dev/php/Dockerfile
@@ -97,7 +97,7 @@ services:
   # Переопределяется в docker-compose.frontend-dev.yml или docker-compose.frontend-prod.yml
   frontend:
     image: placeholder
-    container_name: frontend
+    container_name: ${COMPOSE_PROJECT_NAME:-backend}-frontend
     networks:
       - nginx-php83-psql16
     depends_on:

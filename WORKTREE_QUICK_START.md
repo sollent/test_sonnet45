@@ -117,9 +117,15 @@ docker-compose up -d
 ### 3. Установить зависимости и запустить миграции
 
 ```bash
-docker exec backend-php83 composer install
-docker exec backend-php83 php bin/console doctrine:database:create
-docker exec backend-php83 php bin/console doctrine:migrations:migrate
+# Используйте Make команды (работают в любом worktree) ⚡
+make composer-install
+make db-create
+make migrate
+
+# Или через docker-compose exec (универсально для всех worktrees)
+docker-compose exec php83-fpm composer install
+docker-compose exec php83-fpm php bin/console doctrine:database:create
+docker-compose exec php83-fpm php bin/console doctrine:migrations:migrate
 ```
 
 ### 4. Открыть Claude Code сессию
@@ -150,6 +156,74 @@ make wt-remove NAME=feature-caching
 | **worktree-3** | 8092 | 15435 | 9012 | 3003 |
 
 > **Скрипт `worktree-create.sh` автоматически определяет следующий свободный порт!**
+
+---
+
+## 🐳 Docker Container Naming
+
+### Main Directory (ВАЖНО для CI/CD!)
+
+**Main директория** (`/Users/sollent/Desktop/Projects/CLAUDE`) **всегда** использует имена контейнеров с префиксом `backend-*`:
+
+```bash
+# В main директории (.env.docker содержит COMPOSE_PROJECT_NAME=backend)
+backend-nginx
+backend-php83
+backend-psql16
+backend-rabbitmq
+backend-cron
+backend-frontend
+```
+
+**⚠️ Критично**: Эти имена используются в CI/CD pipeline и production deployment скриптах!
+
+### Worktree Directories
+
+**Worktree директории** автоматически получают уникальные имена через `COMPOSE_PROJECT_NAME`:
+
+```bash
+# Worktree "feature-caching" (.env.docker содержит COMPOSE_PROJECT_NAME=claude-feature-caching)
+claude-feature-caching-nginx
+claude-feature-caching-php83
+claude-feature-caching-psql16
+claude-feature-caching-rabbitmq
+claude-feature-caching-cron
+claude-feature-caching-frontend
+```
+
+**Префикс `claude-`** автоматически добавляется скриптом `worktree-create.sh`.
+
+### Как Это Работает?
+
+1. **docker-compose.app.yml** использует fallback pattern:
+   ```yaml
+   container_name: ${COMPOSE_PROJECT_NAME:-backend}-nginx
+   ```
+
+2. **Main** `.env.docker` содержит:
+   ```bash
+   COMPOSE_PROJECT_NAME=backend
+   ```
+
+3. **Worktree** `.env.docker` генерируется скриптом:
+   ```bash
+   COMPOSE_PROJECT_NAME=claude-feature-name
+   ```
+
+### Универсальные Команды
+
+**Используйте `docker-compose exec` вместо `docker exec`** для совместимости:
+
+```bash
+# ✅ Работает в main И worktree
+docker-compose exec php83-fpm php bin/console cache:clear
+
+# ❌ Работает только в main (hardcoded имя)
+docker exec backend-php83 php bin/console cache:clear
+
+# ✅ Еще лучше - Make команды (работают везде)
+make cache-clear
+```
 
 ---
 
@@ -198,10 +272,13 @@ docker-compose down
 
 ## ⚠️ Важно Помнить
 
-1. **Каждый worktree** использует **уникальные порты** (автоматически назначаются скриптом)
-2. **COMPOSE_PROJECT_NAME** в `.env.docker` изолирует Docker контейнеры
-3. **Не удаляйте worktree вручную** через `rm -rf` - используйте скрипт или `git worktree remove`
-4. **Всегда останавливайте Docker** перед удалением worktree
+1. **Main директория сохраняет `backend-*` имена контейнеров** - это критично для CI/CD и production!
+2. **Каждый worktree** использует:
+   - **Уникальные порты** (автоматически назначаются скриптом)
+   - **Уникальный `COMPOSE_PROJECT_NAME=claude-<name>`** (изолирует Docker контейнеры)
+3. **Используйте Make команды** или `docker-compose exec` вместо `docker exec` для совместимости
+4. **Не удаляйте worktree вручную** через `rm -rf` - используйте скрипт или `git worktree remove`
+5. **Всегда останавливайте Docker** перед удалением worktree (`docker-compose down`)
 
 ---
 
