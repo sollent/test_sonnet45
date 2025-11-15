@@ -1,5 +1,8 @@
 .DEFAULT_GOAL := help
 
+# Docker Compose wrapper для автоматической загрузки .env
+DOCKER_COMPOSE = ./scripts/docker-compose-wrapper.sh
+
 # Docker Compose файлы (модульная структура)
 COMPOSE_BASE = docker-compose.yml
 COMPOSE_DEV = infrastructure/docker/docker-compose.dev.yml
@@ -8,8 +11,8 @@ COMPOSE_PROD = infrastructure/docker/docker-compose-prod.yml
 COMPOSE_FRONTEND_PROD = infrastructure/docker/docker-compose.frontend-prod.yml
 
 # Полные команды для разных окружений
-COMPOSE_DEV_FULL = docker compose -f $(COMPOSE_BASE) -f $(COMPOSE_DEV) -f $(COMPOSE_FRONTEND_DEV)
-COMPOSE_PROD_FULL = docker compose -f $(COMPOSE_BASE) -f $(COMPOSE_PROD) -f $(COMPOSE_FRONTEND_PROD)
+COMPOSE_DEV_FULL = $(DOCKER_COMPOSE) -f $(COMPOSE_BASE) -f $(COMPOSE_DEV) -f $(COMPOSE_FRONTEND_DEV)
+COMPOSE_PROD_FULL = $(DOCKER_COMPOSE) -f $(COMPOSE_BASE) -f $(COMPOSE_PROD) -f $(COMPOSE_FRONTEND_PROD)
 
 help: ## Show this help message
 	@echo "🚀 Available commands:"

@@ -60,13 +60,17 @@ PORT_OFFSET=$((NEXT_NGINX_PORT - 8089))
 NEXT_POSTGRES_PORT=$((15432 + PORT_OFFSET))
 NEXT_PHP_FPM_PORT=$((9009 + PORT_OFFSET))
 NEXT_FRONTEND_PORT=$((3000 + PORT_OFFSET))
+NEXT_RABBITMQ_PORT=$((5672 + PORT_OFFSET))
+NEXT_RABBITMQ_MGMT_PORT=$((15672 + PORT_OFFSET))
 
 echo ""
 echo "🔧 Конфигурация портов:"
-echo "   Nginx:      $NEXT_NGINX_PORT"
-echo "   PostgreSQL: $NEXT_POSTGRES_PORT"
-echo "   PHP-FPM:    $NEXT_PHP_FPM_PORT"
-echo "   Frontend:   $NEXT_FRONTEND_PORT"
+echo "   Nginx:          $NEXT_NGINX_PORT"
+echo "   PostgreSQL:     $NEXT_POSTGRES_PORT"
+echo "   PHP-FPM:        $NEXT_PHP_FPM_PORT"
+echo "   Frontend:       $NEXT_FRONTEND_PORT"
+echo "   RabbitMQ:       $NEXT_RABBITMQ_PORT"
+echo "   RabbitMQ Mgmt:  $NEXT_RABBITMQ_MGMT_PORT"
 
 # Создаем .env.docker
 cat > .env.docker <<EOF
@@ -87,8 +91,8 @@ POSTGRES_PORT=${NEXT_POSTGRES_PORT}
 # RabbitMQ Configuration
 RABBITMQ_USER=user
 RABBITMQ_PASSWORD=password
-RABBITMQ_PORT=5672
-RABBITMQ_MANAGEMENT_PORT=15672
+RABBITMQ_PORT=${NEXT_RABBITMQ_PORT}
+RABBITMQ_MANAGEMENT_PORT=${NEXT_RABBITMQ_MGMT_PORT}
 
 # Nginx Configuration
 NGINX_PORT=${NEXT_NGINX_PORT}
@@ -96,11 +100,30 @@ NGINX_PORT=${NEXT_NGINX_PORT}
 # PHP-FPM Configuration
 PHP_FPM_PORT=${NEXT_PHP_FPM_PORT}
 
-# Frontend Configuration (если используется Docker)
+# Frontend Configuration
+FRONTEND_DEV_PORT=${NEXT_FRONTEND_PORT}
+FRONTEND_PROD_PORT=$((8080 + PORT_OFFSET))
 FRONTEND_PORT=${NEXT_FRONTEND_PORT}
+VITE_API_BASE_URL=http://localhost:${NEXT_NGINX_PORT}
 EOF
 
 echo "✅ Файл .env.docker создан"
+
+# Создаем симлинк .env -> .env.docker для Docker Compose
+ln -sf .env.docker .env
+echo "✅ Создан симлинк .env -> .env.docker"
+
+# Копируем docker-compose-wrapper.sh для автоматической загрузки .env
+mkdir -p scripts
+cp "$MAIN_DIR/scripts/docker-compose-wrapper.sh" scripts/docker-compose-wrapper.sh 2>/dev/null || true
+chmod +x scripts/docker-compose-wrapper.sh 2>/dev/null || true
+echo "✅ Скопирован docker-compose-wrapper.sh"
+
+# Копируем Makefile из main (если отличается)
+if [ -f "$MAIN_DIR/Makefile" ] && ! cmp -s "$MAIN_DIR/Makefile" "Makefile"; then
+    cp "$MAIN_DIR/Makefile" Makefile
+    echo "✅ Скопирован обновленный Makefile"
+fi
 
 # Копируем .env.docker.example для справки (если не существует)
 if [ ! -f .env.docker.example ]; then

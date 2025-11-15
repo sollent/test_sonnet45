@@ -111,6 +111,11 @@ make wt-create BRANCH=feature/caching NAME=feature-caching
 
 ```bash
 cd /Users/sollent/Desktop/Projects/CLAUDE-worktrees/feature-caching
+
+# Запуск через Make (рекомендуется - автоматически загружает .env) ⚡
+make up
+
+# ИЛИ напрямую через docker-compose (тоже работает - симлинк .env создан автоматически)
 docker-compose up -d
 ```
 
@@ -270,15 +275,46 @@ docker-compose down
 
 ---
 
+## ⚙️ Автоматизация (Важно!)
+
+### Что делает скрипт `worktree-create.sh`:
+
+1. ✅ **Генерирует уникальные порты** для всех сервисов (Nginx, PostgreSQL, PHP-FPM, RabbitMQ, Frontend)
+2. ✅ **Создает `.env.docker`** с правильной конфигурацией
+3. ✅ **Создает симлинк `.env` → `.env.docker`** для совместимости с docker-compose
+4. ✅ **Устанавливает `COMPOSE_PROJECT_NAME=claude-<name>`** для изоляции контейнеров
+
+### Как работает docker-compose в worktree:
+
+```bash
+# В worktree:
+docker-compose up -d
+# ↓ читает .env (симлинк на .env.docker)
+# ↓ автоматически подставляет все переменные (порты, COMPOSE_PROJECT_NAME)
+# ✅ Контейнеры запускаются с именами claude-<name>-* и уникальными портами
+```
+
+### Make команды используют wrapper:
+
+```bash
+# Makefile автоматически использует scripts/docker-compose-wrapper.sh
+# Wrapper загружает .env перед запуском docker-compose
+make up    # ✅ Работает в main И worktree
+make down  # ✅ Работает везде
+```
+
+---
+
 ## ⚠️ Важно Помнить
 
 1. **Main директория сохраняет `backend-*` имена контейнеров** - это критично для CI/CD и production!
-2. **Каждый worktree** использует:
-   - **Уникальные порты** (автоматически назначаются скриптом)
+2. **Каждый worktree** автоматически получает:
+   - **Уникальные порты** (генерируются скриптом worktree-create.sh)
    - **Уникальный `COMPOSE_PROJECT_NAME=claude-<name>`** (изолирует Docker контейнеры)
-3. **Используйте Make команды** или `docker-compose exec` вместо `docker exec` для совместимости
-4. **Не удаляйте worktree вручную** через `rm -rf` - используйте скрипт или `git worktree remove`
-5. **Всегда останавливайте Docker** перед удалением worktree (`docker-compose down`)
+   - **Симлинк `.env` → `.env.docker`** (для автоматической загрузки переменных)
+3. **Используйте Make команды** или `docker-compose` напрямую - оба способа работают!
+4. **Не удаляйте worktree вручную** через `rm -rf` - используйте `make wt-remove NAME=...`
+5. **Всегда останавливайте Docker** перед удалением worktree (`make down` или `docker-compose down`)
 
 ---
 
