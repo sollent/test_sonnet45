@@ -189,13 +189,9 @@ jobs:
           APP_ENV: test
           JWT_PASSPHRASE: test_passphrase
 
-      - name: 🚀 Start frontend dev server
+      - name: 📦 Install frontend dependencies
         working-directory: apps/frontend
-        run: |
-          npm ci
-          npm run dev &
-        env:
-          VITE_API_BASE_URL: http://localhost:8089
+        run: npm ci
 
       - name: 🎭 Install Playwright
         working-directory: apps/frontend
@@ -205,7 +201,9 @@ jobs:
         working-directory: apps/frontend
         run: npm run test:e2e
         env:
-          BASE_URL: http://localhost:3000
+          PLAYWRIGHT_BASE_URL: http://localhost:3000
+          VITE_API_BASE_URL: http://localhost:8089
+          CI: true
 
       - name: 📸 Upload test artifacts
         if: failure()
