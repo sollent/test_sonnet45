@@ -18,8 +18,9 @@ services:
       - PLAYWRIGHT_BASE_URL=${E2E_FRONTEND_URL:-http://host.docker.internal:3000}
 
     # Подключаемся к сети backend для доступа к API
+    # Используем default сеть проекта
     networks:
-      - backend-network
+      - default
 
     # Для доступа к сервисам на хосте (backend, frontend)
     extra_hosts:
@@ -42,8 +43,3 @@ services:
     # Тесты запускаются по требованию через docker-compose run
     profiles:
       - e2e
-
-networks:
-  backend-network:
-    name: ${COMPOSE_PROJECT_NAME:-backend}-network
-    external: true
