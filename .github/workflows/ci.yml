@@ -60,6 +60,16 @@ jobs:
         working-directory: apps/backend
         run: composer install --no-progress --prefer-dist --optimize-autoloader
 
+      - name: 🔐 Generate JWT keys
+        working-directory: apps/backend
+        run: |
+          mkdir -p config/jwt
+          openssl genrsa -out config/jwt/private.pem 4096
+          openssl rsa -pubout -in config/jwt/private.pem -out config/jwt/public.pem
+          chmod 644 config/jwt/private.pem config/jwt/public.pem
+        env:
+          JWT_PASSPHRASE: test_passphrase
+
       - name: 🔍 Run PHPStan
         working-directory: apps/backend
         run: vendor/bin/phpstan analyse --memory-limit=1G
@@ -167,12 +177,17 @@ jobs:
         run: |
           cd apps/backend
           composer install --no-progress
+          mkdir -p config/jwt
+          openssl genrsa -out config/jwt/private.pem 4096
+          openssl rsa -pubout -in config/jwt/private.pem -out config/jwt/public.pem
+          chmod 644 config/jwt/private.pem config/jwt/public.pem
           php bin/console doctrine:database:create --env=test --if-not-exists
           php bin/console doctrine:schema:create --env=test
           php -S localhost:8089 -t public &
         env:
           DATABASE_URL: postgresql://e2e_user:e2e_pass@127.0.0.1:5432/e2e_db?serverVersion=16&charset=utf8
           APP_ENV: test
+          JWT_PASSPHRASE: test_passphrase
 
       - name: 🚀 Start frontend dev server
         working-directory: apps/frontend
