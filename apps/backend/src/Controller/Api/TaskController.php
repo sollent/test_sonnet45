@@ -156,11 +156,11 @@ class TaskController extends AbstractController
         response: 200,
         description: 'Returns the paginated list of overdue tasks for the current user',
         content: new OA\JsonContent(
-            type: 'object',
             properties: [
                 new OA\Property(property: 'tasks', type: 'array', items: new OA\Items(ref: new Model(type: TaskResponseDto::class))),
                 new OA\Property(property: 'total', type: 'integer'),
             ],
+            type: 'object',
         ),
     )]
     #[OA\Parameter(name: 'page', in: 'query', description: 'The page number', schema: new OA\Schema(type: 'integer', default: 1))]
