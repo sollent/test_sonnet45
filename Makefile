@@ -204,34 +204,39 @@ test-coverage: ## Generate test coverage report
 
 test-frontend: ## Run frontend unit tests (Vitest)
 	@echo "🎨 Running frontend unit tests..."
-	cd apps/frontend && npm run test:run
+	$(COMPOSE_DEV_FULL) exec frontend npm run test:run
 
 test-frontend-ui: ## Run frontend tests with UI
 	@echo "🎨 Running frontend tests with UI..."
-	cd apps/frontend && npm run test:ui
+	$(COMPOSE_DEV_FULL) exec frontend npm run test:ui
 
 test-frontend-coverage: ## Generate frontend test coverage
 	@echo "📊 Generating frontend test coverage..."
-	cd apps/frontend && npm run test:coverage
+	$(COMPOSE_DEV_FULL) exec frontend npm run test:coverage
 
-test-e2e: ## Run E2E tests (Playwright)
+test-e2e: ## Run E2E tests locally (Playwright, requires browsers)
 	@echo "🎭 Running E2E tests..."
-	@echo "⚠️  Make sure backend and frontend are running!"
+	@echo "⚠️  Backend and frontend must be running!"
+	@echo "⚠️  Playwright browsers must be installed locally: npx playwright install"
+	@echo "⚠️  Running from host (not Docker) due to Alpine limitations"
 	cd apps/frontend && npm run test:e2e
 
-test-e2e-ui: ## Run E2E tests with UI mode
+test-e2e-ui: ## Run E2E tests with UI mode (locally)
 	@echo "🎭 Running E2E tests in UI mode..."
-	@echo "⚠️  Make sure backend and frontend are running!"
+	@echo "⚠️  Backend and frontend must be running!"
+	@echo "⚠️  Running from host (not Docker)"
 	cd apps/frontend && npm run test:e2e:ui
 
-test-e2e-debug: ## Run E2E tests in debug mode
+test-e2e-debug: ## Run E2E tests in debug mode (locally)
 	@echo "🐛 Running E2E tests in debug mode..."
-	@echo "⚠️  Make sure backend and frontend are running!"
+	@echo "⚠️  Backend and frontend must be running!"
+	@echo "⚠️  Running from host (not Docker)"
 	cd apps/frontend && npm run test:e2e:debug
 
-test-e2e-headed: ## Run E2E tests in headed mode (see browser)
+test-e2e-headed: ## Run E2E tests in headed mode (locally)
 	@echo "🎭 Running E2E tests in headed mode..."
-	@echo "⚠️  Make sure backend and frontend are running!"
+	@echo "⚠️  Backend and frontend must be running!"
+	@echo "⚠️  Running from host (not Docker)"
 	cd apps/frontend && npm run test:e2e:headed
 
 test-all: test test-frontend ## Run all tests (backend + frontend unit)
