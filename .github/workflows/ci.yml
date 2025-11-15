@@ -75,6 +75,7 @@ jobs:
           APP_ENV: test
           APP_DEBUG: true
         run: |
+          php bin/console doctrine:database:create --env=test --if-not-exists
           php bin/console doctrine:schema:create --env=test
           vendor/bin/phpunit --coverage-text
 
@@ -166,6 +167,7 @@ jobs:
         run: |
           cd apps/backend
           composer install --no-progress
+          php bin/console doctrine:database:create --env=test --if-not-exists
           php bin/console doctrine:schema:create --env=test
           php -S localhost:8089 -t public &
         env:
