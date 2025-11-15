@@ -9,6 +9,7 @@ use App\Dto\Request\Task\TaskFilterDto;
 use App\Dto\Request\Task\UpdateTaskDto;
 use App\Dto\Response\Task\TaskResponseDto;
 use App\Entity\Task;
+use App\Entity\User;
 use App\Enum\TaskPriority;
 use App\Enum\TaskStatus;
 use App\Repository\Database\TaskRepository;
@@ -25,7 +26,6 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapQueryString;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Security\Core\User\User;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/api/tasks', name: 'task_')]
@@ -109,6 +109,7 @@ class TaskController extends AbstractController
         #[MapQueryString]
         TaskFilterDto $filters = new TaskFilterDto(),
     ): JsonResponse {
+        /** @var User $user */
         $user = $this->getUser();
 
         // Get pagination parameters with default limit for security
@@ -116,7 +117,7 @@ class TaskController extends AbstractController
         $limit = $request->query->get('limit') ? (int) $request->query->get('limit') : 150;
         $offset = $request->query->get('offset') ? (int) $request->query->get('offset') : 0;
 
-        // Get onlyWithSubtasks parameter (default: false - show all tasks)
+        // Get onlyWithSubtasOks parameter (default: false - show all tasks)
         // When true: show ONLY tasks that have subtasks (complex tasks)
         // When false (default): show ALL tasks with their subtasks
         $onlyWithSubtasks = $request->query->get('onlyWithSubtasks', 'false') === 'true';
