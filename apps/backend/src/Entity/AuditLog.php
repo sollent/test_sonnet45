@@ -8,6 +8,9 @@ use App\Repository\Database\AuditLogRepository;
 use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 
+/**
+ * Audit logs accepted to view only for ROLE_SUPER_ADMIN
+ */
 #[ORM\Entity(repositoryClass: AuditLogRepository::class)]
 #[ORM\Table(name: 'audit_logs')]
 #[ORM\Index(name: 'idx_audit_user', columns: ['user_id'])]
