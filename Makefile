@@ -191,16 +191,16 @@ quality-fix: ## Fix code style and re-run checks
 
 test: ## Run all backend tests
 	@echo "🧪 Running all tests..."
-	$(COMPOSE_DEV_FULL) exec php83-fpm php bin/phpunit
+	$(COMPOSE_DEV_FULL) exec php83-fpm sh -c "APP_ENV=test php bin/phpunit"
 
 test-unit: ## Run unit tests only
-	$(COMPOSE_DEV_FULL) exec php83-fpm php bin/phpunit --testsuite unit
+	$(COMPOSE_DEV_FULL) exec php83-fpm sh -c "APP_ENV=test php bin/phpunit --testsuite unit"
 
 test-integration: ## Run integration tests only
-	$(COMPOSE_DEV_FULL) exec php83-fpm php bin/phpunit --testsuite integration
+	$(COMPOSE_DEV_FULL) exec php83-fpm sh -c "APP_ENV=test php bin/phpunit --testsuite integration"
 
 test-coverage: ## Generate test coverage report
-	$(COMPOSE_DEV_FULL) exec php83-fpm php bin/phpunit --coverage-html coverage
+	$(COMPOSE_DEV_FULL) exec php83-fpm sh -c "APP_ENV=test php bin/phpunit --coverage-html coverage"
 
 ## 📊 Status Commands
 
