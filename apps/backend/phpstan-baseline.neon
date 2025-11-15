@@ -79,18 +79,6 @@ parameters:
 			path: src/Controller/Api/TagController.php
 
 		-
-			message: '#^PHPDoc tag @var for variable \$user contains unknown class Symfony\\Component\\Security\\Core\\User\\User\.$#'
-			identifier: class.notFound
-			count: 2
-			path: src/Controller/Api/TaskController.php
-
-		-
-			message: '#^PHPDoc tag @var with type Symfony\\Component\\Security\\Core\\User\\User is not subtype of native type Symfony\\Component\\Security\\Core\\User\\UserInterface\|null\.$#'
-			identifier: varTag.nativeType
-			count: 2
-			path: src/Controller/Api/TaskController.php
-
-		-
 			message: '#^Parameter \#1 \$user of method App\\Repository\\Database\\TaskRepository\:\:findTasksByDayRaw\(\) expects App\\Entity\\User, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
 			identifier: argument.type
 			count: 1
@@ -109,55 +97,7 @@ parameters:
 			path: src/Controller/Api/TaskController.php
 
 		-
-			message: '#^Parameter \#1 \$user of method App\\Service\\TaskService\:\:getActiveTasks\(\) expects App\\Entity\\User, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Controller/Api/TaskController.php
-
-		-
-			message: '#^Parameter \#1 \$user of method App\\Service\\TaskService\:\:getOverdueTasksPaginated\(\) expects App\\Entity\\User, Symfony\\Component\\Security\\Core\\User\\User given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Controller/Api/TaskController.php
-
-		-
-			message: '#^Parameter \#1 \$user of method App\\Service\\TaskService\:\:getOverdueTasksPaginated\(\) expects App\\Entity\\User, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Controller/Api/TaskController.php
-
-		-
 			message: '#^Parameter \#1 \$user of method App\\Service\\TaskService\:\:getTaskStatistics\(\) expects App\\Entity\\User, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Controller/Api/TaskController.php
-
-		-
-			message: '#^Parameter \#1 \$user of method App\\Service\\TaskService\:\:getTodayTasks\(\) expects App\\Entity\\User, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Controller/Api/TaskController.php
-
-		-
-			message: '#^Parameter \#1 \$user of method App\\Service\\TaskService\:\:getUnscheduledTasksPaginated\(\) expects App\\Entity\\User, Symfony\\Component\\Security\\Core\\User\\User given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Controller/Api/TaskController.php
-
-		-
-			message: '#^Parameter \#1 \$user of method App\\Service\\TaskService\:\:getUnscheduledTasksPaginated\(\) expects App\\Entity\\User, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Controller/Api/TaskController.php
-
-		-
-			message: '#^Parameter \#1 \$user of method App\\Service\\TaskService\:\:getUpcomingTasks\(\) expects App\\Entity\\User, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Controller/Api/TaskController.php
-
-		-
-			message: '#^Parameter \#1 \$user of method App\\Service\\TaskService\:\:searchTasks\(\) expects App\\Entity\\User, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Controller/Api/TaskController.php
