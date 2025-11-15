@@ -188,8 +188,48 @@ Pinia stores и паттерны состояния
 
 ### 🚀 CI/CD & Планы Оптимизации (`project/docs/ci-cd-plans/`)
 
+#### [`CI_CD_SETUP_GUIDE.md`](CI_CD_SETUP_GUIDE.md)
+**🚀 НОВОЕ 2025-11-15** - Пошаговая инструкция по активации CI/CD системы (95% → 100%)
+
+**Ключевые Темы:**
+- Финальная настройка CI/CD pipeline (7 шагов, ~40 минут)
+- Генерация Production Credentials (APP_SECRET, JWT_PASSPHRASE)
+- Создание SSH ключа для GitHub Actions
+- Создание Telegram бота для уведомлений о деплое
+- Настройка 12 GitHub Secrets
+- Тестовый запуск CI (backend, frontend, e2e, security)
+- Manual Deploy тестирование
+- Автоматический деплой при merge в main
+- Детальный Troubleshooting для каждого шага
+- Вспомогательные скрипты (check-github-secrets.sh, test-ssh-connection.sh)
+
+#### [`CI_CD_COMPLETE_GUIDE.md`](CI_CD_COMPLETE_GUIDE.md)
+**📚 ПОЛНЫЙ ГАЙД** - Комплексная система CI/CD на базе GitHub Actions
+
+**Ключевые Темы:**
+- Обзор системы (CI + CD архитектура)
+- 3 GitHub Actions workflows (CI, Deploy, Rollback)
+- Предварительная подготовка (VDS, SSH, Telegram)
+- Полный список GitHub Secrets (12 secrets)
+- Модификация скриптов для CI/CD
+- Health checks и smoke tests
+- Rollback стратегия
+- Troubleshooting (20+ решений)
+- Чеклист готовности
+
+#### [`CI_CD_CONTEXT.md`](CI_CD_CONTEXT.md)
+**⚡ КОНТЕКСТ** - Анализ текущего состояния и план внедрения CI/CD
+
+**Ключевые Темы:**
+- Что уже есть (Production deployment, Docker, Code quality)
+- Что отсутствует для CI/CD
+- 5-фазный план внедрения
+- Технические детали (env variables, Docker configs)
+- Quick Start для CI/CD
+- Метрики успеха
+
 #### [`ci-cd-plans/FRONTEND_OPTIMIZATION_PLAN.md`](ci-cd-plans/FRONTEND_OPTIMIZATION_PLAN.md)
-**🎯 НОВОЕ** - Комплексный план оптимизации производительности Frontend
+**🎯 ПЛАН** - Комплексный план оптимизации производительности Frontend
 
 **Ключевые Темы:**
 - Анализ текущих проблем (PrimeVue, ECharts, bundle size)
@@ -511,6 +551,25 @@ Frontend:
 ---
 
 ## 🚀 Быстрые Справочные Команды
+
+### CI/CD Helper Scripts
+
+```bash
+# Проверка готовности GitHub Secrets
+./scripts/check-github-secrets.sh ~/taskflow-production-secrets.txt
+
+# Тестирование SSH подключения к VDS
+./scripts/test-ssh-connection.sh 45.129.186.88 root
+
+# Генерация production secrets
+./scripts/generate-secrets.sh
+
+# Health check production сервера
+./scripts/health-check.sh
+
+# Production deployment (вручную)
+./scripts/deploy-production.sh
+```
 
 ### Backend (Docker)
 
