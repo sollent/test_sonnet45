@@ -57,3 +57,5 @@ Thumbs.db
 # But we ignore any potential worktree metadata that might leak
 .git/worktrees/
 ACTIVE_WORKTREES.txt
+
+/taskflow-production-secrets.txt
