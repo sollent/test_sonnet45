@@ -157,7 +157,7 @@ class TaskController extends AbstractController
         content: new OA\JsonContent(
             type: 'object',
             properties: [
-                new OA\Property(property: 'tasks', type: 'array', items: new OA\Items(ref: '#/components/schemas/TaskList')),
+                new OA\Property(property: 'tasks', type: 'array', items: new OA\Items(ref: new Model(type: TaskResponseDto::class))),
                 new OA\Property(property: 'total', type: 'integer'),
             ],
         ),
@@ -192,7 +192,7 @@ class TaskController extends AbstractController
         content: new OA\JsonContent(
             type: 'object',
             properties: [
-                new OA\Property(property: 'tasks', type: 'array', items: new OA\Items(ref: '#/components/schemas/TaskList')),
+                new OA\Property(property: 'tasks', type: 'array', items: new OA\Items(ref: new Model(type: TaskResponseDto::class))),
                 new OA\Property(property: 'total', type: 'integer'),
             ],
         ),
