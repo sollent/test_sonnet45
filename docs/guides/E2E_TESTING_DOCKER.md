@@ -264,6 +264,11 @@ export default defineConfig({
     baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000',
   },
 
+  // Параллельное выполнение тестов с 5 воркерами (dev + CI)
+  fullyParallel: true,
+  workers: 5,
+  retries: process.env.CI ? 2 : 1,
+
   // Браузеры для тестирования
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },

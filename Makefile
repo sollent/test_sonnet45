@@ -224,7 +224,7 @@ test-e2e: ## Run E2E tests in Docker (Playwright)
 	@echo "🎭 Running E2E tests in Docker..."
 	@echo "⚠️  Backend (port 8089) and frontend (port 3000) must be running!"
 	@echo ""
-	$(COMPOSE_E2E_FULL) run --rm frontend-e2e npm run test:e2e
+	$(COMPOSE_E2E_FULL) run --rm -e CI=true frontend-e2e npm run test:e2e
 
 test-e2e-ui: ## Run E2E tests with UI mode (requires X11/VNC)
 	@echo "🎭 Running E2E tests in UI mode..."

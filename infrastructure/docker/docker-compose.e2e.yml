@@ -29,7 +29,8 @@ services:
     # Монтируем исходный код для live reload тестов (опционально)
     volumes:
       # Volumes относительно корня проекта
-      - ./apps/frontend/e2e:/app/e2e:ro
+      # Убрали :ro (read-only) так как Playwright нужно записывать результаты
+      - ./apps/frontend/e2e:/app/e2e
       - ./apps/frontend/playwright.config.ts:/app/playwright.config.ts:ro
       # Сохраняем результаты тестов на хост
       - ./apps/frontend/test-results:/app/test-results
