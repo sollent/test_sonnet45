@@ -85,8 +85,11 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    // Use MODE=test to load .env.test with test backend URL (port 8090)
-    command: 'MODE=test npm run dev',
+    // In CI: Override VITE_API_BASE_URL to match backend port (8089)
+    // Locally: Use MODE=test to load .env.test (port 8090 for Docker worktree)
+    command: process.env.CI
+      ? 'VITE_API_BASE_URL=http://localhost:8089 npm run dev'
+      : 'MODE=test npm run dev',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
