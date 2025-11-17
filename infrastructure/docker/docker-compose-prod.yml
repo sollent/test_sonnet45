@@ -16,6 +16,11 @@ services:
     # Host nginx (with SSL) proxies to this container on localhost:8089
     ports:
       - "127.0.0.1:8089:80"
+    # Network alias for frontend to access backend
+    networks:
+      nginx-php83-psql16:
+        aliases:
+          - backend-nginx
 
   php83-fpm:
     restart: always
