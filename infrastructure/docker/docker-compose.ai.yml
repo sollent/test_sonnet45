@@ -1,14 +1,138 @@
-# AI Services Docker Compose
-# This is a PLACEHOLDER - will be implemented during Voice AI development
-
 version: '3.8'
 
 services:
-  # TODO: Add Ollama service (LLM)
-  # TODO: Add Whisper.cpp service (STT)
-  # TODO: Add Centrifugo service (WebSocket)
+  # ============================================
+  # Ollama - LLM Service (Llama 3.2)
+  # ============================================
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ${COMPOSE_PROJECT_NAME:-backend}-ollama
+    ports:
+      - "${OLLAMA_PORT:-11434}:11434"
+    volumes:
+      - ollama_models:/root/.ollama
+      - ./ai/ollama-entrypoint.sh:/entrypoint.sh:ro
+    environment:
+      - OLLAMA_MODELS=${OLLAMA_MODELS:-llama3.2:3b}
+      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_ORIGINS=*
+      - OLLAMA_DEBUG=${OLLAMA_DEBUG:-false}
+    networks:
+      - nginx-php83-psql16
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 2G
+    entrypoint: ["/bin/sh", "/entrypoint.sh"]
 
-  # Placeholder to prevent errors
-  ai-placeholder:
-    image: alpine:latest
-    command: echo "AI services not implemented yet"
+  # ============================================
+  # Whisper - Speech-to-Text Service
+  # ============================================
+  whisper:
+    image: onerahmet/openai-whisper-asr-webservice:latest-gpu
+    container_name: ${COMPOSE_PROJECT_NAME:-backend}-whisper
+    ports:
+      - "${WHISPER_PORT:-9000}:9000"
+    volumes:
+      - whisper_models:/app/models
+    environment:
+      - ASR_MODEL=${WHISPER_MODEL:-base}
+      - ASR_ENGINE=${WHISPER_ENGINE:-openai_whisper}
+      - ASR_MODEL_PATH=/app/models
+      - ASR_LANGUAGE=${WHISPER_LANGUAGE:-ru}
+    networks:
+      - nginx-php83-psql16
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
+
+  # ============================================
+  # Centrifugo - WebSocket Service
+  # ============================================
+  centrifugo:
+    image: centrifugo/centrifugo:v5
+    container_name: ${COMPOSE_PROJECT_NAME:-backend}-centrifugo
+    ports:
+      - "${CENTRIFUGO_PORT:-8000}:8000"
+      - "${CENTRIFUGO_ADMIN_PORT:-8001}:8001"
+    volumes:
+      - ./ai/centrifugo.json:/centrifugo/config.json:ro
+    environment:
+      - CENTRIFUGO_ADMIN=${CENTRIFUGO_ADMIN:-true}
+      - CENTRIFUGO_ADMIN_PASSWORD=${CENTRIFUGO_ADMIN_PASSWORD:-admin}
+      - CENTRIFUGO_ADMIN_SECRET=${CENTRIFUGO_ADMIN_SECRET:-secret}
+      - CENTRIFUGO_API_KEY=${CENTRIFUGO_API_KEY:-api-key}
+      - CENTRIFUGO_TOKEN_HMAC_SECRET_KEY=${CENTRIFUGO_SECRET:-secret-key}
+      - CENTRIFUGO_ALLOWED_ORIGINS=${CENTRIFUGO_ORIGINS:-http://localhost:3000}
+    command: centrifugo -c /centrifugo/config.json
+    networks:
+      - nginx-php83-psql16
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  # ============================================
+  # Redis - Cache for Centrifugo
+  # ============================================
+  redis:
+    image: redis:7-alpine
+    container_name: ${COMPOSE_PROJECT_NAME:-backend}-redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+    command: redis-server --appendonly yes
+    networks:
+      - nginx-php83-psql16
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+volumes:
+  ollama_models:
+    driver: local
+  whisper_models:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  nginx-php83-psql16:
+    external: true
