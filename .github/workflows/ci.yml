@@ -12,6 +12,27 @@ env:
 
 jobs:
   # ========================================
+  # Telegram Notification - Start
+  # ========================================
+  notify-start:
+    name: 📢 CI Started Notification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Telegram notification (CI started)
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          format: markdown
+          message: |
+            🔄 *CI Tests Started*
+
+            📦 *Repository:* `${{ github.repository }}`
+            🌿 *Branch:* `${{ github.ref_name }}`
+            👤 *Actor:* `${{ github.actor }}`
+            📝 *Commit:* `${{ github.event.head_commit.message }}`
+            🔗 *SHA:* `${{ github.sha }}`
+  # ========================================
   # Backend Tests
   # ========================================
   backend-tests:
@@ -213,3 +234,55 @@ jobs:
   #       with:
   #         name: e2e-screenshots
   #         path: apps/frontend/test-results/
+
+  # ========================================
+  # Telegram Notification - Success
+  # ========================================
+  notify-success:
+    name: ✅ CI Success Notification
+    runs-on: ubuntu-latest
+    needs: [backend-tests, frontend-tests]
+    if: success()
+    steps:
+      - name: Send Telegram notification (CI success)
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          format: markdown
+          message: |
+            ✅ *CI Tests Passed*
+
+            📦 *Repository:* `${{ github.repository }}`
+            🌿 *Branch:* `${{ github.ref_name }}`
+            👤 *Actor:* `${{ github.actor }}`
+
+            ✨ *All tests passed successfully!*
+
+  # ========================================
+  # Telegram Notification - Failure
+  # ========================================
+  notify-failure:
+    name: ❌ CI Failure Notification
+    runs-on: ubuntu-latest
+    needs: [backend-tests, frontend-tests]
+    if: failure()
+    steps:
+      - name: Send Telegram notification (CI failure)
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          format: markdown
+          message: |
+            ❌ *CI Tests FAILED*
+
+            📦 *Repository:* `${{ github.repository }}`
+            🌿 *Branch:* `${{ github.ref_name }}`
+            👤 *Actor:* `${{ github.actor }}`
+            🔗 *Actions:* [View logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+            ⚠️ *CRITICAL: Production deployment will NOT start!*
+            ⚠️ *CI pipeline must pass before deployment can proceed.*
+
+            Please fix the failing tests before merging to main.
