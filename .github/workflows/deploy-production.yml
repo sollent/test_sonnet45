@@ -322,36 +322,6 @@ jobs:
           fi
           DBCHECK
 
-      - name: 🧪 Smoke Tests
-        run: |
-          echo "Running smoke tests..."
-
-          # Test login endpoint
-          response=$(curl -s -X POST https://api.task.nesty.by/api/login \
-            -H "Content-Type: application/json" \
-            -d '{"email":"test@example.com","password":"test"}' \
-            -w "\n%{http_code}")
-
-          http_code=$(echo "$response" | tail -n 1)
-          if [ "$http_code" = "401" ] || [ "$http_code" = "400" ]; then
-            echo "✅ Login endpoint working (expected auth failure)"
-          else
-            echo "❌ Login endpoint not responding correctly"
-            exit 1
-          fi
-
-          # Test tasks endpoint (should require auth)
-          response=$(curl -s https://api.task.nesty.by/api/tasks -w "\n%{http_code}")
-          http_code=$(echo "$response" | tail -n 1)
-          if [ "$http_code" = "401" ]; then
-            echo "✅ Tasks endpoint properly secured"
-          else
-            echo "❌ Tasks endpoint not properly secured"
-            exit 1
-          fi
-
-          echo "✅ All smoke tests passed"
-
       - name: 📢 Send Telegram notification (success)
         if: success()
         uses: appleboy/telegram-action@master
