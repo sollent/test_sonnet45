@@ -6,8 +6,8 @@ namespace App\Service\AI;
 
 use App\Entity\User;
 use App\Entity\Task;
+use App\Repository\Database\TagRepository;
 use App\Service\TaskService;
-use App\Service\TagService;
 use App\ValueObject\ParsedCommand;
 use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
@@ -22,18 +22,18 @@ use RuntimeException;
 class VoiceCommandExecutor
 {
     private TaskService $taskService;
-    private TagService $tagService;
+    private TagRepository $tagRepository;
     private SmartSearchService $searchService;
     private LoggerInterface $logger;
 
     public function __construct(
         TaskService $taskService,
-        TagService $tagService,
+        TagRepository $tagRepository,
         SmartSearchService $searchService,
         LoggerInterface $logger
     ) {
         $this->taskService = $taskService;
-        $this->tagService = $tagService;
+        $this->tagRepository = $tagRepository;
         $this->searchService = $searchService;
         $this->logger = $logger;
     }
@@ -117,12 +117,13 @@ class VoiceCommandExecutor
 
         // Добавление тегов, если указаны
         if (!empty($parameters['tags'])) {
-            $tags = is_array($parameters['tags'])
+            $tagNames = is_array($parameters['tags'])
                 ? $parameters['tags']
                 : [$parameters['tags']];
 
-            foreach ($tags as $tagName) {
-                $tag = $this->tagService->findOrCreateTag($tagName, $user);
+            $tags = $this->tagRepository->findOrCreateByNames($tagNames, $user);
+
+            foreach ($tags as $tag) {
                 $task->addTag($tag);
             }
 

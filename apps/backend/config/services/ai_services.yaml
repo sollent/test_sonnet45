@@ -1,0 +1,34 @@
+services:
+    # HTTP Client для AI сервисов
+    ai.http_client:
+        class: Symfony\Component\HttpClient\HttpClient
+        factory: ['Symfony\Component\HttpClient\HttpClient', 'create']
+
+    # Alias для автовайринга
+    Symfony\Contracts\HttpClient\HttpClientInterface:
+        alias: ai.http_client
+
+    # LLM Service
+    App\Service\AI\LLMService:
+        arguments:
+            $httpClient: '@ai.http_client'
+            $logger: '@logger'
+            $params: '@parameter_bag'
+
+    # Voice Processing Service
+    App\Service\AI\VoiceProcessingService:
+        arguments:
+            $httpClient: '@ai.http_client'
+            $whisperUrl: '%env(default::WHISPER_URL)%'
+
+    # WebSocket Publisher
+    App\Service\AI\WebSocketPublisher:
+        arguments:
+            $httpClient: '@ai.http_client'
+
+parameters:
+    env(WHISPER_URL): 'http://whisper:9000'
+    env(OLLAMA_URL): 'http://ollama:11434'
+    env(CENTRIFUGO_URL): 'http://centrifugo:8000'
+    env(CENTRIFUGO_API_KEY): 'api-key'
+    env(WEBSOCKET_ENABLED): true
