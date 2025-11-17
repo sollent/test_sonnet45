@@ -12,6 +12,10 @@ services:
       - NGINX_DEBUG=false
     # Production: Use specific version instead of :latest
     image: nginx:1.25-alpine
+    # Production: Bind to internal port for host nginx to proxy
+    # Host nginx (with SSL) proxies to this container on localhost:8089
+    ports:
+      - "127.0.0.1:8089:80"
 
   php83-fpm:
     restart: always
