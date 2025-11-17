@@ -216,8 +216,11 @@ jobs:
           docker exec test_sonnet45-php83 chmod -R 777 public/uploads/
           echo "✅ Permissions set"
 
-          echo "🔐 Checking JWT keys..."
-          docker exec test_sonnet45-php83 sh -c "[ ! -f config/jwt/private.pem ] && php bin/console lexik:jwt:generate-keypair || echo 'JWT keys exist'"
+          echo "🔐 Generating JWT keys..."
+          # Удаляем старые ключи и генерируем новые с текущим passphrase
+          docker exec test_sonnet45-php83 rm -f config/jwt/private.pem config/jwt/public.pem
+          docker exec test_sonnet45-php83 php bin/console lexik:jwt:generate-keypair --skip-if-exists
+          echo "✅ JWT keys generated with current passphrase"
 
           echo "🌐 Checking host nginx status..."
           # Проверяем что host nginx работает (нужен для HTTPS proxy)
