@@ -107,10 +107,7 @@ jobs:
           RABBITMQ_PORT=5672
           RABBITMQ_MANAGEMENT_PORT=15672
 
-          NGINX_PORT=80
           PHP_FPM_PORT=9000
-
-          FRONTEND_PROD_PORT=3001
           VITE_API_BASE_URL=https://api.task.nesty.by
           ENVDOCKER
 
