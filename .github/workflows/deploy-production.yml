@@ -287,16 +287,16 @@ jobs:
           attempt=0
 
           while [ $attempt -lt $max_attempts ]; do
-            http_code=$(curl -s -o /dev/null -w "%{http_code}" https://api.task.nesty.by/api/login || echo "000")
+            http_code=$(curl -s -o /dev/null -w "%{http_code}" https://api.task.nesty.by/api/users/me || echo "000")
 
-            # API должен вернуть 400 или 401 для /api/login без credentials (значит работает!)
-            if [ "$http_code" = "400" ] || [ "$http_code" = "401" ]; then
-              echo "✅ API is healthy and responding (HTTP $http_code on /api/login)"
+            # API должен вернуть 401 для /api/users/me без JWT токена (значит работает!)
+            if [ "$http_code" = "401" ]; then
+              echo "✅ API is healthy and responding (HTTP $http_code on /api/users/me)"
               break
             fi
 
             attempt=$((attempt + 1))
-            echo "Attempt $attempt/$max_attempts: HTTP $http_code (expected 400/401), waiting 5 seconds..."
+            echo "Attempt $attempt/$max_attempts: HTTP $http_code (expected 401), waiting 5 seconds..."
             sleep 5
           done
 
