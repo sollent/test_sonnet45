@@ -135,7 +135,11 @@ jobs:
           echo "🔗 Creating env symlinks..."
           ln -sf .env.docker.prod .env.docker
           ln -sf .env.docker.prod .env
-          ln -sf apps/backend/.env.prod apps/backend/.env
+
+          # Backend .env symlink (из директории apps/backend)
+          cd apps/backend
+          ln -sf .env.prod .env
+          cd ../..
 
           # Пересборка и перезапуск контейнеров
           echo "🐳 Building and restarting Docker containers..."
