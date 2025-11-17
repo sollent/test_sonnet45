@@ -80,7 +80,7 @@ jobs:
 
       - name: 📝 Create deployment script
         run: |
-          cat > deploy.sh << 'EOF'
+          cat > deploy.sh << EOF
           #!/bin/bash
           set -e
 
