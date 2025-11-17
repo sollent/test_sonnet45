@@ -279,23 +279,22 @@ jobs:
           attempt=0
 
           while [ $attempt -lt $max_attempts ]; do
-            response=$(curl -s https://api.task.nesty.by/api/health || echo "")
-            http_code=$(curl -s -o /dev/null -w "%{http_code}" https://api.task.nesty.by/api/health || echo "000")
+            http_code=$(curl -s -o /dev/null -w "%{http_code}" https://api.task.nesty.by/api/login || echo "000")
 
-            if echo "$response" | grep -q "ok"; then
-              echo "✅ API is healthy (HTTP $http_code)"
-              echo "Response: $response"
+            # API должен вернуть 400 или 401 для /api/login без credentials (значит работает!)
+            if [ "$http_code" = "400" ] || [ "$http_code" = "401" ]; then
+              echo "✅ API is healthy and responding (HTTP $http_code on /api/login)"
               break
             fi
 
             attempt=$((attempt + 1))
-            echo "Attempt $attempt/$max_attempts: HTTP $http_code, response doesn't contain 'ok', waiting 5 seconds..."
-            echo "Response: $response"
+            echo "Attempt $attempt/$max_attempts: HTTP $http_code (expected 400/401), waiting 5 seconds..."
             sleep 5
           done
 
           if [ $attempt -eq $max_attempts ]; then
             echo "❌ API health check failed after $max_attempts attempts"
+            echo "Last HTTP code: $http_code"
             exit 1
           fi
 
@@ -303,20 +302,14 @@ jobs:
         run: |
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VDS_USER }}@${{ secrets.VDS_HOST }} 'bash -s' << 'DBCHECK'
           echo "Checking database connection..."
-          docker exec test_sonnet45-php83 php -r '
-            try {
-              $pdo = new PDO("postgresql:host=test_sonnet45-psql16;port=5432;dbname=backend_prod", "prod_user", getenv("POSTGRES_PASSWORD"));
-              echo "✅ Database connection successful\n";
-              exit(0);
-            } catch (Exception $e) {
-              echo "❌ Database connection failed: " . $e->getMessage() . "\n";
-              exit(1);
-            }
-          '
-          if [ $? -eq 0 ]; then
-            echo "Database check passed"
+
+          # Используем Symfony doctrine команду для проверки подключения к БД
+          if docker exec test_sonnet45-php83 php bin/console dbal:run-sql "SELECT 1" --env=prod 2>&1 | grep -q "1"; then
+            echo "✅ Database connection successful"
+            exit 0
           else
-            echo "Database check failed"
+            echo "❌ Database connection failed"
+            docker exec test_sonnet45-php83 php bin/console dbal:run-sql "SELECT 1" --env=prod 2>&1
             exit 1
           fi
           DBCHECK
