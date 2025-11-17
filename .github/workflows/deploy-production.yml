@@ -119,6 +119,8 @@ jobs:
           DATABASE_URL="postgresql://prod_user:${{ secrets.PROD_POSTGRES_PASSWORD }}@test_sonnet45-psql16:5432/backend_prod?serverVersion=16&charset=utf8"
 
           JWT_PASSPHRASE=${{ secrets.PROD_JWT_PASSPHRASE }}
+          JWT_REFRESH_TOKEN_TTL=2592000
+          JWT_REFRESH_TOKEN_TTL_UPDATE=true
 
           MESSENGER_TRANSPORT_DSN=amqp://prod_user:${{ secrets.PROD_RABBITMQ_PASSWORD }}@test_sonnet45-rabbitmq:5672/%2f/messages
 
@@ -207,6 +209,12 @@ jobs:
           echo "🧹 Clearing cache..."
           docker exec test_sonnet45-php83 php bin/console cache:clear --env=prod
           docker exec test_sonnet45-php83 php bin/console cache:warmup --env=prod
+
+          echo "🔒 Setting correct permissions..."
+          # Устанавливаем права на директории для записи (кеш, логи, uploads)
+          docker exec test_sonnet45-php83 chmod -R 777 var/
+          docker exec test_sonnet45-php83 chmod -R 777 public/uploads/
+          echo "✅ Permissions set"
 
           echo "🔐 Checking JWT keys..."
           docker exec test_sonnet45-php83 sh -c "[ ! -f config/jwt/private.pem ] && php bin/console lexik:jwt:generate-keypair || echo 'JWT keys exist'"
