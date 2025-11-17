@@ -80,58 +80,52 @@ jobs:
 
       - name: 📝 Create deployment script
         run: |
-          cat > deploy.sh << EOF
+          cat > deploy.sh << 'ENDSCRIPT'
           #!/bin/bash
           set -e
 
           echo "🚀 Starting deployment..."
 
-          # Переход в директорию проекта
-          cd ${{ secrets.VDS_PROJECT_PATH }}
+          cd /var/www/test_sonnet45
 
-          # Обновление кода
           echo "📥 Pulling latest changes..."
           git pull origin main
 
-          # Создание production .env файлов
           echo "🔧 Creating production env files..."
 
-          # Docker env
-          cat > .env.docker.prod << EOL
-POSTGRES_DB=backend_prod
-POSTGRES_USER=prod_user
-POSTGRES_PASSWORD=${{ secrets.PROD_POSTGRES_PASSWORD }}
-POSTGRES_PORT=5432
+          cat > .env.docker.prod << 'ENVDOCKER'
+          POSTGRES_DB=backend_prod
+          POSTGRES_USER=prod_user
+          POSTGRES_PASSWORD=PROD_POSTGRES_PASS_PLACEHOLDER
+          POSTGRES_PORT=5432
 
-RABBITMQ_USER=prod_user
-RABBITMQ_PASSWORD=${{ secrets.PROD_RABBITMQ_PASSWORD }}
-RABBITMQ_PORT=5672
-RABBITMQ_MANAGEMENT_PORT=15672
+          RABBITMQ_USER=prod_user
+          RABBITMQ_PASSWORD=PROD_RABBITMQ_PASS_PLACEHOLDER
+          RABBITMQ_PORT=5672
+          RABBITMQ_MANAGEMENT_PORT=15672
 
-NGINX_PORT=80
-PHP_FPM_PORT=9000
+          NGINX_PORT=80
+          PHP_FPM_PORT=9000
 
-FRONTEND_PROD_PORT=3001
-VITE_API_BASE_URL=https://api.task.nesty.by
-EOL
+          FRONTEND_PROD_PORT=3001
+          VITE_API_BASE_URL=https://api.task.nesty.by
+          ENVDOCKER
 
-          # Symfony env
-          cat > apps/backend/.env.prod << ENVEOF
-APP_ENV=prod
-APP_SECRET=${{ secrets.PROD_APP_SECRET }}
-APP_DEBUG=false
+          cat > apps/backend/.env.prod << 'ENVSYMFONY'
+          APP_ENV=prod
+          APP_SECRET=PROD_APP_SECRET_PLACEHOLDER
+          APP_DEBUG=false
 
-DATABASE_URL="postgresql://prod_user:${{ secrets.PROD_POSTGRES_PASSWORD }}@psql16:5432/backend_prod?serverVersion=16&charset=utf8"
+          DATABASE_URL="postgresql://prod_user:PROD_POSTGRES_PASS_PLACEHOLDER@psql16:5432/backend_prod?serverVersion=16&charset=utf8"
 
-JWT_PASSPHRASE=${{ secrets.PROD_JWT_PASSPHRASE }}
+          JWT_PASSPHRASE=PROD_JWT_PASSPHRASE_PLACEHOLDER
 
-MESSENGER_TRANSPORT_DSN=amqp://prod_user:${{ secrets.PROD_RABBITMQ_PASSWORD }}@rabbitmq:5672/%2f/messages
+          MESSENGER_TRANSPORT_DSN=amqp://prod_user:PROD_RABBITMQ_PASS_PLACEHOLDER@rabbitmq:5672/%2f/messages
 
-GOOGLE_CLIENT_ID=${{ secrets.PROD_GOOGLE_CLIENT_ID }}
-GOOGLE_CLIENT_SECRET=${{ secrets.PROD_GOOGLE_CLIENT_SECRET }}
-ENVEOF
+          GOOGLE_CLIENT_ID=PROD_GOOGLE_CLIENT_ID_PLACEHOLDER
+          GOOGLE_CLIENT_SECRET=PROD_GOOGLE_CLIENT_SECRET_PLACEHOLDER
+          ENVSYMFONY
 
-          # Проверка что файл создан
           if [ -f apps/backend/.env.prod ]; then
             echo "✅ apps/backend/.env.prod created successfully"
             ls -lh apps/backend/.env.prod
@@ -140,17 +134,14 @@ ENVEOF
             exit 1
           fi
 
-          # Создание symlinks для env файлов
           echo "🔗 Creating env symlinks..."
           ln -sf .env.docker.prod .env.docker
           ln -sf .env.docker.prod .env
 
-          # Backend .env symlink (из директории apps/backend)
           cd apps/backend
           ln -sf .env.prod .env
           cd ../..
 
-          # Пересборка и перезапуск контейнеров
           echo "🐳 Building and restarting Docker containers..."
           docker compose -f docker-compose.yml \
                         -f infrastructure/docker/docker-compose-prod.yml \
@@ -167,28 +158,32 @@ ENVEOF
                         -f infrastructure/docker/docker-compose.frontend-prod.yml \
                         up -d
 
-          # Ожидание запуска контейнеров
           echo "⏳ Waiting for containers to start..."
           sleep 10
 
-          # Установка зависимостей и миграции
           echo "📦 Installing dependencies..."
           docker exec backend-php83 composer install --no-dev --optimize-autoloader
 
           echo "🔄 Running migrations..."
           docker exec backend-php83 php bin/console doctrine:migrations:migrate --no-interaction
 
-          # Очистка кеша
           echo "🧹 Clearing cache..."
           docker exec backend-php83 php bin/console cache:clear --env=prod
           docker exec backend-php83 php bin/console cache:warmup --env=prod
 
-          # Генерация JWT ключей если их нет
           echo "🔐 Checking JWT keys..."
           docker exec backend-php83 sh -c "[ ! -f config/jwt/private.pem ] && php bin/console lexik:jwt:generate-keypair || echo 'JWT keys exist'"
 
           echo "✅ Deployment completed!"
-          EOF
+          ENDSCRIPT
+
+          # Replace placeholders with actual secrets
+          sed -i "s|PROD_POSTGRES_PASS_PLACEHOLDER|${{ secrets.PROD_POSTGRES_PASSWORD }}|g" deploy.sh
+          sed -i "s|PROD_RABBITMQ_PASS_PLACEHOLDER|${{ secrets.PROD_RABBITMQ_PASSWORD }}|g" deploy.sh
+          sed -i "s|PROD_APP_SECRET_PLACEHOLDER|${{ secrets.PROD_APP_SECRET }}|g" deploy.sh
+          sed -i "s|PROD_JWT_PASSPHRASE_PLACEHOLDER|${{ secrets.PROD_JWT_PASSPHRASE }}|g" deploy.sh
+          sed -i "s|PROD_GOOGLE_CLIENT_ID_PLACEHOLDER|${{ secrets.PROD_GOOGLE_CLIENT_ID }}|g" deploy.sh
+          sed -i "s|PROD_GOOGLE_CLIENT_SECRET_PLACEHOLDER|${{ secrets.PROD_GOOGLE_CLIENT_SECRET }}|g" deploy.sh
 
           chmod +x deploy.sh
 
@@ -233,24 +228,25 @@ ENVEOF
 
       - name: 🏥 Health Check - Database
         run: |
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VDS_USER }}@${{ secrets.VDS_HOST }} << 'EOF'
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VDS_USER }}@${{ secrets.VDS_HOST }} 'bash -s' << 'DBCHECK'
           echo "Checking database connection..."
-          if docker exec backend-php83 php -r "
+          docker exec backend-php83 php -r '
             try {
-              \$pdo = new PDO('postgresql:host=psql16;port=5432;dbname=backend_prod', 'prod_user', getenv('POSTGRES_PASSWORD'));
-              echo '✅ Database connection successful\n';
+              $pdo = new PDO("postgresql:host=psql16;port=5432;dbname=backend_prod", "prod_user", getenv("POSTGRES_PASSWORD"));
+              echo "✅ Database connection successful\n";
               exit(0);
-            } catch (Exception \$e) {
-              echo '❌ Database connection failed: ' . \$e->getMessage() . '\n';
+            } catch (Exception $e) {
+              echo "❌ Database connection failed: " . $e->getMessage() . "\n";
               exit(1);
             }
-          "; then
+          '
+          if [ $? -eq 0 ]; then
             echo "Database check passed"
           else
             echo "Database check failed"
             exit 1
           fi
-          EOF
+          DBCHECK
 
       - name: 🧪 Smoke Tests
         run: |
