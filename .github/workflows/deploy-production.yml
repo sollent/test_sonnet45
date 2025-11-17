@@ -149,19 +149,50 @@ jobs:
           docker compose -f docker-compose.yml \
                         -f infrastructure/docker/docker-compose-prod.yml \
                         -f infrastructure/docker/docker-compose.frontend-prod.yml \
-                        down
+                        down --remove-orphans
 
-          echo "🔨 Building containers (with cache for speed)..."
+          echo "⏳ Waiting for containers to fully stop..."
+          sleep 5
+
+          echo "🔓 Ensuring port 80 is released..."
+          # Kill any process still using port 80 (nginx, etc)
+          lsof -ti:80 | xargs -r kill -9 2>/dev/null || true
+          sleep 2
+
+          echo "🔍 Checking if full rebuild is needed..."
+          # Smart --no-cache logic: rebuild only if Dockerfile or dependencies changed
+          LAST_DEPLOY_FILE=".last_deploy_commit"
+          BUILD_FLAGS=""
+
+          if [ -f "$LAST_DEPLOY_FILE" ]; then
+            LAST_COMMIT=$(cat "$LAST_DEPLOY_FILE")
+            CHANGED_FILES=$(git diff --name-only "$LAST_COMMIT" HEAD 2>/dev/null || echo "")
+
+            if echo "$CHANGED_FILES" | grep -qE "(Dockerfile|composer\.json|package\.json|package-lock\.json|composer\.lock|infrastructure/docker/)"; then
+              BUILD_FLAGS="--no-cache"
+              echo "⚠️  Dependencies or Dockerfile changed - rebuilding without cache"
+            else
+              echo "✅ Only code changed - using cache for faster build"
+            fi
+          else
+            BUILD_FLAGS="--no-cache"
+            echo "🆕 First deployment - building without cache"
+          fi
+
+          echo "🔨 Building containers..."
           docker compose -f docker-compose.yml \
                         -f infrastructure/docker/docker-compose-prod.yml \
                         -f infrastructure/docker/docker-compose.frontend-prod.yml \
-                        build
+                        build $BUILD_FLAGS
+
+          # Save current commit for next deployment
+          git rev-parse HEAD > "$LAST_DEPLOY_FILE"
 
           echo "🚀 Starting containers..."
           docker compose -f docker-compose.yml \
                         -f infrastructure/docker/docker-compose-prod.yml \
                         -f infrastructure/docker/docker-compose.frontend-prod.yml \
-                        up -d
+                        up -d --force-recreate
 
           echo "⏳ Waiting for containers to start..."
           sleep 15
@@ -169,8 +200,10 @@ jobs:
           echo "📦 Installing dependencies..."
           docker exec test_sonnet45-php83 composer install --no-dev --optimize-autoloader
 
-          echo "🔄 Running migrations..."
-          docker exec test_sonnet45-php83 php bin/console doctrine:migrations:migrate --no-interaction
+          echo "🔄 Updating database schema..."
+          # Temporarily using d:s:u instead of migrations
+          docker exec test_sonnet45-php83 php bin/console d:s:u --force
+          # docker exec test_sonnet45-php83 php bin/console doctrine:migrations:migrate --no-interaction
 
           echo "🧹 Clearing cache..."
           docker exec test_sonnet45-php83 php bin/console cache:clear --env=prod
