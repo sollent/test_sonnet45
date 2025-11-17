@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # ============================================
   # Ollama - LLM Service (Llama 3.2)
@@ -37,8 +35,9 @@ services:
   # Whisper - Speech-to-Text Service
   # ============================================
   whisper:
-    image: onerahmet/openai-whisper-asr-webservice:latest-gpu
+    image: onerahmet/openai-whisper-asr-webservice:latest
     container_name: ${COMPOSE_PROJECT_NAME:-backend}-whisper
+    platform: linux/amd64
     ports:
       - "${WHISPER_PORT:-9000}:9000"
     volumes:
