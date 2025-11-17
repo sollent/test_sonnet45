@@ -110,6 +110,9 @@ jobs:
 
           NGINX_PORT=80
           PHP_FPM_PORT=9000
+
+          FRONTEND_PROD_PORT=3001
+          VITE_API_BASE_URL=https://api.task.nesty.by
           EOL
 
           # Symfony env
@@ -128,18 +131,27 @@ jobs:
           GOOGLE_CLIENT_SECRET=${{ secrets.PROD_GOOGLE_CLIENT_SECRET }}
           EOL
 
+          # Создание symlinks для env файлов
+          echo "🔗 Creating env symlinks..."
+          ln -sf .env.docker.prod .env.docker
+          ln -sf .env.docker.prod .env
+          ln -sf apps/backend/.env.prod apps/backend/.env
+
           # Пересборка и перезапуск контейнеров
           echo "🐳 Building and restarting Docker containers..."
-          docker-compose -f docker-compose.yml \
+          docker compose -f docker-compose.yml \
                         -f infrastructure/docker/docker-compose-prod.yml \
+                        -f infrastructure/docker/docker-compose.frontend-prod.yml \
                         down
 
-          docker-compose -f docker-compose.yml \
+          docker compose -f docker-compose.yml \
                         -f infrastructure/docker/docker-compose-prod.yml \
+                        -f infrastructure/docker/docker-compose.frontend-prod.yml \
                         build --no-cache
 
-          docker-compose -f docker-compose.yml \
+          docker compose -f docker-compose.yml \
                         -f infrastructure/docker/docker-compose-prod.yml \
+                        -f infrastructure/docker/docker-compose.frontend-prod.yml \
                         up -d
 
           # Ожидание запуска контейнеров
