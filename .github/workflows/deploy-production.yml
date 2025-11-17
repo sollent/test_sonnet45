@@ -151,9 +151,11 @@ jobs:
           echo "⏳ Waiting for containers to fully stop..."
           sleep 5
 
-          echo "🔓 Ensuring port 80 is released..."
-          # Kill any process still using port 80 (nginx, etc)
-          lsof -ti:80 | xargs -r kill -9 2>/dev/null || true
+          echo "🔓 Ensuring Docker ports are released..."
+          # НЕ убиваем host nginx на порту 80! Он нужен для HTTPS proxy!
+          # Убиваем только процессы на Docker портах 8000 и 8089 (если есть)
+          lsof -ti:8000 | xargs -r kill -9 2>/dev/null || true
+          lsof -ti:8089 | xargs -r kill -9 2>/dev/null || true
           sleep 2
 
           echo "🔍 Checking if full rebuild is needed..."
@@ -209,6 +211,24 @@ jobs:
           echo "🔐 Checking JWT keys..."
           docker exec test_sonnet45-php83 sh -c "[ ! -f config/jwt/private.pem ] && php bin/console lexik:jwt:generate-keypair || echo 'JWT keys exist'"
 
+          echo "🌐 Checking host nginx status..."
+          # Проверяем что host nginx работает (нужен для HTTPS proxy)
+          if systemctl is-active --quiet nginx; then
+            echo "✅ Host nginx is running"
+          else
+            echo "⚠️  Host nginx is not running, starting..."
+            systemctl start nginx
+            if systemctl is-active --quiet nginx; then
+              echo "✅ Host nginx started successfully"
+            else
+              echo "❌ ERROR: Failed to start host nginx"
+              exit 1
+            fi
+          fi
+
+          # Перезагружаем конфигурацию nginx (на случай если были изменения)
+          nginx -t && systemctl reload nginx || echo "⚠️  Nginx config test failed, but continuing..."
+
           echo "✅ Deployment completed!"
           ENDSCRIPT
 
@@ -221,6 +241,12 @@ jobs:
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VDS_USER }}@${{ secrets.VDS_HOST }} "bash /tmp/deploy.sh"
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VDS_USER }}@${{ secrets.VDS_HOST }} "rm /tmp/deploy.sh"
 
+      - name: ⏳ Wait for services to stabilize
+        run: |
+          echo "Waiting 30 seconds for all services to fully start and stabilize..."
+          sleep 30
+          echo "✅ Wait complete, proceeding with health checks"
+
       - name: 🏥 Health Check - HTTP
         run: |
           echo "Checking frontend HTTP status..."
@@ -228,28 +254,48 @@ jobs:
           attempt=0
 
           while [ $attempt -lt $max_attempts ]; do
-            if curl -f -s -o /dev/null -w "%{http_code}" https://task.nesty.by | grep -q "200"; then
-              echo "✅ Frontend is responding"
+            http_code=$(curl -s -o /dev/null -w "%{http_code}" https://task.nesty.by || echo "000")
+
+            if [ "$http_code" = "200" ]; then
+              echo "✅ Frontend is responding (HTTP $http_code)"
               break
             fi
 
             attempt=$((attempt + 1))
-            echo "Attempt $attempt/$max_attempts failed, waiting..."
+            echo "Attempt $attempt/$max_attempts: HTTP $http_code (expected 200), waiting 10 seconds..."
             sleep 10
           done
 
           if [ $attempt -eq $max_attempts ]; then
-            echo "❌ Frontend health check failed"
+            echo "❌ Frontend health check failed after $max_attempts attempts"
+            echo "Last HTTP code: $http_code"
             exit 1
           fi
 
       - name: 🏥 Health Check - API
         run: |
           echo "Checking backend API..."
-          if curl -f -s https://api.task.nesty.by/api/health | grep -q "ok"; then
-            echo "✅ API is healthy"
-          else
-            echo "❌ API health check failed"
+          max_attempts=10
+          attempt=0
+
+          while [ $attempt -lt $max_attempts ]; do
+            response=$(curl -s https://api.task.nesty.by/api/health || echo "")
+            http_code=$(curl -s -o /dev/null -w "%{http_code}" https://api.task.nesty.by/api/health || echo "000")
+
+            if echo "$response" | grep -q "ok"; then
+              echo "✅ API is healthy (HTTP $http_code)"
+              echo "Response: $response"
+              break
+            fi
+
+            attempt=$((attempt + 1))
+            echo "Attempt $attempt/$max_attempts: HTTP $http_code, response doesn't contain 'ok', waiting 5 seconds..."
+            echo "Response: $response"
+            sleep 5
+          done
+
+          if [ $attempt -eq $max_attempts ]; then
+            echo "❌ API health check failed after $max_attempts attempts"
             exit 1
           fi
 
