@@ -115,21 +115,30 @@ jobs:
           VITE_API_BASE_URL=https://api.task.nesty.by
           EOL
 
-          # Symfony env
-          cat > apps/backend/.env.prod << EOL
-          APP_ENV=prod
-          APP_SECRET=${{ secrets.PROD_APP_SECRET }}
-          APP_DEBUG=false
+          # Symfony env (построчное создание для избежания проблем с heredoc)
+          cat > apps/backend/.env.prod << EOF
+APP_ENV=prod
+APP_SECRET=${{ secrets.PROD_APP_SECRET }}
+APP_DEBUG=false
 
-          DATABASE_URL="postgresql://prod_user:${{ secrets.PROD_POSTGRES_PASSWORD }}@psql16:5432/backend_prod?serverVersion=16&charset=utf8"
+DATABASE_URL="postgresql://prod_user:${{ secrets.PROD_POSTGRES_PASSWORD }}@psql16:5432/backend_prod?serverVersion=16&charset=utf8"
 
-          JWT_PASSPHRASE=${{ secrets.PROD_JWT_PASSPHRASE }}
+JWT_PASSPHRASE=${{ secrets.PROD_JWT_PASSPHRASE }}
 
-          MESSENGER_TRANSPORT_DSN=amqp://prod_user:${{ secrets.PROD_RABBITMQ_PASSWORD }}@rabbitmq:5672/%2f/messages
+MESSENGER_TRANSPORT_DSN=amqp://prod_user:${{ secrets.PROD_RABBITMQ_PASSWORD }}@rabbitmq:5672/%2f/messages
 
-          GOOGLE_CLIENT_ID=${{ secrets.PROD_GOOGLE_CLIENT_ID }}
-          GOOGLE_CLIENT_SECRET=${{ secrets.PROD_GOOGLE_CLIENT_SECRET }}
-          EOL
+GOOGLE_CLIENT_ID=${{ secrets.PROD_GOOGLE_CLIENT_ID }}
+GOOGLE_CLIENT_SECRET=${{ secrets.PROD_GOOGLE_CLIENT_SECRET }}
+EOF
+
+          # Проверка что файл создан
+          if [ -f apps/backend/.env.prod ]; then
+            echo "✅ apps/backend/.env.prod created successfully"
+            ls -lh apps/backend/.env.prod
+          else
+            echo "❌ ERROR: Failed to create apps/backend/.env.prod"
+            exit 1
+          fi
 
           # Создание symlinks для env файлов
           echo "🔗 Creating env symlinks..."
