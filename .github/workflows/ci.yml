@@ -25,12 +25,12 @@ jobs:
           token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           format: markdown
           message: |
-            🔄 *CI Tests Started*
+            🔄 *CI Тесты Запущены*
 
-            📦 *Repository:* `${{ github.repository }}`
-            🌿 *Branch:* `${{ github.ref_name }}`
-            👤 *Actor:* `${{ github.actor }}`
-            📝 *Commit:* `${{ github.event.head_commit.message }}`
+            📦 *Репозиторий:* `${{ github.repository }}`
+            🌿 *Ветка:* `${{ github.ref_name }}`
+            👤 *Пользователь:* `${{ github.actor }}`
+            📝 *Коммит:* `${{ github.event.head_commit.message }}`
             🔗 *SHA:* `${{ github.sha }}`
   # ========================================
   # Backend Tests
@@ -251,13 +251,13 @@ jobs:
           token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           format: markdown
           message: |
-            ✅ *CI Tests Passed*
+            ✅ *CI Тесты Пройдены*
 
-            📦 *Repository:* `${{ github.repository }}`
-            🌿 *Branch:* `${{ github.ref_name }}`
-            👤 *Actor:* `${{ github.actor }}`
+            📦 *Репозиторий:* `${{ github.repository }}`
+            🌿 *Ветка:* `${{ github.ref_name }}`
+            👤 *Пользователь:* `${{ github.actor }}`
 
-            ✨ *All tests passed successfully!*
+            ✨ *Все тесты успешно пройдены!*
 
   # ========================================
   # Telegram Notification - Failure
@@ -275,14 +275,14 @@ jobs:
           token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           format: markdown
           message: |
-            ❌ *CI Tests FAILED*
+            ❌ *CI Тесты ПРОВАЛЕНЫ*
 
-            📦 *Repository:* `${{ github.repository }}`
-            🌿 *Branch:* `${{ github.ref_name }}`
-            👤 *Actor:* `${{ github.actor }}`
-            🔗 *Actions:* [View logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            📦 *Репозиторий:* `${{ github.repository }}`
+            🌿 *Ветка:* `${{ github.ref_name }}`
+            👤 *Пользователь:* `${{ github.actor }}`
+            🔗 *Логи:* [Посмотреть](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
-            ⚠️ *CRITICAL: Production deployment will NOT start!*
-            ⚠️ *CI pipeline must pass before deployment can proceed.*
+            ⚠️ *КРИТИЧНО: Деплой в production НЕ запустится!*
+            ⚠️ *CI пайплайн должен пройти успешно перед деплоем.*
 
-            Please fix the failing tests before merging to main.
+            Исправьте упавшие тесты перед мержем в main.
