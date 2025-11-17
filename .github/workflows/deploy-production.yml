@@ -1,7 +1,10 @@
 name: Deploy to Production
 
 on:
-  push:
+  workflow_run:
+    workflows: ["CI Tests"]
+    types:
+      - completed
     branches: [ main ]
   workflow_dispatch: # Позволяет запускать вручную
 
@@ -10,6 +13,8 @@ jobs:
     name: 🚀 Deploy to Production
     runs-on: ubuntu-latest
     environment: production
+    # Запускаем деплой ТОЛЬКО если CI прошел успешно
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       - name: 📥 Checkout code
