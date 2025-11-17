@@ -34,9 +34,19 @@ jobs:
       - name: 🔐 Setup SSH key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.VDS_SSH_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
+          echo "${{ secrets.VDS_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H ${{ secrets.VDS_HOST }} >> ~/.ssh/known_hosts
+
+          # Create SSH config to use the deploy key
+          cat > ~/.ssh/config << EOF
+          Host vds
+            HostName ${{ secrets.VDS_HOST }}
+            User ${{ secrets.VDS_USER }}
+            IdentityFile ~/.ssh/deploy_key
+            StrictHostKeyChecking no
+          EOF
+          chmod 600 ~/.ssh/config
 
       - name: 📝 Create deployment script
         run: |
@@ -129,9 +139,9 @@ jobs:
 
       - name: 🚀 Deploy to VDS
         run: |
-          scp deploy.sh ${{ secrets.VDS_USER }}@${{ secrets.VDS_HOST }}:/tmp/deploy.sh
-          ssh ${{ secrets.VDS_USER }}@${{ secrets.VDS_HOST }} "bash /tmp/deploy.sh"
-          ssh ${{ secrets.VDS_USER }}@${{ secrets.VDS_HOST }} "rm /tmp/deploy.sh"
+          scp deploy.sh vds:/tmp/deploy.sh
+          ssh vds "bash /tmp/deploy.sh"
+          ssh vds "rm /tmp/deploy.sh"
 
       - name: 🏥 Health Check - HTTP
         run: |
@@ -167,7 +177,7 @@ jobs:
 
       - name: 🏥 Health Check - Database
         run: |
-          ssh ${{ secrets.VDS_USER }}@${{ secrets.VDS_HOST }} << 'EOF'
+          ssh vds << 'EOF'
           echo "Checking database connection..."
           if docker exec backend-php83 php -r "
             try {
