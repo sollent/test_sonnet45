@@ -145,37 +145,39 @@ jobs:
           ln -sf .env.prod .env
           cd ../..
 
-          echo "🐳 Building and restarting Docker containers..."
+          echo "🐳 Stopping old containers..."
           docker compose -f docker-compose.yml \
                         -f infrastructure/docker/docker-compose-prod.yml \
                         -f infrastructure/docker/docker-compose.frontend-prod.yml \
                         down
 
+          echo "🔨 Building containers (with cache for speed)..."
           docker compose -f docker-compose.yml \
                         -f infrastructure/docker/docker-compose-prod.yml \
                         -f infrastructure/docker/docker-compose.frontend-prod.yml \
-                        build --no-cache
+                        build
 
+          echo "🚀 Starting containers..."
           docker compose -f docker-compose.yml \
                         -f infrastructure/docker/docker-compose-prod.yml \
                         -f infrastructure/docker/docker-compose.frontend-prod.yml \
                         up -d
 
           echo "⏳ Waiting for containers to start..."
-          sleep 10
+          sleep 15
 
           echo "📦 Installing dependencies..."
-          docker exec backend-php83 composer install --no-dev --optimize-autoloader
+          docker exec test_sonnet45-php83 composer install --no-dev --optimize-autoloader
 
           echo "🔄 Running migrations..."
-          docker exec backend-php83 php bin/console doctrine:migrations:migrate --no-interaction
+          docker exec test_sonnet45-php83 php bin/console doctrine:migrations:migrate --no-interaction
 
           echo "🧹 Clearing cache..."
-          docker exec backend-php83 php bin/console cache:clear --env=prod
-          docker exec backend-php83 php bin/console cache:warmup --env=prod
+          docker exec test_sonnet45-php83 php bin/console cache:clear --env=prod
+          docker exec test_sonnet45-php83 php bin/console cache:warmup --env=prod
 
           echo "🔐 Checking JWT keys..."
-          docker exec backend-php83 sh -c "[ ! -f config/jwt/private.pem ] && php bin/console lexik:jwt:generate-keypair || echo 'JWT keys exist'"
+          docker exec test_sonnet45-php83 sh -c "[ ! -f config/jwt/private.pem ] && php bin/console lexik:jwt:generate-keypair || echo 'JWT keys exist'"
 
           echo "✅ Deployment completed!"
           ENDSCRIPT
@@ -233,9 +235,9 @@ jobs:
         run: |
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VDS_USER }}@${{ secrets.VDS_HOST }} 'bash -s' << 'DBCHECK'
           echo "Checking database connection..."
-          docker exec backend-php83 php -r '
+          docker exec test_sonnet45-php83 php -r '
             try {
-              $pdo = new PDO("postgresql:host=psql16;port=5432;dbname=backend_prod", "prod_user", getenv("POSTGRES_PASSWORD"));
+              $pdo = new PDO("postgresql:host=test_sonnet45-psql16;port=5432;dbname=backend_prod", "prod_user", getenv("POSTGRES_PASSWORD"));
               echo "✅ Database connection successful\n";
               exit(0);
             } catch (Exception $e) {
