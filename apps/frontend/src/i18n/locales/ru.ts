@@ -712,5 +712,17 @@ export default {
     tag_updated: 'Тег успешно обновлен',
     tag_deleted: 'Тег успешно удален',
   },
+
+  voice: {
+    speak: 'Голосовая команда',
+    recording: 'Запись...',
+    processing: 'Обработка...',
+    error: 'Ошибка',
+    recording_started: 'Запись началась',
+    command_submitted: 'Команда отправлена на обработку',
+    recording_error: 'Ошибка записи. Проверьте доступ к микрофону.',
+    submission_error: 'Ошибка отправки команды',
+    not_supported: 'Ваш браузер не поддерживает запись аудио',
+  },
 }
 

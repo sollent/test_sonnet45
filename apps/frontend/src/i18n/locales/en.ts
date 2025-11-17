@@ -712,5 +712,17 @@ export default {
     tag_updated: 'Tag updated successfully',
     tag_deleted: 'Tag deleted successfully',
   },
+
+  voice: {
+    speak: 'Voice Command',
+    recording: 'Recording...',
+    processing: 'Processing...',
+    error: 'Error',
+    recording_started: 'Recording started',
+    command_submitted: 'Command submitted for processing',
+    recording_error: 'Recording error. Please check microphone access.',
+    submission_error: 'Command submission error',
+    not_supported: 'Your browser does not support audio recording',
+  },
 }
 

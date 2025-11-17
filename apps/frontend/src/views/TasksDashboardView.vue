@@ -15,11 +15,13 @@ import CompletedTasksList from '@/components/tasks/CompletedTasksList.vue'
 import DayHeaderWithProgress from '@/components/tasks/DayHeaderWithProgress.vue'
 import TaskDetailsSidebar from '@/components/tasks/TaskDetailsSidebar.vue'
 import FloatingActionButton from '@/components/ui/FloatingActionButton.vue'
+import VoiceButton from '@/components/voice/VoiceButton.vue'
 import TaskFilters from '@/components/tasks/TaskFilters.vue'
 import QuickFilters from '@/components/tasks/QuickFilters.vue'
 import AdvancedFiltersModal from '@/components/tasks/AdvancedFiltersModal.vue'
 import TaskDialog from '@/components/tasks/TaskDialog.vue'
 import type { Task } from '@/types/task.types'
+import type { VoiceCommandResponse } from '@/types/voice.types'
 
 const router = useRouter()
 const { t, locale } = useI18n()
@@ -529,6 +531,25 @@ async function handleTaskSaved() {
   isCreateDialogVisible.value = false
 }
 
+/**
+ * Обработчик успешной отправки голосовой команды
+ */
+function handleVoiceCommandSubmitted(response: VoiceCommandResponse) {
+  console.log('Voice command submitted:', response)
+  showSuccess(t('voice.command_submitted'))
+
+  // TODO: Можно добавить отображение статуса обработки команды
+  // Или открыть sidebar с деталями команды
+}
+
+/**
+ * Обработчик ошибки голосовой команды
+ */
+function handleVoiceError(error: string) {
+  console.error('Voice command error:', error)
+  // Ошибка уже показана через useToast в компоненте VoiceButton
+}
+
 async function handleTaskUpdated() {
   // Only update selected task if it exists, without reloading all tasks
   // This prevents unnecessary API calls when working with subtasks
@@ -879,6 +900,16 @@ async function handleTaskDeleted() {
       position="bottom-left"
       @click="handleCreateTask"
     />
+
+    <!-- Voice Command Button -->
+    <div class="voice-button-fab">
+      <VoiceButton
+        :language="locale as 'ru' | 'en' | 'uk'"
+        size="large"
+        @command-submitted="handleVoiceCommandSubmitted"
+        @error="handleVoiceError"
+      />
+    </div>
     <TaskDialog
       v-model="isCreateDialogVisible"
       :task="editingTask"
@@ -1767,5 +1798,33 @@ async function handleTaskDeleted() {
 .task-move-leave-active {
   position: absolute;
   width: 100%;
+}
+
+/* Voice Button FAB positioning */
+.voice-button-fab {
+  position: fixed;
+  bottom: 2rem;
+  right: max(1.5rem, calc((100vw - 1600px) / 2 + 1.5rem));
+  z-index: 1000;
+  animation: fabIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes fabIn {
+  from {
+    transform: scale(0) rotate(-180deg);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .voice-button-fab {
+    bottom: 1.5rem;
+    right: 1.5rem;
+  }
 }
 </style>
