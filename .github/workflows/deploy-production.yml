@@ -38,15 +38,45 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H ${{ secrets.VDS_HOST }} >> ~/.ssh/known_hosts
 
-          # Create SSH config to use the deploy key
-          cat > ~/.ssh/config << EOF
-          Host vds
-            HostName ${{ secrets.VDS_HOST }}
-            User ${{ secrets.VDS_USER }}
-            IdentityFile ~/.ssh/deploy_key
-            StrictHostKeyChecking no
-          EOF
-          chmod 600 ~/.ssh/config
+          # Debug: Check key format (first/last lines only - не показываем сам ключ!)
+          echo "🔍 Checking SSH key format..."
+          if head -n 1 ~/.ssh/deploy_key | grep -q "BEGIN OPENSSH PRIVATE KEY"; then
+            echo "✅ Key starts with BEGIN OPENSSH PRIVATE KEY"
+          else
+            echo "❌ ERROR: Key does not start with BEGIN OPENSSH PRIVATE KEY"
+            echo "First line: $(head -n 1 ~/.ssh/deploy_key)"
+            exit 1
+          fi
+
+          if tail -n 1 ~/.ssh/deploy_key | grep -q "END OPENSSH PRIVATE KEY"; then
+            echo "✅ Key ends with END OPENSSH PRIVATE KEY"
+          else
+            echo "❌ ERROR: Key does not end with END OPENSSH PRIVATE KEY"
+            echo "Last line: $(tail -n 1 ~/.ssh/deploy_key)"
+            exit 1
+          fi
+
+          # Validate key with ssh-keygen
+          if ssh-keygen -l -f ~/.ssh/deploy_key &>/dev/null; then
+            echo "✅ Key is valid"
+            ssh-keygen -l -f ~/.ssh/deploy_key
+          else
+            echo "❌ ERROR: Key is invalid or corrupted"
+            exit 1
+          fi
+
+          # Test SSH connection
+          echo "🔌 Testing SSH connection..."
+          if ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.VDS_USER }}@${{ secrets.VDS_HOST }} "echo 'SSH connection successful!'" 2>&1; then
+            echo "✅ SSH connection works!"
+          else
+            echo "❌ ERROR: SSH connection failed"
+            echo "Please check:"
+            echo "1. Public key is added to VDS ~/.ssh/authorized_keys"
+            echo "2. VDS is accessible from GitHub Actions"
+            echo "3. SSH service is running on VDS"
+            exit 1
+          fi
 
       - name: 📝 Create deployment script
         run: |
@@ -139,9 +169,10 @@ jobs:
 
       - name: 🚀 Deploy to VDS
         run: |
-          scp deploy.sh vds:/tmp/deploy.sh
-          ssh vds "bash /tmp/deploy.sh"
-          ssh vds "rm /tmp/deploy.sh"
+          # Прямое указание ключа для scp/ssh (если SSH config не работает)
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no deploy.sh ${{ secrets.VDS_USER }}@${{ secrets.VDS_HOST }}:/tmp/deploy.sh
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VDS_USER }}@${{ secrets.VDS_HOST }} "bash /tmp/deploy.sh"
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VDS_USER }}@${{ secrets.VDS_HOST }} "rm /tmp/deploy.sh"
 
       - name: 🏥 Health Check - HTTP
         run: |
@@ -177,7 +208,7 @@ jobs:
 
       - name: 🏥 Health Check - Database
         run: |
-          ssh vds << 'EOF'
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VDS_USER }}@${{ secrets.VDS_HOST }} << 'EOF'
           echo "Checking database connection..."
           if docker exec backend-php83 php -r "
             try {
