@@ -96,14 +96,14 @@ jobs:
 
           echo "🔧 Creating production env files..."
 
-          cat > .env.docker.prod << 'ENVDOCKER'
+          cat > .env.docker.prod << ENVDOCKER
           POSTGRES_DB=backend_prod
           POSTGRES_USER=prod_user
-          POSTGRES_PASSWORD=PROD_POSTGRES_PASS_PLACEHOLDER
+          POSTGRES_PASSWORD=${{ secrets.PROD_POSTGRES_PASSWORD }}
           POSTGRES_PORT=5432
 
           RABBITMQ_USER=prod_user
-          RABBITMQ_PASSWORD=PROD_RABBITMQ_PASS_PLACEHOLDER
+          RABBITMQ_PASSWORD=${{ secrets.PROD_RABBITMQ_PASSWORD }}
           RABBITMQ_PORT=5672
           RABBITMQ_MANAGEMENT_PORT=15672
 
@@ -114,30 +114,20 @@ jobs:
           VITE_API_BASE_URL=https://api.task.nesty.by
           ENVDOCKER
 
-          cat > apps/backend/.env.prod << 'ENVSYMFONY'
+          cat > apps/backend/.env.prod << ENVSYMFONY
           APP_ENV=prod
-          APP_SECRET=PROD_APP_SECRET_PLACEHOLDER
+          APP_SECRET=${{ secrets.PROD_APP_SECRET }}
           APP_DEBUG=false
 
-          DATABASE_URL="postgresql://prod_user:PROD_POSTGRES_PASS_PLACEHOLDER@test_sonnet45-psql16:5432/backend_prod?serverVersion=16&charset=utf8"
+          DATABASE_URL="postgresql://prod_user:${{ secrets.PROD_POSTGRES_PASSWORD }}@test_sonnet45-psql16:5432/backend_prod?serverVersion=16&charset=utf8"
 
-          JWT_PASSPHRASE=PROD_JWT_PASSPHRASE_PLACEHOLDER
+          JWT_PASSPHRASE=${{ secrets.PROD_JWT_PASSPHRASE }}
 
-          MESSENGER_TRANSPORT_DSN=amqp://prod_user:PROD_RABBITMQ_PASS_PLACEHOLDER@test_sonnet45-rabbitmq:5672/%2f/messages
+          MESSENGER_TRANSPORT_DSN=amqp://prod_user:${{ secrets.PROD_RABBITMQ_PASSWORD }}@test_sonnet45-rabbitmq:5672/%2f/messages
 
-          GOOGLE_CLIENT_ID=PROD_GOOGLE_CLIENT_ID_PLACEHOLDER
-          GOOGLE_CLIENT_SECRET=PROD_GOOGLE_CLIENT_SECRET_PLACEHOLDER
+          GOOGLE_CLIENT_ID=${{ secrets.PROD_GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET=${{ secrets.PROD_GOOGLE_CLIENT_SECRET }}
           ENVSYMFONY
-
-          # Replace placeholders with actual values (MUST be done inside VDS!)
-          sed -i "s|PROD_POSTGRES_PASS_PLACEHOLDER|PROD_POSTGRES_PASS_VALUE|g" .env.docker.prod
-          sed -i "s|PROD_RABBITMQ_PASS_PLACEHOLDER|PROD_RABBITMQ_PASS_VALUE|g" .env.docker.prod
-          sed -i "s|PROD_APP_SECRET_PLACEHOLDER|PROD_APP_SECRET_VALUE|g" apps/backend/.env.prod
-          sed -i "s|PROD_JWT_PASSPHRASE_PLACEHOLDER|PROD_JWT_PASSPHRASE_VALUE|g" apps/backend/.env.prod
-          sed -i "s|PROD_GOOGLE_CLIENT_ID_PLACEHOLDER|PROD_GOOGLE_CLIENT_ID_VALUE|g" apps/backend/.env.prod
-          sed -i "s|PROD_GOOGLE_CLIENT_SECRET_PLACEHOLDER|PROD_GOOGLE_CLIENT_SECRET_VALUE|g" apps/backend/.env.prod
-          sed -i "s|PROD_POSTGRES_PASS_PLACEHOLDER|PROD_POSTGRES_PASS_VALUE|g" apps/backend/.env.prod
-          sed -i "s|PROD_RABBITMQ_PASS_PLACEHOLDER|PROD_RABBITMQ_PASS_VALUE|g" apps/backend/.env.prod
 
           if [ -f apps/backend/.env.prod ]; then
             echo "✅ apps/backend/.env.prod created successfully"
@@ -224,23 +214,6 @@ jobs:
 
           echo "✅ Deployment completed!"
           ENDSCRIPT
-
-          # Replace placeholders with actual secrets (TWO levels!)
-          # Level 1: Direct placeholders in heredoc
-          sed -i "s|PROD_POSTGRES_PASS_PLACEHOLDER|${{ secrets.PROD_POSTGRES_PASSWORD }}|g" deploy.sh
-          sed -i "s|PROD_RABBITMQ_PASS_PLACEHOLDER|${{ secrets.PROD_RABBITMQ_PASSWORD }}|g" deploy.sh
-          sed -i "s|PROD_APP_SECRET_PLACEHOLDER|${{ secrets.PROD_APP_SECRET }}|g" deploy.sh
-          sed -i "s|PROD_JWT_PASSPHRASE_PLACEHOLDER|${{ secrets.PROD_JWT_PASSPHRASE }}|g" deploy.sh
-          sed -i "s|PROD_GOOGLE_CLIENT_ID_PLACEHOLDER|${{ secrets.PROD_GOOGLE_CLIENT_ID }}|g" deploy.sh
-          sed -i "s|PROD_GOOGLE_CLIENT_SECRET_PLACEHOLDER|${{ secrets.PROD_GOOGLE_CLIENT_SECRET }}|g" deploy.sh
-
-          # Level 2: VALUE placeholders inside sed commands
-          sed -i "s|PROD_POSTGRES_PASS_VALUE|${{ secrets.PROD_POSTGRES_PASSWORD }}|g" deploy.sh
-          sed -i "s|PROD_RABBITMQ_PASS_VALUE|${{ secrets.PROD_RABBITMQ_PASSWORD }}|g" deploy.sh
-          sed -i "s|PROD_APP_SECRET_VALUE|${{ secrets.PROD_APP_SECRET }}|g" deploy.sh
-          sed -i "s|PROD_JWT_PASSPHRASE_VALUE|${{ secrets.PROD_JWT_PASSPHRASE }}|g" deploy.sh
-          sed -i "s|PROD_GOOGLE_CLIENT_ID_VALUE|${{ secrets.PROD_GOOGLE_CLIENT_ID }}|g" deploy.sh
-          sed -i "s|PROD_GOOGLE_CLIENT_SECRET_VALUE|${{ secrets.PROD_GOOGLE_CLIENT_SECRET }}|g" deploy.sh
 
           chmod +x deploy.sh
 
