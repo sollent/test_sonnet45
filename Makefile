@@ -9,15 +9,17 @@ COMPOSE_DEV = infrastructure/docker/docker-compose.dev.yml
 COMPOSE_FRONTEND_DEV = infrastructure/docker/docker-compose.frontend-dev.yml
 COMPOSE_PROD = infrastructure/docker/docker-compose-prod.yml
 COMPOSE_FRONTEND_PROD = infrastructure/docker/docker-compose.frontend-prod.yml
+COMPOSE_E2E = infrastructure/docker/docker-compose.e2e.yml
 
 # Полные команды для разных окружений
 COMPOSE_DEV_FULL = $(DOCKER_COMPOSE) -f $(COMPOSE_BASE) -f $(COMPOSE_DEV) -f $(COMPOSE_FRONTEND_DEV)
 COMPOSE_PROD_FULL = $(DOCKER_COMPOSE) -f $(COMPOSE_BASE) -f $(COMPOSE_PROD) -f $(COMPOSE_FRONTEND_PROD)
+COMPOSE_E2E_FULL = $(DOCKER_COMPOSE) -f $(COMPOSE_BASE) -f $(COMPOSE_E2E)
 
 help: ## Show this help message
 	@echo "🚀 Available commands:"
 	@echo ""
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-25s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z0-9_-]+:.*## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  \033[36m%-25s\033[0m %s\n", $$1, $$2}'
 
 ## 🏗️  Development Environment Commands
 
@@ -191,16 +193,67 @@ quality-fix: ## Fix code style and re-run checks
 
 test: ## Run all backend tests
 	@echo "🧪 Running all tests..."
-	$(COMPOSE_DEV_FULL) exec php83-fpm php bin/phpunit
+	$(COMPOSE_DEV_FULL) exec php83-fpm sh -c "APP_ENV=test php bin/phpunit"
 
 test-unit: ## Run unit tests only
-	$(COMPOSE_DEV_FULL) exec php83-fpm php bin/phpunit --testsuite unit
+	$(COMPOSE_DEV_FULL) exec php83-fpm sh -c "APP_ENV=test php bin/phpunit --testsuite unit"
 
 test-integration: ## Run integration tests only
-	$(COMPOSE_DEV_FULL) exec php83-fpm php bin/phpunit --testsuite integration
+	$(COMPOSE_DEV_FULL) exec php83-fpm sh -c "APP_ENV=test php bin/phpunit --testsuite integration"
 
 test-coverage: ## Generate test coverage report
-	$(COMPOSE_DEV_FULL) exec php83-fpm php bin/phpunit --coverage-html coverage
+	$(COMPOSE_DEV_FULL) exec php83-fpm sh -c "APP_ENV=test php bin/phpunit --coverage-html coverage"
+
+test-frontend: ## Run frontend unit tests (Vitest)
+	@echo "🎨 Running frontend unit tests..."
+	$(COMPOSE_DEV_FULL) exec frontend npm run test:run
+
+test-frontend-ui: ## Run frontend tests with UI
+	@echo "🎨 Running frontend tests with UI..."
+	$(COMPOSE_DEV_FULL) exec frontend npm run test:ui
+
+test-frontend-coverage: ## Generate frontend test coverage
+	@echo "📊 Generating frontend test coverage..."
+	$(COMPOSE_DEV_FULL) exec frontend npm run test:coverage
+
+test-e2e-build: ## Build E2E Docker image
+	@echo "🔨 Building E2E testing image..."
+	$(COMPOSE_E2E_FULL) build frontend-e2e
+
+test-e2e: ## Run E2E tests in Docker (Playwright)
+	@echo "🎭 Running E2E tests in Docker..."
+	@echo "⚠️  Backend (port 8089) and frontend (port 3000) must be running!"
+	@echo ""
+	$(COMPOSE_E2E_FULL) run --rm -e CI=true frontend-e2e npm run test:e2e
+
+test-e2e-ui: ## Run E2E tests with UI mode (requires X11/VNC)
+	@echo "🎭 Running E2E tests in UI mode..."
+	@echo "⚠️  UI mode requires display server (not supported in Docker by default)"
+	@echo "⚠️  Use test-e2e-headed for headed mode or run locally"
+	@echo ""
+	$(COMPOSE_E2E_FULL) run --rm frontend-e2e npm run test:e2e:ui
+
+test-e2e-debug: ## Run E2E tests in debug mode
+	@echo "🐛 Running E2E tests in debug mode..."
+	@echo "⚠️  Backend and frontend must be running!"
+	@echo ""
+	$(COMPOSE_E2E_FULL) run --rm frontend-e2e npm run test:e2e:debug
+
+test-e2e-headed: ## Run E2E tests in headed mode
+	@echo "🎭 Running E2E tests in headed mode..."
+	@echo "⚠️  Backend and frontend must be running!"
+	@echo ""
+	$(COMPOSE_E2E_FULL) run --rm frontend-e2e npm run test:e2e:headed
+
+test-e2e-report: ## Show Playwright test report
+	@echo "📊 Opening Playwright test report..."
+	@if [ -d "apps/frontend/playwright-report" ]; then \
+		cd apps/frontend && npx playwright show-report; \
+	else \
+		echo "❌ No test report found. Run tests first: make test-e2e"; \
+	fi
+
+test-all: test test-frontend ## Run all tests (backend + frontend unit)
 
 ## 📊 Status Commands
 

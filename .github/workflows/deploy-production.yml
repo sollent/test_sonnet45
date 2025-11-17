@@ -34,9 +34,49 @@ jobs:
       - name: 🔐 Setup SSH key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.VDS_SSH_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
+          echo "${{ secrets.VDS_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H ${{ secrets.VDS_HOST }} >> ~/.ssh/known_hosts
+
+          # Debug: Check key format (first/last lines only - не показываем сам ключ!)
+          echo "🔍 Checking SSH key format..."
+          if head -n 1 ~/.ssh/deploy_key | grep -q "BEGIN OPENSSH PRIVATE KEY"; then
+            echo "✅ Key starts with BEGIN OPENSSH PRIVATE KEY"
+          else
+            echo "❌ ERROR: Key does not start with BEGIN OPENSSH PRIVATE KEY"
+            echo "First line: $(head -n 1 ~/.ssh/deploy_key)"
+            exit 1
+          fi
+
+          if tail -n 1 ~/.ssh/deploy_key | grep -q "END OPENSSH PRIVATE KEY"; then
+            echo "✅ Key ends with END OPENSSH PRIVATE KEY"
+          else
+            echo "❌ ERROR: Key does not end with END OPENSSH PRIVATE KEY"
+            echo "Last line: $(tail -n 1 ~/.ssh/deploy_key)"
+            exit 1
+          fi
+
+          # Validate key with ssh-keygen
+          if ssh-keygen -l -f ~/.ssh/deploy_key &>/dev/null; then
+            echo "✅ Key is valid"
+            ssh-keygen -l -f ~/.ssh/deploy_key
+          else
+            echo "❌ ERROR: Key is invalid or corrupted"
+            exit 1
+          fi
+
+          # Test SSH connection
+          echo "🔌 Testing SSH connection..."
+          if ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.VDS_USER }}@${{ secrets.VDS_HOST }} "echo 'SSH connection successful!'" 2>&1; then
+            echo "✅ SSH connection works!"
+          else
+            echo "❌ ERROR: SSH connection failed"
+            echo "Please check:"
+            echo "1. Public key is added to VDS ~/.ssh/authorized_keys"
+            echo "2. VDS is accessible from GitHub Actions"
+            echo "3. SSH service is running on VDS"
+            exit 1
+          fi
 
       - name: 📝 Create deployment script
         run: |
@@ -56,50 +96,75 @@ jobs:
           # Создание production .env файлов
           echo "🔧 Creating production env files..."
 
-          # Docker env
-          cat > .env.docker.prod << EOL
-          POSTGRES_DB=backend_prod
-          POSTGRES_USER=prod_user
-          POSTGRES_PASSWORD=${{ secrets.PROD_POSTGRES_PASSWORD }}
-          POSTGRES_PORT=5432
+          # Docker env (используем <<- для поддержки отступов)
+          cat > .env.docker.prod <<- EOL
+		POSTGRES_DB=backend_prod
+		POSTGRES_USER=prod_user
+		POSTGRES_PASSWORD=${{ secrets.PROD_POSTGRES_PASSWORD }}
+		POSTGRES_PORT=5432
 
-          RABBITMQ_USER=prod_user
-          RABBITMQ_PASSWORD=${{ secrets.PROD_RABBITMQ_PASSWORD }}
-          RABBITMQ_PORT=5672
-          RABBITMQ_MANAGEMENT_PORT=15672
+		RABBITMQ_USER=prod_user
+		RABBITMQ_PASSWORD=${{ secrets.PROD_RABBITMQ_PASSWORD }}
+		RABBITMQ_PORT=5672
+		RABBITMQ_MANAGEMENT_PORT=15672
 
-          NGINX_PORT=80
-          PHP_FPM_PORT=9000
-          EOL
+		NGINX_PORT=80
+		PHP_FPM_PORT=9000
 
-          # Symfony env
-          cat > apps/backend/.env.prod << EOL
-          APP_ENV=prod
-          APP_SECRET=${{ secrets.PROD_APP_SECRET }}
-          APP_DEBUG=false
+		FRONTEND_PROD_PORT=3001
+		VITE_API_BASE_URL=https://api.task.nesty.by
+		EOL
 
-          DATABASE_URL="postgresql://prod_user:${{ secrets.PROD_POSTGRES_PASSWORD }}@psql16:5432/backend_prod?serverVersion=16&charset=utf8"
+          # Symfony env (используем <<- для поддержки отступов)
+          cat > apps/backend/.env.prod <<- EOF
+		APP_ENV=prod
+		APP_SECRET=${{ secrets.PROD_APP_SECRET }}
+		APP_DEBUG=false
 
-          JWT_PASSPHRASE=${{ secrets.PROD_JWT_PASSPHRASE }}
+		DATABASE_URL="postgresql://prod_user:${{ secrets.PROD_POSTGRES_PASSWORD }}@psql16:5432/backend_prod?serverVersion=16&charset=utf8"
 
-          MESSENGER_TRANSPORT_DSN=amqp://prod_user:${{ secrets.PROD_RABBITMQ_PASSWORD }}@rabbitmq:5672/%2f/messages
+		JWT_PASSPHRASE=${{ secrets.PROD_JWT_PASSPHRASE }}
 
-          GOOGLE_CLIENT_ID=${{ secrets.PROD_GOOGLE_CLIENT_ID }}
-          GOOGLE_CLIENT_SECRET=${{ secrets.PROD_GOOGLE_CLIENT_SECRET }}
-          EOL
+		MESSENGER_TRANSPORT_DSN=amqp://prod_user:${{ secrets.PROD_RABBITMQ_PASSWORD }}@rabbitmq:5672/%2f/messages
+
+		GOOGLE_CLIENT_ID=${{ secrets.PROD_GOOGLE_CLIENT_ID }}
+		GOOGLE_CLIENT_SECRET=${{ secrets.PROD_GOOGLE_CLIENT_SECRET }}
+		EOF
+
+          # Проверка что файл создан
+          if [ -f apps/backend/.env.prod ]; then
+            echo "✅ apps/backend/.env.prod created successfully"
+            ls -lh apps/backend/.env.prod
+          else
+            echo "❌ ERROR: Failed to create apps/backend/.env.prod"
+            exit 1
+          fi
+
+          # Создание symlinks для env файлов
+          echo "🔗 Creating env symlinks..."
+          ln -sf .env.docker.prod .env.docker
+          ln -sf .env.docker.prod .env
+
+          # Backend .env symlink (из директории apps/backend)
+          cd apps/backend
+          ln -sf .env.prod .env
+          cd ../..
 
           # Пересборка и перезапуск контейнеров
           echo "🐳 Building and restarting Docker containers..."
-          docker-compose -f docker-compose.yml \
+          docker compose -f docker-compose.yml \
                         -f infrastructure/docker/docker-compose-prod.yml \
+                        -f infrastructure/docker/docker-compose.frontend-prod.yml \
                         down
 
-          docker-compose -f docker-compose.yml \
+          docker compose -f docker-compose.yml \
                         -f infrastructure/docker/docker-compose-prod.yml \
+                        -f infrastructure/docker/docker-compose.frontend-prod.yml \
                         build --no-cache
 
-          docker-compose -f docker-compose.yml \
+          docker compose -f docker-compose.yml \
                         -f infrastructure/docker/docker-compose-prod.yml \
+                        -f infrastructure/docker/docker-compose.frontend-prod.yml \
                         up -d
 
           # Ожидание запуска контейнеров
@@ -129,9 +194,10 @@ jobs:
 
       - name: 🚀 Deploy to VDS
         run: |
-          scp deploy.sh ${{ secrets.VDS_USER }}@${{ secrets.VDS_HOST }}:/tmp/deploy.sh
-          ssh ${{ secrets.VDS_USER }}@${{ secrets.VDS_HOST }} "bash /tmp/deploy.sh"
-          ssh ${{ secrets.VDS_USER }}@${{ secrets.VDS_HOST }} "rm /tmp/deploy.sh"
+          # Прямое указание ключа для scp/ssh (если SSH config не работает)
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no deploy.sh ${{ secrets.VDS_USER }}@${{ secrets.VDS_HOST }}:/tmp/deploy.sh
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VDS_USER }}@${{ secrets.VDS_HOST }} "bash /tmp/deploy.sh"
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VDS_USER }}@${{ secrets.VDS_HOST }} "rm /tmp/deploy.sh"
 
       - name: 🏥 Health Check - HTTP
         run: |
@@ -167,7 +233,7 @@ jobs:
 
       - name: 🏥 Health Check - Database
         run: |
-          ssh ${{ secrets.VDS_USER }}@${{ secrets.VDS_HOST }} << 'EOF'
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VDS_USER }}@${{ secrets.VDS_HOST }} << 'EOF'
           echo "Checking database connection..."
           if docker exec backend-php83 php -r "
             try {

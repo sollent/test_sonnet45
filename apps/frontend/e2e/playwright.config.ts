@@ -15,8 +15,9 @@ export default defineConfig({
   testDir: './tests',
 
   /* Global setup and teardown */
-  globalSetup: './global-setup.ts',
-  globalTeardown: './global-teardown.ts',
+  // Только для локальной разработки, в CI backend уже запущен
+  globalSetup: process.env.CI ? undefined : './global-setup.ts',
+  globalTeardown: process.env.CI ? undefined : './global-teardown.ts',
 
   /* Only match E2E test files in e2e directory, ignore Vitest unit tests */
   testMatch: /e2e\/tests\/.*\.spec\.ts$/,
@@ -33,8 +34,8 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 1,
-  /* Limit workers to avoid race conditions and backend overload */
-  workers: process.env.CI ? 1 : 4,
+  /* Use 5 workers for parallel test execution (both dev and CI) */
+  workers: 5,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
     ['html'],
@@ -84,8 +85,11 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    // Use MODE=test to load .env.test with test backend URL (port 8090)
-    command: 'MODE=test npm run dev',
+    // In CI: Override VITE_API_BASE_URL to match backend port (8089)
+    // Locally: Use MODE=test to load .env.test (port 8090 for Docker worktree)
+    command: process.env.CI
+      ? 'VITE_API_BASE_URL=http://localhost:8089 npm run dev'
+      : 'MODE=test npm run dev',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,

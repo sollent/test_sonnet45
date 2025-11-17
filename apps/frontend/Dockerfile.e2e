@@ -1,0 +1,27 @@
+# E2E Testing Dockerfile для Playwright
+# Использует официальный Playwright образ с предустановленными браузерами
+# Размер: ~2GB (включает Chromium, Firefox, WebKit)
+
+FROM mcr.microsoft.com/playwright:v1.56.1-noble
+
+# Устанавливаем рабочую директорию
+WORKDIR /app
+
+# Копируем package.json и package-lock.json
+COPY package.json package-lock.json ./
+
+# Устанавливаем зависимости
+# Используем --frozen-lockfile для детерминированных сборок
+RUN npm ci
+
+# Копируем исходный код
+# В e2e режиме нам нужен весь код, включая тесты
+COPY . .
+
+# Playwright браузеры уже установлены в базовом образе
+# Проверим что все на месте
+RUN npx playwright --version
+
+# По умолчанию запускаем e2e тесты
+# Можно переопределить через docker-compose command
+CMD ["npm", "run", "test:e2e"]

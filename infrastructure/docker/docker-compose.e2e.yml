@@ -1,0 +1,46 @@
+# E2E Testing Docker Compose Configuration
+# Запускает Playwright тесты в изолированном контейнере
+
+services:
+  frontend-e2e:
+    container_name: ${COMPOSE_PROJECT_NAME:-backend}-frontend-e2e
+    build:
+      # Context относительно корня проекта (где docker-compose.yml)
+      context: ./apps/frontend
+      dockerfile: Dockerfile.e2e
+
+    # E2E тесты должны подключаться к backend API
+    # Используем host.docker.internal для доступа к хосту
+    environment:
+      # URL для подключения к backend (должен быть доступен из контейнера)
+      - VITE_API_BASE_URL=${E2E_API_URL:-http://host.docker.internal:8089}
+      # URL frontend приложения для тестирования
+      - PLAYWRIGHT_BASE_URL=${E2E_FRONTEND_URL:-http://host.docker.internal:3000}
+
+    # Подключаемся к сети backend для доступа к API
+    # Используем default сеть проекта
+    networks:
+      - default
+
+    # Для доступа к сервисам на хосте (backend, frontend)
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    # Монтируем исходный код для live reload тестов (опционально)
+    volumes:
+      # Volumes относительно корня проекта
+      # Убрали :ro (read-only) так как Playwright нужно записывать результаты
+      - ./apps/frontend/e2e:/app/e2e
+      - ./apps/frontend/playwright.config.ts:/app/playwright.config.ts:ro
+      # Сохраняем результаты тестов на хост
+      - ./apps/frontend/test-results:/app/test-results
+      - ./apps/frontend/playwright-report:/app/playwright-report
+
+    # По умолчанию запускаем headless тесты
+    # Переопределяется через docker-compose run
+    command: ["npm", "run", "test:e2e"]
+
+    # Не запускаем автоматически при docker-compose up
+    # Тесты запускаются по требованию через docker-compose run
+    profiles:
+      - e2e
