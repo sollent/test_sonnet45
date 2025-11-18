@@ -23,7 +23,7 @@ help: ## Show this help message
 
 ## 🏗️  Development Environment Commands
 
-init: down build up migrate ## 🎯 Initialize full DEV environment (backend + frontend)
+init: down build up migrate ## 🎯 Initialize  full DEV environment (backend + frontend)
 	@echo ""
 	@echo "✅ Development environment ready!"
 	@echo "   Backend:  http://localhost:8089"
