@@ -12,7 +12,12 @@ include:
       - ./.env.docker  # Docker infrastructure variables
       - ./apps/backend/.env  # Symfony application variables
 
-  # AI services (placeholder for now)
+  # Frontend dev service
+  - path: ./infrastructure/docker/docker-compose.frontend-dev.yml
+    env_file:
+      - ./.env.docker
+
+  # AI services
   - path: ./infrastructure/docker/docker-compose.ai.yml
 
 # No services defined here - all in included files
