@@ -226,7 +226,7 @@ test-e2e: ## Run E2E tests in Docker (Playwright)
 	@echo ""
 	$(COMPOSE_E2E_FULL) run --rm -e CI=true frontend-e2e npm run test:e2e
 
-test-e2e-ui: ## Run E2E tests with UI mode  (requires X11/VNC)
+test-e2e-ui: ## Run E2E tests with UI mode (requires X11/VNC)
 	@echo "🎭 Running E2E tests in UI mode..."
 	@echo "⚠️  UI mode requires display server (not supported in Docker by default)"
 	@echo "⚠️  Use test-e2e-headed for headed mode or run locally"
