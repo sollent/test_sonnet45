@@ -35,10 +35,10 @@ class VoiceCommandRepository extends ServiceEntityRepository
      */
     public function save(VoiceCommand $command, bool $flush = true): void
     {
-        $this->_em->persist($command);
+        $this->getEntityManager()->persist($command);
 
         if ($flush) {
-            $this->_em->flush();
+            $this->getEntityManager()->flush();
         }
     }
 
@@ -47,10 +47,10 @@ class VoiceCommandRepository extends ServiceEntityRepository
      */
     public function remove(VoiceCommand $command, bool $flush = true): void
     {
-        $this->_em->remove($command);
+        $this->getEntityManager()->remove($command);
 
         if ($flush) {
-            $this->_em->flush();
+            $this->getEntityManager()->flush();
         }
     }
 

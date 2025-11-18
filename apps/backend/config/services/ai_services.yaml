@@ -32,3 +32,8 @@ parameters:
     env(CENTRIFUGO_URL): 'http://centrifugo:8000'
     env(CENTRIFUGO_API_KEY): 'api-key'
     env(WEBSOCKET_ENABLED): true
+    env(LLM_MODEL): 'llama3.2:1b'
+
+    # Параметры для сервисов (доступны через ParameterBagInterface)
+    ollama_url: '%env(OLLAMA_URL)%'
+    llm_model: '%env(LLM_MODEL)%'
