@@ -12,12 +12,12 @@ namespace App\Message;
 final class ProcessVoiceCommand
 {
     /**
-     * @param int $commandId ID команды для обработки
-     * @param int $userId ID пользователя
-     * @param string $type Тип команды (audio/text)
-     * @param string|null $audioUrl URL аудио файла (для voice_audio)
-     * @param string|null $text Текст команды (для voice_text)
-     * @param array $context Дополнительный контекст
+     * @param int         $commandId ID команды для обработки
+     * @param int         $userId    ID пользователя
+     * @param string      $type      Тип команды (audio/text)
+     * @param string|null $audioUrl  URL аудио файла (для voice_audio)
+     * @param string|null $text      Текст команды (для voice_text)
+     * @param array       $context   Дополнительный контекст
      */
     public function __construct(
         private int $commandId,
@@ -25,7 +25,7 @@ final class ProcessVoiceCommand
         private string $type,
         private ?string $audioUrl = null,
         private ?string $text = null,
-        private array $context = []
+        private array $context = [],
     ) {
     }
 

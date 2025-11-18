@@ -6,6 +6,8 @@ namespace App\Tests\Unit\Service\AI;
 
 use App\Service\AI\LLMService;
 use App\ValueObject\ParsedCommand;
+use Exception;
+use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
@@ -20,8 +22,11 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
 class LLMServiceTest extends TestCase
 {
     private HttpClientInterface $httpClient;
+
     private LoggerInterface $logger;
+
     private ParameterBagInterface $params;
+
     private LLMService $service;
 
     protected function setUp(): void
@@ -35,13 +40,13 @@ class LLMServiceTest extends TestCase
         $this->params->method('get')
             ->willReturnMap([
                 ['ollama_url', 'http://ollama:11434'],
-                ['llm_model', 'llama3.2:3b']
+                ['llm_model', 'llama3.2:3b'],
             ]);
 
         $this->service = new LLMService(
             $this->httpClient,
             $this->logger,
-            $this->params
+            $this->params,
         );
     }
 
@@ -57,13 +62,13 @@ class LLMServiceTest extends TestCase
         $mockResponse->method('getStatusCode')->willReturn(200);
         $mockResponse->method('toArray')->willReturn([
             'response' => json_encode([
-                'action' => 'create_task',
+                'action'     => 'create_task',
                 'parameters' => [
-                    'title' => 'Купить молоко',
-                    'due_date' => 'tomorrow'
+                    'title'    => 'Купить молоко',
+                    'due_date' => 'tomorrow',
                 ],
-                'confidence' => 0.95
-            ])
+                'confidence' => 0.95,
+            ]),
         ]);
 
         $this->httpClient->expects($this->once())
@@ -76,7 +81,7 @@ class LLMServiceTest extends TestCase
                         && $options['json']['model'] === 'llama3.2:3b'
                         && isset($options['json']['prompt'])
                         && str_contains($options['json']['prompt'], 'Создай задачу купить молоко завтра');
-                })
+                }),
             )
             ->willReturn($mockResponse);
 
@@ -104,12 +109,12 @@ class LLMServiceTest extends TestCase
         $mockResponse->method('getStatusCode')->willReturn(200);
         $mockResponse->method('toArray')->willReturn([
             'response' => json_encode([
-                'action' => 'complete_task',
+                'action'     => 'complete_task',
                 'parameters' => [
-                    'search' => 'отчет'
+                    'search' => 'отчет',
                 ],
-                'confidence' => 0.88
-            ])
+                'confidence' => 0.88,
+            ]),
         ]);
 
         $this->httpClient->expects($this->once())
@@ -138,10 +143,10 @@ class LLMServiceTest extends TestCase
         $mockResponse->method('getStatusCode')->willReturn(200);
         $mockResponse->method('toArray')->willReturn([
             'response' => json_encode([
-                'action' => 'unknown',
+                'action'     => 'unknown',
                 'parameters' => [],
-                'confidence' => 0.3
-            ])
+                'confidence' => 0.3,
+            ]),
         ]);
 
         $this->httpClient->expects($this->once())
@@ -168,7 +173,7 @@ class LLMServiceTest extends TestCase
 
         $this->httpClient->expects($this->exactly(3)) // 3 retry attempts
             ->method('request')
-            ->willThrowException(new \Exception('Connection failed'));
+            ->willThrowException(new Exception('Connection failed'));
 
         // Act
         $result = $this->service->parseCommand($commandText);
@@ -185,7 +190,7 @@ class LLMServiceTest extends TestCase
      */
     public function testEmptyCommandValidation(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Command text cannot be empty');
 
         $this->service->parseCommand('');
@@ -202,7 +207,7 @@ class LLMServiceTest extends TestCase
         $mockResponse = $this->createMock(ResponseInterface::class);
         $mockResponse->method('getStatusCode')->willReturn(200);
         $mockResponse->method('toArray')->willReturn([
-            'response' => 'Вот результат парсинга: {"action":"filter_tasks","parameters":{"filters":{"date":"tomorrow"}},"confidence":0.9} Готово!'
+            'response' => 'Вот результат парсинга: {"action":"filter_tasks","parameters":{"filters":{"date":"tomorrow"}},"confidence":0.9} Готово!',
         ]);
 
         $this->httpClient->expects($this->once())
@@ -244,7 +249,7 @@ class LLMServiceTest extends TestCase
         // Arrange - сервис недоступен
         $this->httpClient->expects($this->once())
             ->method('request')
-            ->willThrowException(new \Exception('Connection refused'));
+            ->willThrowException(new Exception('Connection refused'));
 
         // Act & Assert
         $this->assertFalse($this->service->isAvailable());
@@ -261,8 +266,8 @@ class LLMServiceTest extends TestCase
             'models' => [
                 ['name' => 'llama3.2:3b'],
                 ['name' => 'llama3.2:1b'],
-                ['name' => 'mistral:7b']
-            ]
+                ['name' => 'mistral:7b'],
+            ],
         ]);
 
         $this->httpClient->expects($this->once())

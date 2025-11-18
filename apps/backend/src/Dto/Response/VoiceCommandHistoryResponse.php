@@ -12,7 +12,7 @@ use OpenApi\Attributes as OA;
 #[OA\Schema(
     title: 'Voice Command History Response',
     description: 'Response with list of voice commands history',
-    type: 'object'
+    type: 'object',
 )]
 class VoiceCommandHistoryResponse
 {
@@ -22,7 +22,7 @@ class VoiceCommandHistoryResponse
     #[OA\Property(
         description: 'List of voice commands',
         type: 'array',
-        items: new OA\Items(ref: '#/components/schemas/VoiceCommandResponse')
+        items: new OA\Items(ref: '#/components/schemas/VoiceCommandResponse'),
     )]
     public array $commands = [];
 

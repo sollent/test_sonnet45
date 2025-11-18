@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace App\Service\AI;
 
 use App\ValueObject\ParsedCommand;
-use Psr\Log\LoggerInterface;
-use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
-use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
+use Exception;
 use InvalidArgumentException;
+use Psr\Log\LoggerInterface;
 use RuntimeException;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
  * Сервис для работы с Large Language Model (Llama 3.2 через Ollama)
@@ -21,83 +22,89 @@ use RuntimeException;
 class LLMService
 {
     private const DEFAULT_MODEL = 'llama3.2:3b';
+
     private const DEFAULT_TIMEOUT = 30.0;
+
     private const MAX_RETRIES = 3;
+
     private const RETRY_DELAY_MS = 500;
 
     /**
      * Системный промпт для LLM (из PROMPTS_LIBRARY.md)
      */
     private const SYSTEM_PROMPT = <<<'PROMPT'
-Ты - ассистент для управления задачами для русскоязычных пользователей.
+        Ты - ассистент для управления задачами для русскоязычных пользователей.
 
-Твоя задача: Конвертировать голосовые команды в валидный JSON.
+        Твоя задача: Конвертировать голосовые команды в валидный JSON.
 
-ВАЖНЫЕ ПРАВИЛА:
-1. ВСЕГДА возвращай ТОЛЬКО валидный JSON (никакого дополнительного текста!)
-2. Понимай команды на русском языке
-3. Извлекай: действие (action), параметры (parameters), уверенность (confidence)
-4. Если не уверен, установи confidence < 0.5
+        ВАЖНЫЕ ПРАВИЛА:
+        1. ВСЕГДА возвращай ТОЛЬКО валидный JSON (никакого дополнительного текста!)
+        2. Понимай команды на русском языке
+        3. Извлекай: действие (action), параметры (parameters), уверенность (confidence)
+        4. Если не уверен, установи confidence < 0.5
 
-Доступные действия (actions):
-- create_task
-- complete_task
-- filter_tasks
-- create_subtask
-- bulk_complete
+        Доступные действия (actions):
+        - create_task
+        - complete_task
+        - filter_tasks
+        - create_subtask
+        - bulk_complete
 
-Формат JSON (ТОЧНО эта структура):
-{
-  "action": "action_name",
-  "parameters": {},
-  "confidence": 0.0-1.0
-}
+        Формат JSON (ТОЧНО эта структура):
+        {
+          "action": "action_name",
+          "parameters": {},
+          "confidence": 0.0-1.0
+        }
 
-Примеры команд, которые ты будешь получать:
+        Примеры команд, которые ты будешь получать:
 
-"Создай задачу купить молоко завтра" →
-{
-  "action": "create_task",
-  "parameters": {
-    "title": "Купить молоко",
-    "due_date": "tomorrow"
-  },
-  "confidence": 0.95
-}
+        "Создай задачу купить молоко завтра" →
+        {
+          "action": "create_task",
+          "parameters": {
+            "title": "Купить молоко",
+            "due_date": "tomorrow"
+          },
+          "confidence": 0.95
+        }
 
-"Отметь задачу купить молоко как выполненную" →
-{
-  "action": "complete_task",
-  "parameters": {
-    "search": "купить молоко"
-  },
-  "confidence": 0.92
-}
+        "Отметь задачу купить молоко как выполненную" →
+        {
+          "action": "complete_task",
+          "parameters": {
+            "search": "купить молоко"
+          },
+          "confidence": 0.92
+        }
 
-"Покажи все задачи на завтра со статусом важные" →
-{
-  "action": "filter_tasks",
-  "parameters": {
-    "filters": {
-      "date": "tomorrow",
-      "priority": "high"
-    }
-  },
-  "confidence": 0.88
-}
+        "Покажи все задачи на завтра со статусом важные" →
+        {
+          "action": "filter_tasks",
+          "parameters": {
+            "filters": {
+              "date": "tomorrow",
+              "priority": "high"
+            }
+          },
+          "confidence": 0.88
+        }
 
-Теперь обработай эту команду:
-PROMPT;
+        Теперь обработай эту команду:
+        PROMPT;
 
     private string $ollamaUrl;
+
     private string $model;
+
     private HttpClientInterface $httpClient;
+
     private LoggerInterface $logger;
 
     public function __construct(
         HttpClientInterface $httpClient,
         LoggerInterface $logger,
-        ParameterBagInterface $params
+        ParameterBagInterface $params,
     ) {
         $this->httpClient = $httpClient;
         $this->logger = $logger;
@@ -117,8 +124,10 @@ PROMPT;
      * Парсинг текстовой команды в структурированный объект
      *
      * @param string $commandText Текст команды от пользователя
-     * @return ParsedCommand Распарсенная команда
+     *
      * @throws RuntimeException При ошибке LLM или недоступности сервиса
+     *
+     * @return ParsedCommand Распарсенная команда
      */
     public function parseCommand(string $commandText): ParsedCommand
     {
@@ -127,12 +136,13 @@ PROMPT;
         }
 
         $this->logger->info('Parsing command with LLM', [
-            'model' => $this->model,
-            'command' => $commandText
+            'model'   => $this->model,
+            'command' => $commandText,
         ]);
 
         // Попытки с retry при сбоях
         $lastError = null;
+
         for ($attempt = 1; $attempt <= self::MAX_RETRIES; $attempt++) {
             try {
                 $response = $this->callOllama($commandText);
@@ -144,18 +154,18 @@ PROMPT;
                 $command = ParsedCommand::fromArray($parsedData, $commandText);
 
                 $this->logger->info('Command parsed successfully', [
-                    'action' => $command->action,
+                    'action'     => $command->action,
                     'confidence' => $command->confidence,
-                    'attempt' => $attempt
+                    'attempt'    => $attempt,
                 ]);
 
                 return $command;
 
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $lastError = $e;
                 $this->logger->warning('LLM parse attempt failed', [
                     'attempt' => $attempt,
-                    'error' => $e->getMessage()
+                    'error'   => $e->getMessage(),
                 ]);
 
                 if ($attempt < self::MAX_RETRIES) {
@@ -168,7 +178,7 @@ PROMPT;
         // Если все попытки провалились, возвращаем команду с низкой уверенностью
         $this->logger->error('All LLM parse attempts failed', [
             'command' => $commandText,
-            'error' => $lastError?->getMessage()
+            'error'   => $lastError?->getMessage(),
         ]);
 
         // Возвращаем ParsedCommand с действием clarification_needed
@@ -176,12 +186,51 @@ PROMPT;
             action: ParsedCommand::ACTION_CLARIFICATION_NEEDED,
             parameters: [
                 'original_text' => $commandText,
-                'question' => 'Извините, не удалось понять команду. Можете перефразировать?',
-                'error' => $lastError?->getMessage()
+                'question'      => 'Извините, не удалось понять команду. Можете перефразировать?',
+                'error'         => $lastError?->getMessage(),
             ],
             confidence: 0.1,
-            originalText: $commandText
+            originalText: $commandText,
         );
+    }
+
+    /**
+     * Проверка доступности Ollama сервиса
+     */
+    public function isAvailable(): bool
+    {
+        try {
+            $response = $this->httpClient->request('GET', $this->ollamaUrl . '/api/tags', [
+                'timeout' => 5.0,
+            ]);
+
+            return $response->getStatusCode() === 200;
+        } catch (Exception $e) {
+            $this->logger->warning('Ollama health check failed', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
+
+    /**
+     * Получить список доступных моделей
+     */
+    public function getAvailableModels(): array
+    {
+        try {
+            $response = $this->httpClient->request('GET', $this->ollamaUrl . '/api/tags');
+            $data = $response->toArray();
+
+            return array_map(fn ($model) => $model['name'], $data['models'] ?? []);
+        } catch (Exception $e) {
+            $this->logger->error('Failed to fetch models list', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return [];
+        }
     }
 
     /**
@@ -192,29 +241,30 @@ PROMPT;
      */
     private function callOllama(string $commandText): array
     {
-        $prompt = self::SYSTEM_PROMPT . "\n\nКоманда: \"" . $commandText . "\"";
+        $prompt = self::SYSTEM_PROMPT . "\n\nКоманда: \"" . $commandText . '"';
 
         try {
             $response = $this->httpClient->request('POST', $this->ollamaUrl . '/api/generate', [
                 'json' => [
-                    'model' => $this->model,
-                    'prompt' => $prompt,
-                    'stream' => false,
-                    'format' => 'json',
+                    'model'   => $this->model,
+                    'prompt'  => $prompt,
+                    'stream'  => false,
+                    'format'  => 'json',
                     'options' => [
                         'temperature' => 0.1,  // Низкая температура для консистентности
-                        'top_p' => 0.9,
+                        'top_p'       => 0.9,
                         'num_predict' => 256,  // Ограничение длины ответа
-                    ]
+                    ],
                 ],
-                'timeout' => self::DEFAULT_TIMEOUT
+                'timeout' => self::DEFAULT_TIMEOUT,
             ]);
 
             $statusCode = $response->getStatusCode();
+
             if ($statusCode !== 200) {
                 throw new RuntimeException(sprintf(
                     'Ollama API returned status %d',
-                    $statusCode
+                    $statusCode,
                 ));
             }
 
@@ -228,8 +278,9 @@ PROMPT;
 
         } catch (TransportExceptionInterface $e) {
             $this->logger->error('Ollama API transport error', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             throw new RuntimeException('Failed to connect to Ollama: ' . $e->getMessage(), 0, $e);
         }
     }
@@ -260,9 +311,10 @@ PROMPT;
         if (json_last_error() !== JSON_ERROR_NONE) {
             $this->logger->error('Invalid JSON from LLM', [
                 'raw_response' => $text,
-                'extracted' => $jsonString,
-                'error' => json_last_error_msg()
+                'extracted'    => $jsonString,
+                'error'        => json_last_error_msg(),
             ]);
+
             throw new RuntimeException('Invalid JSON in LLM response: ' . json_last_error_msg());
         }
 
@@ -277,42 +329,5 @@ PROMPT;
         }
 
         return $data;
-    }
-
-    /**
-     * Проверка доступности Ollama сервиса
-     */
-    public function isAvailable(): bool
-    {
-        try {
-            $response = $this->httpClient->request('GET', $this->ollamaUrl . '/api/tags', [
-                'timeout' => 5.0
-            ]);
-
-            return $response->getStatusCode() === 200;
-        } catch (\Exception $e) {
-            $this->logger->warning('Ollama health check failed', [
-                'error' => $e->getMessage()
-            ]);
-            return false;
-        }
-    }
-
-    /**
-     * Получить список доступных моделей
-     */
-    public function getAvailableModels(): array
-    {
-        try {
-            $response = $this->httpClient->request('GET', $this->ollamaUrl . '/api/tags');
-            $data = $response->toArray();
-
-            return array_map(fn($model) => $model['name'], $data['models'] ?? []);
-        } catch (\Exception $e) {
-            $this->logger->error('Failed to fetch models list', [
-                'error' => $e->getMessage()
-            ]);
-            return [];
-        }
     }
 }

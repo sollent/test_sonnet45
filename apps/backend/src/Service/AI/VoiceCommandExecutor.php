@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace App\Service\AI;
 
-use App\Entity\User;
 use App\Entity\Task;
+use App\Entity\User;
 use App\Repository\Database\TagRepository;
 use App\Service\TaskService;
 use App\ValueObject\ParsedCommand;
 use DateTimeImmutable;
+use Exception;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -22,15 +23,18 @@ use RuntimeException;
 class VoiceCommandExecutor
 {
     private TaskService $taskService;
+
     private TagRepository $tagRepository;
+
     private SmartSearchService $searchService;
+
     private LoggerInterface $logger;
 
     public function __construct(
         TaskService $taskService,
         TagRepository $tagRepository,
         SmartSearchService $searchService,
-        LoggerInterface $logger
+        LoggerInterface $logger,
     ) {
         $this->taskService = $taskService;
         $this->tagRepository = $tagRepository;
@@ -42,48 +46,50 @@ class VoiceCommandExecutor
      * Выполнение распарсенной команды
      *
      * @param ParsedCommand $command Распарсенная команда от LLM
-     * @param User $user Пользователь
-     * @return array Результат выполнения
+     * @param User          $user    Пользователь
+     *
      * @throws RuntimeException При ошибке выполнения
+     *
+     * @return array Результат выполнения
      */
     public function execute(ParsedCommand $command, User $user): array
     {
         $this->logger->info('Executing voice command', [
-            'action' => $command->action,
+            'action'     => $command->action,
             'parameters' => $command->parameters,
-            'user_id' => $user->getId()
+            'user_id'    => $user->getId(),
         ]);
 
         try {
             $result = match ($command->action) {
-                ParsedCommand::ACTION_CREATE_TASK => $this->executeCreateTask($command->parameters, $user),
-                ParsedCommand::ACTION_COMPLETE_TASK => $this->executeCompleteTask($command->parameters, $user),
-                ParsedCommand::ACTION_FILTER_TASKS => $this->executeFilterTasks($command->parameters, $user),
-                ParsedCommand::ACTION_CREATE_SUBTASK => $this->executeCreateSubtask($command->parameters, $user),
-                ParsedCommand::ACTION_BULK_COMPLETE => $this->executeBulkComplete($command->parameters, $user),
+                ParsedCommand::ACTION_CREATE_TASK          => $this->executeCreateTask($command->parameters, $user),
+                ParsedCommand::ACTION_COMPLETE_TASK        => $this->executeCompleteTask($command->parameters, $user),
+                ParsedCommand::ACTION_FILTER_TASKS         => $this->executeFilterTasks($command->parameters, $user),
+                ParsedCommand::ACTION_CREATE_SUBTASK       => $this->executeCreateSubtask($command->parameters, $user),
+                ParsedCommand::ACTION_BULK_COMPLETE        => $this->executeBulkComplete($command->parameters, $user),
                 ParsedCommand::ACTION_CLARIFICATION_NEEDED => $this->executeClarificationNeeded($command->parameters),
-                ParsedCommand::ACTION_UNKNOWN => $this->executeUnknown($command->parameters),
-                default => throw new RuntimeException('Unsupported action: ' . $command->action)
+                ParsedCommand::ACTION_UNKNOWN              => $this->executeUnknown($command->parameters),
+                default                                    => throw new RuntimeException('Unsupported action: ' . $command->action)
             };
 
             $this->logger->info('Voice command executed successfully', [
-                'action' => $command->action,
-                'result_type' => $result['type'] ?? 'unknown'
+                'action'      => $command->action,
+                'result_type' => $result['type'] ?? 'unknown',
             ]);
 
             return $result;
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logger->error('Failed to execute voice command', [
                 'action' => $command->action,
-                'error' => $e->getMessage()
+                'error'  => $e->getMessage(),
             ]);
 
             return [
-                'type' => 'error',
+                'type'    => 'error',
                 'success' => false,
                 'message' => 'Произошла ошибка при выполнении команды: ' . $e->getMessage(),
-                'error' => $e->getMessage()
+                'error'   => $e->getMessage(),
             ];
         }
     }
@@ -101,10 +107,10 @@ class VoiceCommandExecutor
 
         // Подготовка данных для создания задачи
         $taskData = [
-            'title' => $title,
+            'title'       => $title,
             'description' => $parameters['description'] ?? '',
-            'status' => 'new',
-            'priority' => $this->parsePriority($parameters['priority'] ?? null),
+            'status'      => 'new',
+            'priority'    => $this->parsePriority($parameters['priority'] ?? null),
         ];
 
         // Обработка даты
@@ -131,16 +137,16 @@ class VoiceCommandExecutor
         }
 
         return [
-            'type' => 'task_created',
+            'type'    => 'task_created',
             'success' => true,
             'message' => sprintf('Задача "%s" успешно создана', $title),
-            'task' => [
-                'id' => $task->getId(),
-                'title' => $task->getTitle(),
-                'status' => $task->getStatus(),
+            'task'    => [
+                'id'       => $task->getId(),
+                'title'    => $task->getTitle(),
+                'status'   => $task->getStatus(),
                 'priority' => $task->getPriority(),
-                'dueDate' => $task->getDueDate()?->format('c')
-            ]
+                'dueDate'  => $task->getDueDate()?->format('c'),
+            ],
         ];
     }
 
@@ -160,10 +166,10 @@ class VoiceCommandExecutor
 
         if (!$task) {
             return [
-                'type' => 'task_not_found',
+                'type'    => 'task_not_found',
                 'success' => false,
                 'message' => sprintf('Задача "%s" не найдена', $search),
-                'search' => $search
+                'search'  => $search,
             ];
         }
 
@@ -172,14 +178,14 @@ class VoiceCommandExecutor
         $this->taskService->saveTask($task);
 
         return [
-            'type' => 'task_completed',
+            'type'    => 'task_completed',
             'success' => true,
             'message' => sprintf('Задача "%s" отмечена как выполненная', $task->getTitle()),
-            'task' => [
-                'id' => $task->getId(),
-                'title' => $task->getTitle(),
-                'status' => $task->getStatus()
-            ]
+            'task'    => [
+                'id'     => $task->getId(),
+                'title'  => $task->getTitle(),
+                'status' => $task->getStatus(),
+            ],
         ];
     }
 
@@ -194,27 +200,27 @@ class VoiceCommandExecutor
         $tasks = $this->searchService->filterTasks($filters, $user);
 
         // Форматирование результатов
-        $taskList = array_map(function(Task $task) {
+        $taskList = array_map(function (Task $task) {
             return [
-                'id' => $task->getId(),
-                'title' => $task->getTitle(),
-                'status' => $task->getStatus(),
+                'id'       => $task->getId(),
+                'title'    => $task->getTitle(),
+                'status'   => $task->getStatus(),
                 'priority' => $task->getPriority(),
-                'dueDate' => $task->getDueDate()?->format('c'),
-                'tags' => array_map(fn($tag) => $tag->getName(), $task->getTags()->toArray())
+                'dueDate'  => $task->getDueDate()?->format('c'),
+                'tags'     => array_map(fn ($tag) => $tag->getName(), $task->getTags()->toArray()),
             ];
         }, $tasks);
 
         $count = count($tasks);
 
         return [
-            'type' => 'tasks_filtered',
+            'type'    => 'tasks_filtered',
             'success' => true,
             'message' => $count > 0
                 ? sprintf('Найдено задач: %d', $count)
                 : 'Задачи не найдены',
             'count' => $count,
-            'tasks' => $taskList
+            'tasks' => $taskList,
         ];
     }
 
@@ -235,34 +241,34 @@ class VoiceCommandExecutor
 
         if (!$parentTask) {
             return [
-                'type' => 'parent_not_found',
+                'type'    => 'parent_not_found',
                 'success' => false,
                 'message' => sprintf('Родительская задача "%s" не найдена', $parentSearch),
-                'search' => $parentSearch
+                'search'  => $parentSearch,
             ];
         }
 
         // Создание подзадачи
         $subtaskData = [
-            'title' => $title,
-            'description' => $parameters['description'] ?? '',
-            'status' => 'new',
-            'priority' => $parentTask->getPriority(), // Наследуем приоритет
-            'parentTaskId' => $parentTask->getId()
+            'title'        => $title,
+            'description'  => $parameters['description'] ?? '',
+            'status'       => 'new',
+            'priority'     => $parentTask->getPriority(), // Наследуем приоритет
+            'parentTaskId' => $parentTask->getId(),
         ];
 
         $subtask = $this->taskService->createTask($subtaskData, $user);
 
         return [
-            'type' => 'subtask_created',
+            'type'    => 'subtask_created',
             'success' => true,
             'message' => sprintf('Подзадача "%s" создана для "%s"', $title, $parentTask->getTitle()),
             'subtask' => [
-                'id' => $subtask->getId(),
-                'title' => $subtask->getTitle(),
-                'parent_id' => $parentTask->getId(),
-                'parent_title' => $parentTask->getTitle()
-            ]
+                'id'           => $subtask->getId(),
+                'title'        => $subtask->getTitle(),
+                'parent_id'    => $parentTask->getId(),
+                'parent_title' => $parentTask->getTitle(),
+            ],
         ];
     }
 
@@ -278,10 +284,10 @@ class VoiceCommandExecutor
 
         if (empty($tasks)) {
             return [
-                'type' => 'no_tasks_to_complete',
+                'type'    => 'no_tasks_to_complete',
                 'success' => false,
                 'message' => 'Не найдено задач для завершения',
-                'filters' => $filters
+                'filters' => $filters,
             ];
         }
 
@@ -299,12 +305,12 @@ class VoiceCommandExecutor
         }
 
         return [
-            'type' => 'bulk_completed',
-            'success' => true,
-            'message' => sprintf('Завершено задач: %d из %d', $completedCount, count($tasks)),
-            'completed_count' => $completedCount,
-            'total_count' => count($tasks),
-            'completed_titles' => $completedTitles
+            'type'             => 'bulk_completed',
+            'success'          => true,
+            'message'          => sprintf('Завершено задач: %d из %d', $completedCount, count($tasks)),
+            'completed_count'  => $completedCount,
+            'total_count'      => count($tasks),
+            'completed_titles' => $completedTitles,
         ];
     }
 
@@ -314,15 +320,15 @@ class VoiceCommandExecutor
     private function executeClarificationNeeded(array $parameters): array
     {
         return [
-            'type' => 'clarification_needed',
-            'success' => false,
-            'message' => $parameters['question'] ?? 'Не удалось понять команду. Можете уточнить?',
+            'type'          => 'clarification_needed',
+            'success'       => false,
+            'message'       => $parameters['question'] ?? 'Не удалось понять команду. Можете уточнить?',
             'original_text' => $parameters['original_text'] ?? null,
-            'suggestions' => [
+            'suggestions'   => [
                 'Создай задачу купить молоко',
                 'Отметь задачу отчет как выполненную',
-                'Покажи все задачи на завтра'
-            ]
+                'Покажи все задачи на завтра',
+            ],
         ];
     }
 
@@ -332,18 +338,18 @@ class VoiceCommandExecutor
     private function executeUnknown(array $parameters): array
     {
         return [
-            'type' => 'unknown_command',
-            'success' => false,
-            'message' => 'Команда не распознана. Попробуйте переформулировать.',
+            'type'          => 'unknown_command',
+            'success'       => false,
+            'message'       => 'Команда не распознана. Попробуйте переформулировать.',
             'original_text' => $parameters['original_text'] ?? null,
-            'help' => [
+            'help'          => [
                 'Доступные команды:',
                 '• Создание задачи: "Создай задачу [название]"',
                 '• Завершение задачи: "Отметь [название] как выполненную"',
                 '• Фильтрация: "Покажи задачи на [дату]"',
                 '• Создание подзадачи: "Добавь подзадачу [название] к [родительская задача]"',
-                '• Массовое завершение: "Заверши все задачи на сегодня"'
-            ]
+                '• Массовое завершение: "Заверши все задачи на сегодня"',
+            ],
         ];
     }
 
@@ -360,16 +366,16 @@ class VoiceCommandExecutor
 
         // Карта соответствий русских названий
         $priorityMap = [
-            'низкий' => 'low',
-            'низкая' => 'low',
+            'низкий'  => 'low',
+            'низкая'  => 'low',
             'средний' => 'medium',
             'средняя' => 'medium',
             'обычный' => 'medium',
             'обычная' => 'medium',
             'высокий' => 'high',
             'высокая' => 'high',
-            'важный' => 'high',
-            'важная' => 'high',
+            'важный'  => 'high',
+            'важная'  => 'high',
             'срочный' => 'high',
             'срочная' => 'high',
         ];
@@ -394,7 +400,7 @@ class VoiceCommandExecutor
         $dateExpression = mb_strtolower(trim($dateExpression));
 
         try {
-            return match($dateExpression) {
+            return match ($dateExpression) {
                 'сегодня', 'today' => (new DateTimeImmutable())->setTime(23, 59, 59),
                 'завтра', 'tomorrow' => (new DateTimeImmutable('+1 day'))->setTime(23, 59, 59),
                 'послезавтра', 'day after tomorrow' => (new DateTimeImmutable('+2 days'))->setTime(23, 59, 59),
@@ -402,11 +408,12 @@ class VoiceCommandExecutor
                 'через месяц', 'next month' => (new DateTimeImmutable('+1 month'))->setTime(23, 59, 59),
                 default => new DateTimeImmutable($dateExpression)
             };
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logger->warning('Failed to parse due date', [
                 'expression' => $dateExpression,
-                'error' => $e->getMessage()
+                'error'      => $e->getMessage(),
             ]);
+
             return null;
         }
     }

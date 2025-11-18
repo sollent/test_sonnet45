@@ -13,7 +13,7 @@ use OpenApi\Attributes as OA;
 #[OA\Schema(
     title: 'Voice Command Response',
     description: 'Response with voice command details and processing status',
-    type: 'object'
+    type: 'object',
 )]
 class VoiceCommandResponse
 {
@@ -23,7 +23,7 @@ class VoiceCommandResponse
     #[OA\Property(
         description: 'Current status',
         example: 'completed',
-        enum: ['pending', 'processing', 'executing', 'completed', 'failed']
+        enum: ['pending', 'processing', 'executing', 'completed', 'failed'],
     )]
     public string $status;
 
@@ -33,7 +33,7 @@ class VoiceCommandResponse
     #[OA\Property(
         description: 'Command type',
         example: 'voice_text',
-        enum: ['voice_audio', 'voice_text']
+        enum: ['voice_audio', 'voice_text'],
     )]
     public string $commandType;
 
@@ -43,21 +43,21 @@ class VoiceCommandResponse
     #[OA\Property(
         description: 'Parsed command details',
         example: [
-            'action' => 'create_task',
+            'action'     => 'create_task',
             'parameters' => ['title' => 'Купить молоко', 'due_date' => 'tomorrow'],
-            'confidence' => 0.95
-        ]
+            'confidence' => 0.95,
+        ],
     )]
     public ?array $parsedCommand = null;
 
     #[OA\Property(
         description: 'Execution result',
         example: [
-            'type' => 'task_created',
+            'type'    => 'task_created',
             'success' => true,
             'message' => 'Задача "Купить молоко" успешно создана',
-            'task' => ['id' => 456, 'title' => 'Купить молоко']
-        ]
+            'task'    => ['id' => 456, 'title' => 'Купить молоко'],
+        ],
     )]
     public ?array $executionResult = null;
 

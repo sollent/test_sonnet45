@@ -4,46 +4,68 @@ declare(strict_types=1);
 
 namespace App\ValueObject;
 
+use InvalidArgumentException;
+use JsonSerializable;
+
 /**
  * Распарсенная команда от LLM
  *
  * Value Object для хранения структурированной команды после парсинга Llama 3.2
  * Содержит action, parameters и confidence согласно PROMPTS_LIBRARY
  */
-final readonly class ParsedCommand implements \JsonSerializable
+final readonly class ParsedCommand implements JsonSerializable
 {
     /**
      * Доступные действия согласно документации
      */
     public const ACTION_CREATE_TASK = 'create_task';
+
     public const ACTION_COMPLETE_TASK = 'complete_task';
+
     public const ACTION_FILTER_TASKS = 'filter_tasks';
+
     public const ACTION_CREATE_SUBTASK = 'create_subtask';
+
     public const ACTION_BULK_COMPLETE = 'bulk_complete';
+
     public const ACTION_CLARIFICATION_NEEDED = 'clarification_needed';
+
     public const ACTION_UNKNOWN = 'unknown';
 
     /**
-     * @param string $action Действие для выполнения
-     * @param array $parameters Параметры команды
-     * @param float $confidence Уверенность LLM в парсинге (0.0-1.0)
+     * @param string      $action       Действие для выполнения
+     * @param array       $parameters   Параметры команды
+     * @param float       $confidence   Уверенность LLM в парсинге (0.0-1.0)
      * @param string|null $originalText Оригинальный текст команды
      */
     public function __construct(
         public string $action,
         public array $parameters,
         public float $confidence,
-        public ?string $originalText = null
+        public ?string $originalText = null,
     ) {
         // Валидация уверенности
         if ($this->confidence < 0.0 || $this->confidence > 1.0) {
-            throw new \InvalidArgumentException('Confidence must be between 0.0 and 1.0');
+            throw new InvalidArgumentException('Confidence must be between 0.0 and 1.0');
         }
 
         // Валидация действия
         if (!$this->isValidAction($this->action)) {
-            throw new \InvalidArgumentException('Invalid action: ' . $this->action);
+            throw new InvalidArgumentException('Invalid action: ' . $this->action);
         }
+    }
+
+    /**
+     * Преобразование в строку для логирования
+     */
+    public function __toString(): string
+    {
+        return sprintf(
+            'ParsedCommand[action=%s, confidence=%.2f, executable=%s]',
+            $this->action,
+            $this->confidence,
+            $this->isExecutable() ? 'yes' : 'no',
+        );
     }
 
     /**
@@ -55,24 +77,8 @@ final readonly class ParsedCommand implements \JsonSerializable
             action: $data['action'] ?? self::ACTION_UNKNOWN,
             parameters: $data['parameters'] ?? [],
             confidence: (float) ($data['confidence'] ?? 0.0),
-            originalText: $originalText
+            originalText: $originalText,
         );
-    }
-
-    /**
-     * Проверить, является ли действие валидным
-     */
-    private function isValidAction(string $action): bool
-    {
-        return in_array($action, [
-            self::ACTION_CREATE_TASK,
-            self::ACTION_COMPLETE_TASK,
-            self::ACTION_FILTER_TASKS,
-            self::ACTION_CREATE_SUBTASK,
-            self::ACTION_BULK_COMPLETE,
-            self::ACTION_CLARIFICATION_NEEDED,
-            self::ACTION_UNKNOWN,
-        ], true);
     }
 
     /**
@@ -80,8 +86,8 @@ final readonly class ParsedCommand implements \JsonSerializable
      */
     public function needsClarification(): bool
     {
-        return $this->action === self::ACTION_CLARIFICATION_NEEDED ||
-               $this->confidence < 0.5;
+        return $this->action === self::ACTION_CLARIFICATION_NEEDED
+               || $this->confidence < 0.5;
     }
 
     /**
@@ -89,9 +95,9 @@ final readonly class ParsedCommand implements \JsonSerializable
      */
     public function isExecutable(): bool
     {
-        return !$this->needsClarification() &&
-               $this->action !== self::ACTION_UNKNOWN &&
-               $this->confidence >= 0.5;
+        return !$this->needsClarification()
+               && $this->action !== self::ACTION_UNKNOWN
+               && $this->confidence >= 0.5;
     }
 
     /**
@@ -121,25 +127,28 @@ final readonly class ParsedCommand implements \JsonSerializable
     public function jsonSerialize(): array
     {
         return [
-            'action' => $this->action,
-            'parameters' => $this->parameters,
-            'confidence' => $this->confidence,
-            'original_text' => $this->originalText,
+            'action'              => $this->action,
+            'parameters'          => $this->parameters,
+            'confidence'          => $this->confidence,
+            'original_text'       => $this->originalText,
             'needs_clarification' => $this->needsClarification(),
-            'is_executable' => $this->isExecutable(),
+            'is_executable'       => $this->isExecutable(),
         ];
     }
 
     /**
-     * Преобразование в строку для логирования
+     * Проверить, является ли действие валидным
      */
-    public function __toString(): string
+    private function isValidAction(string $action): bool
     {
-        return sprintf(
-            'ParsedCommand[action=%s, confidence=%.2f, executable=%s]',
-            $this->action,
-            $this->confidence,
-            $this->isExecutable() ? 'yes' : 'no'
-        );
+        return in_array($action, [
+            self::ACTION_CREATE_TASK,
+            self::ACTION_COMPLETE_TASK,
+            self::ACTION_FILTER_TASKS,
+            self::ACTION_CREATE_SUBTASK,
+            self::ACTION_BULK_COMPLETE,
+            self::ACTION_CLARIFICATION_NEEDED,
+            self::ACTION_UNKNOWN,
+        ], true);
     }
 }

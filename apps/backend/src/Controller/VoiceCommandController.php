@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Dto\Request\VoiceCommandRequest;
-use App\Dto\Response\VoiceCommandResponse;
 use App\Dto\Response\VoiceCommandHistoryResponse;
+use App\Dto\Response\VoiceCommandResponse;
 use App\Dto\Response\VoiceCommandStatisticsResponse;
 use App\Entity\User;
 use App\Repository\Database\VoiceCommandRepository;
 use App\Service\AI\VoiceProcessingService;
 use App\ValueObject\CommandStatus;
+use Exception;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use Nelmio\ApiDocBundle\Annotation\Security;
 use OpenApi\Attributes as OA;
@@ -25,6 +26,7 @@ use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use ValueError;
 
 /**
  * API контроллер для голосовых команд
@@ -41,7 +43,7 @@ class VoiceCommandController extends AbstractController
         private VoiceProcessingService $voiceProcessingService,
         private VoiceCommandRepository $commandRepository,
         private SerializerInterface $serializer,
-        private ValidatorInterface $validator
+        private ValidatorInterface $validator,
     ) {
     }
 
@@ -55,32 +57,34 @@ class VoiceCommandController extends AbstractController
         requestBody: new OA\RequestBody(
             description: 'Voice command data',
             required: true,
-            content: new OA\JsonContent(ref: new Model(type: VoiceCommandRequest::class))
+            content: new OA\JsonContent(ref: new Model(type: VoiceCommandRequest::class)),
         ),
         responses: [
             new OA\Response(
                 response: 200,
                 description: 'Command processed successfully',
-                content: new OA\JsonContent(ref: new Model(type: VoiceCommandResponse::class))
+                content: new OA\JsonContent(ref: new Model(type: VoiceCommandResponse::class)),
             ),
             new OA\Response(
                 response: 400,
-                description: 'Invalid request data'
+                description: 'Invalid request data',
             ),
             new OA\Response(
                 response: 401,
-                description: 'Unauthorized'
+                description: 'Unauthorized',
             ),
             new OA\Response(
                 response: 500,
-                description: 'Processing error'
-            )
-        ]
+                description: 'Processing error',
+            ),
+        ],
     )]
     #[Security(name: 'Bearer')]
     public function processCommand(
-        #[MapRequestPayload] VoiceCommandRequest $request,
-        #[CurrentUser] User $user
+        #[MapRequestPayload]
+        VoiceCommandRequest $request,
+        #[CurrentUser]
+        User $user,
     ): JsonResponse {
         try {
             // Обработка в зависимости от типа команды
@@ -88,18 +92,18 @@ class VoiceCommandController extends AbstractController
                 // Голосовая команда (аудио)
                 $command = $this->voiceProcessingService->processVoiceAudio(
                     $request->audioUrl,
-                    $user
+                    $user,
                 );
             } elseif ($request->text !== null) {
                 // Текстовая команда
                 $command = $this->voiceProcessingService->processVoiceText(
                     $request->text,
-                    $user
+                    $user,
                 );
             } else {
                 return $this->json([
                     'success' => false,
-                    'error' => 'Either audioUrl or text must be provided'
+                    'error'   => 'Either audioUrl or text must be provided',
                 ], Response::HTTP_BAD_REQUEST);
             }
 
@@ -108,10 +112,10 @@ class VoiceCommandController extends AbstractController
 
             return $this->json($response, Response::HTTP_OK);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $this->json([
                 'success' => false,
-                'error' => 'Failed to process command: ' . $e->getMessage()
+                'error'   => 'Failed to process command: ' . $e->getMessage(),
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -129,14 +133,14 @@ class VoiceCommandController extends AbstractController
                 in: 'query',
                 description: 'Maximum number of commands to return',
                 required: false,
-                schema: new OA\Schema(type: 'integer', default: 20, minimum: 1, maximum: 100)
+                schema: new OA\Schema(type: 'integer', default: 20, minimum: 1, maximum: 100),
             ),
             new OA\Parameter(
                 name: 'offset',
                 in: 'query',
                 description: 'Number of commands to skip',
                 required: false,
-                schema: new OA\Schema(type: 'integer', default: 0, minimum: 0)
+                schema: new OA\Schema(type: 'integer', default: 0, minimum: 0),
             ),
             new OA\Parameter(
                 name: 'status',
@@ -145,26 +149,27 @@ class VoiceCommandController extends AbstractController
                 required: false,
                 schema: new OA\Schema(
                     type: 'string',
-                    enum: ['pending', 'processing', 'executing', 'completed', 'failed']
-                )
-            )
+                    enum: ['pending', 'processing', 'executing', 'completed', 'failed'],
+                ),
+            ),
         ],
         responses: [
             new OA\Response(
                 response: 200,
                 description: 'Commands history retrieved successfully',
-                content: new OA\JsonContent(ref: new Model(type: VoiceCommandHistoryResponse::class))
+                content: new OA\JsonContent(ref: new Model(type: VoiceCommandHistoryResponse::class)),
             ),
             new OA\Response(
                 response: 401,
-                description: 'Unauthorized'
-            )
-        ]
+                description: 'Unauthorized',
+            ),
+        ],
     )]
     #[Security(name: 'Bearer')]
     public function getHistory(
         Request $request,
-        #[CurrentUser] User $user
+        #[CurrentUser]
+        User $user,
     ): JsonResponse {
         $limit = min((int) $request->query->get('limit', 20), 100);
         $offset = max((int) $request->query->get('offset', 0), 0);
@@ -172,13 +177,14 @@ class VoiceCommandController extends AbstractController
 
         // Валидация статуса если указан
         $status = null;
+
         if ($statusFilter !== null) {
             try {
                 $status = CommandStatus::from($statusFilter);
-            } catch (\ValueError $e) {
+            } catch (ValueError $e) {
                 return $this->json([
                     'success' => false,
-                    'error' => 'Invalid status value'
+                    'error'   => 'Invalid status value',
                 ], Response::HTTP_BAD_REQUEST);
             }
         }
@@ -189,8 +195,8 @@ class VoiceCommandController extends AbstractController
         // Формируем ответ
         $response = new VoiceCommandHistoryResponse();
         $response->commands = array_map(
-            fn($cmd) => VoiceCommandResponse::fromEntity($cmd),
-            $commands
+            fn ($cmd) => VoiceCommandResponse::fromEntity($cmd),
+            $commands,
         );
         $response->total = count($commands);
         $response->limit = $limit;
@@ -212,40 +218,41 @@ class VoiceCommandController extends AbstractController
                 in: 'path',
                 description: 'Command ID',
                 required: true,
-                schema: new OA\Schema(type: 'integer')
-            )
+                schema: new OA\Schema(type: 'integer'),
+            ),
         ],
         responses: [
             new OA\Response(
                 response: 200,
                 description: 'Command status retrieved successfully',
-                content: new OA\JsonContent(ref: new Model(type: VoiceCommandResponse::class))
+                content: new OA\JsonContent(ref: new Model(type: VoiceCommandResponse::class)),
             ),
             new OA\Response(
                 response: 404,
-                description: 'Command not found'
+                description: 'Command not found',
             ),
             new OA\Response(
                 response: 403,
-                description: 'Access denied to this command'
+                description: 'Access denied to this command',
             ),
             new OA\Response(
                 response: 401,
-                description: 'Unauthorized'
-            )
-        ]
+                description: 'Unauthorized',
+            ),
+        ],
     )]
     #[Security(name: 'Bearer')]
     public function getStatus(
         int $id,
-        #[CurrentUser] User $user
+        #[CurrentUser]
+        User $user,
     ): JsonResponse {
         $command = $this->commandRepository->find($id);
 
         if (!$command) {
             return $this->json([
                 'success' => false,
-                'error' => 'Command not found'
+                'error'   => 'Command not found',
             ], Response::HTTP_NOT_FOUND);
         }
 
@@ -253,7 +260,7 @@ class VoiceCommandController extends AbstractController
         if ($command->getUser()->getId() !== $user->getId()) {
             return $this->json([
                 'success' => false,
-                'error' => 'Access denied'
+                'error'   => 'Access denied',
             ], Response::HTTP_FORBIDDEN);
         }
 
@@ -273,17 +280,18 @@ class VoiceCommandController extends AbstractController
             new OA\Response(
                 response: 200,
                 description: 'Statistics retrieved successfully',
-                content: new OA\JsonContent(ref: new Model(type: VoiceCommandStatisticsResponse::class))
+                content: new OA\JsonContent(ref: new Model(type: VoiceCommandStatisticsResponse::class)),
             ),
             new OA\Response(
                 response: 401,
-                description: 'Unauthorized'
-            )
-        ]
+                description: 'Unauthorized',
+            ),
+        ],
     )]
     #[Security(name: 'Bearer')]
     public function getStatistics(
-        #[CurrentUser] User $user
+        #[CurrentUser]
+        User $user,
     ): JsonResponse {
         $stats = $this->commandRepository->getUserStatistics($user);
 
@@ -296,7 +304,7 @@ class VoiceCommandController extends AbstractController
         if ($stats['total'] > 0) {
             $response->successRate = round(
                 (($stats['by_status']['completed'] ?? 0) / $stats['total']) * 100,
-                2
+                2,
             );
         } else {
             $response->successRate = 0;
@@ -318,40 +326,41 @@ class VoiceCommandController extends AbstractController
                 in: 'path',
                 description: 'Command ID to retry',
                 required: true,
-                schema: new OA\Schema(type: 'integer')
-            )
+                schema: new OA\Schema(type: 'integer'),
+            ),
         ],
         responses: [
             new OA\Response(
                 response: 200,
                 description: 'Command reprocessing started',
-                content: new OA\JsonContent(ref: new Model(type: VoiceCommandResponse::class))
+                content: new OA\JsonContent(ref: new Model(type: VoiceCommandResponse::class)),
             ),
             new OA\Response(
                 response: 404,
-                description: 'Command not found'
+                description: 'Command not found',
             ),
             new OA\Response(
                 response: 403,
-                description: 'Access denied or command cannot be retried'
+                description: 'Access denied or command cannot be retried',
             ),
             new OA\Response(
                 response: 401,
-                description: 'Unauthorized'
-            )
-        ]
+                description: 'Unauthorized',
+            ),
+        ],
     )]
     #[Security(name: 'Bearer')]
     public function retryCommand(
         int $id,
-        #[CurrentUser] User $user
+        #[CurrentUser]
+        User $user,
     ): JsonResponse {
         $command = $this->commandRepository->find($id);
 
         if (!$command) {
             return $this->json([
                 'success' => false,
-                'error' => 'Command not found'
+                'error'   => 'Command not found',
             ], Response::HTTP_NOT_FOUND);
         }
 
@@ -359,7 +368,7 @@ class VoiceCommandController extends AbstractController
         if ($command->getUser()->getId() !== $user->getId()) {
             return $this->json([
                 'success' => false,
-                'error' => 'Access denied'
+                'error'   => 'Access denied',
             ], Response::HTTP_FORBIDDEN);
         }
 
@@ -367,7 +376,7 @@ class VoiceCommandController extends AbstractController
         if ($command->getStatus() !== CommandStatus::FAILED) {
             return $this->json([
                 'success' => false,
-                'error' => 'Only failed commands can be retried'
+                'error'   => 'Only failed commands can be retried',
             ], Response::HTTP_FORBIDDEN);
         }
 
@@ -380,12 +389,12 @@ class VoiceCommandController extends AbstractController
             if ($command->getTranscribedText()) {
                 $this->voiceProcessingService->processVoiceText(
                     $command->getTranscribedText(),
-                    $user
+                    $user,
                 );
             } elseif ($command->getRawAudioUrl()) {
                 $this->voiceProcessingService->processVoiceAudio(
                     $command->getRawAudioUrl(),
-                    $user
+                    $user,
                 );
             }
 
@@ -393,10 +402,10 @@ class VoiceCommandController extends AbstractController
 
             return $this->json($response);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $this->json([
                 'success' => false,
-                'error' => 'Failed to retry command: ' . $e->getMessage()
+                'error'   => 'Failed to retry command: ' . $e->getMessage(),
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }

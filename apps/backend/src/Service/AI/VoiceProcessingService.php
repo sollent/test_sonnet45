@@ -7,17 +7,12 @@ namespace App\Service\AI;
 use App\Entity\User;
 use App\Entity\VoiceCommand;
 use App\Repository\Database\VoiceCommandRepository;
-use App\Service\AI\LLMService;
-use App\Service\AI\SmartSearchService;
-use App\Service\AI\VoiceCommandExecutor;
-use App\Service\AI\WebSocketPublisher;
-use App\ValueObject\CommandStatus;
 use App\ValueObject\CommandType;
-use App\ValueObject\ParsedCommand;
 use App\ValueObject\TranscriptionResult;
+use Exception;
 use Psr\Log\LoggerInterface;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
 use RuntimeException;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
  * Основной сервис обработки голосовых команд
@@ -28,11 +23,17 @@ use RuntimeException;
 class VoiceProcessingService
 {
     private VoiceCommandRepository $commandRepository;
+
     private LLMService $llmService;
+
     private VoiceCommandExecutor $commandExecutor;
+
     private WebSocketPublisher $wsPublisher;
+
     private HttpClientInterface $httpClient;
+
     private LoggerInterface $logger;
+
     private string $whisperUrl;
 
     public function __construct(
@@ -42,7 +43,7 @@ class VoiceProcessingService
         WebSocketPublisher $wsPublisher,
         HttpClientInterface $httpClient,
         LoggerInterface $logger,
-        string $whisperUrl = 'http://whisper:9000'
+        string $whisperUrl = 'http://whisper:9000',
     ) {
         $this->commandRepository = $commandRepository;
         $this->llmService = $llmService;
@@ -57,21 +58,22 @@ class VoiceProcessingService
      * Обработка голосовой команды (аудио)
      *
      * @param string $audioUrl URL аудиофайла
-     * @param User $user Пользователь
+     * @param User   $user     Пользователь
+     *
      * @return VoiceCommand Созданная и обработанная команда
      */
     public function processVoiceAudio(string $audioUrl, User $user): VoiceCommand
     {
         $this->logger->info('Processing voice audio command', [
             'audio_url' => $audioUrl,
-            'user_id' => $user->getId()
+            'user_id'   => $user->getId(),
         ]);
 
         // Создаем запись команды
         $command = new VoiceCommand(
             user: $user,
             commandType: CommandType::VOICE_AUDIO,
-            rawAudioUrl: $audioUrl
+            rawAudioUrl: $audioUrl,
         );
 
         $this->commandRepository->save($command);
@@ -91,14 +93,14 @@ class VoiceProcessingService
 
             // Уведомляем о завершении транскрипции
             $this->notifyStatus($command, 'transcription_completed', [
-                'text' => $transcription->text,
-                'language' => $transcription->language
+                'text'     => $transcription->text,
+                'language' => $transcription->language,
             ]);
 
             // Продолжаем обработку текста
             $this->processCommandText($command, $transcription->text, $user);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->handleError($command, $e);
         }
 
@@ -109,21 +111,22 @@ class VoiceProcessingService
      * Обработка текстовой команды
      *
      * @param string $text Текст команды
-     * @param User $user Пользователь
+     * @param User   $user Пользователь
+     *
      * @return VoiceCommand Созданная и обработанная команда
      */
     public function processVoiceText(string $text, User $user): VoiceCommand
     {
         $this->logger->info('Processing voice text command', [
-            'text' => $text,
-            'user_id' => $user->getId()
+            'text'    => $text,
+            'user_id' => $user->getId(),
         ]);
 
         // Создаем запись команды
         $command = new VoiceCommand(
             user: $user,
             commandType: CommandType::VOICE_TEXT,
-            transcribedText: $text
+            transcribedText: $text,
         );
 
         $this->commandRepository->save($command);
@@ -139,11 +142,67 @@ class VoiceProcessingService
             // Обрабатываем текст
             $this->processCommandText($command, $text, $user);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->handleError($command, $e);
         }
 
         return $command;
+    }
+
+    /**
+     * Повторная обработка застрявших команд
+     *
+     * @return int Количество обработанных команд
+     */
+    public function retryStuckCommands(): int
+    {
+        $stuckCommands = $this->commandRepository->findStuckCommands(5);
+        $count = 0;
+
+        foreach ($stuckCommands as $command) {
+            $this->logger->warning('Retrying stuck command', [
+                'command_id' => $command->getId(),
+                'status'     => $command->getStatus()->value,
+            ]);
+
+            try {
+                // Если есть транскрибированный текст, продолжаем с него
+                if ($command->getTranscribedText()) {
+                    $this->processCommandText(
+                        $command,
+                        $command->getTranscribedText(),
+                        $command->getUser(),
+                    );
+                    $count++;
+                } else {
+                    // Иначе помечаем как проваленную
+                    $command->markAsFailed('Command stuck without transcription');
+                    $this->commandRepository->save($command);
+                }
+            } catch (Exception $e) {
+                $this->handleError($command, $e);
+            }
+        }
+
+        return $count;
+    }
+
+    /**
+     * Получение истории команд пользователя
+     */
+    public function getUserCommandHistory(User $user, int $limit = 20): array
+    {
+        $commands = $this->commandRepository->findByUser($user, null, $limit);
+
+        return array_map(fn (VoiceCommand $cmd) => $cmd->toArray(), $commands);
+    }
+
+    /**
+     * Получение статистики пользователя
+     */
+    public function getUserStatistics(User $user): array
+    {
+        return $this->commandRepository->getUserStatistics($user);
     }
 
     /**
@@ -158,9 +217,9 @@ class VoiceProcessingService
 
         // Уведомляем о парсинге
         $this->notifyStatus($command, 'command_parsed', [
-            'action' => $parsedCommand->action,
+            'action'     => $parsedCommand->action,
             'confidence' => $parsedCommand->confidence,
-            'parameters' => $parsedCommand->parameters
+            'parameters' => $parsedCommand->parameters,
         ]);
 
         // Если команда не выполнима (низкая уверенность или требует уточнения)
@@ -170,7 +229,7 @@ class VoiceProcessingService
             $this->commandRepository->save($command);
 
             $this->notifyStatus($command, 'clarification_needed', [
-                'question' => $clarificationMessage
+                'question' => $clarificationMessage,
             ]);
 
             return;
@@ -191,7 +250,7 @@ class VoiceProcessingService
             $this->commandRepository->save($command);
 
             $this->notifyStatus($command, 'execution_failed', [
-                'error' => $errorMessage
+                'error' => $errorMessage,
             ]);
         }
     }
@@ -204,7 +263,7 @@ class VoiceProcessingService
     private function transcribeAudio(string $audioUrl): TranscriptionResult
     {
         $this->logger->info('Transcribing audio', [
-            'audio_url' => $audioUrl
+            'audio_url' => $audioUrl,
         ]);
 
         try {
@@ -214,15 +273,15 @@ class VoiceProcessingService
             // Отправляем на Whisper
             $response = $this->httpClient->request('POST', $this->whisperUrl . '/v1/audio/transcriptions', [
                 'headers' => [
-                    'Content-Type' => 'multipart/form-data'
+                    'Content-Type' => 'multipart/form-data',
                 ],
                 'body' => [
-                    'file' => $audioData,
-                    'model' => 'whisper-1',
-                    'language' => 'ru', // Приоритет русского языка
-                    'response_format' => 'verbose_json'
+                    'file'            => $audioData,
+                    'model'           => 'whisper-1',
+                    'language'        => 'ru', // Приоритет русского языка
+                    'response_format' => 'verbose_json',
                 ],
-                'timeout' => 60 // Увеличенный timeout для больших файлов
+                'timeout' => 60, // Увеличенный timeout для больших файлов
             ]);
 
             $data = $response->toArray();
@@ -236,13 +295,13 @@ class VoiceProcessingService
                 text: $data['text'],
                 language: $data['language'] ?? 'ru',
                 confidence: $data['confidence'] ?? 0.9,
-                durationMs: isset($data['duration']) ? (int)($data['duration'] * 1000) : null
+                durationMs: isset($data['duration']) ? (int) ($data['duration'] * 1000) : null,
             );
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logger->error('Transcription failed', [
                 'audio_url' => $audioUrl,
-                'error' => $e->getMessage()
+                'error'     => $e->getMessage(),
             ]);
 
             // Fallback - создаем результат с низкой уверенностью
@@ -257,8 +316,9 @@ class VoiceProcessingService
     {
         try {
             $response = $this->httpClient->request('GET', $audioUrl);
+
             return $response->getContent();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw new RuntimeException('Failed to download audio: ' . $e->getMessage(), 0, $e);
         }
     }
@@ -266,19 +326,19 @@ class VoiceProcessingService
     /**
      * Обработка ошибок
      */
-    private function handleError(VoiceCommand $command, \Exception $error): void
+    private function handleError(VoiceCommand $command, Exception $error): void
     {
         $this->logger->error('Voice command processing failed', [
             'command_id' => $command->getId(),
-            'error' => $error->getMessage(),
-            'trace' => $error->getTraceAsString()
+            'error'      => $error->getMessage(),
+            'trace'      => $error->getTraceAsString(),
         ]);
 
         $command->markAsFailed($error->getMessage());
         $this->commandRepository->save($command);
 
         $this->notifyStatus($command, 'processing_failed', [
-            'error' => $error->getMessage()
+            'error' => $error->getMessage(),
         ]);
     }
 
@@ -293,71 +353,15 @@ class VoiceProcessingService
                 event: $event,
                 data: array_merge([
                     'command_id' => $command->getId(),
-                    'status' => $command->getStatus()->value,
-                    'type' => $command->getCommandType()->value,
-                ], $data)
+                    'status'     => $command->getStatus()->value,
+                    'type'       => $command->getCommandType()->value,
+                ], $data),
             );
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Логируем ошибку, но не прерываем основной процесс
             $this->logger->warning('Failed to send WebSocket notification', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
         }
-    }
-
-    /**
-     * Повторная обработка застрявших команд
-     *
-     * @return int Количество обработанных команд
-     */
-    public function retryStuckCommands(): int
-    {
-        $stuckCommands = $this->commandRepository->findStuckCommands(5);
-        $count = 0;
-
-        foreach ($stuckCommands as $command) {
-            $this->logger->warning('Retrying stuck command', [
-                'command_id' => $command->getId(),
-                'status' => $command->getStatus()->value
-            ]);
-
-            try {
-                // Если есть транскрибированный текст, продолжаем с него
-                if ($command->getTranscribedText()) {
-                    $this->processCommandText(
-                        $command,
-                        $command->getTranscribedText(),
-                        $command->getUser()
-                    );
-                    $count++;
-                } else {
-                    // Иначе помечаем как проваленную
-                    $command->markAsFailed('Command stuck without transcription');
-                    $this->commandRepository->save($command);
-                }
-            } catch (\Exception $e) {
-                $this->handleError($command, $e);
-            }
-        }
-
-        return $count;
-    }
-
-    /**
-     * Получение истории команд пользователя
-     */
-    public function getUserCommandHistory(User $user, int $limit = 20): array
-    {
-        $commands = $this->commandRepository->findByUser($user, null, $limit);
-
-        return array_map(fn(VoiceCommand $cmd) => $cmd->toArray(), $commands);
-    }
-
-    /**
-     * Получение статистики пользователя
-     */
-    public function getUserStatistics(User $user): array
-    {
-        return $this->commandRepository->getUserStatistics($user);
     }
 }

@@ -10,7 +10,6 @@ use App\ValueObject\CommandType;
 use App\ValueObject\ParsedCommand;
 use App\ValueObject\TranscriptionResult;
 use DateTimeImmutable;
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use InvalidArgumentException;
 
@@ -114,7 +113,7 @@ class VoiceCommand extends AbstractEntity
         User $user,
         CommandType $commandType,
         ?string $rawAudioUrl = null,
-        ?string $transcribedText = null
+        ?string $transcribedText = null,
     ) {
         parent::__construct();
 
@@ -145,7 +144,7 @@ class VoiceCommand extends AbstractEntity
             throw new InvalidArgumentException(sprintf(
                 'Cannot transition from %s to %s',
                 $this->status->value,
-                CommandStatus::PROCESSING->value
+                CommandStatus::PROCESSING->value,
             ));
         }
 
@@ -182,6 +181,7 @@ class VoiceCommand extends AbstractEntity
         // Если команда требует уточнения, не переходим в executing
         if (!$command->isExecutable()) {
             $this->markAsFailed($command->getClarificationQuestion() ?? 'Command needs clarification');
+
             return;
         }
 
@@ -199,7 +199,7 @@ class VoiceCommand extends AbstractEntity
             throw new InvalidArgumentException(sprintf(
                 'Cannot transition from %s to %s',
                 $this->status->value,
-                CommandStatus::COMPLETED->value
+                CommandStatus::COMPLETED->value,
             ));
         }
 
@@ -225,7 +225,7 @@ class VoiceCommand extends AbstractEntity
             throw new InvalidArgumentException(sprintf(
                 'Cannot transition from %s to %s',
                 $this->status->value,
-                CommandStatus::FAILED->value
+                CommandStatus::FAILED->value,
             ));
         }
 
@@ -368,23 +368,23 @@ class VoiceCommand extends AbstractEntity
     public function toArray(): array
     {
         return [
-            'id' => $this->getId(),
-            'user_id' => $this->user->getId(),
-            'status' => $this->status->value,
-            'status_label' => $this->status->getLabel(),
-            'command_type' => $this->commandType->value,
-            'raw_audio_url' => $this->rawAudioUrl,
-            'transcribed_text' => $this->transcribedText,
-            'transcription_result' => $this->transcriptionResult,
-            'parsed_command' => $this->parsedCommand,
-            'execution_result' => $this->executionResult,
-            'error_message' => $this->errorMessage,
-            'processing_started_at' => $this->processingStartedAt?->format('c'),
-            'completed_at' => $this->completedAt?->format('c'),
+            'id'                     => $this->getId(),
+            'user_id'                => $this->user->getId(),
+            'status'                 => $this->status->value,
+            'status_label'           => $this->status->getLabel(),
+            'command_type'           => $this->commandType->value,
+            'raw_audio_url'          => $this->rawAudioUrl,
+            'transcribed_text'       => $this->transcribedText,
+            'transcription_result'   => $this->transcriptionResult,
+            'parsed_command'         => $this->parsedCommand,
+            'execution_result'       => $this->executionResult,
+            'error_message'          => $this->errorMessage,
+            'processing_started_at'  => $this->processingStartedAt?->format('c'),
+            'completed_at'           => $this->completedAt?->format('c'),
             'processing_duration_ms' => $this->processingDurationMs,
-            'metadata' => $this->metadata,
-            'created_at' => $this->createdAt?->format('c'),
-            'updated_at' => $this->updatedAt?->format('c'),
+            'metadata'               => $this->metadata,
+            'created_at'             => $this->createdAt?->format('c'),
+            'updated_at'             => $this->updatedAt?->format('c'),
         ];
     }
 }

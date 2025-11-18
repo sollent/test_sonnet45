@@ -57,17 +57,13 @@ class VoiceCommandRepository extends ServiceEntityRepository
     /**
      * Найти команды пользователя
      *
-     * @param User $user
-     * @param CommandStatus|null $status
-     * @param int $limit
-     * @param int $offset
      * @return VoiceCommand[]
      */
     public function findByUser(
         User $user,
         ?CommandStatus $status = null,
         int $limit = 50,
-        int $offset = 0
+        int $offset = 0,
     ): array {
         $qb = $this->createQueryBuilder('vc')
             ->where('vc.user = :user')
@@ -87,7 +83,6 @@ class VoiceCommandRepository extends ServiceEntityRepository
     /**
      * Найти незавершенные команды пользователя
      *
-     * @param User $user
      * @return VoiceCommand[]
      */
     public function findPendingByUser(User $user): array
@@ -99,7 +94,7 @@ class VoiceCommandRepository extends ServiceEntityRepository
             ->setParameter('statuses', [
                 CommandStatus::PENDING->value,
                 CommandStatus::PROCESSING->value,
-                CommandStatus::EXECUTING->value
+                CommandStatus::EXECUTING->value,
             ])
             ->orderBy('vc.createdAt', 'ASC')
             ->getQuery()
@@ -123,8 +118,6 @@ class VoiceCommandRepository extends ServiceEntityRepository
     /**
      * Найти команды по статусу
      *
-     * @param CommandStatus $status
-     * @param int $limit
      * @return VoiceCommand[]
      */
     public function findByStatus(CommandStatus $status, int $limit = 100): array
@@ -142,6 +135,7 @@ class VoiceCommandRepository extends ServiceEntityRepository
      * Найти застрявшие команды (processing более N минут)
      *
      * @param int $minutes Количество минут
+     *
      * @return VoiceCommand[]
      */
     public function findStuckCommands(int $minutes = 5): array
@@ -154,7 +148,7 @@ class VoiceCommandRepository extends ServiceEntityRepository
             ->andWhere('vc.processingStartedAt < :threshold')
             ->setParameter('statuses', [
                 CommandStatus::PROCESSING->value,
-                CommandStatus::EXECUTING->value
+                CommandStatus::EXECUTING->value,
             ])
             ->setParameter('threshold', $threshold)
             ->orderBy('vc.processingStartedAt', 'ASC')
@@ -170,10 +164,10 @@ class VoiceCommandRepository extends ServiceEntityRepository
         $qb = $this->createQueryBuilder('vc');
 
         $stats = $qb->select([
-                'vc.status as status',
-                'COUNT(vc.id) as count',
-                'AVG(vc.processingDurationMs) as avg_duration'
-            ])
+            'vc.status as status',
+            'COUNT(vc.id) as count',
+            'AVG(vc.processingDurationMs) as avg_duration',
+        ])
             ->where('vc.user = :user')
             ->setParameter('user', $user)
             ->groupBy('vc.status')
@@ -182,9 +176,9 @@ class VoiceCommandRepository extends ServiceEntityRepository
 
         // Форматируем результат
         $result = [
-            'total' => 0,
-            'by_status' => [],
-            'average_duration_ms' => 0
+            'total'               => 0,
+            'by_status'           => [],
+            'average_duration_ms' => 0,
         ];
 
         $totalDuration = 0;
@@ -217,7 +211,7 @@ class VoiceCommandRepository extends ServiceEntityRepository
     public function findByDateRange(
         DateTimeImmutable $from,
         DateTimeImmutable $to,
-        ?User $user = null
+        ?User $user = null,
     ): array {
         $qb = $this->createQueryBuilder('vc')
             ->where('vc.createdAt >= :from')
@@ -239,7 +233,7 @@ class VoiceCommandRepository extends ServiceEntityRepository
      */
     public function createPaginationQueryBuilder(
         ?User $user = null,
-        ?CommandStatus $status = null
+        ?CommandStatus $status = null,
     ): QueryBuilder {
         $qb = $this->createQueryBuilder('vc')
             ->orderBy('vc.createdAt', 'DESC');
@@ -261,6 +255,7 @@ class VoiceCommandRepository extends ServiceEntityRepository
      * Очистить старые завершенные команды
      *
      * @param int $daysOld Возраст команд в днях
+     *
      * @return int Количество удаленных записей
      */
     public function cleanupOldCommands(int $daysOld = 30): int
@@ -273,7 +268,7 @@ class VoiceCommandRepository extends ServiceEntityRepository
             ->andWhere('vc.completedAt < :threshold')
             ->setParameter('statuses', [
                 CommandStatus::COMPLETED->value,
-                CommandStatus::FAILED->value
+                CommandStatus::FAILED->value,
             ])
             ->setParameter('threshold', $threshold)
             ->getQuery()

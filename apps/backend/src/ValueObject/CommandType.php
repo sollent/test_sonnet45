@@ -27,9 +27,9 @@ enum CommandType: string
      */
     public function getLabel(): string
     {
-        return match($this) {
+        return match ($this) {
             self::VOICE_AUDIO => 'Голосовое аудио',
-            self::VOICE_TEXT => 'Текстовая команда',
+            self::VOICE_TEXT  => 'Текстовая команда',
         };
     }
 

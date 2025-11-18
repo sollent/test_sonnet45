@@ -12,7 +12,7 @@ use OpenApi\Attributes as OA;
 #[OA\Schema(
     title: 'Voice Command Statistics Response',
     description: 'Response with voice commands usage statistics',
-    type: 'object'
+    type: 'object',
 )]
 class VoiceCommandStatisticsResponse
 {
@@ -22,12 +22,12 @@ class VoiceCommandStatisticsResponse
     #[OA\Property(
         description: 'Commands count by status',
         example: [
-            'pending' => 2,
+            'pending'    => 2,
             'processing' => 1,
-            'executing' => 0,
-            'completed' => 120,
-            'failed' => 27
-        ]
+            'executing'  => 0,
+            'completed'  => 120,
+            'failed'     => 27,
+        ],
     )]
     public array $commandsByStatus;
 
@@ -40,10 +40,10 @@ class VoiceCommandStatisticsResponse
     #[OA\Property(
         description: 'Most used actions',
         example: [
-            'create_task' => 65,
+            'create_task'   => 65,
             'complete_task' => 40,
-            'filter_tasks' => 15
-        ]
+            'filter_tasks'  => 15,
+        ],
     )]
     public ?array $mostUsedActions = null;
 
@@ -56,8 +56,8 @@ class VoiceCommandStatisticsResponse
             '2024-01-12' => 7,
             '2024-01-13' => 10,
             '2024-01-14' => 15,
-            '2024-01-15' => 9
-        ]
+            '2024-01-15' => 9,
+        ],
     )]
     public ?array $commandsByDay = null;
 }

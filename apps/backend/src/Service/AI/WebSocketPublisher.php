@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace App\Service\AI;
 
+use Exception;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
-use RuntimeException;
 
 /**
  * Сервис публикации сообщений через WebSocket (Centrifugo)
@@ -18,15 +19,19 @@ use RuntimeException;
 class WebSocketPublisher
 {
     private HttpClientInterface $httpClient;
+
     private LoggerInterface $logger;
+
     private string $centrifugoUrl;
+
     private string $centrifugoApiKey;
+
     private bool $enabled;
 
     public function __construct(
         HttpClientInterface $httpClient,
         LoggerInterface $logger,
-        ParameterBagInterface $params
+        ParameterBagInterface $params,
     ) {
         $this->httpClient = $httpClient;
         $this->logger = $logger;
@@ -48,15 +53,17 @@ class WebSocketPublisher
     /**
      * Публикация сообщения пользователю
      *
-     * @param int $userId ID пользователя
-     * @param string $event Тип события
-     * @param array $data Данные для отправки
+     * @param int    $userId ID пользователя
+     * @param string $event  Тип события
+     * @param array  $data   Данные для отправки
+     *
      * @return bool Успешность отправки
      */
     public function publish(int $userId, string $event, array $data): bool
     {
         if (!$this->enabled) {
             $this->logger->debug('WebSocket publishing is disabled');
+
             return true;
         }
 
@@ -64,25 +71,26 @@ class WebSocketPublisher
 
         $this->logger->info('Publishing to WebSocket', [
             'channel' => $channel,
-            'event' => $event,
-            'user_id' => $userId
+            'event'   => $event,
+            'user_id' => $userId,
         ]);
 
         try {
             $message = [
-                'event' => $event,
-                'data' => $data,
+                'event'     => $event,
+                'data'      => $data,
                 'timestamp' => time(),
             ];
 
             return $this->sendToCentrifugo($channel, $message);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logger->error('Failed to publish to WebSocket', [
                 'channel' => $channel,
-                'event' => $event,
-                'error' => $e->getMessage()
+                'event'   => $event,
+                'error'   => $e->getMessage(),
             ]);
+
             return false;
         }
     }
@@ -91,7 +99,8 @@ class WebSocketPublisher
      * Публикация глобального сообщения (broadcast)
      *
      * @param string $event Тип события
-     * @param array $data Данные для отправки
+     * @param array  $data  Данные для отправки
+     *
      * @return bool Успешность отправки
      */
     public function broadcast(string $event, array $data): bool
@@ -103,24 +112,25 @@ class WebSocketPublisher
         $channel = 'global';
 
         $this->logger->info('Broadcasting to all users', [
-            'event' => $event,
-            'channel' => $channel
+            'event'   => $event,
+            'channel' => $channel,
         ]);
 
         try {
             $message = [
-                'event' => $event,
-                'data' => $data,
+                'event'     => $event,
+                'data'      => $data,
                 'timestamp' => time(),
             ];
 
             return $this->sendToCentrifugo($channel, $message);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logger->error('Failed to broadcast', [
                 'event' => $event,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
@@ -132,11 +142,11 @@ class WebSocketPublisher
         int $userId,
         int $commandId,
         string $status,
-        array $additionalData = []
+        array $additionalData = [],
     ): bool {
         return $this->publish($userId, 'voice_command_status', array_merge([
             'command_id' => $commandId,
-            'status' => $status,
+            'status'     => $status,
         ], $additionalData));
     }
 
@@ -147,69 +157,14 @@ class WebSocketPublisher
         int $userId,
         int $commandId,
         bool $success,
-        array $result
+        array $result,
     ): bool {
         $event = $success ? 'voice_command_success' : 'voice_command_failed';
 
         return $this->publish($userId, $event, [
             'command_id' => $commandId,
-            'result' => $result,
+            'result'     => $result,
         ]);
-    }
-
-    /**
-     * Отправка данных в Centrifugo
-     */
-    private function sendToCentrifugo(string $channel, array $message): bool
-    {
-        try {
-            $response = $this->httpClient->request('POST', $this->centrifugoUrl . '/api/publish', [
-                'headers' => [
-                    'Authorization' => 'apikey ' . $this->centrifugoApiKey,
-                    'Content-Type' => 'application/json',
-                ],
-                'json' => [
-                    'channel' => $channel,
-                    'data' => $message,
-                ],
-                'timeout' => 5.0
-            ]);
-
-            $statusCode = $response->getStatusCode();
-
-            if ($statusCode !== 200) {
-                throw new RuntimeException(sprintf(
-                    'Centrifugo returned status %d',
-                    $statusCode
-                ));
-            }
-
-            $responseData = $response->toArray();
-
-            // Проверяем ответ Centrifugo
-            if (isset($responseData['error'])) {
-                throw new RuntimeException(
-                    'Centrifugo error: ' . $responseData['error']['message'] ?? 'Unknown error'
-                );
-            }
-
-            return true;
-
-        } catch (\Exception $e) {
-            $this->logger->error('Failed to send to Centrifugo', [
-                'channel' => $channel,
-                'error' => $e->getMessage()
-            ]);
-            return false;
-        }
-    }
-
-    /**
-     * Получение канала для пользователя
-     */
-    private function getUserChannel(int $userId): string
-    {
-        return sprintf('user:%d', $userId);
     }
 
     /**
@@ -219,14 +174,15 @@ class WebSocketPublisher
     {
         try {
             $response = $this->httpClient->request('GET', $this->centrifugoUrl . '/health', [
-                'timeout' => 2.0
+                'timeout' => 2.0,
             ]);
 
             return $response->getStatusCode() === 200;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logger->warning('Centrifugo health check failed', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
@@ -239,43 +195,99 @@ class WebSocketPublisher
         $eventMap = [
             VoiceEventType::PROCESSING_STARTED => [
                 'title' => 'Обработка началась',
-                'icon' => '🎤',
+                'icon'  => '🎤',
             ],
             VoiceEventType::TRANSCRIPTION_COMPLETED => [
                 'title' => 'Транскрипция завершена',
-                'icon' => '📝',
+                'icon'  => '📝',
             ],
             VoiceEventType::COMMAND_PARSED => [
                 'title' => 'Команда распознана',
-                'icon' => '🧠',
+                'icon'  => '🧠',
             ],
             VoiceEventType::COMMAND_EXECUTING => [
                 'title' => 'Выполнение команды',
-                'icon' => '⚡',
+                'icon'  => '⚡',
             ],
             VoiceEventType::COMMAND_COMPLETED => [
                 'title' => 'Команда выполнена',
-                'icon' => '✅',
+                'icon'  => '✅',
             ],
             VoiceEventType::COMMAND_FAILED => [
                 'title' => 'Ошибка выполнения',
-                'icon' => '❌',
+                'icon'  => '❌',
             ],
             VoiceEventType::CLARIFICATION_NEEDED => [
                 'title' => 'Требуется уточнение',
-                'icon' => '❓',
+                'icon'  => '❓',
             ],
         ];
 
         $eventInfo = $eventMap[$type->value] ?? [
             'title' => 'Событие',
-            'icon' => '📢',
+            'icon'  => '📢',
         ];
 
         return $this->publish($userId, 'voice_event', array_merge($eventInfo, [
             'type' => $type->value,
             'data' => $data,
         ]));
+    }
+
+    /**
+     * Отправка данных в Centrifugo
+     */
+    private function sendToCentrifugo(string $channel, array $message): bool
+    {
+        try {
+            $response = $this->httpClient->request('POST', $this->centrifugoUrl . '/api/publish', [
+                'headers' => [
+                    'Authorization' => 'apikey ' . $this->centrifugoApiKey,
+                    'Content-Type'  => 'application/json',
+                ],
+                'json' => [
+                    'channel' => $channel,
+                    'data'    => $message,
+                ],
+                'timeout' => 5.0,
+            ]);
+
+            $statusCode = $response->getStatusCode();
+
+            if ($statusCode !== 200) {
+                throw new RuntimeException(sprintf(
+                    'Centrifugo returned status %d',
+                    $statusCode,
+                ));
+            }
+
+            $responseData = $response->toArray();
+
+            // Проверяем ответ Centrifugo
+            if (isset($responseData['error'])) {
+                throw new RuntimeException(
+                    'Centrifugo error: ' . $responseData['error']['message'] ?? 'Unknown error',
+                );
+            }
+
+            return true;
+
+        } catch (Exception $e) {
+            $this->logger->error('Failed to send to Centrifugo', [
+                'channel' => $channel,
+                'error'   => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
+
+    /**
+     * Получение канала для пользователя
+     */
+    private function getUserChannel(int $userId): string
+    {
+        return sprintf('user:%d', $userId);
     }
 }
 

@@ -42,12 +42,12 @@ enum CommandStatus: string
      */
     public function getLabel(): string
     {
-        return match($this) {
-            self::PENDING => 'В ожидании',
+        return match ($this) {
+            self::PENDING    => 'В ожидании',
             self::PROCESSING => 'Обрабатывается',
-            self::EXECUTING => 'Выполняется',
-            self::COMPLETED => 'Завершена',
-            self::FAILED => 'Ошибка',
+            self::EXECUTING  => 'Выполняется',
+            self::COMPLETED  => 'Завершена',
+            self::FAILED     => 'Ошибка',
         };
     }
 
@@ -70,10 +70,10 @@ enum CommandStatus: string
         }
 
         // Определяем допустимые переходы
-        $allowedTransitions = match($this) {
-            self::PENDING => [self::PROCESSING, self::FAILED],
+        $allowedTransitions = match ($this) {
+            self::PENDING    => [self::PROCESSING, self::FAILED],
             self::PROCESSING => [self::EXECUTING, self::FAILED],
-            self::EXECUTING => [self::COMPLETED, self::FAILED],
+            self::EXECUTING  => [self::COMPLETED, self::FAILED],
             self::COMPLETED, self::FAILED => [],
         };
 
