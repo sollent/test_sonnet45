@@ -43,10 +43,10 @@ services:
     volumes:
       - whisper_models:/app/models
     environment:
-      - ASR_MODEL=${WHISPER_MODEL:-base}
-      - ASR_ENGINE=${WHISPER_ENGINE:-openai_whisper}
+      - ASR_MODEL=tiny
+      - ASR_ENGINE=openai_whisper
       - ASR_MODEL_PATH=/app/models
-      - ASR_LANGUAGE=${WHISPER_LANGUAGE:-ru}
+      - ASR_LANGUAGE=ru
     networks:
       - nginx-php83-psql16
     healthcheck:

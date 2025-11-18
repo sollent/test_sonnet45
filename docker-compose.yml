@@ -19,6 +19,8 @@ include:
 
   # AI services
   - path: ./infrastructure/docker/docker-compose.ai.yml
+    env_file:
+      - ./.env.docker
 
 # No services defined here - all in included files
 
