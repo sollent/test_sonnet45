@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace App\Service\AI;
 
+use App\Dto\Request\Task\CreateTaskDto;
 use App\Entity\Task;
 use App\Entity\User;
+use App\Enum\TaskPriority;
+use App\Enum\TaskStatus;
 use App\Repository\Database\TagRepository;
 use App\Service\TaskService;
 use App\ValueObject\ParsedCommand;
@@ -105,21 +108,21 @@ class VoiceCommandExecutor
             throw new RuntimeException('Title is required for task creation');
         }
 
-        // Подготовка данных для создания задачи
-        $taskData = [
-            'title'       => $title,
-            'description' => $parameters['description'] ?? '',
-            'status'      => 'new',
-            'priority'    => $this->parsePriority($parameters['priority'] ?? null),
-        ];
+        // Создание DTO для задачи
+        $dto = new CreateTaskDto();
+        $dto->title = $title;
+        $dto->description = $parameters['description'] ?? '';
+        $dto->status = TaskStatus::PENDING;
+        $dto->priority = $this->parsePriority($parameters['priority'] ?? null);
 
         // Обработка даты
         if (isset($parameters['due_date'])) {
-            $taskData['dueDate'] = $this->parseDueDate($parameters['due_date']);
+            $dueDate = $this->parseDueDate($parameters['due_date']);
+            $dto->dueDate = $dueDate?->format('Y-m-d H:i:s');
         }
 
         // Создание задачи
-        $task = $this->taskService->createTask($taskData, $user);
+        $task = $this->taskService->createTask($dto, $user);
 
         // Добавление тегов, если указаны
         if (!empty($parameters['tags'])) {
@@ -249,15 +252,14 @@ class VoiceCommandExecutor
         }
 
         // Создание подзадачи
-        $subtaskData = [
-            'title'        => $title,
-            'description'  => $parameters['description'] ?? '',
-            'status'       => 'new',
-            'priority'     => $parentTask->getPriority(), // Наследуем приоритет
-            'parentTaskId' => $parentTask->getId(),
-        ];
+        $dto = new CreateTaskDto();
+        $dto->title = $title;
+        $dto->description = $parameters['description'] ?? '';
+        $dto->status = TaskStatus::PENDING;
+        $dto->priority = $parentTask->getPriority(); // Наследуем приоритет
+        $dto->parentTaskId = $parentTask->getId();
 
-        $subtask = $this->taskService->createTask($subtaskData, $user);
+        $subtask = $this->taskService->createTask($dto, $user);
 
         return [
             'type'    => 'subtask_created',
@@ -356,28 +358,28 @@ class VoiceCommandExecutor
     /**
      * Парсинг приоритета из параметров
      */
-    private function parsePriority(?string $priority): string
+    private function parsePriority(?string $priority): TaskPriority
     {
         if (empty($priority)) {
-            return 'medium';
+            return TaskPriority::MEDIUM;
         }
 
         $priority = mb_strtolower(trim($priority));
 
         // Карта соответствий русских названий
         $priorityMap = [
-            'низкий'  => 'low',
-            'низкая'  => 'low',
-            'средний' => 'medium',
-            'средняя' => 'medium',
-            'обычный' => 'medium',
-            'обычная' => 'medium',
-            'высокий' => 'high',
-            'высокая' => 'high',
-            'важный'  => 'high',
-            'важная'  => 'high',
-            'срочный' => 'high',
-            'срочная' => 'high',
+            'низкий'  => TaskPriority::LOW,
+            'низкая'  => TaskPriority::LOW,
+            'средний' => TaskPriority::MEDIUM,
+            'средняя' => TaskPriority::MEDIUM,
+            'обычный' => TaskPriority::MEDIUM,
+            'обычная' => TaskPriority::MEDIUM,
+            'высокий' => TaskPriority::HIGH,
+            'высокая' => TaskPriority::HIGH,
+            'важный'  => TaskPriority::HIGH,
+            'важная'  => TaskPriority::HIGH,
+            'срочный' => TaskPriority::URGENT,
+            'срочная' => TaskPriority::URGENT,
         ];
 
         if (isset($priorityMap[$priority])) {
@@ -385,11 +387,13 @@ class VoiceCommandExecutor
         }
 
         // Проверка английских вариантов
-        if (in_array($priority, ['low', 'medium', 'high'], true)) {
-            return $priority;
-        }
-
-        return 'medium';
+        return match ($priority) {
+            'low' => TaskPriority::LOW,
+            'medium' => TaskPriority::MEDIUM,
+            'high' => TaskPriority::HIGH,
+            'urgent' => TaskPriority::URGENT,
+            default => TaskPriority::MEDIUM,
+        };
     }
 
     /**
