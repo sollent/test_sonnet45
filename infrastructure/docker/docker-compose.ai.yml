@@ -134,4 +134,3 @@ volumes:
 
 networks:
   nginx-php83-psql16:
-    external: true
