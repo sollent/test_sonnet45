@@ -177,8 +177,7 @@ class VoiceCommandExecutor
         }
 
         // Отметка как выполненной
-        $task->setStatus('done');
-        $this->taskService->saveTask($task);
+        $task = $this->taskService->completeTask($task, $user);
 
         return [
             'type'    => 'task_completed',
@@ -298,9 +297,8 @@ class VoiceCommandExecutor
         $completedTitles = [];
 
         foreach ($tasks as $task) {
-            if ($task->getStatus() !== 'done') {
-                $task->setStatus('done');
-                $this->taskService->saveTask($task);
+            if ($task->getStatus() !== TaskStatus::COMPLETED) {
+                $this->taskService->completeTask($task, $user);
                 $completedCount++;
                 $completedTitles[] = $task->getTitle();
             }
