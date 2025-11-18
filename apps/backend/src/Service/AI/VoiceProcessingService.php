@@ -7,6 +7,7 @@ namespace App\Service\AI;
 use App\Entity\User;
 use App\Entity\VoiceCommand;
 use App\Repository\Database\VoiceCommandRepository;
+use App\ValueObject\CommandStatus;
 use App\ValueObject\CommandType;
 use App\ValueObject\TranscriptionResult;
 use Exception;
@@ -175,9 +176,11 @@ class VoiceProcessingService
                     );
                     $count++;
                 } else {
-                    // Иначе помечаем как проваленную
-                    $command->markAsFailed('Command stuck without transcription');
-                    $this->commandRepository->save($command);
+                    // Иначе помечаем как проваленную (если еще не failed)
+                    if ($command->getStatus() !== CommandStatus::FAILED) {
+                        $command->markAsFailed('Command stuck without transcription');
+                        $this->commandRepository->save($command);
+                    }
                 }
             } catch (Exception $e) {
                 $this->handleError($command, $e);
@@ -225,8 +228,12 @@ class VoiceProcessingService
         // Если команда не выполнима (низкая уверенность или требует уточнения)
         if (!$parsedCommand->isExecutable()) {
             $clarificationMessage = $parsedCommand->getClarificationQuestion();
-            $command->markAsFailed($clarificationMessage ?? 'Команда требует уточнения');
-            $this->commandRepository->save($command);
+
+            // Помечаем как failed только если еще не в этом статусе
+            if ($command->getStatus() !== CommandStatus::FAILED) {
+                $command->markAsFailed($clarificationMessage ?? 'Команда требует уточнения');
+                $this->commandRepository->save($command);
+            }
 
             $this->notifyStatus($command, 'clarification_needed', [
                 'question' => $clarificationMessage,
@@ -246,8 +253,12 @@ class VoiceProcessingService
             $this->notifyStatus($command, 'command_executed', $result);
         } else {
             $errorMessage = $result['message'] ?? 'Ошибка выполнения команды';
-            $command->markAsFailed($errorMessage);
-            $this->commandRepository->save($command);
+
+            // Помечаем как failed только если еще не в этом статусе
+            if ($command->getStatus() !== CommandStatus::FAILED) {
+                $command->markAsFailed($errorMessage);
+                $this->commandRepository->save($command);
+            }
 
             $this->notifyStatus($command, 'execution_failed', [
                 'error' => $errorMessage,
@@ -334,8 +345,11 @@ class VoiceProcessingService
             'trace'      => $error->getTraceAsString(),
         ]);
 
-        $command->markAsFailed($error->getMessage());
-        $this->commandRepository->save($command);
+        // Помечаем как failed только если еще не в этом статусе
+        if ($command->getStatus() !== CommandStatus::FAILED) {
+            $command->markAsFailed($error->getMessage());
+            $this->commandRepository->save($command);
+        }
 
         $this->notifyStatus($command, 'processing_failed', [
             'error' => $error->getMessage(),

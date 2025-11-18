@@ -171,7 +171,7 @@ FROM voice_commands ORDER BY id DESC LIMIT 5;
 
 ## 🐛 Критические Баги
 
-### Bug #1: State Machine - Двойной переход в "failed" ❌
+### Bug #1: State Machine - Двойной переход в "failed" ✅ **ИСПРАВЛЕН**
 
 **Описание**: При попытке обработать команды id=10 и id=11, система выдала ошибку:
 
@@ -181,7 +181,7 @@ Cannot transition from failed to failed
 
 **Локация**:
 ```
-VoiceProcessingService.php:228
+VoiceProcessingService.php:179, 228, 249, 337
 VoiceCommand->markAsFailed()
 ```
 
@@ -193,16 +193,24 @@ VoiceCommand->markAsFailed()
 
 **Причина**: Когда LLM не может распарсить команду, `VoiceCommand` помечается как "failed". При повторной попытке вызвать `markAsFailed()` на уже failed entity, State Machine выдает ошибку.
 
-**Решение**: Добавить проверку текущего состояния перед вызовом `markAsFailed()`:
+**Решение**: ✅ **ПРИМЕНЕНО** - Добавлены проверки состояния перед вызовом `markAsFailed()` во всех 4 местах:
 
 ```php
-// VoiceProcessingService.php:228
-if ($command->getStatus() !== VoiceCommandStatus::FAILED) {
+// VoiceProcessingService.php:179, 232, 257, 348
+if ($command->getStatus() !== CommandStatus::FAILED) {
     $command->markAsFailed($errorMessage);
+    $this->commandRepository->save($command);
 }
 ```
 
-**Приоритет**: 🔥 **HIGH** (блокирует повторные запросы)
+**Результаты тестирования**:
+- ✅ Команды с невалидным текстом корректно проваливаются без ошибок
+- ✅ Ошибка "Cannot transition from failed to failed" больше не возникает
+- ✅ Все 4 типа команд продолжают работать с 100% success rate
+
+**Статус**: ✅ **FIXED** (2025-11-18)
+
+**Приоритет**: 🔥 **HIGH** (было критично - теперь исправлено)
 
 ---
 
