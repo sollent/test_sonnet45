@@ -158,7 +158,7 @@ use Psr\Log\LoggerInterface;
 class LLMService
 {
     private string $ollamaUrl = 'http://localhost:11434';  // Change if needed
-    private string $model = 'llama3.2:3b';
+    private string $model = 'llama3.2:1b';
 
     public function __construct(
         private HttpClientInterface $httpClient,

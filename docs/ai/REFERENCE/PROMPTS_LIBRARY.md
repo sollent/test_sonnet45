@@ -444,7 +444,7 @@ $context['all_tasks'] = $allTasks;
 ```php
 $response = $this->httpClient->request('POST', $ollamaUrl . '/api/generate', [
     'json' => [
-        'model' => 'llama3.2:3b',
+        'model' => 'llama3.2:1b',
         'prompt' => $prompt,
         'format' => 'json',  // Принудительный вывод JSON
         'options' => [

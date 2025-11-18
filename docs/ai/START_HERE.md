@@ -52,7 +52,7 @@
 
 **День 5: AI Сервисы**
 - [ ] 5.1: [AI Сервисы](01_INFRASTRUCTURE/03_AI_SERVICES.md) - Установи Ollama + Whisper
-- [ ] 5.2: Загрузи модель Llama 3.2 3B
+- [ ] 5.2: Загрузи модель Llama 3.2 1B
 - [ ] 5.3: Протестируй транскрипцию Whisper
 - [ ] 5.4: Интеграционный тест полного потока
 
@@ -168,7 +168,7 @@ public function handle(VoiceCommand $command): array
 ```bash
 # Тест LLM
 curl -X POST http://localhost:11434/api/generate \
-  -d '{"model":"llama3.2:3b","prompt":"Создай задачу купить молоко"}'
+  -d '{"model":"llama3.2:1b","prompt":"Создай задачу купить молоко"}'
 
 # Тест API
 curl -X POST http://localhost:8089/api/voice/command \

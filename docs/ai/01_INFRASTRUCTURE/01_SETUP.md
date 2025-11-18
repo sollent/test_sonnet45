@@ -213,7 +213,7 @@ CENTRIFUGO_ADMIN_PORT=8001
 REDIS_PORT=6379
 
 # Конфигурация Ollama
-OLLAMA_MODEL=llama3.2:3b
+OLLAMA_MODEL=llama3.2:1b
 OLLAMA_HOST=0.0.0.0
 OLLAMA_KEEP_ALIVE=5m
 OLLAMA_NUM_PARALLEL=2
@@ -912,7 +912,7 @@ docker-compose logs --tail=50
 curl -X POST http://localhost:11434/api/generate \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "llama3.2:3b",
+    "model": "llama3.2:1b",
     "prompt": "Создай задачу",
     "stream": false
   }'
@@ -958,7 +958,7 @@ sudo kill -9 <PID>
 ```bash
 # Ручная загрузка
 docker exec -it voice-ai-ollama bash
-ollama pull llama3.2:3b
+ollama pull llama3.2:1b
 
 # Проверить место на диске
 df -h
