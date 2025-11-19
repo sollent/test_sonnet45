@@ -37,6 +37,10 @@ services:
   # ============================================
   # Whisper - Speech-to-Text Service
   # ============================================
+  # Model: small (244M params, ~1GB disk)
+  # Features: High-quality punctuation, 90-95% accuracy
+  # Performance: 2-4s for short commands (10-20s audio)
+  # ============================================
   whisper:
     image: onerahmet/openai-whisper-asr-webservice:latest
     container_name: ${COMPOSE_PROJECT_NAME:-backend}-whisper
@@ -46,7 +50,7 @@ services:
     volumes:
       - whisper_models:/app/models
     environment:
-      - ASR_MODEL=tiny
+      - ASR_MODEL=small
       - ASR_ENGINE=openai_whisper
       - ASR_MODEL_PATH=/app/models
       - ASR_LANGUAGE=ru
@@ -61,9 +65,9 @@ services:
     deploy:
       resources:
         limits:
-          memory: 2G
+          memory: 3G
         reservations:
-          memory: 1G
+          memory: 2G
 
   # ============================================
   # Centrifugo - WebSocket Service
