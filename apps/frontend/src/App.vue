@@ -51,7 +51,7 @@ const loaderKey = computed(() => {
 
 // Показывать language switcher только НЕ на главной, календаре и аналитике
 const shouldShowLanguageSwitcher = computed(() => {
-  const hiddenPaths = ['/', '/tasks', '/calendar', '/analytics']
+  const hiddenPaths = ['/dashboard', '/calendar', '/analytics']
   return !hiddenPaths.includes(route.path)
 })
 </script>
