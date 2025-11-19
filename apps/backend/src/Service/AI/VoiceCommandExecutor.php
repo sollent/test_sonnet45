@@ -31,17 +31,21 @@ class VoiceCommandExecutor
 
     private SmartSearchService $searchService;
 
+    private DateTimeParser $dateTimeParser;
+
     private LoggerInterface $logger;
 
     public function __construct(
         TaskService $taskService,
         TagRepository $tagRepository,
         SmartSearchService $searchService,
+        DateTimeParser $dateTimeParser,
         LoggerInterface $logger,
     ) {
         $this->taskService = $taskService;
         $this->tagRepository = $tagRepository;
         $this->searchService = $searchService;
+        $this->dateTimeParser = $dateTimeParser;
         $this->logger = $logger;
     }
 
@@ -115,10 +119,31 @@ class VoiceCommandExecutor
         $dto->status = TaskStatus::PENDING;
         $dto->priority = $this->parsePriority($parameters['priority'] ?? null);
 
-        // Обработка даты
+        // Обработка даты и времени
         if (isset($parameters['due_date'])) {
-            $dueDate = $this->parseDueDate($parameters['due_date']);
-            $dto->dueDate = $dueDate?->format('Y-m-d H:i:s');
+            // Проверяем наличие временного диапазона (start_time и end_time)
+            if (isset($parameters['start_time']) && isset($parameters['end_time'])) {
+                // Задача с временным диапазоном (например: "с 19:30 до 21:00")
+                $startDate = $this->dateTimeParser->parseDateWithTime(
+                    $parameters['due_date'],
+                    $parameters['start_time']
+                );
+                $endDate = $this->dateTimeParser->parseDateWithTime(
+                    $parameters['due_date'],
+                    $parameters['end_time']
+                );
+
+                $dto->startDate = $startDate?->format('Y-m-d H:i:s');
+                $dto->dueDate = $endDate?->format('Y-m-d H:i:s');
+            } else {
+                // Обычная задача без временного диапазона
+                // Устанавливаем start_date на начало дня, due_date на конец дня
+                $startDate = $this->dateTimeParser->parseStartDate($parameters['due_date']);
+                $dueDate = $this->dateTimeParser->parseDueDate($parameters['due_date']);
+
+                $dto->startDate = $startDate?->format('Y-m-d H:i:s');
+                $dto->dueDate = $dueDate?->format('Y-m-d H:i:s');
+            }
         }
 
         // Создание задачи
@@ -144,11 +169,12 @@ class VoiceCommandExecutor
             'success' => true,
             'message' => sprintf('Задача "%s" успешно создана', $title),
             'task'    => [
-                'id'       => $task->getId(),
-                'title'    => $task->getTitle(),
-                'status'   => $task->getStatus(),
-                'priority' => $task->getPriority(),
-                'dueDate'  => $task->getDueDate()?->format('c'),
+                'id'        => $task->getId(),
+                'title'     => $task->getTitle(),
+                'status'    => $task->getStatus(),
+                'priority'  => $task->getPriority(),
+                'startDate' => $task->getStartDate()?->format('c'),
+                'dueDate'   => $task->getDueDate()?->format('c'),
             ],
         ];
     }
@@ -394,29 +420,4 @@ class VoiceCommandExecutor
         };
     }
 
-    /**
-     * Парсинг даты из параметров
-     */
-    private function parseDueDate(string $dateExpression): ?DateTimeImmutable
-    {
-        $dateExpression = mb_strtolower(trim($dateExpression));
-
-        try {
-            return match ($dateExpression) {
-                'сегодня', 'today' => (new DateTimeImmutable())->setTime(23, 59, 59),
-                'завтра', 'tomorrow' => (new DateTimeImmutable('+1 day'))->setTime(23, 59, 59),
-                'послезавтра', 'day after tomorrow' => (new DateTimeImmutable('+2 days'))->setTime(23, 59, 59),
-                'через неделю', 'next week' => (new DateTimeImmutable('+1 week'))->setTime(23, 59, 59),
-                'через месяц', 'next month' => (new DateTimeImmutable('+1 month'))->setTime(23, 59, 59),
-                default => new DateTimeImmutable($dateExpression)
-            };
-        } catch (Exception $e) {
-            $this->logger->warning('Failed to parse due date', [
-                'expression' => $dateExpression,
-                'error'      => $e->getMessage(),
-            ]);
-
-            return null;
-        }
-    }
 }

@@ -41,6 +41,13 @@ class LLMService
         1. Возвращай ТОЛЬКО валидный JSON (без пояснений!)
         2. Различай действия: СОЗДАТЬ vs ЗАВЕРШИТЬ vs ПОКАЗАТЬ vs СОЗДАТЬ ПОДЗАДАЧУ
         3. Точно определяй action по ключевым словам
+        4. ⚠️ ИЗВЛЕКАЙ дату/время из title и помещай в параметры!
+
+        ПРАВИЛА РАБОТЫ С ДАТАМИ И ВРЕМЕНЕМ:
+        - ВСЕГДА извлекай дату из title (например "на сегодня", "на завтра", "25 ноября")
+        - Очищай title от временных меток (НЕ включай дату в название задачи!)
+        - Для временных диапазонов используй start_time и end_time
+        - Поддерживай форматы: "сегодня", "завтра", "послезавтра", "понедельник", "25 ноября", "с 19:30 до 21:00"
 
         Доступные действия (action):
         - create_task      (создать, добавить, запланировать)
@@ -56,19 +63,50 @@ class LLMService
           "confidence": 0.0-1.0
         }
 
-        === ПРИМЕРЫ СОЗДАНИЯ ЗАДАЧИ ===
+        === ПРИМЕРЫ СОЗДАНИЯ ЗАДАЧИ (БЕЗ ДАТ) ===
 
         "Создай задачу купить молоко" →
         {"action":"create_task","parameters":{"title":"Купить молоко"},"confidence":0.95}
 
-        "Добавь задачу написать отчет на завтра" →
-        {"action":"create_task","parameters":{"title":"Написать отчет","due_date":"tomorrow"},"confidence":0.95}
-
         "Создай срочную задачу позвонить клиенту" →
         {"action":"create_task","parameters":{"title":"Позвонить клиенту","priority":"high"},"confidence":0.95}
 
+        === ПРИМЕРЫ С ДАТАМИ (ИЗВЛЕЧЕНИЕ ИЗ TITLE!) ===
+
+        "Создай задачу выкурить сигариллу на сегодня" →
+        {"action":"create_task","parameters":{"title":"Выкурить сигариллу","due_date":"today"},"confidence":0.95}
+
+        "Добавь задачу написать отчет на завтра" →
+        {"action":"create_task","parameters":{"title":"Написать отчет","due_date":"tomorrow"},"confidence":0.95}
+
+        "Создай задачу купить молоко на завтра" →
+        {"action":"create_task","parameters":{"title":"Купить молоко","due_date":"tomorrow"},"confidence":0.95}
+
+        "Создай задачу купить продукты послезавтра" →
+        {"action":"create_task","parameters":{"title":"Купить продукты","due_date":"day_after_tomorrow"},"confidence":0.93}
+
         "Запланируй встречу с командой на пятницу" →
         {"action":"create_task","parameters":{"title":"Встреча с командой","due_date":"friday"},"confidence":0.92}
+
+        "Создай задачу позвонить маме в понедельник" →
+        {"action":"create_task","parameters":{"title":"Позвонить маме","due_date":"monday"},"confidence":0.93}
+
+        "Добавь задачу сходить в магазин в понедельник" →
+        {"action":"create_task","parameters":{"title":"Сходить в магазин","due_date":"monday"},"confidence":0.93}
+
+        "Добавь задачу сдать отчет 25 ноября" →
+        {"action":"create_task","parameters":{"title":"Сдать отчет","due_date":"25 ноября"},"confidence":0.90}
+
+        === ПРИМЕРЫ С ВРЕМЕННЫМИ ДИАПАЗОНАМИ ===
+
+        "Создай задачу сьесть кашу на сегодня с 19:30 до 21:00" →
+        {"action":"create_task","parameters":{"title":"Сьесть кашу","due_date":"today","start_time":"19:30","end_time":"21:00"},"confidence":0.92}
+
+        "Запланируй тренировку завтра с 10:00 до 12:00" →
+        {"action":"create_task","parameters":{"title":"Тренировка","due_date":"tomorrow","start_time":"10:00","end_time":"12:00"},"confidence":0.93}
+
+        "Добавь встречу с клиентом на понедельник с 14:00 до 15:30" →
+        {"action":"create_task","parameters":{"title":"Встреча с клиентом","due_date":"monday","start_time":"14:00","end_time":"15:30"},"confidence":0.92}
 
         === ПРИМЕРЫ ЗАВЕРШЕНИЯ ЗАДАЧИ ===
 
