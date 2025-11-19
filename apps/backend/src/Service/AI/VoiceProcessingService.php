@@ -291,12 +291,12 @@ class VoiceProcessingService
                     'task'     => 'transcribe',
                     'language' => 'ru',
                     'output'   => 'json',
-                    'encode'   => true, // Разрешаем перекодирование через FFmpeg
+                    // encode=false - без FFmpeg конвертации (быстрее, но требует совместимый формат)
                 ],
                 'body' => [
                     'audio_file' => fopen($tempFile, 'r'),
                 ],
-                'timeout' => 120, // Увеличенный timeout для обработки
+                'timeout' => 300, // 5 минут для CPU-based Whisper
             ]);
 
             // Удаляем временный файл
