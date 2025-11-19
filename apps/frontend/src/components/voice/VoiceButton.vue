@@ -47,7 +47,7 @@ interface Emits {
 const props = withDefaults(defineProps<Props>(), {
   language: 'ru',
   size: 'medium',
-  showLabel: true,
+  showLabel: false, // Убрали label - только иконка
   icon: 'pi pi-microphone',
   disabled: false
 })
@@ -250,21 +250,30 @@ defineExpose({
 /* Базовые стили кнопки */
 .voice-button {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  border-radius: 50% !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
-/* Размеры */
+/* Размеры для круглой кнопки */
 .voice-button-small {
-  font-size: 0.875rem;
+  width: 48px !important;
+  height: 48px !important;
+  font-size: 1.25rem;
 }
 
 .voice-button-medium {
-  font-size: 1rem;
-  padding: 0.75rem 1.5rem;
+  width: 56px !important;
+  height: 56px !important;
+  font-size: 1.5rem;
 }
 
 .voice-button-large {
-  font-size: 1.125rem;
-  padding: 1rem 2rem;
+  width: 64px !important;
+  height: 64px !important;
+  font-size: 1.75rem;
 }
 
 /* Состояние записи */
@@ -356,13 +365,15 @@ defineExpose({
   }
 
   .voice-button-medium {
-    font-size: 0.9375rem;
-    padding: 0.625rem 1.25rem;
+    width: 52px !important;
+    height: 52px !important;
+    font-size: 1.375rem;
   }
 
   .voice-button-large {
-    font-size: 1rem;
-    padding: 0.75rem 1.5rem;
+    width: 56px !important;
+    height: 56px !important;
+    font-size: 1.5rem;
   }
 
   .duration-indicator {
