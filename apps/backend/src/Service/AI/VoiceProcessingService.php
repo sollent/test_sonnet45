@@ -296,7 +296,7 @@ class VoiceProcessingService
                 'body' => [
                     'audio_file' => fopen($tempFile, 'r'),
                 ],
-                'timeout' => 30, // 30 секунд для tiny модели на CPU
+                'timeout' => 60, // 60 секунд для tiny модели на Mac M1/M2 (Rosetta эмуляция)
             ]);
 
             // Удаляем временный файл
