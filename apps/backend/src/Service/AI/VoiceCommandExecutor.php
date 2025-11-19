@@ -69,14 +69,17 @@ class VoiceCommandExecutor
 
         try {
             $result = match ($command->action) {
-                ParsedCommand::ACTION_CREATE_TASK          => $this->executeCreateTask($command->parameters, $user),
-                ParsedCommand::ACTION_COMPLETE_TASK        => $this->executeCompleteTask($command->parameters, $user),
-                ParsedCommand::ACTION_FILTER_TASKS         => $this->executeFilterTasks($command->parameters, $user),
-                ParsedCommand::ACTION_CREATE_SUBTASK       => $this->executeCreateSubtask($command->parameters, $user),
-                ParsedCommand::ACTION_BULK_COMPLETE        => $this->executeBulkComplete($command->parameters, $user),
-                ParsedCommand::ACTION_CLARIFICATION_NEEDED => $this->executeClarificationNeeded($command->parameters),
-                ParsedCommand::ACTION_UNKNOWN              => $this->executeUnknown($command->parameters),
-                default                                    => throw new RuntimeException('Unsupported action: ' . $command->action)
+                ParsedCommand::ACTION_CREATE_TASK           => $this->executeCreateTask($command->parameters, $user),
+                ParsedCommand::ACTION_CREATE_MULTIPLE_TASKS => $this->executeCreateMultipleTasks($command->parameters, $user),
+                ParsedCommand::ACTION_COMPLETE_TASK         => $this->executeCompleteTask($command->parameters, $user),
+                ParsedCommand::ACTION_FILTER_TASKS          => $this->executeFilterTasks($command->parameters, $user),
+                ParsedCommand::ACTION_CREATE_SUBTASK        => $this->executeCreateSubtask($command->parameters, $user),
+                ParsedCommand::ACTION_UPDATE_TASK           => $this->executeUpdateTask($command->parameters, $user),
+                ParsedCommand::ACTION_MOVE_TASK             => $this->executeMoveTask($command->parameters, $user),
+                ParsedCommand::ACTION_BULK_COMPLETE         => $this->executeBulkComplete($command->parameters, $user),
+                ParsedCommand::ACTION_CLARIFICATION_NEEDED  => $this->executeClarificationNeeded($command->parameters),
+                ParsedCommand::ACTION_UNKNOWN               => $this->executeUnknown($command->parameters),
+                default                                     => throw new RuntimeException('Unsupported action: ' . $command->action)
             };
 
             $this->logger->info('Voice command executed successfully', [
@@ -164,17 +167,40 @@ class VoiceCommandExecutor
             $this->taskService->saveTask($task);
         }
 
+        // 🆕 Создание подзадач, если указаны
+        $createdSubtasks = [];
+        if (!empty($parameters['subtasks']) && is_array($parameters['subtasks'])) {
+            foreach ($parameters['subtasks'] as $subtaskTitle) {
+                if (!empty($subtaskTitle)) {
+                    $subtaskDto = new CreateTaskDto();
+                    $subtaskDto->title = $subtaskTitle;
+                    $subtaskDto->status = TaskStatus::PENDING;
+                    $subtaskDto->priority = $task->getPriority(); // Наследуем приоритет
+                    $subtaskDto->parentTaskId = $task->getId();
+
+                    $subtask = $this->taskService->createTask($subtaskDto, $user);
+                    $createdSubtasks[] = [
+                        'id'    => $subtask->getId(),
+                        'title' => $subtask->getTitle(),
+                    ];
+                }
+            }
+        }
+
         return [
-            'type'    => 'task_created',
-            'success' => true,
-            'message' => sprintf('Задача "%s" успешно создана', $title),
-            'task'    => [
+            'type'     => 'task_created',
+            'success'  => true,
+            'message'  => count($createdSubtasks) > 0
+                ? sprintf('Задача "%s" создана с %d подзадачами', $title, count($createdSubtasks))
+                : sprintf('Задача "%s" успешно создана', $title),
+            'task'     => [
                 'id'        => $task->getId(),
                 'title'     => $task->getTitle(),
                 'status'    => $task->getStatus(),
                 'priority'  => $task->getPriority(),
                 'startDate' => $task->getStartDate()?->format('c'),
                 'dueDate'   => $task->getDueDate()?->format('c'),
+                'subtasks'  => $createdSubtasks,
             ],
         ];
     }
@@ -375,6 +401,225 @@ class VoiceCommandExecutor
                 '• Фильтрация: "Покажи задачи на [дату]"',
                 '• Создание подзадачи: "Добавь подзадачу [название] к [родительская задача]"',
                 '• Массовое завершение: "Заверши все задачи на сегодня"',
+            ],
+        ];
+    }
+
+    /**
+     * 🆕 Создание нескольких задач одновременно
+     */
+    private function executeCreateMultipleTasks(array $parameters, User $user): array
+    {
+        $tasks = $parameters['tasks'] ?? [];
+
+        if (empty($tasks) || !is_array($tasks)) {
+            throw new RuntimeException('Tasks array is required for multiple task creation');
+        }
+
+        $createdTasks = [];
+        $errors = [];
+
+        foreach ($tasks as $index => $taskData) {
+            try {
+                // Используем существующий метод executeCreateTask для каждой задачи
+                $result = $this->executeCreateTask($taskData, $user);
+
+                if ($result['success']) {
+                    $createdTasks[] = $result['task'];
+                } else {
+                    $errors[] = sprintf('Задача #%d: %s', $index + 1, $result['message']);
+                }
+            } catch (Exception $e) {
+                $errors[] = sprintf('Задача #%d: %s', $index + 1, $e->getMessage());
+            }
+        }
+
+        $successCount = count($createdTasks);
+        $totalCount = count($tasks);
+
+        return [
+            'type'          => 'multiple_tasks_created',
+            'success'       => $successCount > 0,
+            'message'       => sprintf('Создано задач: %d из %d', $successCount, $totalCount),
+            'created_count' => $successCount,
+            'total_count'   => $totalCount,
+            'tasks'         => $createdTasks,
+            'errors'        => $errors,
+        ];
+    }
+
+    /**
+     * 🆕 Обновление существующей задачи
+     */
+    private function executeUpdateTask(array $parameters, User $user): array
+    {
+        $search = $parameters['search'] ?? null;
+        $updates = $parameters['updates'] ?? [];
+
+        if (empty($search)) {
+            throw new RuntimeException('Search query is required for task update');
+        }
+
+        if (empty($updates)) {
+            throw new RuntimeException('Updates are required for task update');
+        }
+
+        // Поиск задачи
+        $task = $this->searchService->findBestMatch($search, $user);
+
+        if (!$task) {
+            return [
+                'type'    => 'task_not_found',
+                'success' => false,
+                'message' => sprintf('Задача "%s" не найдена', $search),
+                'search'  => $search,
+            ];
+        }
+
+        $updatedFields = [];
+
+        // Обновление приоритета
+        if (isset($updates['priority'])) {
+            $newPriority = $this->parsePriority($updates['priority']);
+            $task->setPriority($newPriority);
+            $updatedFields[] = 'приоритет';
+        }
+
+        // Обновление статуса
+        if (isset($updates['status'])) {
+            $statusMap = [
+                'pending'    => TaskStatus::PENDING,
+                'ожидание'   => TaskStatus::PENDING,
+                'в работе'   => TaskStatus::IN_PROGRESS,
+                'in_progress'=> TaskStatus::IN_PROGRESS,
+                'completed'  => TaskStatus::COMPLETED,
+                'выполнено'  => TaskStatus::COMPLETED,
+                'завершено'  => TaskStatus::COMPLETED,
+            ];
+
+            $statusKey = mb_strtolower($updates['status']);
+            if (isset($statusMap[$statusKey])) {
+                $task->setStatus($statusMap[$statusKey]);
+                $updatedFields[] = 'статус';
+            }
+        }
+
+        // Обновление даты и времени
+        if (isset($updates['due_date'])) {
+            if (isset($updates['start_time']) && isset($updates['end_time'])) {
+                $startDate = $this->dateTimeParser->parseDateWithTime(
+                    $updates['due_date'],
+                    $updates['start_time']
+                );
+                $endDate = $this->dateTimeParser->parseDateWithTime(
+                    $updates['due_date'],
+                    $updates['end_time']
+                );
+
+                $task->setStartDate($startDate);
+                $task->setDueDate($endDate);
+                $updatedFields[] = 'дата и время';
+            } else {
+                $startDate = $this->dateTimeParser->parseStartDate($updates['due_date']);
+                $dueDate = $this->dateTimeParser->parseDueDate($updates['due_date']);
+
+                $task->setStartDate($startDate);
+                $task->setDueDate($dueDate);
+                $updatedFields[] = 'дата';
+            }
+        } elseif (isset($updates['start_time']) || isset($updates['end_time'])) {
+            // Обновление только времени без изменения даты
+            $currentDate = $task->getDueDate() ?? new DateTimeImmutable();
+            $dateStr = $currentDate->format('Y-m-d');
+
+            if (isset($updates['start_time'])) {
+                $startDate = $this->dateTimeParser->parseDateWithTime($dateStr, $updates['start_time']);
+                $task->setStartDate($startDate);
+            }
+
+            if (isset($updates['end_time'])) {
+                $endDate = $this->dateTimeParser->parseDateWithTime($dateStr, $updates['end_time']);
+                $task->setDueDate($endDate);
+            }
+
+            $updatedFields[] = 'время';
+        }
+
+        // Сохранение изменений
+        $this->taskService->saveTask($task);
+
+        return [
+            'type'    => 'task_updated',
+            'success' => true,
+            'message' => sprintf(
+                'Задача "%s" обновлена: %s',
+                $task->getTitle(),
+                implode(', ', $updatedFields)
+            ),
+            'task' => [
+                'id'        => $task->getId(),
+                'title'     => $task->getTitle(),
+                'status'    => $task->getStatus(),
+                'priority'  => $task->getPriority(),
+                'startDate' => $task->getStartDate()?->format('c'),
+                'dueDate'   => $task->getDueDate()?->format('c'),
+            ],
+            'updated_fields' => $updatedFields,
+        ];
+    }
+
+    /**
+     * 🆕 Перемещение задачи на другое время/дату
+     */
+    private function executeMoveTask(array $parameters, User $user): array
+    {
+        $search = $parameters['search'] ?? null;
+        $newDate = $parameters['new_date'] ?? null;
+
+        if (empty($search) || empty($newDate)) {
+            throw new RuntimeException('Search query and new date are required for task move');
+        }
+
+        // Поиск задачи
+        $task = $this->searchService->findBestMatch($search, $user);
+
+        if (!$task) {
+            return [
+                'type'    => 'task_not_found',
+                'success' => false,
+                'message' => sprintf('Задача "%s" не найдена', $search),
+                'search'  => $search,
+            ];
+        }
+
+        // Парсинг новой даты/времени
+        if (isset($parameters['start_time']) && isset($parameters['end_time'])) {
+            $startDate = $this->dateTimeParser->parseDateWithTime($newDate, $parameters['start_time']);
+            $endDate = $this->dateTimeParser->parseDateWithTime($newDate, $parameters['end_time']);
+
+            $task->setStartDate($startDate);
+            $task->setDueDate($endDate);
+        } else {
+            $startDate = $this->dateTimeParser->parseStartDate($newDate);
+            $dueDate = $this->dateTimeParser->parseDueDate($newDate);
+
+            $task->setStartDate($startDate);
+            $task->setDueDate($dueDate);
+        }
+
+        $this->taskService->saveTask($task);
+
+        return [
+            'type'    => 'task_moved',
+            'success' => true,
+            'message' => sprintf('Задача "%s" перемещена на %s', $task->getTitle(), $newDate),
+            'task'    => [
+                'id'        => $task->getId(),
+                'title'     => $task->getTitle(),
+                'status'    => $task->getStatus(),
+                'priority'  => $task->getPriority(),
+                'startDate' => $task->getStartDate()?->format('c'),
+                'dueDate'   => $task->getDueDate()?->format('c'),
             ],
         ];
     }

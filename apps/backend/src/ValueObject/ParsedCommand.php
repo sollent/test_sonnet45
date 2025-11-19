@@ -28,6 +28,13 @@ final readonly class ParsedCommand implements JsonSerializable
 
     public const ACTION_BULK_COMPLETE = 'bulk_complete';
 
+    // 🆕 Новые действия для супер сложных команд
+    public const ACTION_CREATE_MULTIPLE_TASKS = 'create_multiple_tasks';
+
+    public const ACTION_UPDATE_TASK = 'update_task';
+
+    public const ACTION_MOVE_TASK = 'move_task';
+
     public const ACTION_CLARIFICATION_NEEDED = 'clarification_needed';
 
     public const ACTION_UNKNOWN = 'unknown';
@@ -147,6 +154,9 @@ final readonly class ParsedCommand implements JsonSerializable
             self::ACTION_FILTER_TASKS,
             self::ACTION_CREATE_SUBTASK,
             self::ACTION_BULK_COMPLETE,
+            self::ACTION_CREATE_MULTIPLE_TASKS,
+            self::ACTION_UPDATE_TASK,
+            self::ACTION_MOVE_TASK,
             self::ACTION_CLARIFICATION_NEEDED,
             self::ACTION_UNKNOWN,
         ], true);
