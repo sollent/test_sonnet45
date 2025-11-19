@@ -334,7 +334,9 @@ class VoiceProcessingService
                 $filePath = parse_url($audioUrl, PHP_URL_PATH) ?? $audioUrl;
 
                 // Строим полный путь к файлу
-                $projectDir = dirname(__DIR__, 2);
+                // __DIR__ = /var/www/backend-app/src/Service/AI
+                // dirname(__DIR__, 3) = /var/www/backend-app
+                $projectDir = dirname(__DIR__, 3);
                 $fullPath = $projectDir . '/public' . $filePath;
 
                 // Проверяем существование файла
