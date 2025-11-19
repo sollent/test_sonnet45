@@ -296,7 +296,7 @@ class VoiceProcessingService
                 'body' => [
                     'audio_file' => fopen($tempFile, 'r'),
                 ],
-                'timeout' => 300, // 5 минут для CPU-based Whisper
+                'timeout' => 30, // 30 секунд для tiny модели на CPU
             ]);
 
             // Удаляем временный файл
