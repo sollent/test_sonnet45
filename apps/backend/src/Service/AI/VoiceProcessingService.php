@@ -281,24 +281,31 @@ class VoiceProcessingService
             // Загружаем аудио файл
             $audioData = $this->downloadAudio($audioUrl);
 
-            // Отправляем на Whisper
-            $response = $this->httpClient->request('POST', $this->whisperUrl . '/v1/audio/transcriptions', [
-                'headers' => [
-                    'Content-Type' => 'multipart/form-data',
+            // Создаем временный файл для аудио
+            $tempFile = tempnam(sys_get_temp_dir(), 'whisper_');
+            file_put_contents($tempFile, $audioData);
+
+            // Отправляем на Whisper (используем правильный API: /asr)
+            $response = $this->httpClient->request('POST', $this->whisperUrl . '/asr', [
+                'query' => [
+                    'task'     => 'transcribe',
+                    'language' => 'ru',
+                    'output'   => 'json',
+                    'encode'   => true, // Разрешаем перекодирование через FFmpeg
                 ],
                 'body' => [
-                    'file'            => $audioData,
-                    'model'           => 'whisper-1',
-                    'language'        => 'ru', // Приоритет русского языка
-                    'response_format' => 'verbose_json',
+                    'audio_file' => fopen($tempFile, 'r'),
                 ],
-                'timeout' => 60, // Увеличенный timeout для больших файлов
+                'timeout' => 120, // Увеличенный timeout для обработки
             ]);
+
+            // Удаляем временный файл
+            @unlink($tempFile);
 
             $data = $response->toArray();
 
             if (!isset($data['text'])) {
-                throw new RuntimeException('Invalid Whisper response format');
+                throw new RuntimeException('Invalid Whisper response format: ' . json_encode($data));
             }
 
             // Создаем результат транскрипции
