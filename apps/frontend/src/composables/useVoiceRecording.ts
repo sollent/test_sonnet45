@@ -276,10 +276,11 @@ export function useVoiceRecording(options: RecordingOptions = {}) {
       // Шаг 1: Загрузить аудио файл на сервер через /api/media
       const uploadResponse = await mediaService.uploadAudio(audioBlob.value, 'voice-command.webm')
 
-      // uploadResponse.filePath содержит путь к файлу (например '/uploads/media/abc123.webm')
-      const audioUrl = uploadResponse.filePath
+      // uploadResponse.filePath содержит относительный путь (например '/uploads/media/abc123.webm')
+      // Преобразуем в полный URL для backend
+      const audioUrl = mediaService.getFileUrl(uploadResponse.filePath)
 
-      // Шаг 2: Отправить команду с URL аудио на /api/voice/command
+      // Шаг 2: Отправить команду с полным URL аудио на /api/voice/command
       const response = await voiceService.submitVoiceCommand(
         audioUrl,
         config.language
