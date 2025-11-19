@@ -13,6 +13,7 @@ use App\Repository\Database\TagRepository;
 use App\Service\TaskService;
 use App\ValueObject\ParsedCommand;
 use DateTimeImmutable;
+use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -35,18 +36,22 @@ class VoiceCommandExecutor
 
     private LoggerInterface $logger;
 
+    private EntityManagerInterface $entityManager;
+
     public function __construct(
         TaskService $taskService,
         TagRepository $tagRepository,
         SmartSearchService $searchService,
         DateTimeParser $dateTimeParser,
         LoggerInterface $logger,
+        EntityManagerInterface $entityManager,
     ) {
         $this->taskService = $taskService;
         $this->tagRepository = $tagRepository;
         $this->searchService = $searchService;
         $this->dateTimeParser = $dateTimeParser;
         $this->logger = $logger;
+        $this->entityManager = $entityManager;
     }
 
     /**
@@ -546,7 +551,7 @@ class VoiceCommandExecutor
         }
 
         // Сохранение изменений
-        $this->taskService->saveTask($task);
+        $this->entityManager->flush();
 
         return [
             'type'    => 'task_updated',
