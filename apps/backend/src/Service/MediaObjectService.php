@@ -19,7 +19,16 @@ class MediaObjectService
 
     private const MAX_FILE_SIZE = 10485760; // 10MB
 
-    private const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'zip', 'txt'];
+    private const ALLOWED_EXTENSIONS = [
+        // Images
+        'jpg', 'jpeg', 'png', 'gif', 'webp',
+        // Documents
+        'pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt',
+        // Archives
+        'zip',
+        // Audio (для голосовых команд)
+        'webm', 'mp3', 'wav', 'ogg', 'opus', 'm4a', 'flac'
+    ];
 
     public function __construct(
         private readonly MediaObjectRepository $repository,
