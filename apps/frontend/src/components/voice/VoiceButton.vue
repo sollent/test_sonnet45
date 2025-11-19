@@ -117,7 +117,8 @@ const durationDisplay = computed(() => {
 async function handleClick(): Promise<void> {
   // Если идет запись - остановить
   if (recording.isRecording.value) {
-    recording.stopRecording()
+    // Ждём пока запись остановится и audioBlob будет готов
+    await recording.stopRecording()
     emit('recording-stopped')
 
     // После остановки автоматически отправляем
@@ -214,7 +215,7 @@ defineExpose({
       :label="buttonLabel"
       :icon="buttonIcon"
       :severity="buttonSeverity"
-      :disabled="disabled || isProcessing || !recording.isSupported()"
+      :disabled="disabled || recording.isProcessing.value || !recording.isSupported()"
       :class="buttonClass"
       rounded
       @click="handleClick"

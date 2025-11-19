@@ -10,6 +10,7 @@
 
 import { ref, computed } from 'vue'
 import { voiceService } from '@/services/voice.service'
+import mediaService from '@/services/media.service'
 import type { VoiceCommandResponse } from '@/types/voice.types'
 
 /**
@@ -173,20 +174,40 @@ export function useVoiceRecording(options: RecordingOptions = {}) {
 
   /**
    * Остановка записи
+   * Возвращает Promise, который резолвится когда audioBlob готов
    */
-  function stopRecording(): void {
-    if (!mediaRecorder || recordingState.value !== 'recording') {
-      return
-    }
+  function stopRecording(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (!mediaRecorder || recordingState.value !== 'recording') {
+        resolve()
+        return
+      }
 
-    try {
-      mediaRecorder.stop()
-      recordingState.value = 'idle'
-    } catch (err: any) {
-      error.value = `Failed to stop recording: ${err.message || 'Unknown error'}`
-      recordingState.value = 'error'
-      cleanupRecording()
-    }
+      try {
+        // Сохраняем текущий onstop handler
+        const originalOnStop = mediaRecorder.onstop
+
+        // Переопределяем onstop handler для резолва Promise
+        mediaRecorder.onstop = (event) => {
+          // Вызываем оригинальный handler
+          if (originalOnStop) {
+            originalOnStop.call(mediaRecorder, event)
+          }
+
+          // Резолвим Promise - audioBlob теперь готов
+          resolve()
+        }
+
+        // Останавливаем запись
+        mediaRecorder.stop()
+        recordingState.value = 'idle'
+      } catch (err: any) {
+        error.value = `Failed to stop recording: ${err.message || 'Unknown error'}`
+        recordingState.value = 'error'
+        cleanupRecording()
+        reject(err)
+      }
+    })
   }
 
   /**
@@ -252,23 +273,15 @@ export function useVoiceRecording(options: RecordingOptions = {}) {
       recordingState.value = 'processing'
       error.value = null
 
-      // TODO: Здесь нужно загрузить audioBlob на сервер и получить URL
-      // На данном этапе симулируем URL
-      // В реальности нужно использовать media.service.ts для загрузки файла
+      // Шаг 1: Загрузить аудио файл на сервер через /api/media
+      const uploadResponse = await mediaService.uploadAudio(audioBlob.value, 'voice-command.webm')
 
-      // Пример: загрузка через FormData
-      const formData = new FormData()
-      formData.append('audio', audioBlob.value, 'voice-command.webm')
+      // uploadResponse.filePath содержит путь к файлу (например '/uploads/media/abc123.webm')
+      const audioUrl = uploadResponse.filePath
 
-      // TODO: Реализовать загрузку файла и получение URL
-      // const uploadedUrl = await mediaService.uploadAudio(formData)
-
-      // Временно используем локальный URL для тестирования
-      const uploadedUrl = audioUrl.value!
-
-      // Отправляем команду с URL аудио
+      // Шаг 2: Отправить команду с URL аудио на /api/voice/command
       const response = await voiceService.submitVoiceCommand(
-        uploadedUrl,
+        audioUrl,
         config.language
       )
 
