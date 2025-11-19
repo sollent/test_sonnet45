@@ -10,7 +10,7 @@ use JsonSerializable;
 /**
  * Распарсенная команда от LLM
  *
- * Value Object для хранения структурированной команды после парсинга Llama 3.2
+ * Value Object для хранения структурированной команды после парсинга Qwen 2.5
  * Содержит action, parameters и confidence согласно PROMPTS_LIBRARY
  */
 final readonly class ParsedCommand implements JsonSerializable

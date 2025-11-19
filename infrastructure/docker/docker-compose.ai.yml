@@ -1,6 +1,6 @@
 services:
   # ============================================
-  # Ollama - LLM Service (Llama 3.2)
+  # Ollama - LLM Service (Qwen 2.5)
   # ============================================
   ollama:
     image: ollama/ollama:latest
@@ -13,7 +13,7 @@ services:
       # Re-enable after fixing the script or use manual model pull
       # - ./ai/ollama-entrypoint.sh:/entrypoint.sh:ro
     environment:
-      - OLLAMA_MODELS=${OLLAMA_MODELS:-mistral:7b}
+      - OLLAMA_MODELS=${OLLAMA_MODELS:-qwen2.5:3b}
       - OLLAMA_HOST=0.0.0.0
       - OLLAMA_ORIGINS=*
       - OLLAMA_DEBUG=${OLLAMA_DEBUG:-false}
@@ -28,9 +28,9 @@ services:
     deploy:
       resources:
         limits:
-          memory: 12G
+          memory: 6G
         reservations:
-          memory: 8G
+          memory: 4G
     # ⚠️ DISABLED: Using default Ollama entrypoint
     # entrypoint: ["/bin/sh", "/entrypoint.sh"]
 

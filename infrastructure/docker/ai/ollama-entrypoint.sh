@@ -28,7 +28,7 @@ wait_for_ollama
 # Pull models specified in environment variable
 # ⚠️ DISABLED: Auto-pull causes container restart issues
 # User should manually pull models after container starts:
-# docker exec -it claude-ai-assistant-ollama ollama pull mistral:7b
+# docker exec -it claude-ai-assistant-ollama ollama pull qwen2.5:3b
 #
 # if [ -n "$OLLAMA_MODELS" ]; then
 #     IFS=',' # Split by comma

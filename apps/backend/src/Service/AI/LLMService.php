@@ -14,16 +14,16 @@ use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
- * Сервис для работы с Large Language Model (Llama 3.2 через Ollama)
+ * Сервис для работы с Large Language Model (Qwen 2.5 через Ollama)
  *
  * Отвечает за парсинг голосовых команд и конвертацию их в структурированные действия.
  * Следует паттерну Adapter для изоляции внешнего API
  */
 class LLMService
 {
-    private const DEFAULT_MODEL = 'mistral:7b';
+    private const DEFAULT_MODEL = 'qwen2.5:3b';
 
-    private const DEFAULT_TIMEOUT = 30.0;
+    private const DEFAULT_TIMEOUT = 120.0; // 2 минуты для qwen2.5:3b на CPU
 
     private const MAX_RETRIES = 3;
 
@@ -32,7 +32,7 @@ class LLMService
     /**
      * Системный промпт для LLM с расширенными Few-Shot примерами
      *
-     * Оптимизировано для модели mistral:7b - 90-95% точность парсинга сложных команд
+     * Оптимизировано для модели qwen2.5:3b - 85-90% точность парсинга сложных команд
      */
     private const SYSTEM_PROMPT = <<<'PROMPT'
         Ты - ассистент для управления задачами. Анализируй русские голосовые команды и конвертируй в JSON.
