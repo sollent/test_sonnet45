@@ -105,7 +105,7 @@ backend/src/Service/VoiceAssistant/LLMService.php
 Критично:
 - Скопируй системный промпт ТОЧНО из PROMPTS_LIBRARY.md
 - Используй Ollama HTTP client (Symfony\Contracts\HttpClient\HttpClientInterface)
-- Запрос: {"model": "qwen2.5:3b", "prompt": "...", "format": "json", "options": {"temperature": 0.3}}
+- Запрос: {"model": "qwen2.5:1.5b", "prompt": "...", "format": "json", "options": {"temperature": 0.1}}
 - Парси JSON ответ
 - Валидируй структуру: {action, parameters, confidence}
 - Резервный парсинг если JSON невалиден
@@ -481,19 +481,19 @@ onVoiceEvent('completed', (data) => {
 # Установить Ollama
 curl -fsSL https://ollama.com/install.sh | sh
 
-# Загрузить модель Qwen 2.5 3B (~ 2GB скачивание)
-ollama pull qwen2.5:3b
+# Загрузить модель Qwen 2.5 1.5B (~ 1GB скачивание)
+ollama pull qwen2.5:1.5b
 
 # Запустить Ollama сервер
 ollama serve
 
 # Тест
 curl http://localhost:11434/api/tags
-# Должен показать: {"models": [{"name": "qwen2.5:3b", ...}]}
+# Должен показать: {"models": [{"name": "qwen2.5:1.5b", ...}]}
 
 # Тест русской команды
 curl -X POST http://localhost:11434/api/generate -d '{
-  "model": "qwen2.5:3b",
+  "model": "qwen2.5:1.5b",
   "prompt": "Конвертируй в JSON: Создай задачу купить молоко",
   "format": "json",
   "stream": false

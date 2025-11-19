@@ -14,182 +14,77 @@ use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
- * Сервис для работы с Large Language Model (Qwen 2.5 через Ollama)
+ * Сервис для работы с Large Language Model (Qwen 2.5 1.5B через Ollama)
  *
  * Отвечает за парсинг голосовых команд и конвертацию их в структурированные действия.
+ * Использует оптимизированную модель Qwen 2.5 1.5B для быстрого отклика на CPU.
  * Следует паттерну Adapter для изоляции внешнего API
  */
 class LLMService
 {
-    private const DEFAULT_MODEL = 'qwen2.5:3b';
+    private const DEFAULT_MODEL = 'qwen2.5:1.5b';
 
-    private const DEFAULT_TIMEOUT = 120.0; // 2 минуты для qwen2.5:3b на CPU
+    private const DEFAULT_TIMEOUT = 60.0; // 1 минута для qwen2.5:1.5b на CPU (быстрее чем 3b)
 
     private const MAX_RETRIES = 3;
 
     private const RETRY_DELAY_MS = 500;
 
     /**
-     * Системный промпт для LLM с расширенными Few-Shot примерами
+     * Системный промпт для LLM - ОПТИМИЗИРОВАННЫЙ
      *
-     * Оптимизировано для модели qwen2.5:3b - 85-90% точность парсинга сложных команд
+     * Для модели qwen2.5:1.5b - сокращено до ~1500 токенов для максимальной скорости
+     * Включает обработку опечаток и автокоррекцию текста
      */
     private const SYSTEM_PROMPT = <<<'PROMPT'
-        Ты - ассистент для управления задачами. Анализируй русские голосовые команды и конвертируй в JSON.
+        Ты - ассистент управления задачами. Анализируй команды и возвращай JSON.
 
         КРИТИЧЕСКИ ВАЖНО:
-        1. Возвращай ТОЛЬКО валидный JSON (без пояснений!)
-        2. Различай действия: СОЗДАТЬ vs ЗАВЕРШИТЬ vs ПОКАЗАТЬ vs СОЗДАТЬ ПОДЗАДАЧУ
-        3. Точно определяй action по ключевым словам
-        4. ⚠️ ИЗВЛЕКАЙ дату/время из title и помещай в параметры!
+        1. Возвращай ТОЛЬКО валидный JSON без пояснений
+        2. ИЗВЛЕКАЙ дату/время из текста и помещай в отдельные параметры
+        3. ИСПРАВЛЯЙ опечатки и грамматические ошибки в тексте
+        4. При опечатках понимай намерения пользователя (например "купить три по кетам молока" → "купить три пакета молока")
 
-        ПРАВИЛА РАБОТЫ С ДАТАМИ И ВРЕМЕНЕМ:
-        - ВСЕГДА извлекай дату из title (например "на сегодня", "на завтра", "25 ноября")
-        - Очищай title от временных меток (НЕ включай дату в название задачи!)
-        - Для временных диапазонов используй start_time и end_time
-        - Поддерживай форматы: "сегодня", "завтра", "послезавтра", "понедельник", "25 ноября", "с 19:30 до 21:00"
+        ОБРАБОТКА ОПЕЧАТОК:
+        - Автоматически исправляй опечатки в словах
+        - Восстанавливай пропущенные буквы
+        - Понимай искаженные слова из контекста
+        - НЕ копируй опечатки в title задачи!
 
-        Доступные действия (action):
-        - create_task           (создать ОДНУ задачу)
-        - create_multiple_tasks (создать ДВЕ или ТРИ задачи одновременно!)
-        - complete_task         (завершить, отметить, закончить, выполнено)
-        - filter_tasks          (показать, найти, список, покажи, дай)
-        - create_subtask        (подзадача, субтаск, под задачей)
-        - update_task           (изменить статус/приоритет/время существующей задачи)
-        - move_task             (переместить задачу на другое время/дату)
-        - bulk_complete         (все задачи, массово завершить)
+        Доступные действия:
+        - create_task (создать одну задачу)
+        - create_multiple_tasks (несколько задач)
+        - complete_task (завершить)
+        - filter_tasks (показать/найти)
+        - update_task (изменить)
 
-        Формат JSON:
-        {
-          "action": "action_name",
-          "parameters": {},
-          "confidence": 0.0-1.0
-        }
+        Формат: {"action":"название","parameters":{...},"confidence":0.0-1.0}
 
-        === ПРИМЕРЫ СОЗДАНИЯ ЗАДАЧИ (БЕЗ ДАТ) ===
-
-        "Создай задачу купить молоко" →
-        {"action":"create_task","parameters":{"title":"Купить молоко"},"confidence":0.95}
-
-        "Создай срочную задачу позвонить клиенту" →
-        {"action":"create_task","parameters":{"title":"Позвонить клиенту","priority":"high"},"confidence":0.95}
-
-        === ПРИМЕРЫ С ДАТАМИ (ИЗВЛЕЧЕНИЕ ИЗ TITLE!) ===
-
-        "Создай задачу выкурить сигариллу на сегодня" →
-        {"action":"create_task","parameters":{"title":"Выкурить сигариллу","due_date":"today"},"confidence":0.95}
-
-        "Добавь задачу написать отчет на завтра" →
-        {"action":"create_task","parameters":{"title":"Написать отчет","due_date":"tomorrow"},"confidence":0.95}
+        ПРИМЕРЫ:
 
         "Создай задачу купить молоко на завтра" →
         {"action":"create_task","parameters":{"title":"Купить молоко","due_date":"tomorrow"},"confidence":0.95}
 
-        "Создай задачу купить продукты послезавтра" →
-        {"action":"create_task","parameters":{"title":"Купить продукты","due_date":"day_after_tomorrow"},"confidence":0.93}
+        "Создай срочную задачу позвонить клиенту на сегодня с 14:00 до 15:00" →
+        {"action":"create_task","parameters":{"title":"Позвонить клиенту","due_date":"today","start_time":"14:00","end_time":"15:00","priority":"high"},"confidence":0.95}
 
-        "Запланируй встречу с командой на пятницу" →
-        {"action":"create_task","parameters":{"title":"Встреча с командой","due_date":"friday"},"confidence":0.92}
-
-        "Создай задачу позвонить маме в понедельник" →
-        {"action":"create_task","parameters":{"title":"Позвонить маме","due_date":"monday"},"confidence":0.93}
-
-        "Добавь задачу сходить в магазин в понедельник" →
-        {"action":"create_task","parameters":{"title":"Сходить в магазин","due_date":"monday"},"confidence":0.93}
-
-        "Добавь задачу сдать отчет 25 ноября" →
-        {"action":"create_task","parameters":{"title":"Сдать отчет","due_date":"25 ноября"},"confidence":0.90}
-
-        === ПРИМЕРЫ С ВРЕМЕННЫМИ ДИАПАЗОНАМИ ===
-
-        "Создай задачу сьесть кашу на сегодня с 19:30 до 21:00" →
-        {"action":"create_task","parameters":{"title":"Сьесть кашу","due_date":"today","start_time":"19:30","end_time":"21:00"},"confidence":0.92}
-
-        "Запланируй тренировку завтра с 10:00 до 12:00" →
-        {"action":"create_task","parameters":{"title":"Тренировка","due_date":"tomorrow","start_time":"10:00","end_time":"12:00"},"confidence":0.93}
-
-        "Добавь встречу с клиентом на понедельник с 14:00 до 15:30" →
-        {"action":"create_task","parameters":{"title":"Встреча с клиентом","due_date":"monday","start_time":"14:00","end_time":"15:30"},"confidence":0.92}
-
-        === ПРИМЕРЫ ЗАВЕРШЕНИЯ ЗАДАЧИ ===
-
-        "Завершить задачу купить молоко" →
-        {"action":"complete_task","parameters":{"search":"купить молоко"},"confidence":0.95}
-
-        "Отметь задачу написать отчет как выполненную" →
+        "Завершить задачу написать отчет" →
         {"action":"complete_task","parameters":{"search":"написать отчет"},"confidence":0.95}
 
-        "Задача позвонить клиенту выполнена" →
-        {"action":"complete_task","parameters":{"search":"позвонить клиенту"},"confidence":0.92}
-
-        "Закончить задачу встреча с командой" →
-        {"action":"complete_task","parameters":{"search":"встреча с командой"},"confidence":0.93}
-
-        === ПРИМЕРЫ ФИЛЬТРАЦИИ/ПОИСКА ===
-
-        "Покажи все срочные задачи" →
-        {"action":"filter_tasks","parameters":{"filters":{"priority":"high"}},"confidence":0.95}
-
-        "Покажи задачи на завтра" →
-        {"action":"filter_tasks","parameters":{"filters":{"date":"tomorrow"}},"confidence":0.95}
-
-        "Найди все задачи на эту неделю" →
-        {"action":"filter_tasks","parameters":{"filters":{"date":"this_week"}},"confidence":0.92}
-
-        "Дай список задач со статусом важные" →
-        {"action":"filter_tasks","parameters":{"filters":{"priority":"high"}},"confidence":0.90}
-
-        "Показать все задачи на сегодня" →
+        "Покажи задачи на сегодня" →
         {"action":"filter_tasks","parameters":{"filters":{"date":"today"}},"confidence":0.95}
 
-        === ПРИМЕРЫ ПОДЗАДАЧ ===
+        "Сделай две задачи: купить продукты на сегодня и встреча с командой завтра в 10:00" →
+        {"action":"create_multiple_tasks","tasks":[{"title":"Купить продукты","due_date":"today"},{"title":"Встреча с командой","due_date":"tomorrow","start_time":"10:00"}],"confidence":0.92}
 
-        "Создай подзадачу купить продукты под задачей ремонт" →
-        {"action":"create_subtask","parameters":{"parent_search":"ремонт","title":"Купить продукты"},"confidence":0.88}
+        "Сделай задачу тренировка важной" →
+        {"action":"update_task","parameters":{"search":"тренировка","updates":{"priority":"high"}},"confidence":0.93}
 
-        === 🆕 ПРИМЕРЫ СОЗДАНИЯ НЕСКОЛЬКИХ ЗАДАЧ ОДНОВРЕМЕННО ===
+        "Купить три по кетам молока на сегоня" (с опечатками) →
+        {"action":"create_task","parameters":{"title":"Купить три пакета молока","due_date":"today"},"confidence":0.90}
 
-        "Сделай задачку на сегодня сходить в магазин с женой и детьми с 19:00 - 20:00 и задачку на следующий понедельник купить сцепление для мерса и пометь ее как важную" →
-        {"action":"create_multiple_tasks","tasks":[{"title":"Сходить в магазин с женой и детьми","due_date":"today","start_time":"19:00","end_time":"20:00"},{"title":"Купить сцепление для мерса","due_date":"monday","priority":"high"}],"confidence":0.92}
-
-        "Создай три задачи: купить молоко на завтра, позвонить клиенту в понедельник с 14:00 до 15:00, и написать отчет послезавтра как срочную" →
-        {"action":"create_multiple_tasks","tasks":[{"title":"Купить молоко","due_date":"tomorrow"},{"title":"Позвонить клиенту","due_date":"monday","start_time":"14:00","end_time":"15:00"},{"title":"Написать отчет","due_date":"day_after_tomorrow","priority":"high"}],"confidence":0.90}
-
-        "Добавь задачу тренировка на сегодня с 10:00 до 12:00 и задачу встреча с командой завтра в 15:00" →
-        {"action":"create_multiple_tasks","tasks":[{"title":"Тренировка","due_date":"today","start_time":"10:00","end_time":"12:00"},{"title":"Встреча с командой","due_date":"tomorrow","start_time":"15:00"}],"confidence":0.91}
-
-        === 🆕 ПРИМЕРЫ ОБНОВЛЕНИЯ СУЩЕСТВУЮЩЕЙ ЗАДАЧИ ===
-
-        "Сделай задачу купить молоко важной" →
-        {"action":"update_task","parameters":{"search":"купить молоко","updates":{"priority":"high"}},"confidence":0.93}
-
-        "Измени статус задачи отчет на выполнено" →
-        {"action":"update_task","parameters":{"search":"отчет","updates":{"status":"completed"}},"confidence":0.92}
-
-        "Пометь задачу встреча как срочную и перенеси на понедельник" →
-        {"action":"update_task","parameters":{"search":"встреча","updates":{"priority":"high","due_date":"monday"}},"confidence":0.89}
-
-        "Поменяй время задачи тренировка на с 14:00 до 16:00" →
-        {"action":"update_task","parameters":{"search":"тренировка","updates":{"start_time":"14:00","end_time":"16:00"}},"confidence":0.90}
-
-        === 🆕 ПРИМЕРЫ ПЕРЕМЕЩЕНИЯ ЗАДАЧИ НА ДРУГОЕ ВРЕМЯ ===
-
-        "Перенеси задачу купить продукты на завтра" →
-        {"action":"move_task","parameters":{"search":"купить продукты","new_date":"tomorrow"},"confidence":0.94}
-
-        "Передвинь встречу с клиентом на пятницу с 10:00 до 12:00" →
-        {"action":"move_task","parameters":{"search":"встреча с клиентом","new_date":"friday","start_time":"10:00","end_time":"12:00"},"confidence":0.91}
-
-        "Перемести задачу отчет на следующую неделю" →
-        {"action":"move_task","parameters":{"search":"отчет","new_date":"next_week"},"confidence":0.88}
-
-        === 🆕 ПРИМЕРЫ СОЗДАНИЯ ЗАДАЧИ С ПОДЗАДАЧАМИ ===
-
-        "Создай задачу ремонт квартиры на следующую неделю с подзадачами: купить краску, нанять мастера, убрать мебель" →
-        {"action":"create_task","parameters":{"title":"Ремонт квартиры","due_date":"next_week","subtasks":["Купить краску","Нанять мастера","Убрать мебель"]},"confidence":0.89}
-
-        "Добавь срочную задачу подготовка к презентации на завтра с подзадачами: сделать слайды и отрепетировать речь" →
-        {"action":"create_task","parameters":{"title":"Подготовка к презентации","due_date":"tomorrow","priority":"high","subtasks":["Сделать слайды","Отрепетировать речь"]},"confidence":0.90}
+        "Создай задачу ремонт квартиры с подзадачами: купить краску, нанять мастера" →
+        {"action":"create_task","parameters":{"title":"Ремонт квартиры","subtasks":["Купить краску","Нанять мастера"]},"confidence":0.89}
 
         Теперь обработай команду:
         PROMPT;
@@ -215,7 +110,7 @@ class LLMService
             ? $params->get('ollama_url')
             : 'http://ollama:11434';
 
-        // Модель Llama 3.2 3B
+        // Модель Qwen 2.5 1.5B - оптимизирована для скорости на CPU
         $this->model = $params->has('llm_model')
             ? $params->get('llm_model')
             : self::DEFAULT_MODEL;

@@ -13,10 +13,12 @@ services:
       # Re-enable after fixing the script or use manual model pull
       # - ./ai/ollama-entrypoint.sh:/entrypoint.sh:ro
     environment:
-      - OLLAMA_MODELS=${OLLAMA_MODELS:-qwen2.5:3b}
+      - OLLAMA_MODELS=${OLLAMA_MODELS:-qwen2.5:1.5b}
       - OLLAMA_HOST=0.0.0.0
       - OLLAMA_ORIGINS=*
       - OLLAMA_DEBUG=${OLLAMA_DEBUG:-false}
+      - OLLAMA_NUM_PARALLEL=${OLLAMA_NUM_PARALLEL:-2}  # Обрабатывать 2 запроса параллельно
+      - OLLAMA_KEEP_ALIVE=${OLLAMA_KEEP_ALIVE:-24h}   # Держать модель в памяти 24 часа
     networks:
       - nginx-php83-psql16
     healthcheck:
