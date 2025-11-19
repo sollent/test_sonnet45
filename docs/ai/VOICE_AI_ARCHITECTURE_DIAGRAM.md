@@ -175,7 +175,7 @@
 │  │  🦙 Ollama (LLM Runtime)    │   │  🎙️ Whisper.cpp (STT)      │                       │
 │  │  Port: 11434                │   │  Port: 8090                │                       │
 │  │                             │   │                             │                       │
-│  │  Model: llama3.2:1b         │   │  Model: base.en             │                       │
+│  │  Model: mistral:7b         │   │  Model: base.en             │                       │
 │  │  Quant: Q4_K_M              │   │  Size: 74M params           │                       │
 │  │  Size: ~2.5GB RAM           │   │  RAM: ~500MB                │                       │
 │  │  Context: 8192 tokens       │   │  Real-time factor: 0.3      │                       │
@@ -184,7 +184,7 @@
 │  │  API:                       │   │  API:                       │                       │
 │  │  POST /api/generate         │   │  POST /inference            │                       │
 │  │  {                          │   │  {                          │                       │
-│  │    "model": "llama3.2:1b",  │   │    "file": audio_blob,      │                       │
+│  │    "model": "mistral:7b",  │   │    "file": audio_blob,      │                       │
 │  │    "prompt": "...",         │   │    "response_format": "json"│                       │
 │  │    "format": "json",        │   │  }                          │                       │
 │  │    "stream": false          │   │  Response:                  │                       │
@@ -393,7 +393,7 @@
 │  2. Call Ollama API:                                                                │
 │     POST http://voice-ai-ollama:11434/api/generate                                  │
 │     {                                                                                │
-│       "model": "llama3.2:1b",                                                       │
+│       "model": "mistral:7b",                                                       │
 │       "prompt": $prompt,                                                            │
 │       "format": "json",                                                             │
 │       "stream": false                                                               │

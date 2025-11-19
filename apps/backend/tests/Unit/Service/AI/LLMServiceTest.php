@@ -40,7 +40,7 @@ class LLMServiceTest extends TestCase
         $this->params->method('get')
             ->willReturnMap([
                 ['ollama_url', 'http://ollama:11434'],
-                ['llm_model', 'llama3.2:3b'],
+                ['llm_model', 'mistral:7b'],
             ]);
 
         $this->service = new LLMService(
@@ -78,7 +78,7 @@ class LLMServiceTest extends TestCase
                 'http://ollama:11434/api/generate',
                 $this->callback(function ($options) {
                     return isset($options['json']['model'])
-                        && $options['json']['model'] === 'llama3.2:3b'
+                        && $options['json']['model'] === 'mistral:7b'
                         && isset($options['json']['prompt'])
                         && str_contains($options['json']['prompt'], 'Создай задачу купить молоко завтра');
                 }),
@@ -264,8 +264,8 @@ class LLMServiceTest extends TestCase
         $mockResponse = $this->createMock(ResponseInterface::class);
         $mockResponse->method('toArray')->willReturn([
             'models' => [
-                ['name' => 'llama3.2:3b'],
-                ['name' => 'llama3.2:1b'],
+                ['name' => 'mistral:7b'],
+                ['name' => 'mistral:7b'],
                 ['name' => 'mistral:7b'],
             ],
         ]);
@@ -280,7 +280,7 @@ class LLMServiceTest extends TestCase
 
         // Assert
         $this->assertCount(3, $models);
-        $this->assertContains('llama3.2:3b', $models);
+        $this->assertContains('mistral:7b', $models);
         $this->assertContains('mistral:7b', $models);
     }
 }

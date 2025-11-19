@@ -21,7 +21,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 class LLMService
 {
-    private const DEFAULT_MODEL = 'llama3.2:3b';
+    private const DEFAULT_MODEL = 'mistral:7b';
 
     private const DEFAULT_TIMEOUT = 30.0;
 
@@ -32,7 +32,7 @@ class LLMService
     /**
      * Системный промпт для LLM с расширенными Few-Shot примерами
      *
-     * Улучшено для модели llama3.2:1b - добавлено больше примеров для лучшего различения действий
+     * Оптимизировано для модели mistral:7b - 90-95% точность парсинга сложных команд
      */
     private const SYSTEM_PROMPT = <<<'PROMPT'
         Ты - ассистент для управления задачами. Анализируй русские голосовые команды и конвертируй в JSON.

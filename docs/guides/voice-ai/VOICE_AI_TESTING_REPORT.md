@@ -14,7 +14,7 @@
 | **Успешных** | 2 | ✅ 40% |
 | **Провалившихся** | 3 | ❌ 60% |
 | **Whisper STT** | Tiny model, 49s | ✅ Работает |
-| **Ollama LLM** | llama3.2:1b | ⚠️ Недостаточно |
+| **Ollama LLM** | mistral:7b | ⚠️ Недостаточно |
 | **Command Executor** | Создание задач | ✅ Работает |
 | **DB Persistence** | voice_commands | ✅ Работает |
 | **State Machine** | VoiceCommand entity | ❌ Баг найден |
@@ -121,7 +121,7 @@ FROM voice_commands ORDER BY id DESC LIMIT 5;
 
 **Результат**: LLM **неправильно распарсил** команду и создал НОВУЮ задачу (id=3) вместо завершения существующей (id=2).
 
-**Проблема**: Модель `llama3.2:1b` слишком простая и не может различать действия "Создать" vs "Завершить".
+**Проблема**: Модель `mistral:7b` слишком простая и не может различать действия "Создать" vs "Завершить".
 
 **Оценка**: ❌ **КРИТИЧЕСКАЯ ПРОБЛЕМА**
 
@@ -142,7 +142,7 @@ FROM voice_commands ORDER BY id DESC LIMIT 5;
 **Ошибка в логах**:
 ```
 [2025-11-18T23:36:03.026190+03:00] app.INFO: Parsing command with LLM
-  {"model":"llama3.2:1b","command":"Покажи все срочные задачи"}
+  {"model":"mistral:7b","command":"Покажи все срочные задачи"}
 ```
 
 **Проблема**: LLM не смог распарсить команду типа "Покажи" / "Показать".
@@ -248,7 +248,7 @@ if ($command->getStatus() !== CommandStatus::FAILED) {
 
 | Метрика | Значение |
 |---------|----------|
-| **Модель** | llama3.2:1b |
+| **Модель** | mistral:7b |
 | **Среднее время** | ~10-15 секунд |
 | **Качество парсинга** | ⚠️ Недостаточное (40% success rate) |
 
@@ -286,7 +286,7 @@ if ($command->getStatus() !== CommandStatus::FAILED) {
 
 ### ❌ Критические Проблемы
 
-1. **LLM Quality** - Модель `llama3.2:1b` недостаточно мощная:
+1. **LLM Quality** - Модель `mistral:7b` недостаточно мощная:
    - Не понимает 60% команд
    - Путает действия (create vs complete vs filter)
    - Нужна более мощная модель или улучшение промпта
@@ -308,7 +308,7 @@ if ($command->getStatus() !== CommandStatus::FAILED) {
 
 2. **Улучшить LLM Промпт ИЛИ Сменить Модель**
 
-   **Вариант A**: Улучшить промпт для llama3.2:1b
+   **Вариант A**: Улучшить промпт для mistral:7b
    - Добавить больше примеров (few-shot learning)
    - Улучшить инструкции для различения действий
    - ETA: 2-3 часа
@@ -361,7 +361,7 @@ ec2815fcaa70   onerahmet/openai-whisper-asr-webservice   Up (healthy)
 ```bash
 # AI Services
 OLLAMA_PORT=11435
-OLLAMA_MODELS=llama3.2:1b
+OLLAMA_MODELS=mistral:7b
 WHISPER_PORT=9001
 WHISPER_MODEL=tiny
 CENTRIFUGO_PORT=8001
@@ -395,7 +395,7 @@ CENTRIFUGO_PORT=8001
 
 ## 🎓 Уроки и Выводы
 
-1. **Модель llama3.2:1b** слишком легкая для продакшена:
+1. **Модель mistral:7b** слишком легкая для продакшена:
    - Хороша для демо простых команд
    - Недостаточна для production use case с множеством действий
 

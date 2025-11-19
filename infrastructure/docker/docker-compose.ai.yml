@@ -11,7 +11,7 @@ services:
       - ollama_models:/root/.ollama
       - ./ai/ollama-entrypoint.sh:/entrypoint.sh:ro
     environment:
-      - OLLAMA_MODELS=${OLLAMA_MODELS:-llama3.2:1b}
+      - OLLAMA_MODELS=${OLLAMA_MODELS:-mistral:7b}
       - OLLAMA_HOST=0.0.0.0
       - OLLAMA_ORIGINS=*
       - OLLAMA_DEBUG=${OLLAMA_DEBUG:-false}
@@ -26,9 +26,9 @@ services:
     deploy:
       resources:
         limits:
-          memory: 4G
+          memory: 12G
         reservations:
-          memory: 2G
+          memory: 8G
     entrypoint: ["/bin/sh", "/entrypoint.sh"]
 
   # ============================================

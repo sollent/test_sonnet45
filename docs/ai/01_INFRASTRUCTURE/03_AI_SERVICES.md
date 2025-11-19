@@ -75,7 +75,7 @@ echo "Ollama installation completed!"
 
 set -e
 
-MODEL="llama3.2:1b"
+MODEL="mistral:7b"
 echo "📦 Installing ${MODEL} model..."
 
 # Pull the model
@@ -83,7 +83,7 @@ docker exec voice-ai-ollama ollama pull ${MODEL}
 
 # Create custom model with Russian optimization
 cat > /tmp/Modelfile <<EOF
-FROM llama3.2:1b
+FROM mistral:7b
 
 # Model parameters for Russian language
 PARAMETER temperature 0.3
@@ -200,8 +200,8 @@ server:
 models:
   default: voice-assistant
   available:
-    - llama3.2:1b
-    - llama3.2:1b  # Fallback for low memory
+    - mistral:7b
+    - mistral:7b  # Fallback for low memory
 
 performance:
   max_loaded_models: 1
@@ -1389,7 +1389,7 @@ class VoiceAIIntegrationTester:
             test_prompt = "Создай задачу купить молоко завтра в 15:00"
 
             payload = {
-                "model": "llama3.2:1b",
+                "model": "mistral:7b",
                 "prompt": f"Convert to JSON command: {test_prompt}",
                 "stream": False,
                 "options": {
@@ -1417,7 +1417,7 @@ class VoiceAIIntegrationTester:
                             'service': 'ollama',
                             'status': 'success',
                             'inference_time': inference_time,
-                            'model': 'llama3.2:1b'
+                            'model': 'mistral:7b'
                         }
                     else:
                         return {
@@ -1563,7 +1563,7 @@ docker exec voice-ai-ollama sh -c '
     taskset -c 0,1 ollama serve &
 
     # Preload model
-    ollama run llama3.2:1b "test" --verbose false
+    ollama run mistral:7b "test" --verbose false
 '
 
 # 2. Optimize Whisper

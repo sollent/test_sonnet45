@@ -105,7 +105,7 @@ backend/src/Service/VoiceAssistant/LLMService.php
 Критично:
 - Скопируй системный промпт ТОЧНО из PROMPTS_LIBRARY.md
 - Используй Ollama HTTP client (Symfony\Contracts\HttpClient\HttpClientInterface)
-- Запрос: {"model": "llama3.2:1b", "prompt": "...", "format": "json", "options": {"temperature": 0.3}}
+- Запрос: {"model": "mistral:7b", "prompt": "...", "format": "json", "options": {"temperature": 0.3}}
 - Парси JSON ответ
 - Валидируй структуру: {action, parameters, confidence}
 - Резервный парсинг если JSON невалиден
@@ -151,7 +151,7 @@ curl http://localhost:11434/api/tags
 
 # Тест с русской командой
 curl -X POST http://localhost:11434/api/generate -d '{
-  "model": "llama3.2:1b",
+  "model": "mistral:7b",
   "prompt": "Ты - ассистент для задач. Конвертируй эту русскую команду в JSON: Создай задачу купить молоко завтра",
   "format": "json",
   "stream": false
@@ -482,18 +482,18 @@ onVoiceEvent('completed', (data) => {
 curl -fsSL https://ollama.com/install.sh | sh
 
 # Загрузить модель Llama 3.2 1B (~ 2GB скачивание)
-ollama pull llama3.2:1b
+ollama pull mistral:7b
 
 # Запустить Ollama сервер
 ollama serve
 
 # Тест
 curl http://localhost:11434/api/tags
-# Должен показать: {"models": [{"name": "llama3.2:1b", ...}]}
+# Должен показать: {"models": [{"name": "mistral:7b", ...}]}
 
 # Тест русской команды
 curl -X POST http://localhost:11434/api/generate -d '{
-  "model": "llama3.2:1b",
+  "model": "mistral:7b",
   "prompt": "Конвертируй в JSON: Создай задачу купить молоко",
   "format": "json",
   "stream": false
@@ -671,7 +671,7 @@ $task = $this->taskService->createTask(
 docker exec backend-psql16 psql -U user -d backend-app -c "\d voice_commands"
 
 # После Фазы 2 (Сервисы)
-curl -X POST http://localhost:11434/api/generate -d '{"model":"llama3.2:1b","prompt":"тест"}'
+curl -X POST http://localhost:11434/api/generate -d '{"model":"mistral:7b","prompt":"тест"}'
 
 # После Фазы 3 (API)
 curl -X POST http://localhost:8089/api/voice/command -H "Authorization: Bearer TOKEN" -d '{"text":"тест"}'

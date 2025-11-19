@@ -168,7 +168,7 @@ public function handle(VoiceCommand $command): array
 ```bash
 # Тест LLM
 curl -X POST http://localhost:11434/api/generate \
-  -d '{"model":"llama3.2:1b","prompt":"Создай задачу купить молоко"}'
+  -d '{"model":"mistral:7b","prompt":"Создай задачу купить молоко"}'
 
 # Тест API
 curl -X POST http://localhost:8089/api/voice/command \
