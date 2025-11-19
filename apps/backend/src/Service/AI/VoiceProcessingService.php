@@ -322,10 +322,37 @@ class VoiceProcessingService
 
     /**
      * Загрузка аудио файла
+     * Поддерживает как внешние URL, так и локальные файлы
      */
     private function downloadAudio(string $audioUrl): string
     {
         try {
+            // Проверяем, является ли это локальным файлом (путь начинается с /uploads/)
+            if (str_starts_with($audioUrl, '/uploads/') ||
+                str_contains($audioUrl, '/uploads/media/')) {
+                // Извлекаем путь к файлу (убираем возможный домен)
+                $filePath = parse_url($audioUrl, PHP_URL_PATH) ?? $audioUrl;
+
+                // Строим полный путь к файлу
+                $projectDir = dirname(__DIR__, 2);
+                $fullPath = $projectDir . '/public' . $filePath;
+
+                // Проверяем существование файла
+                if (!file_exists($fullPath)) {
+                    throw new RuntimeException("Audio file not found: {$fullPath}");
+                }
+
+                // Читаем файл напрямую с диска
+                $content = file_get_contents($fullPath);
+
+                if ($content === false) {
+                    throw new RuntimeException("Failed to read audio file: {$fullPath}");
+                }
+
+                return $content;
+            }
+
+            // Для внешних URL используем HTTP клиент
             $response = $this->httpClient->request('GET', $audioUrl);
 
             return $response->getContent();
