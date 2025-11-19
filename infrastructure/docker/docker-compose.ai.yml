@@ -9,7 +9,9 @@ services:
       - "${OLLAMA_PORT:-11434}:11434"
     volumes:
       - ollama_models:/root/.ollama
-      - ./ai/ollama-entrypoint.sh:/entrypoint.sh:ro
+      # ⚠️ DISABLED: Custom entrypoint causes restart issues
+      # Re-enable after fixing the script or use manual model pull
+      # - ./ai/ollama-entrypoint.sh:/entrypoint.sh:ro
     environment:
       - OLLAMA_MODELS=${OLLAMA_MODELS:-mistral:7b}
       - OLLAMA_HOST=0.0.0.0
@@ -29,7 +31,8 @@ services:
           memory: 12G
         reservations:
           memory: 8G
-    entrypoint: ["/bin/sh", "/entrypoint.sh"]
+    # ⚠️ DISABLED: Using default Ollama entrypoint
+    # entrypoint: ["/bin/sh", "/entrypoint.sh"]
 
   # ============================================
   # Whisper - Speech-to-Text Service

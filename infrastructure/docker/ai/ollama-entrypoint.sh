@@ -26,14 +26,18 @@ wait_for_ollama() {
 wait_for_ollama
 
 # Pull models specified in environment variable
-if [ -n "$OLLAMA_MODELS" ]; then
-    IFS=',' # Split by comma
-    for model in $OLLAMA_MODELS; do
-        model=$(echo "$model" | tr -d ' ') # Remove spaces
-        echo "Pulling model: $model"
-        ollama pull "$model" || echo "Failed to pull $model, continuing..."
-    done
-fi
+# ⚠️ DISABLED: Auto-pull causes container restart issues
+# User should manually pull models after container starts:
+# docker exec -it claude-ai-assistant-ollama ollama pull mistral:7b
+#
+# if [ -n "$OLLAMA_MODELS" ]; then
+#     IFS=',' # Split by comma
+#     for model in $OLLAMA_MODELS; do
+#         model=$(echo "$model" | tr -d ' ') # Remove spaces
+#         echo "Pulling model: $model"
+#         ollama pull "$model" || echo "Failed to pull $model, continuing..."
+#     done
+# fi
 
 # List available models
 echo "Available models:"
