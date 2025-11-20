@@ -7,6 +7,7 @@ namespace App\Service\AI;
 use App\Entity\User;
 use App\Entity\VoiceCommand;
 use App\Repository\Database\VoiceCommandRepository;
+use App\Service\AI\Response\CommandResponse;
 use App\ValueObject\CommandStatus;
 use App\ValueObject\CommandType;
 use App\ValueObject\TranscriptionResult;
@@ -27,7 +28,7 @@ class VoiceProcessingService
 
     private LLMService $llmService;
 
-    private VoiceCommandExecutor $commandExecutor;
+    private VoiceCommandExecutorNew $commandExecutor;
 
     private WebSocketPublisher $wsPublisher;
 
@@ -40,11 +41,11 @@ class VoiceProcessingService
     public function __construct(
         VoiceCommandRepository $commandRepository,
         LLMService $llmService,
-        VoiceCommandExecutor $commandExecutor,
+        VoiceCommandExecutorNew $commandExecutor,
         WebSocketPublisher $wsPublisher,
         HttpClientInterface $httpClient,
         LoggerInterface $logger,
-        string $whisperUrl = 'http://host.docker.internal:9001',
+        string $whisperUrl = 'http://host.docker.internal:9001'
     ) {
         $this->commandRepository = $commandRepository;
         $this->llmService = $llmService;
@@ -74,7 +75,7 @@ class VoiceProcessingService
         $command = new VoiceCommand(
             user: $user,
             commandType: CommandType::VOICE_AUDIO,
-            rawAudioUrl: $audioUrl,
+            rawAudioUrl: $audioUrl
         );
 
         $this->commandRepository->save($command);
@@ -127,7 +128,7 @@ class VoiceProcessingService
         $command = new VoiceCommand(
             user: $user,
             commandType: CommandType::VOICE_TEXT,
-            transcribedText: $text,
+            transcribedText: $text
         );
 
         $this->commandRepository->save($command);
@@ -245,14 +246,22 @@ class VoiceProcessingService
         // Шаг 3: Выполнение команды
         $result = $this->commandExecutor->execute($parsedCommand, $user);
 
-        // Проверяем результат
-        if ($result['success'] ?? false) {
-            $command->markAsCompleted($result);
+        // Проверяем результат (теперь это CommandResponse объект)
+        if ($result->isSuccess()) {
+            // Преобразуем CommandResponse в массив для совместимости
+            $resultArray = [
+                'success' => true,
+                'type' => $result->getType(),
+                'message' => $result->getMessage(),
+                'data' => $result->getData(),
+            ];
+
+            $command->markAsCompleted($resultArray);
             $this->commandRepository->save($command);
 
-            $this->notifyStatus($command, 'command_executed', $result);
+            $this->notifyStatus($command, 'command_executed', $resultArray);
         } else {
-            $errorMessage = $result['message'] ?? 'Ошибка выполнения команды';
+            $errorMessage = $result->getMessage();
 
             // Помечаем как failed только если еще не в этом статусе
             if ($command->getStatus() !== CommandStatus::FAILED) {
@@ -262,6 +271,7 @@ class VoiceProcessingService
 
             $this->notifyStatus($command, 'execution_failed', [
                 'error' => $errorMessage,
+                'errors' => $result->getErrors(),
             ]);
         }
     }
