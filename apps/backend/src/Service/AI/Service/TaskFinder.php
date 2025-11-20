@@ -157,7 +157,7 @@ class TaskFinder
      * @param array $parameters Параметры
      * @return string|null Поисковый запрос для родителя
      */
-    private function extractParentSearch(array $parameters): ?string
+    public function extractParentSearch(array $parameters): ?string
     {
         return $parameters['parent_search']
             ?? $parameters['parent']
