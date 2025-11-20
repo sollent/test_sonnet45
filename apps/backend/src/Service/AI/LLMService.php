@@ -153,6 +153,18 @@ class LLMService
             Параметры:
             - tasks: массив строк с названиями задач для поиска
 
+        12. delete_task - удалить одну задачу
+            Параметры:
+            - search (текст для поиска задачи)
+
+        13. delete_multiple_tasks - удалить конкретные задачи по названиям
+            Параметры:
+            - tasks: массив строк с названиями задач для поиска
+
+        14. bulk_delete - удалить задачи по фильтрам (например "все на сегодня")
+            Параметры:
+            - filters (как в filter_tasks)
+
         === ПРИОРИТЕТЫ (используй ТОЛЬКО эти) ===
         - low - низкий приоритет
         - medium - средний/обычный приоритет
@@ -219,6 +231,21 @@ class LLMService
 
         "К задаче организовать вечеринку добавь три подзадачи: купить торт, пригласить гостей и украсить комнату" →
         {"action":"create_multiple_subtasks","parameters":{"parent_search":"организовать вечеринку","subtasks":[{"title":"Купить торт"},{"title":"Пригласить гостей"},{"title":"Украсить комнату"}]},"confidence":0.93}
+
+        "Удали задачу купить молоко" →
+        {"action":"delete_task","parameters":{"search":"купить молоко"},"confidence":0.94}
+
+        "Удали две задачи: купить гуся и купить кабана" →
+        {"action":"delete_multiple_tasks","parameters":{"tasks":["купить гуся","купить кабана"]},"confidence":0.92}
+
+        "Удали все задачи на сегодня" →
+        {"action":"bulk_delete","parameters":{"filters":{"date":"today"}},"confidence":0.90}
+
+        "Удали все завершенные задачи" →
+        {"action":"bulk_delete","parameters":{"filters":{"status":"completed"}},"confidence":0.91}
+
+        "Удали все задачи на вчера с низким приоритетом" →
+        {"action":"bulk_delete","parameters":{"filters":{"date":"yesterday","priority":"low"}},"confidence":0.89}
 
         === С ОПЕЧАТКАМИ ===
 

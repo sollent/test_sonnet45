@@ -86,6 +86,9 @@ class VoiceCommandExecutor
                 ParsedCommand::ACTION_MOVE_TASK             => $this->executeMoveTask($command->parameters, $user),
                 ParsedCommand::ACTION_BULK_COMPLETE         => $this->executeBulkComplete($command->parameters, $user),
                 ParsedCommand::ACTION_COMPLETE_MULTIPLE_TASKS => $this->executeCompleteMultipleTasks($command->parameters, $user),
+                ParsedCommand::ACTION_DELETE_TASK           => $this->executeDeleteTask($command->parameters, $user),
+                ParsedCommand::ACTION_DELETE_MULTIPLE_TASKS => $this->executeDeleteMultipleTasks($command->parameters, $user),
+                ParsedCommand::ACTION_BULK_DELETE           => $this->executeBulkDelete($command->parameters, $user),
                 ParsedCommand::ACTION_CLARIFICATION_NEEDED  => $this->executeClarificationNeeded($command->parameters),
                 ParsedCommand::ACTION_UNKNOWN               => $this->executeUnknown($command->parameters),
                 default                                     => throw new RuntimeException('Unsupported action: ' . $command->action)
@@ -603,6 +606,154 @@ class VoiceCommandExecutor
             'tasks'           => $completedTasks,
             'not_found'       => $notFoundTasks,
             'errors'          => $errors,
+        ];
+    }
+
+    /**
+     * Удаление одной задачи (CRUD: Delete)
+     */
+    private function executeDeleteTask(array $parameters, User $user): array
+    {
+        $search = $parameters['search'] ?? $parameters['title'] ?? null;
+
+        if (empty($search)) {
+            throw new RuntimeException('Search query is required for task deletion');
+        }
+
+        // Поиск задачи
+        $task = $this->searchService->findBestMatch($search, $user);
+
+        if (!$task) {
+            return [
+                'type'    => 'task_not_found',
+                'success' => false,
+                'message' => sprintf('Задача "%s" не найдена', $search),
+                'search'  => $search,
+            ];
+        }
+
+        $taskTitle = $task->getTitle();
+        $taskId = $task->getId();
+
+        // Удаление задачи
+        $this->entityManager->remove($task);
+        $this->entityManager->flush();
+
+        return [
+            'type'    => 'task_deleted',
+            'success' => true,
+            'message' => sprintf('Задача "%s" удалена', $taskTitle),
+            'task'    => [
+                'id'    => $taskId,
+                'title' => $taskTitle,
+            ],
+        ];
+    }
+
+    /**
+     * Удаление нескольких конкретных задач по названиям (CRUD: Delete - batch)
+     */
+    private function executeDeleteMultipleTasks(array $parameters, User $user): array
+    {
+        $taskNames = $parameters['tasks'] ?? [];
+
+        if (empty($taskNames) || !is_array($taskNames)) {
+            throw new RuntimeException('Tasks array is required for deleting multiple tasks');
+        }
+
+        $deletedTasks = [];
+        $notFoundTasks = [];
+        $errors = [];
+
+        foreach ($taskNames as $taskName) {
+            // Поиск задачи по названию
+            $task = $this->searchService->findBestMatch($taskName, $user);
+
+            if (!$task) {
+                $notFoundTasks[] = $taskName;
+                continue;
+            }
+
+            try {
+                $taskTitle = $task->getTitle();
+                $taskId = $task->getId();
+
+                // Удаляем задачу
+                $this->entityManager->remove($task);
+                $deletedTasks[] = [
+                    'id'    => $taskId,
+                    'title' => $taskTitle,
+                ];
+            } catch (Exception $e) {
+                $errors[] = sprintf('Задача "%s": %s', $task->getTitle(), $e->getMessage());
+            }
+        }
+
+        // Сохраняем все удаления
+        $this->entityManager->flush();
+
+        $successCount = count($deletedTasks);
+        $totalCount = count($taskNames);
+
+        if ($successCount === 0) {
+            return [
+                'type'       => 'no_tasks_deleted',
+                'success'    => false,
+                'message'    => 'Не удалось удалить ни одной задачи',
+                'not_found'  => $notFoundTasks,
+                'errors'     => $errors,
+            ];
+        }
+
+        return [
+            'type'          => 'multiple_tasks_deleted',
+            'success'       => true,
+            'message'       => sprintf('Удалено задач: %d из %d', $successCount, $totalCount),
+            'deleted_count' => $successCount,
+            'total_count'   => $totalCount,
+            'tasks'         => $deletedTasks,
+            'not_found'     => $notFoundTasks,
+            'errors'        => $errors,
+        ];
+    }
+
+    /**
+     * Массовое удаление задач по фильтрам (CRUD: Delete - batch)
+     */
+    private function executeBulkDelete(array $parameters, User $user): array
+    {
+        $filters = $parameters['filters'] ?? $parameters;
+
+        // Поиск задач по фильтрам
+        $tasks = $this->searchService->filterTasks($filters, $user);
+
+        if (empty($tasks)) {
+            return [
+                'type'    => 'no_tasks_to_delete',
+                'success' => false,
+                'message' => 'Не найдено задач для удаления',
+                'filters' => $filters,
+            ];
+        }
+
+        // Удаление всех найденных задач
+        $deletedCount = 0;
+        $deletedTitles = [];
+
+        foreach ($tasks as $task) {
+            $deletedTitles[] = $task->getTitle();
+            $this->entityManager->remove($task);
+            $deletedCount++;
+        }
+
+        $this->entityManager->flush();
+
+        return [
+            'type'           => 'bulk_deleted',
+            'success'        => true,
+            'message'        => sprintf('Удалено задач: %d', $deletedCount),
+            'deleted_count'  => $deletedCount,
+            'deleted_titles' => $deletedTitles,
         ];
     }
 
