@@ -183,6 +183,11 @@ class LLMService
             - search (поиск задачи для копирования)
             - new_date (опционально, дата для копии)
 
+        17. bulk_move - массовое перемещение задач по фильтрам
+            Параметры:
+            - filters: {date, priority, status} (как в filter_tasks)
+            - new_date (обязательно, куда переносить)
+
         === ПРИОРИТЕТЫ (используй ТОЛЬКО эти) ===
         - low - низкий приоритет
         - medium - средний/обычный приоритет
@@ -288,6 +293,12 @@ class LLMService
 
         "Продублируй задачу встреча с клиентом" →
         {"action":"duplicate_task","parameters":{"search":"встреча с клиентом"},"confidence":0.91}
+
+        "Перенеси все задачи с сегодня на завтра" →
+        {"action":"bulk_move","parameters":{"filters":{"date":"today"},"new_date":"tomorrow"},"confidence":0.90}
+
+        "Сдвинь все срочные задачи на следующую неделю" →
+        {"action":"bulk_move","parameters":{"filters":{"priority":"urgent"},"new_date":"next_week"},"confidence":0.89}
 
         === С ОПЕЧАТКАМИ ===
 

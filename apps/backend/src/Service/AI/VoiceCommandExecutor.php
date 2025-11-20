@@ -93,6 +93,7 @@ class VoiceCommandExecutor
                 ParsedCommand::ACTION_DELETE_MULTIPLE_TASKS => $this->executeDeleteMultipleTasks($command->parameters, $user),
                 ParsedCommand::ACTION_BULK_DELETE           => $this->executeBulkDelete($command->parameters, $user),
                 ParsedCommand::ACTION_DUPLICATE_TASK        => $this->executeDuplicateTask($command->parameters, $user),
+                ParsedCommand::ACTION_BULK_MOVE             => $this->executeBulkMove($command->parameters, $user),
                 ParsedCommand::ACTION_CLARIFICATION_NEEDED  => $this->executeClarificationNeeded($command->parameters),
                 ParsedCommand::ACTION_UNKNOWN               => $this->executeUnknown($command->parameters),
                 default                                     => throw new RuntimeException('Unsupported action: ' . $command->action)
@@ -976,6 +977,57 @@ class VoiceCommandExecutor
                 'startDate' => $newTask->getStartDate()?->format('c'),
                 'dueDate'   => $newTask->getDueDate()?->format('c'),
             ],
+        ];
+    }
+
+    /**
+     * Массовое перемещение задач по фильтрам (CRUD: Update - batch)
+     */
+    private function executeBulkMove(array $parameters, User $user): array
+    {
+        $filters = $parameters['filters'] ?? [];
+        $newDate = $parameters['new_date'] ?? null;
+
+        if (empty($newDate)) {
+            throw new RuntimeException('New date is required for bulk move');
+        }
+
+        // Поиск задач по фильтрам
+        $tasks = $this->searchService->filterTasks($filters, $user);
+
+        if (empty($tasks)) {
+            return [
+                'type'    => 'no_tasks_to_move',
+                'success' => false,
+                'message' => 'Не найдено задач для перемещения',
+                'filters' => $filters,
+            ];
+        }
+
+        // Парсинг новой даты
+        $startDate = $this->dateTimeParser->parseStartDate($newDate);
+        $dueDate = $this->dateTimeParser->parseDueDate($newDate);
+
+        // Перемещение всех задач
+        $movedCount = 0;
+        $movedTitles = [];
+
+        foreach ($tasks as $task) {
+            $task->setStartDate($startDate);
+            $task->setDueDate($dueDate);
+            $movedTitles[] = $task->getTitle();
+            $movedCount++;
+        }
+
+        $this->entityManager->flush();
+
+        return [
+            'type'         => 'bulk_moved',
+            'success'      => true,
+            'message'      => sprintf('Перемещено задач: %d на %s', $movedCount, $newDate),
+            'moved_count'  => $movedCount,
+            'new_date'     => $newDate,
+            'moved_titles' => $movedTitles,
         ];
     }
 

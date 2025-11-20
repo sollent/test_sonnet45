@@ -55,6 +55,8 @@ final readonly class ParsedCommand implements JsonSerializable
 
     public const ACTION_DUPLICATE_TASK = 'duplicate_task';
 
+    public const ACTION_BULK_MOVE = 'bulk_move';
+
     public const ACTION_CLARIFICATION_NEEDED = 'clarification_needed';
 
     public const ACTION_UNKNOWN = 'unknown';
@@ -187,6 +189,7 @@ final readonly class ParsedCommand implements JsonSerializable
             self::ACTION_DELETE_MULTIPLE_TASKS,
             self::ACTION_BULK_DELETE,
             self::ACTION_DUPLICATE_TASK,
+            self::ACTION_BULK_MOVE,
             self::ACTION_CLARIFICATION_NEEDED,
             self::ACTION_UNKNOWN,
         ], true);
