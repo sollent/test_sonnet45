@@ -204,6 +204,16 @@ class LLMService
             - before_date (опционально, если period=before_date, формат YYYY-MM-DD)
             ВАЖНО: Без period команда НЕ выполняется для безопасности!
 
+        21. set_description - установить/изменить описание задачи
+            Параметры:
+            - search (поиск задачи)
+            - description (новое описание)
+
+        22. convert_subtask_to_task - преобразовать подзадачу в самостоятельную задачу
+            Параметры:
+            - search (поиск подзадачи)
+            - new_date (опционально, дата для новой задачи)
+
         === ПРИОРИТЕТЫ (используй ТОЛЬКО эти) ===
         - low - низкий приоритет
         - medium - средний/обычный приоритет
@@ -333,6 +343,18 @@ class LLMService
 
         "Удали старые завершённые задачи до 1 ноября" →
         {"action":"cleanup_completed","parameters":{"period":"before_date","before_date":"2025-11-01"},"confidence":0.88}
+
+        "Добавь описание встречи с клиентом: обсудить контракт и условия поставки" →
+        {"action":"set_description","parameters":{"search":"встреча с клиентом","description":"Обсудить контракт и условия поставки"},"confidence":0.91}
+
+        "Установи описание задачи отчёт: подготовить квартальный отчёт по продажам" →
+        {"action":"set_description","parameters":{"search":"отчёт","description":"Подготовить квартальный отчёт по продажам"},"confidence":0.90}
+
+        "Преобразуй подзадачу купить торт в отдельную задачу" →
+        {"action":"convert_subtask_to_task","parameters":{"search":"купить торт"},"confidence":0.89}
+
+        "Сделай подзадачу пригласить гостей самостоятельной задачей на завтра" →
+        {"action":"convert_subtask_to_task","parameters":{"search":"пригласить гостей","new_date":"tomorrow"},"confidence":0.88}
 
         === С ОПЕЧАТКАМИ ===
 

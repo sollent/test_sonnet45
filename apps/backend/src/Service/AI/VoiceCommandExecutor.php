@@ -97,6 +97,8 @@ class VoiceCommandExecutor
                 ParsedCommand::ACTION_ADD_TAG               => $this->executeAddTag($command->parameters, $user),
                 ParsedCommand::ACTION_REMOVE_TAG            => $this->executeRemoveTag($command->parameters, $user),
                 ParsedCommand::ACTION_CLEANUP_COMPLETED     => $this->executeCleanupCompleted($command->parameters, $user),
+                ParsedCommand::ACTION_SET_DESCRIPTION       => $this->executeSetDescription($command->parameters, $user),
+                ParsedCommand::ACTION_CONVERT_SUBTASK_TO_TASK => $this->executeConvertSubtaskToTask($command->parameters, $user),
                 ParsedCommand::ACTION_CLARIFICATION_NEEDED  => $this->executeClarificationNeeded($command->parameters),
                 ParsedCommand::ACTION_UNKNOWN               => $this->executeUnknown($command->parameters),
                 default                                     => throw new RuntimeException('Unsupported action: ' . $command->action)
@@ -1265,6 +1267,122 @@ class VoiceCommandExecutor
             'deleted_count'  => $deletedCount,
             'period'         => $period,
             'deleted_titles' => $deletedTitles,
+        ];
+    }
+
+    /**
+     * Установка/изменение описания задачи (CRUD: Update)
+     */
+    private function executeSetDescription(array $parameters, User $user): array
+    {
+        $search = $parameters['search'] ?? null;
+        $description = $parameters['description'] ?? null;
+
+        if (empty($search)) {
+            throw new RuntimeException('Search query is required for setting description');
+        }
+
+        if ($description === null) {
+            throw new RuntimeException('Description is required');
+        }
+
+        // Поиск задачи
+        $task = $this->searchService->findBestMatch($search, $user);
+
+        if (!$task) {
+            return [
+                'type'    => 'task_not_found',
+                'success' => false,
+                'message' => sprintf('Задача "%s" не найдена', $search),
+                'search'  => $search,
+            ];
+        }
+
+        // Устанавливаем описание
+        $task->setDescription($description);
+        $this->entityManager->flush();
+
+        return [
+            'type'    => 'description_set',
+            'success' => true,
+            'message' => sprintf('Описание задачи "%s" обновлено', $task->getTitle()),
+            'task'    => [
+                'id'          => $task->getId(),
+                'title'       => $task->getTitle(),
+                'description' => $description,
+            ],
+        ];
+    }
+
+    /**
+     * Преобразование подзадачи в самостоятельную задачу (CRUD: Update)
+     */
+    private function executeConvertSubtaskToTask(array $parameters, User $user): array
+    {
+        $search = $parameters['search'] ?? null;
+
+        if (empty($search)) {
+            throw new RuntimeException('Search query is required for converting subtask');
+        }
+
+        // Поиск подзадачи
+        $subtask = $this->searchService->findBestMatch($search, $user);
+
+        if (!$subtask) {
+            return [
+                'type'    => 'task_not_found',
+                'success' => false,
+                'message' => sprintf('Подзадача "%s" не найдена', $search),
+                'search'  => $search,
+            ];
+        }
+
+        // Проверяем что это действительно подзадача
+        $parentTask = $subtask->getParent();
+        if (!$parentTask) {
+            return [
+                'type'    => 'not_a_subtask',
+                'success' => false,
+                'message' => sprintf('"%s" не является подзадачей', $subtask->getTitle()),
+                'task'    => [
+                    'id'    => $subtask->getId(),
+                    'title' => $subtask->getTitle(),
+                ],
+            ];
+        }
+
+        $parentTitle = $parentTask->getTitle();
+
+        // Отсоединяем от родителя
+        $subtask->setParent(null);
+
+        // Обновляем дату если указана
+        if (isset($parameters['new_date'])) {
+            $startDate = $this->dateTimeParser->parseStartDate($parameters['new_date']);
+            $dueDate = $this->dateTimeParser->parseDueDate($parameters['new_date']);
+            $subtask->setStartDate($startDate);
+            $subtask->setDueDate($dueDate);
+        }
+
+        $this->entityManager->flush();
+
+        return [
+            'type'    => 'subtask_converted',
+            'success' => true,
+            'message' => sprintf(
+                'Подзадача "%s" преобразована в самостоятельную задачу (была у "%s")',
+                $subtask->getTitle(),
+                $parentTitle
+            ),
+            'task' => [
+                'id'        => $subtask->getId(),
+                'title'     => $subtask->getTitle(),
+                'status'    => $subtask->getStatus()->value,
+                'priority'  => $subtask->getPriority()->value,
+                'startDate' => $subtask->getStartDate()?->format('c'),
+                'dueDate'   => $subtask->getDueDate()?->format('c'),
+            ],
+            'former_parent' => $parentTitle,
         ];
     }
 
