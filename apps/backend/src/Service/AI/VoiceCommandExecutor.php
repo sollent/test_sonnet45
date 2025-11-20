@@ -184,7 +184,7 @@ class VoiceCommandExecutor
                 $task->addTag($tag);
             }
 
-            $this->taskService->saveTask($task);
+            $this->entityManager->flush();
         }
 
         // Создание подзадач, если указаны
@@ -726,7 +726,7 @@ class VoiceCommandExecutor
             $task->setDueDate($dueDate);
         }
 
-        $this->taskService->saveTask($task);
+        $this->entityManager->flush();
 
         return [
             'type'    => 'task_moved',
