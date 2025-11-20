@@ -61,6 +61,8 @@ final readonly class ParsedCommand implements JsonSerializable
 
     public const ACTION_REMOVE_TAG = 'remove_tag';
 
+    public const ACTION_CLEANUP_COMPLETED = 'cleanup_completed';
+
     public const ACTION_CLARIFICATION_NEEDED = 'clarification_needed';
 
     public const ACTION_UNKNOWN = 'unknown';
@@ -196,6 +198,7 @@ final readonly class ParsedCommand implements JsonSerializable
             self::ACTION_BULK_MOVE,
             self::ACTION_ADD_TAG,
             self::ACTION_REMOVE_TAG,
+            self::ACTION_CLEANUP_COMPLETED,
             self::ACTION_CLARIFICATION_NEEDED,
             self::ACTION_UNKNOWN,
         ], true);

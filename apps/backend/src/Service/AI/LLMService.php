@@ -198,6 +198,12 @@ class LLMService
             - search (поиск задачи)
             - tag (название тега)
 
+        20. cleanup_completed - очистить завершённые задачи за период
+            Параметры:
+            - period (ОБЯЗАТЕЛЬНО! yesterday/last_week/last_month/before_date)
+            - before_date (опционально, если period=before_date, формат YYYY-MM-DD)
+            ВАЖНО: Без period команда НЕ выполняется для безопасности!
+
         === ПРИОРИТЕТЫ (используй ТОЛЬКО эти) ===
         - low - низкий приоритет
         - medium - средний/обычный приоритет
@@ -318,6 +324,15 @@ class LLMService
 
         "Убери тег работа с задачи отчёт" →
         {"action":"remove_tag","parameters":{"search":"отчёт","tag":"работа"},"confidence":0.91}
+
+        "Удали все завершённые задачи за вчера" →
+        {"action":"cleanup_completed","parameters":{"period":"yesterday"},"confidence":0.90}
+
+        "Очисти завершённые задачи за прошлую неделю" →
+        {"action":"cleanup_completed","parameters":{"period":"last_week"},"confidence":0.89}
+
+        "Удали старые завершённые задачи до 1 ноября" →
+        {"action":"cleanup_completed","parameters":{"period":"before_date","before_date":"2025-11-01"},"confidence":0.88}
 
         === С ОПЕЧАТКАМИ ===
 

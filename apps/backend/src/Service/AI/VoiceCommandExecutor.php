@@ -96,6 +96,7 @@ class VoiceCommandExecutor
                 ParsedCommand::ACTION_BULK_MOVE             => $this->executeBulkMove($command->parameters, $user),
                 ParsedCommand::ACTION_ADD_TAG               => $this->executeAddTag($command->parameters, $user),
                 ParsedCommand::ACTION_REMOVE_TAG            => $this->executeRemoveTag($command->parameters, $user),
+                ParsedCommand::ACTION_CLEANUP_COMPLETED     => $this->executeCleanupCompleted($command->parameters, $user),
                 ParsedCommand::ACTION_CLARIFICATION_NEEDED  => $this->executeClarificationNeeded($command->parameters),
                 ParsedCommand::ACTION_UNKNOWN               => $this->executeUnknown($command->parameters),
                 default                                     => throw new RuntimeException('Unsupported action: ' . $command->action)
@@ -1148,6 +1149,122 @@ class VoiceCommandExecutor
                 'title' => $task->getTitle(),
             ],
             'tag' => $tagName,
+        ];
+    }
+
+    /**
+     * Очистка завершённых задач за определённый период (CRUD: Delete - batch)
+     * ВАЖНО: period обязателен для безопасности!
+     */
+    private function executeCleanupCompleted(array $parameters, User $user): array
+    {
+        $period = $parameters['period'] ?? null;
+
+        if (empty($period)) {
+            return [
+                'type'    => 'period_required',
+                'success' => false,
+                'message' => 'Для очистки завершённых задач необходимо указать период (вчера, за прошлую неделю, за прошлый месяц, до определённой даты)',
+            ];
+        }
+
+        // Определяем дату начала периода
+        $now = new DateTimeImmutable();
+        $startDate = null;
+
+        switch ($period) {
+            case 'yesterday':
+                $startDate = $now->modify('-1 day')->setTime(0, 0, 0);
+                $endDate = $now->modify('-1 day')->setTime(23, 59, 59);
+                break;
+
+            case 'last_week':
+                $startDate = $now->modify('-7 days')->setTime(0, 0, 0);
+                $endDate = $now->modify('-1 day')->setTime(23, 59, 59);
+                break;
+
+            case 'last_month':
+                $startDate = $now->modify('-30 days')->setTime(0, 0, 0);
+                $endDate = $now->modify('-1 day')->setTime(23, 59, 59);
+                break;
+
+            case 'before_date':
+                $beforeDate = $parameters['before_date'] ?? null;
+                if (empty($beforeDate)) {
+                    return [
+                        'type'    => 'before_date_required',
+                        'success' => false,
+                        'message' => 'Для очистки задач до определённой даты необходимо указать дату',
+                    ];
+                }
+                // Все завершённые задачи до указанной даты
+                $endDate = new DateTimeImmutable($beforeDate);
+                $endDate = $endDate->setTime(23, 59, 59);
+                $startDate = null; // Нет ограничения снизу
+                break;
+
+            default:
+                return [
+                    'type'    => 'invalid_period',
+                    'success' => false,
+                    'message' => sprintf('Неизвестный период: %s. Используйте: yesterday, last_week, last_month, before_date', $period),
+                ];
+        }
+
+        // Фильтруем завершённые задачи
+        $filters = [
+            'status' => 'completed',
+        ];
+
+        $tasks = $this->searchService->filterTasks($filters, $user);
+
+        // Фильтруем по периоду
+        $tasksToDelete = [];
+        foreach ($tasks as $task) {
+            $taskDate = $task->getDueDate() ?? $task->getCreatedAt();
+            if (!$taskDate) {
+                continue;
+            }
+
+            // Проверяем попадание в период
+            if ($startDate !== null && $taskDate < $startDate) {
+                continue;
+            }
+            if ($taskDate > $endDate) {
+                continue;
+            }
+
+            $tasksToDelete[] = $task;
+        }
+
+        if (empty($tasksToDelete)) {
+            return [
+                'type'    => 'no_tasks_to_cleanup',
+                'success' => false,
+                'message' => sprintf('Не найдено завершённых задач за период: %s', $period),
+                'period'  => $period,
+            ];
+        }
+
+        // Удаляем задачи
+        $deletedCount = 0;
+        $deletedTitles = [];
+
+        foreach ($tasksToDelete as $task) {
+            $deletedTitles[] = $task->getTitle();
+            $this->entityManager->remove($task);
+            $deletedCount++;
+        }
+
+        $this->entityManager->flush();
+
+        return [
+            'type'           => 'cleanup_completed',
+            'success'        => true,
+            'message'        => sprintf('Очищено завершённых задач: %d за период %s', $deletedCount, $period),
+            'deleted_count'  => $deletedCount,
+            'period'         => $period,
+            'deleted_titles' => $deletedTitles,
         ];
     }
 
