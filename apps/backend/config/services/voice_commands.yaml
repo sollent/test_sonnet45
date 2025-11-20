@@ -105,13 +105,8 @@ services:
     # Новый VoiceCommandExecutor
     # ====================================
 
-    App\Service\AI\VoiceCommandExecutorNew:
+    App\Service\AI\VoiceCommandExecutor:
         arguments:
             - '@App\Service\AI\Registry\CommandRegistry'
             - '@logger'
-        public: true
-
-    # Алиас для обратной совместимости (пока не переделаем контроллер)
-    App\Service\AI\VoiceCommandExecutor:
-        alias: App\Service\AI\VoiceCommandExecutorNew
         public: true

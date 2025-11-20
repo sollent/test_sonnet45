@@ -28,7 +28,7 @@ class VoiceProcessingService
 
     private LLMService $llmService;
 
-    private VoiceCommandExecutorNew $commandExecutor;
+    private VoiceCommandExecutor $commandExecutor;
 
     private WebSocketPublisher $wsPublisher;
 
@@ -41,7 +41,7 @@ class VoiceProcessingService
     public function __construct(
         VoiceCommandRepository $commandRepository,
         LLMService $llmService,
-        VoiceCommandExecutorNew $commandExecutor,
+        VoiceCommandExecutor $commandExecutor,
         WebSocketPublisher $wsPublisher,
         HttpClientInterface $httpClient,
         LoggerInterface $logger,
