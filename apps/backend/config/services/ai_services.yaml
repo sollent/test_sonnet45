@@ -27,8 +27,13 @@ services:
             $httpClient: '@ai.http_client'
 
 parameters:
-    env(WHISPER_URL): 'http://whisper:9000'
-    env(OLLAMA_URL): 'http://ollama:11434'
+    # ============================================
+    # AI Services URLs (Native Installation)
+    # ============================================
+    # Используем host.docker.internal для доступа из Docker к нативным сервисам на macOS
+    # Для Linux использовать: http://172.17.0.1:PORT
+    env(WHISPER_URL): 'http://host.docker.internal:9000'
+    env(OLLAMA_URL): 'http://host.docker.internal:11434'
     env(CENTRIFUGO_URL): 'http://centrifugo:8000'
     env(CENTRIFUGO_API_KEY): 'api-key'
     env(WEBSOCKET_ENABLED): true

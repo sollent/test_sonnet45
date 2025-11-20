@@ -1,75 +1,74 @@
 services:
   # ============================================
-  # Ollama - LLM Service (Qwen 2.5)
+  # Ollama - LLM Service (NATIVE INSTALLATION)
   # ============================================
-  ollama:
-    image: ollama/ollama:latest
-    container_name: ${COMPOSE_PROJECT_NAME:-backend}-ollama
-    ports:
-      - "${OLLAMA_PORT:-11434}:11434"
-    volumes:
-      - ollama_models:/root/.ollama
-      # ⚠️ DISABLED: Custom entrypoint causes restart issues
-      # Re-enable after fixing the script or use manual model pull
-      # - ./ai/ollama-entrypoint.sh:/entrypoint.sh:ro
-    environment:
-      - OLLAMA_MODELS=${OLLAMA_MODELS:-qwen2.5:1.5b}
-      - OLLAMA_HOST=0.0.0.0
-      - OLLAMA_ORIGINS=*
-      - OLLAMA_DEBUG=${OLLAMA_DEBUG:-false}
-      - OLLAMA_NUM_PARALLEL=${OLLAMA_NUM_PARALLEL:-2}  # Обрабатывать 2 запроса параллельно
-      - OLLAMA_KEEP_ALIVE=${OLLAMA_KEEP_ALIVE:-24h}   # Держать модель в памяти 24 часа
-    networks:
-      - nginx-php83-psql16
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-    restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          memory: 6G
-        reservations:
-          memory: 4G
-    # ⚠️ DISABLED: Using default Ollama entrypoint
-    # entrypoint: ["/bin/sh", "/entrypoint.sh"]
+  # ⚠️ ЗАКОММЕНТИРОВАНО: Используем нативную установку для производительности
+  # Native Ollama доступен по адресу: http://host.docker.internal:11434
+  # Установка: brew install ollama && ollama serve && ollama pull qwen2.5:1.5b
+  # ============================================
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   container_name: ${COMPOSE_PROJECT_NAME:-backend}-ollama
+  #   ports:
+  #     - "${OLLAMA_PORT:-11434}:11434"
+  #   volumes:
+  #     - ollama_models:/root/.ollama
+  #   environment:
+  #     - OLLAMA_MODELS=${OLLAMA_MODELS:-qwen2.5:1.5b}
+  #     - OLLAMA_HOST=0.0.0.0
+  #     - OLLAMA_ORIGINS=*
+  #     - OLLAMA_DEBUG=${OLLAMA_DEBUG:-false}
+  #     - OLLAMA_NUM_PARALLEL=${OLLAMA_NUM_PARALLEL:-2}
+  #     - OLLAMA_KEEP_ALIVE=${OLLAMA_KEEP_ALIVE:-24h}
+  #   networks:
+  #     - nginx-php83-psql16
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 5
+  #   restart: unless-stopped
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         memory: 6G
+  #       reservations:
+  #         memory: 4G
 
   # ============================================
-  # Whisper - Speech-to-Text Service
+  # Whisper - Speech-to-Text Service (NATIVE INSTALLATION)
   # ============================================
-  # Model: tiny (39M params, ~140MB disk)
-  # Features: Fast transcription, 85-90% accuracy
-  # Performance: 5-10s for short commands (2-5s audio) on CPU
+  # ⚠️ ЗАКОММЕНТИРОВАНО: Используем нативную установку для производительности
+  # Native Whisper доступен по адресу: http://host.docker.internal:9000
+  # Установка: см. docs/ai/NATIVE_INSTALLATION.md
   # ============================================
-  whisper:
-    image: onerahmet/openai-whisper-asr-webservice:latest
-    container_name: ${COMPOSE_PROJECT_NAME:-backend}-whisper
-    platform: linux/amd64
-    ports:
-      - "${WHISPER_PORT:-9000}:9000"
-    volumes:
-      - whisper_models:/app/models
-    environment:
-      - ASR_MODEL=tiny
-      - ASR_ENGINE=openai_whisper
-      - ASR_MODEL_PATH=/app/models
-      - ASR_LANGUAGE=ru
-    networks:
-      - nginx-php83-psql16
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/docs"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-    restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-        reservations:
-          memory: 512M
+  # whisper:
+  #   image: onerahmet/openai-whisper-asr-webservice:latest
+  #   container_name: ${COMPOSE_PROJECT_NAME:-backend}-whisper
+  #   platform: linux/amd64
+  #   ports:
+  #     - "${WHISPER_PORT:-9000}:9000"
+  #   volumes:
+  #     - whisper_models:/app/models
+  #   environment:
+  #     - ASR_MODEL=tiny
+  #     - ASR_ENGINE=openai_whisper
+  #     - ASR_MODEL_PATH=/app/models
+  #     - ASR_LANGUAGE=ru
+  #   networks:
+  #     - nginx-php83-psql16
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:9000/docs"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 5
+  #   restart: unless-stopped
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         memory: 1G
+  #       reservations:
+  #         memory: 512M
 
   # ============================================
   # Centrifugo - WebSocket Service
@@ -134,10 +133,11 @@ services:
           memory: 256M
 
 volumes:
-  ollama_models:
-    driver: local
-  whisper_models:
-    driver: local
+  # ⚠️ ЗАКОММЕНТИРОВАНО: Используем нативную установку
+  # ollama_models:
+  #   driver: local
+  # whisper_models:
+  #   driver: local
   redis_data:
     driver: local
 
