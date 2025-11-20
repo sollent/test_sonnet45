@@ -44,7 +44,7 @@ class VoiceProcessingService
         WebSocketPublisher $wsPublisher,
         HttpClientInterface $httpClient,
         LoggerInterface $logger,
-        string $whisperUrl = 'http://host.docker.internal:9000',
+        string $whisperUrl = 'http://host.docker.internal:9001',
     ) {
         $this->commandRepository = $commandRepository;
         $this->llmService = $llmService;

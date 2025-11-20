@@ -32,7 +32,7 @@ parameters:
     # ============================================
     # Используем host.docker.internal для доступа из Docker к нативным сервисам на macOS
     # Для Linux использовать: http://172.17.0.1:PORT
-    env(WHISPER_URL): 'http://host.docker.internal:9000'
+    env(WHISPER_URL): 'http://host.docker.internal:9001'
     env(OLLAMA_URL): 'http://host.docker.internal:11434'
     env(CENTRIFUGO_URL): 'http://centrifugo:8000'
     env(CENTRIFUGO_API_KEY): 'api-key'
