@@ -22,6 +22,8 @@ final readonly class ParsedCommand implements JsonSerializable
 
     public const ACTION_COMPLETE_TASK = 'complete_task';
 
+    public const ACTION_UNCOMPLETE_TASK = 'uncomplete_task';
+
     public const ACTION_FILTER_TASKS = 'filter_tasks';
 
     public const ACTION_CREATE_SUBTASK = 'create_subtask';
