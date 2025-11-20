@@ -14,17 +14,17 @@ use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
- * Сервис для работы с Large Language Model (Qwen 2.5 1.5B через Ollama)
+ * Сервис для работы с Large Language Model (Qwen 2.5 14B через Ollama)
  *
  * Отвечает за парсинг голосовых команд и конвертацию их в структурированные действия.
- * Использует оптимизированную модель Qwen 2.5 1.5B для быстрого отклика на CPU.
+ * Использует мощную модель Qwen 2.5 14B для отличного понимания сложных команд.
  * Следует паттерну Adapter для изоляции внешнего API
  */
 class LLMService
 {
-    private const DEFAULT_MODEL = 'qwen2.5:1.5b';
+    private const DEFAULT_MODEL = 'qwen2.5:14b';
 
-    private const DEFAULT_TIMEOUT = 60.0; // 1 минута для qwen2.5:1.5b на CPU (быстрее чем 3b)
+    private const DEFAULT_TIMEOUT = 120.0; // 2 минуты для qwen2.5:14b (мощная модель)
 
     private const MAX_RETRIES = 3;
 
@@ -183,7 +183,7 @@ class LLMService
             ? $params->get('ollama_url')
             : 'http://host.docker.internal:11434';
 
-        // Модель Qwen 2.5 1.5B - оптимизирована для скорости на CPU
+        // Модель Qwen 2.5 14B - мощная модель для отличного понимания команд
         $this->model = $params->has('llm_model')
             ? $params->get('llm_model')
             : self::DEFAULT_MODEL;

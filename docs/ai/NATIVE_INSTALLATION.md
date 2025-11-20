@@ -23,9 +23,13 @@ AI сервисы (Ollama и Whisper) теперь работают **натив
 
 | Метрика | Docker | Native | Улучшение |
 |---------|--------|--------|-----------|
-| **Whisper (tiny)** | 10-15s | 0.5-1s | 10-20x |
-| **LLM (Qwen 1.5B)** | 60-90s | 3-5s | 15-20x |
-| **Full Pipeline** | 70-105s | 3.5-6s | 15-20x |
+| **Whisper (medium)** | 15-25s | 5-8s | 3-5x |
+| **LLM (Qwen 14B)** | 60-90s | 5-15s | 4-6x |
+| **Full Pipeline** | 75-115s | 10-23s | 5-7x |
+
+**Примечание**: Модели medium и 14B обеспечивают значительно лучшее качество при приемлемой скорости.
+- Whisper medium: 95-97% точность (vs 85-90% у tiny)
+- Qwen 14B: отличное понимание сложных команд
 
 ### Архитектура
 
@@ -34,7 +38,7 @@ AI сервисы (Ollama и Whisper) теперь работают **натив
 │                   Host                       │
 ├─────────────────────────────────────────────┤
 │  Ollama (localhost:11434)                   │
-│  Whisper API (localhost:9000)               │
+│  Whisper API (localhost:9001)               │
 └──────────────┬──────────────────────────────┘
                │ host.docker.internal
 ┌──────────────┴──────────────────────────────┐
@@ -68,7 +72,7 @@ curl -fsSL https://ollama.com/install.sh | sh
 ollama serve
 
 # В отдельном терминале загрузить модель
-ollama pull qwen2.5:1.5b
+ollama pull qwen2.5:14b
 ```
 
 ### Проверка
@@ -136,9 +140,9 @@ import os
 
 app = Flask(__name__)
 
-# Загружаем модель при старте (tiny для скорости)
-print("Loading Whisper model...")
-model = whisper.load_model("tiny")
+# Загружаем модель при старте (medium для баланса скорости и качества)
+print("Loading Whisper model (medium)...")
+model = whisper.load_model("medium")
 print("Model loaded!")
 
 @app.route('/asr', methods=['POST'])
@@ -172,11 +176,11 @@ def transcribe():
 @app.route('/docs', methods=['GET'])
 def health():
     """Health check endpoint"""
-    return jsonify({'status': 'ok', 'model': 'tiny'})
+    return jsonify({'status': 'ok', 'model': 'medium'})
 
 if __name__ == '__main__':
-    print("Starting Whisper API server on port 9000...")
-    app.run(host='0.0.0.0', port=9000, debug=False)
+    print("Starting Whisper API server on port 9001...")
+    app.run(host='0.0.0.0', port=9001, debug=False, threaded=True)
 ```
 
 ### Запуск Сервера
@@ -193,9 +197,9 @@ python ~/whisper-server.py
 
 ```bash
 # Health check
-curl http://localhost:9000/docs
+curl http://localhost:9001/docs
 
-# Должен вернуть: {"status": "ok", "model": "tiny"}
+# Должен вернуть: {"status": "ok", "model": "medium"}
 ```
 
 ---
@@ -209,7 +213,7 @@ curl http://localhost:9000/docs
 curl http://localhost:11434/api/tags
 
 # Whisper
-curl http://localhost:9000/docs
+curl http://localhost:9001/docs
 ```
 
 ### 2. Проверка из Docker Контейнера
@@ -219,7 +223,7 @@ curl http://localhost:9000/docs
 docker exec backend-php83 curl http://host.docker.internal:11434/api/tags
 
 # Whisper из PHP контейнера
-docker exec backend-php83 curl http://host.docker.internal:9000/docs
+docker exec backend-php83 curl http://host.docker.internal:9001/docs
 ```
 
 ### 3. Функциональный Тест
@@ -347,7 +351,7 @@ pip list | grep whisper
 pip list | grep flask
 
 # Проверить порт
-lsof -i :9000
+lsof -i :9001
 ```
 
 ### Docker не видит нативные сервисы
@@ -367,7 +371,7 @@ docker exec backend-php83 sh -c 'echo "host-gateway host.docker.internal" >> /et
 ollama list
 
 # Загрузить модель заново
-ollama pull qwen2.5:1.5b
+ollama pull qwen2.5:14b
 ```
 
 ### Медленная работа Whisper

@@ -40,7 +40,7 @@ class LLMServiceTest extends TestCase
         $this->params->method('get')
             ->willReturnMap([
                 ['ollama_url', 'http://host.docker.internal:11434'],
-                ['llm_model', 'qwen2.5:1.5b'],
+                ['llm_model', 'qwen2.5:14b'],
             ]);
 
         $this->service = new LLMService(
@@ -78,7 +78,7 @@ class LLMServiceTest extends TestCase
                 'http://host.docker.internal:11434/api/generate',
                 $this->callback(function ($options) {
                     return isset($options['json']['model'])
-                        && $options['json']['model'] === 'qwen2.5:1.5b'
+                        && $options['json']['model'] === 'qwen2.5:14b'
                         && isset($options['json']['prompt'])
                         && str_contains($options['json']['prompt'], 'Создай задачу купить молоко завтра');
                 }),
@@ -264,7 +264,7 @@ class LLMServiceTest extends TestCase
         $mockResponse = $this->createMock(ResponseInterface::class);
         $mockResponse->method('toArray')->willReturn([
             'models' => [
-                ['name' => 'qwen2.5:1.5b'],
+                ['name' => 'qwen2.5:14b'],
                 ['name' => 'qwen2.5:7b'],
                 ['name' => 'llama3.2:1b'],
             ],
@@ -280,7 +280,7 @@ class LLMServiceTest extends TestCase
 
         // Assert
         $this->assertCount(3, $models);
-        $this->assertContains('qwen2.5:1.5b', $models);
+        $this->assertContains('qwen2.5:14b', $models);
         $this->assertContains('qwen2.5:7b', $models);
     }
 }
