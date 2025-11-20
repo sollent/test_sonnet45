@@ -6,6 +6,7 @@
 
 imports:
     - { resource: services/ai_services.yaml }
+    - { resource: services/voice_commands.yaml }
 
 parameters:
 

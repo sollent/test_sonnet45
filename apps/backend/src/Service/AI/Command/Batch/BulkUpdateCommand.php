@@ -31,6 +31,7 @@ class BulkUpdateCommand extends AbstractBatchCommand
     private DateTimeResolver $dateTimeResolver;
     private PriorityMapper $priorityMapper;
     private StatusMapper $statusMapper;
+    private array $updates = [];
 
     public function __construct(
         EntityManagerInterface $entityManager,
@@ -43,7 +44,8 @@ class BulkUpdateCommand extends AbstractBatchCommand
         PriorityMapper $priorityMapper,
         StatusMapper $statusMapper
     ) {
-        parent::__construct($entityManager, $taskService, $searchService, $dateTimeParser, $logger, $taskFinder);
+        parent::__construct($entityManager, $taskService, $searchService, $dateTimeParser, $logger);
+        $this->taskFinder = $taskFinder;
         $this->dateTimeResolver = $dateTimeResolver;
         $this->priorityMapper = $priorityMapper;
         $this->statusMapper = $statusMapper;
@@ -54,7 +56,7 @@ class BulkUpdateCommand extends AbstractBatchCommand
         return ParsedCommand::ACTION_BULK_UPDATE;
     }
 
-    protected function validateBatchParameters(array $parameters): void
+    protected function validateParameters(array $parameters): void
     {
         // Должно быть хотя бы одно изменение
         $hasUpdate = isset($parameters['new_status'])
@@ -66,42 +68,57 @@ class BulkUpdateCommand extends AbstractBatchCommand
         }
     }
 
-    protected function getOperationName(): string
+    protected function doExecute(array $parameters, User $user): CommandResponse
     {
-        return 'обновление';
-    }
+        // Подготавливаем обновления
+        $this->updates = [];
 
-    protected function processSingleTask($task, array $parameters): void
-    {
-        $changes = [];
-
-        // Обновление статуса
         if (isset($parameters['new_status'])) {
-            $newStatus = $this->statusMapper->map($parameters['new_status']);
-            $task->setStatus($newStatus);
-            $changes[] = sprintf('статус → %s', $newStatus->value);
+            $this->updates['status'] = $this->statusMapper->map($parameters['new_status']);
         }
 
-        // Обновление приоритета
         if (isset($parameters['new_priority'])) {
-            $newPriority = $this->priorityMapper->map($parameters['new_priority']);
-            $task->setPriority($newPriority);
-            $changes[] = sprintf('приоритет → %s', $newPriority->value);
+            $this->updates['priority'] = $this->priorityMapper->map($parameters['new_priority']);
         }
 
-        // Обновление дат
         if (isset($parameters['new_due_date'])) {
             $dateRange = $this->dateTimeResolver->resolveDateRange([
                 'due_date' => $parameters['new_due_date']
             ]);
+            $this->updates['start_date'] = $dateRange['start'];
+            $this->updates['due_date'] = $dateRange['due'];
+        }
 
-            if ($dateRange['start'] !== null) {
-                $task->setStartDate($dateRange['start']);
-            }
-            if ($dateRange['due'] !== null) {
-                $task->setDueDate($dateRange['due']);
-                $changes[] = sprintf('срок → %s', $dateRange['due']->format('d.m.Y'));
-            }
+        return $this->processBatchByFilters($parameters, $user);
+    }
+
+    protected function shouldProcessTask($task): bool
+    {
+        // Обновляем все найденные задачи
+        return true;
+    }
+
+    protected function processTask($task, User $user): void
+    {
+        $changes = [];
+
+        if (isset($this->updates['status'])) {
+            $task->setStatus($this->updates['status']);
+            $changes[] = sprintf('статус → %s', $this->updates['status']->value);
+        }
+
+        if (isset($this->updates['priority'])) {
+            $task->setPriority($this->updates['priority']);
+            $changes[] = sprintf('приоритет → %s', $this->updates['priority']->value);
+        }
+
+        if (isset($this->updates['start_date'])) {
+            $task->setStartDate($this->updates['start_date']);
+        }
+
+        if (isset($this->updates['due_date'])) {
+            $task->setDueDate($this->updates['due_date']);
+            $changes[] = sprintf('срок → %s', $this->updates['due_date']?->format('d.m.Y'));
         }
 
         $this->logger->info('Bulk update task', [
@@ -111,35 +128,56 @@ class BulkUpdateCommand extends AbstractBatchCommand
         ]);
     }
 
-    protected function createSuccessResponse(array $processedTasks, array $parameters): CommandResponse
+    protected function getNoTasksResponse(array $filters): CommandResponse
     {
+        return CommandResponse::failure(
+            'no_tasks_found',
+            'Не найдено задач для обновления по указанным критериям',
+            ['filters' => $filters]
+        );
+    }
+
+    protected function getBatchSuccessResponse(
+        int $successCount,
+        int $totalCount,
+        array $processed,
+        array $errors = [],
+        array $notFound = []
+    ): CommandResponse {
         // Формируем описание изменений
         $changes = [];
-        if (isset($parameters['new_status'])) {
-            $changes[] = sprintf('статус → %s', $parameters['new_status']);
+        if (isset($this->updates['status'])) {
+            $changes[] = sprintf('статус → %s', $this->updates['status']->value);
         }
-        if (isset($parameters['new_priority'])) {
-            $changes[] = sprintf('приоритет → %s', $parameters['new_priority']);
+        if (isset($this->updates['priority'])) {
+            $changes[] = sprintf('приоритет → %s', $this->updates['priority']->value);
         }
-        if (isset($parameters['new_due_date'])) {
-            $changes[] = sprintf('срок → %s', $parameters['new_due_date']);
+        if (isset($this->updates['due_date'])) {
+            $changes[] = sprintf('срок → %s', $this->updates['due_date']?->format('d.m.Y'));
         }
 
         $changesText = implode(', ', $changes);
 
         return CommandResponse::success(
             'bulk_update_completed',
-            sprintf('Обновлено %d задач (%s)', count($processedTasks), $changesText),
+            sprintf('Обновлено %d задач (%s)', $successCount, $changesText),
             [
-                'updated_count' => count($processedTasks),
+                'updated_count' => $successCount,
                 'changes' => $changes,
-                'tasks' => array_map(fn($task) => [
-                    'id' => $task->getId(),
-                    'title' => $task->getTitle(),
-                    'status' => $task->getStatus()->value,
-                    'priority' => $task->getPriority()->value,
-                    'dueDate' => $task->getDueDate()?->format('c'),
-                ], $processedTasks),
+                'tasks' => $processed,
+                'errors' => $errors,
+            ]
+        );
+    }
+
+    protected function getNoSuccessResponse(array $notFound, array $errors): CommandResponse
+    {
+        return CommandResponse::failure(
+            'bulk_update_failed',
+            'Не удалось обновить ни одной задачи',
+            [
+                'not_found' => $notFound,
+                'errors' => $errors,
             ]
         );
     }

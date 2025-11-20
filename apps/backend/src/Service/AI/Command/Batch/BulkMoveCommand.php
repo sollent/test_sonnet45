@@ -15,7 +15,6 @@ use App\Service\TaskService;
 use App\ValueObject\ParsedCommand;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
-use RuntimeException;
 
 /**
  * Команда массового перемещения задач к новому родителю
@@ -26,6 +25,8 @@ use RuntimeException;
  */
 class BulkMoveCommand extends AbstractBatchCommand
 {
+    private ?Task $newParent = null;
+
     public function __construct(
         EntityManagerInterface $entityManager,
         TaskService $taskService,
@@ -34,7 +35,8 @@ class BulkMoveCommand extends AbstractBatchCommand
         LoggerInterface $logger,
         TaskFinder $taskFinder
     ) {
-        parent::__construct($entityManager, $taskService, $searchService, $dateTimeParser, $logger, $taskFinder);
+        parent::__construct($entityManager, $taskService, $searchService, $dateTimeParser, $logger);
+        $this->taskFinder = $taskFinder;
     }
 
     public function getAction(): string
@@ -42,132 +44,104 @@ class BulkMoveCommand extends AbstractBatchCommand
         return ParsedCommand::ACTION_BULK_MOVE;
     }
 
-    protected function validateBatchParameters(array $parameters): void
+    protected function validateParameters(array $parameters): void
     {
         // new_parent_search может быть null (перемещение в корень)
         // Дополнительная валидация не требуется
     }
 
-    protected function getOperationName(): string
-    {
-        return 'перемещение';
-    }
-
     protected function doExecute(array $parameters, User $user): CommandResponse
     {
         // Сначала найдем нового родителя если указан
-        $newParent = null;
-        $newParentTitle = '(корень)';
+        $this->newParent = null;
 
         if (!empty($parameters['new_parent_search'])) {
-            $newParent = $this->taskFinder->find($parameters['new_parent_search'], $user);
+            $this->newParent = $this->taskFinder->find($parameters['new_parent_search'], $user);
 
-            if (!$newParent) {
+            if (!$this->newParent) {
                 return CommandResponse::failure(
                     'new_parent_not_found',
                     sprintf('Новая родительская задача "%s" не найдена', $parameters['new_parent_search']),
                     ['search' => $parameters['new_parent_search']]
                 );
             }
-
-            $newParentTitle = $newParent->getTitle();
         }
 
-        // Теперь найдем задачи для перемещения
-        $tasks = $this->findTasks($parameters, $user);
-
-        if (empty($tasks)) {
-            return $this->createNoTasksFoundResponse($parameters);
-        }
-
-        // Фильтруем задачи которые могут создать циклическую зависимость
-        $validTasks = [];
-        $skippedTasks = [];
-
-        foreach ($tasks as $task) {
-            if ($newParent && $this->wouldCreateCycle($task, $newParent)) {
-                $skippedTasks[] = $task;
-                $this->logger->warning('Skipping task due to circular dependency', [
-                    'task_id' => $task->getId(),
-                    'task_title' => $task->getTitle(),
-                    'new_parent_id' => $newParent->getId(),
-                ]);
-            } else {
-                $validTasks[] = $task;
-            }
-        }
-
-        if (empty($validTasks)) {
-            return CommandResponse::failure(
-                'circular_dependency',
-                'Невозможно переместить задачи: все создадут циклическую зависимость',
-                [
-                    'tasks_count' => count($tasks),
-                    'new_parent' => $newParentTitle,
-                ]
-            );
-        }
-
-        // Перемещаем валидные задачи
-        foreach ($validTasks as $task) {
-            $this->processSingleTask($task, ['new_parent' => $newParent]);
-        }
-
-        $this->flush();
-
-        // Формируем ответ
-        $response = $this->createSuccessResponse($validTasks, $parameters);
-
-        // Добавляем информацию о пропущенных задачах
-        if (!empty($skippedTasks)) {
-            $data = $response->getData();
-            $data['skipped_count'] = count($skippedTasks);
-            $data['skipped_tasks'] = array_map(fn($task) => [
-                'id' => $task->getId(),
-                'title' => $task->getTitle(),
-                'reason' => 'circular_dependency',
-            ], $skippedTasks);
-
-            return CommandResponse::success(
-                $response->getType(),
-                $response->getMessage() . sprintf(' (%d пропущено из-за циклической зависимости)', count($skippedTasks)),
-                $data,
-                $response->getErrors()
-            );
-        }
-
-        return $response;
+        // Используем стандартную обработку пакетных операций
+        return $this->processBatchByFilters($parameters, $user);
     }
 
-    protected function processSingleTask($task, array $parameters): void
+    protected function shouldProcessTask($task): bool
     {
-        $newParent = $parameters['new_parent'] ?? null;
-        $task->setParent($newParent);
+        // Проверяем, не создастся ли циклическая зависимость
+        if ($this->newParent && $this->wouldCreateCycle($task, $this->newParent)) {
+            $this->logger->warning('Skipping task due to circular dependency', [
+                'task_id' => $task->getId(),
+                'task_title' => $task->getTitle(),
+                'new_parent_id' => $this->newParent->getId(),
+            ]);
+            return false;
+        }
+        return true;
+    }
+
+    protected function processTask($task, User $user): void
+    {
+        $task->setParent($this->newParent);
 
         $this->logger->info('Bulk move task', [
             'task_id' => $task->getId(),
             'task_title' => $task->getTitle(),
-            'new_parent_id' => $newParent?->getId(),
-            'new_parent_title' => $newParent?->getTitle() ?? '(корень)',
+            'new_parent_id' => $this->newParent?->getId(),
+            'new_parent_title' => $this->newParent?->getTitle() ?? '(корень)',
         ]);
     }
 
-    protected function createSuccessResponse(array $processedTasks, array $parameters): CommandResponse
+    protected function getNoTasksResponse(array $filters): CommandResponse
     {
-        $newParentTitle = isset($parameters['new_parent_search'])
-            ? ($parameters['new_parent_search'] ?: '(корень)')
-            : '(корень)';
+        return CommandResponse::failure(
+            'no_tasks_found',
+            'Не найдено задач для перемещения по указанным критериям',
+            ['filters' => $filters]
+        );
+    }
+
+    protected function getBatchSuccessResponse(
+        int $successCount,
+        int $totalCount,
+        array $processed,
+        array $errors = [],
+        array $notFound = []
+    ): CommandResponse {
+        $newParentTitle = $this->newParent?->getTitle() ?? '(корень)';
+
+        $message = sprintf('Перемещено %d задач в "%s"', $successCount, $newParentTitle);
+
+        $skippedCount = $totalCount - $successCount;
+        if ($skippedCount > 0) {
+            $message .= sprintf(' (%d пропущено из-за циклической зависимости)', $skippedCount);
+        }
 
         return CommandResponse::success(
             'bulk_move_completed',
-            sprintf('Перемещено %d задач в "%s"', count($processedTasks), $newParentTitle),
+            $message,
             [
-                'moved_count' => count($processedTasks),
+                'moved_count' => $successCount,
                 'new_parent' => $newParentTitle,
-                'tasks' => array_map(fn($task) => [
-                    'id' => $task->getId(),
-                    'title' => $task->getTitle(),
-                ], $processedTasks),
+                'tasks' => $processed,
+                'errors' => $errors,
+            ]
+        );
+    }
+
+    protected function getNoSuccessResponse(array $notFound, array $errors): CommandResponse
+    {
+        return CommandResponse::failure(
+            'bulk_move_failed',
+            'Не удалось переместить ни одной задачи',
+            [
+                'not_found' => $notFound,
+                'errors' => $errors,
             ]
         );
     }
