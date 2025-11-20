@@ -94,6 +94,8 @@ class VoiceCommandExecutor
                 ParsedCommand::ACTION_BULK_DELETE           => $this->executeBulkDelete($command->parameters, $user),
                 ParsedCommand::ACTION_DUPLICATE_TASK        => $this->executeDuplicateTask($command->parameters, $user),
                 ParsedCommand::ACTION_BULK_MOVE             => $this->executeBulkMove($command->parameters, $user),
+                ParsedCommand::ACTION_ADD_TAG               => $this->executeAddTag($command->parameters, $user),
+                ParsedCommand::ACTION_REMOVE_TAG            => $this->executeRemoveTag($command->parameters, $user),
                 ParsedCommand::ACTION_CLARIFICATION_NEEDED  => $this->executeClarificationNeeded($command->parameters),
                 ParsedCommand::ACTION_UNKNOWN               => $this->executeUnknown($command->parameters),
                 default                                     => throw new RuntimeException('Unsupported action: ' . $command->action)
@@ -1028,6 +1030,124 @@ class VoiceCommandExecutor
             'moved_count'  => $movedCount,
             'new_date'     => $newDate,
             'moved_titles' => $movedTitles,
+        ];
+    }
+
+    /**
+     * Добавление тега к задаче
+     */
+    private function executeAddTag(array $parameters, User $user): array
+    {
+        $search = $parameters['search'] ?? null;
+        $tagName = $parameters['tag'] ?? null;
+
+        if (empty($search) || empty($tagName)) {
+            throw new RuntimeException('Search and tag are required for adding tag');
+        }
+
+        // Поиск задачи
+        $task = $this->searchService->findBestMatch($search, $user);
+
+        if (!$task) {
+            return [
+                'type'    => 'task_not_found',
+                'success' => false,
+                'message' => sprintf('Задача "%s" не найдена', $search),
+                'search'  => $search,
+            ];
+        }
+
+        // Найти или создать тег
+        $tags = $this->tagRepository->findOrCreateByNames([$tagName], $user);
+        $tag = $tags[0] ?? null;
+
+        if (!$tag) {
+            return [
+                'type'    => 'tag_creation_failed',
+                'success' => false,
+                'message' => sprintf('Не удалось создать тег "%s"', $tagName),
+            ];
+        }
+
+        // Проверяем, есть ли уже этот тег
+        if ($task->getTags()->contains($tag)) {
+            return [
+                'type'    => 'tag_already_exists',
+                'success' => false,
+                'message' => sprintf('Тег "%s" уже добавлен к задаче "%s"', $tagName, $task->getTitle()),
+            ];
+        }
+
+        // Добавляем тег
+        $task->addTag($tag);
+        $this->entityManager->flush();
+
+        return [
+            'type'    => 'tag_added',
+            'success' => true,
+            'message' => sprintf('Тег "%s" добавлен к задаче "%s"', $tagName, $task->getTitle()),
+            'task'    => [
+                'id'    => $task->getId(),
+                'title' => $task->getTitle(),
+            ],
+            'tag' => $tagName,
+        ];
+    }
+
+    /**
+     * Удаление тега с задачи
+     */
+    private function executeRemoveTag(array $parameters, User $user): array
+    {
+        $search = $parameters['search'] ?? null;
+        $tagName = $parameters['tag'] ?? null;
+
+        if (empty($search) || empty($tagName)) {
+            throw new RuntimeException('Search and tag are required for removing tag');
+        }
+
+        // Поиск задачи
+        $task = $this->searchService->findBestMatch($search, $user);
+
+        if (!$task) {
+            return [
+                'type'    => 'task_not_found',
+                'success' => false,
+                'message' => sprintf('Задача "%s" не найдена', $search),
+                'search'  => $search,
+            ];
+        }
+
+        // Ищем тег у задачи
+        $tagToRemove = null;
+        foreach ($task->getTags() as $tag) {
+            if (mb_strtolower($tag->getName()) === mb_strtolower($tagName)) {
+                $tagToRemove = $tag;
+                break;
+            }
+        }
+
+        if (!$tagToRemove) {
+            return [
+                'type'    => 'tag_not_found',
+                'success' => false,
+                'message' => sprintf('Тег "%s" не найден у задачи "%s"', $tagName, $task->getTitle()),
+            ];
+        }
+
+        // Удаляем тег
+        $task->removeTag($tagToRemove);
+        $this->entityManager->flush();
+
+        return [
+            'type'    => 'tag_removed',
+            'success' => true,
+            'message' => sprintf('Тег "%s" удалён с задачи "%s"', $tagName, $task->getTitle()),
+            'task'    => [
+                'id'    => $task->getId(),
+                'title' => $task->getTitle(),
+            ],
+            'tag' => $tagName,
         ];
     }
 

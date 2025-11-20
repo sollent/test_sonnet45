@@ -188,6 +188,16 @@ class LLMService
             - filters: {date, priority, status} (как в filter_tasks)
             - new_date (обязательно, куда переносить)
 
+        18. add_tag - добавить тег к задаче
+            Параметры:
+            - search (поиск задачи)
+            - tag (название тега)
+
+        19. remove_tag - убрать тег с задачи
+            Параметры:
+            - search (поиск задачи)
+            - tag (название тега)
+
         === ПРИОРИТЕТЫ (используй ТОЛЬКО эти) ===
         - low - низкий приоритет
         - medium - средний/обычный приоритет
@@ -299,6 +309,15 @@ class LLMService
 
         "Сдвинь все срочные задачи на следующую неделю" →
         {"action":"bulk_move","parameters":{"filters":{"priority":"urgent"},"new_date":"next_week"},"confidence":0.89}
+
+        "Добавь тег работа к задаче отчёт" →
+        {"action":"add_tag","parameters":{"search":"отчёт","tag":"работа"},"confidence":0.93}
+
+        "Поставь тег срочно на задачу встреча с клиентом" →
+        {"action":"add_tag","parameters":{"search":"встреча с клиентом","tag":"срочно"},"confidence":0.92}
+
+        "Убери тег работа с задачи отчёт" →
+        {"action":"remove_tag","parameters":{"search":"отчёт","tag":"работа"},"confidence":0.91}
 
         === С ОПЕЧАТКАМИ ===
 
