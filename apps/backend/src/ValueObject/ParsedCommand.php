@@ -43,6 +43,8 @@ final readonly class ParsedCommand implements JsonSerializable
 
     public const ACTION_UPDATE_TASK = 'update_task';
 
+    public const ACTION_BULK_UPDATE = 'bulk_update';
+
     public const ACTION_MOVE_TASK = 'move_task';
 
     public const ACTION_DELETE_TASK = 'delete_task';
@@ -177,6 +179,7 @@ final readonly class ParsedCommand implements JsonSerializable
             self::ACTION_COMPLETE_SUBTASKS,
             self::ACTION_CREATE_MULTIPLE_TASKS,
             self::ACTION_UPDATE_TASK,
+            self::ACTION_BULK_UPDATE,
             self::ACTION_MOVE_TASK,
             self::ACTION_DELETE_TASK,
             self::ACTION_DELETE_MULTIPLE_TASKS,

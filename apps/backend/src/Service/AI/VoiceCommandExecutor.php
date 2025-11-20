@@ -84,6 +84,7 @@ class VoiceCommandExecutor
                 ParsedCommand::ACTION_CREATE_SUBTASK        => $this->executeCreateSubtask($command->parameters, $user),
                 ParsedCommand::ACTION_CREATE_MULTIPLE_SUBTASKS => $this->executeCreateMultipleSubtasks($command->parameters, $user),
                 ParsedCommand::ACTION_UPDATE_TASK           => $this->executeUpdateTask($command->parameters, $user),
+                ParsedCommand::ACTION_BULK_UPDATE           => $this->executeBulkUpdate($command->parameters, $user),
                 ParsedCommand::ACTION_MOVE_TASK             => $this->executeMoveTask($command->parameters, $user),
                 ParsedCommand::ACTION_BULK_COMPLETE         => $this->executeBulkComplete($command->parameters, $user),
                 ParsedCommand::ACTION_COMPLETE_MULTIPLE_TASKS => $this->executeCompleteMultipleTasks($command->parameters, $user),
@@ -1144,6 +1145,82 @@ class VoiceCommandExecutor
                 'startDate' => $task->getStartDate()?->format('c'),
                 'dueDate'   => $task->getDueDate()?->format('c'),
             ],
+            'updated_fields' => $updatedFields,
+        ];
+    }
+
+    /**
+     * Массовое обновление задач по фильтрам (CRUD: Update - batch)
+     */
+    private function executeBulkUpdate(array $parameters, User $user): array
+    {
+        $filters = $parameters['filters'] ?? [];
+        $updates = $parameters['updates'] ?? [];
+
+        if (empty($updates)) {
+            throw new RuntimeException('Updates are required for bulk update');
+        }
+
+        // Поиск задач по фильтрам
+        $tasks = $this->searchService->filterTasks($filters, $user);
+
+        if (empty($tasks)) {
+            return [
+                'type'    => 'no_tasks_to_update',
+                'success' => false,
+                'message' => 'Не найдено задач для обновления',
+                'filters' => $filters,
+            ];
+        }
+
+        // Обновление всех найденных задач
+        $updatedCount = 0;
+        $updatedTitles = [];
+        $updatedFields = [];
+
+        foreach ($tasks as $task) {
+            // Обновление приоритета
+            if (isset($updates['priority'])) {
+                $newPriority = $this->parsePriority($updates['priority']);
+                $task->setPriority($newPriority);
+                if (!in_array('приоритет', $updatedFields)) {
+                    $updatedFields[] = 'приоритет';
+                }
+            }
+
+            // Обновление статуса
+            if (isset($updates['status'])) {
+                $statusMap = [
+                    'pending'     => TaskStatus::PENDING,
+                    'in_progress' => TaskStatus::IN_PROGRESS,
+                    'completed'   => TaskStatus::COMPLETED,
+                ];
+
+                $statusKey = mb_strtolower(trim($updates['status']));
+                if (isset($statusMap[$statusKey])) {
+                    $task->setStatus($statusMap[$statusKey]);
+                    if (!in_array('статус', $updatedFields)) {
+                        $updatedFields[] = 'статус';
+                    }
+                }
+            }
+
+            $updatedTitles[] = $task->getTitle();
+            $updatedCount++;
+        }
+
+        $this->entityManager->flush();
+
+        return [
+            'type'           => 'bulk_updated',
+            'success'        => true,
+            'message'        => sprintf(
+                'Обновлено задач: %d (%s)',
+                $updatedCount,
+                implode(', ', $updatedFields)
+            ),
+            'updated_count'  => $updatedCount,
+            'updated_titles' => $updatedTitles,
             'updated_fields' => $updatedFields,
         ];
     }

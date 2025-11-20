@@ -112,7 +112,7 @@ class LLMService
            Параметры:
            - tasks: массив строк с названиями задач для поиска
 
-        6. update_task - изменить приоритет/статус/дату/время
+        6. update_task - изменить приоритет/статус/дату/время одной задачи
            Параметры:
            - search (обязательно)
            - updates: {
@@ -122,6 +122,11 @@ class LLMService
                start_time (опционально, формат HH:MM),
                end_time (опционально, формат HH:MM)
              }
+
+        7. bulk_update - массовое обновление задач по фильтрам
+           Параметры:
+           - filters: {date, priority, status, search} (как в filter_tasks)
+           - updates: {priority?, status?}
 
         6. filter_tasks - показать/найти задачи
            Параметры:
@@ -218,6 +223,15 @@ class LLMService
 
         "Переведи задачу отчет в статус в работе" →
         {"action":"update_task","parameters":{"search":"отчет","updates":{"status":"in_progress"}},"confidence":0.92}
+
+        "Добавь всем задачам на сегодня статус в процессе" →
+        {"action":"bulk_update","parameters":{"filters":{"date":"today"},"updates":{"status":"in_progress"}},"confidence":0.91}
+
+        "Сделай все задачи на завтра срочными" →
+        {"action":"bulk_update","parameters":{"filters":{"date":"tomorrow"},"updates":{"priority":"urgent"}},"confidence":0.90}
+
+        "Переведи все задачи на сегодня в статус завершено" →
+        {"action":"bulk_complete","parameters":{"filters":{"date":"today"}},"confidence":0.92}
 
         "Перенеси встречу на послезавтра в 16:00" →
         {"action":"move_task","parameters":{"search":"встреча","new_date":"day_after_tomorrow","start_time":"16:00"},"confidence":0.91}
