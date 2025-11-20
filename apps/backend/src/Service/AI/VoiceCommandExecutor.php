@@ -86,6 +86,7 @@ class VoiceCommandExecutor
                 ParsedCommand::ACTION_MOVE_TASK             => $this->executeMoveTask($command->parameters, $user),
                 ParsedCommand::ACTION_BULK_COMPLETE         => $this->executeBulkComplete($command->parameters, $user),
                 ParsedCommand::ACTION_COMPLETE_MULTIPLE_TASKS => $this->executeCompleteMultipleTasks($command->parameters, $user),
+                ParsedCommand::ACTION_COMPLETE_SUBTASKS     => $this->executeCompleteSubtasks($command->parameters, $user),
                 ParsedCommand::ACTION_DELETE_TASK           => $this->executeDeleteTask($command->parameters, $user),
                 ParsedCommand::ACTION_DELETE_MULTIPLE_TASKS => $this->executeDeleteMultipleTasks($command->parameters, $user),
                 ParsedCommand::ACTION_BULK_DELETE           => $this->executeBulkDelete($command->parameters, $user),
@@ -606,6 +607,87 @@ class VoiceCommandExecutor
             'tasks'           => $completedTasks,
             'not_found'       => $notFoundTasks,
             'errors'          => $errors,
+        ];
+    }
+
+    /**
+     * Завершение всех подзадач конкретной задачи (CRUD: Update - batch)
+     */
+    private function executeCompleteSubtasks(array $parameters, User $user): array
+    {
+        $parentSearch = $parameters['parent_search'] ?? $parameters['parent'] ?? null;
+
+        if (empty($parentSearch)) {
+            throw new RuntimeException('Parent task search is required for completing subtasks');
+        }
+
+        // Поиск родительской задачи
+        $parentTask = $this->searchService->findBestMatch($parentSearch, $user);
+
+        if (!$parentTask) {
+            return [
+                'type'    => 'parent_not_found',
+                'success' => false,
+                'message' => sprintf('Родительская задача "%s" не найдена', $parentSearch),
+                'search'  => $parentSearch,
+            ];
+        }
+
+        // Получаем все подзадачи
+        $subtasks = $parentTask->getSubtasks();
+
+        if ($subtasks->isEmpty()) {
+            return [
+                'type'    => 'no_subtasks',
+                'success' => false,
+                'message' => sprintf('У задачи "%s" нет подзадач', $parentTask->getTitle()),
+                'parent'  => [
+                    'id'    => $parentTask->getId(),
+                    'title' => $parentTask->getTitle(),
+                ],
+            ];
+        }
+
+        // Завершаем все подзадачи
+        $completedCount = 0;
+        $completedTitles = [];
+
+        foreach ($subtasks as $subtask) {
+            if ($subtask->getStatus() !== TaskStatus::COMPLETED) {
+                $this->taskService->completeTask($subtask, $user);
+                $completedCount++;
+                $completedTitles[] = $subtask->getTitle();
+            }
+        }
+
+        if ($completedCount === 0) {
+            return [
+                'type'    => 'all_subtasks_already_completed',
+                'success' => false,
+                'message' => sprintf('Все подзадачи задачи "%s" уже завершены', $parentTask->getTitle()),
+                'parent'  => [
+                    'id'    => $parentTask->getId(),
+                    'title' => $parentTask->getTitle(),
+                ],
+            ];
+        }
+
+        return [
+            'type'             => 'subtasks_completed',
+            'success'          => true,
+            'message'          => sprintf(
+                'Завершено подзадач: %d из %d для задачи "%s"',
+                $completedCount,
+                $subtasks->count(),
+                $parentTask->getTitle()
+            ),
+            'parent'           => [
+                'id'    => $parentTask->getId(),
+                'title' => $parentTask->getTitle(),
+            ],
+            'completed_count'  => $completedCount,
+            'total_count'      => $subtasks->count(),
+            'completed_titles' => $completedTitles,
         ];
     }
 
