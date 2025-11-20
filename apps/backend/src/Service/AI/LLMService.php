@@ -140,9 +140,13 @@ class LLMService
            - start_time (опционально)
            - end_time (опционально)
 
-        9. bulk_complete - завершить несколько задач
+        9. bulk_complete - завершить задачи по фильтрам (например "все на сегодня")
            Параметры:
            - filters (как в filter_tasks)
+
+        10. complete_multiple_tasks - завершить конкретные задачи по названиям
+            Параметры:
+            - tasks: массив строк с названиями задач для поиска
 
         === ПРИОРИТЕТЫ (используй ТОЛЬКО эти) ===
         - low - низкий приоритет
@@ -198,6 +202,9 @@ class LLMService
 
         "Заверши все задачи на вчера" →
         {"action":"bulk_complete","parameters":{"filters":{"date":"yesterday"}},"confidence":0.90}
+
+        "Заверши две задачи купить гуся и купить кабана" →
+        {"action":"complete_multiple_tasks","parameters":{"tasks":["купить гуся","купить кабана"]},"confidence":0.92}
 
         "Добавь подзадачу закупить продукты к задаче организовать вечеринку" →
         {"action":"create_subtask","parameters":{"parent_search":"организовать вечеринку","title":"Закупить продукты"},"confidence":0.92}

@@ -84,6 +84,7 @@ class VoiceCommandExecutor
                 ParsedCommand::ACTION_UPDATE_TASK           => $this->executeUpdateTask($command->parameters, $user),
                 ParsedCommand::ACTION_MOVE_TASK             => $this->executeMoveTask($command->parameters, $user),
                 ParsedCommand::ACTION_BULK_COMPLETE         => $this->executeBulkComplete($command->parameters, $user),
+                ParsedCommand::ACTION_COMPLETE_MULTIPLE_TASKS => $this->executeCompleteMultipleTasks($command->parameters, $user),
                 ParsedCommand::ACTION_CLARIFICATION_NEEDED  => $this->executeClarificationNeeded($command->parameters),
                 ParsedCommand::ACTION_UNKNOWN               => $this->executeUnknown($command->parameters),
                 default                                     => throw new RuntimeException('Unsupported action: ' . $command->action)
@@ -437,6 +438,69 @@ class VoiceCommandExecutor
             'completed_count'  => $completedCount,
             'total_count'      => count($tasks),
             'completed_titles' => $completedTitles,
+        ];
+    }
+
+    /**
+     * Завершение нескольких конкретных задач по названиям
+     */
+    private function executeCompleteMultipleTasks(array $parameters, User $user): array
+    {
+        $taskNames = $parameters['tasks'] ?? [];
+
+        if (empty($taskNames) || !is_array($taskNames)) {
+            throw new RuntimeException('Tasks array is required for completing multiple tasks');
+        }
+
+        $completedTasks = [];
+        $notFoundTasks = [];
+        $errors = [];
+
+        foreach ($taskNames as $taskName) {
+            // Поиск задачи по названию
+            $task = $this->searchService->findBestMatch($taskName, $user);
+
+            if (!$task) {
+                $notFoundTasks[] = $taskName;
+                continue;
+            }
+
+            // Проверяем что задача не завершена
+            if ($task->getStatus() === TaskStatus::COMPLETED) {
+                $errors[] = sprintf('Задача "%s" уже завершена', $task->getTitle());
+                continue;
+            }
+
+            // Завершаем задачу
+            $this->taskService->completeTask($task, $user);
+            $completedTasks[] = [
+                'id'    => $task->getId(),
+                'title' => $task->getTitle(),
+            ];
+        }
+
+        $successCount = count($completedTasks);
+        $totalCount = count($taskNames);
+
+        if ($successCount === 0) {
+            return [
+                'type'       => 'no_tasks_completed',
+                'success'    => false,
+                'message'    => 'Не удалось завершить ни одной задачи',
+                'not_found'  => $notFoundTasks,
+                'errors'     => $errors,
+            ];
+        }
+
+        return [
+            'type'            => 'multiple_tasks_completed',
+            'success'         => true,
+            'message'         => sprintf('Завершено задач: %d из %d', $successCount, $totalCount),
+            'completed_count' => $successCount,
+            'total_count'     => $totalCount,
+            'tasks'           => $completedTasks,
+            'not_found'       => $notFoundTasks,
+            'errors'          => $errors,
         ];
     }
 

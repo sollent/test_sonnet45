@@ -30,6 +30,8 @@ final readonly class ParsedCommand implements JsonSerializable
 
     public const ACTION_BULK_COMPLETE = 'bulk_complete';
 
+    public const ACTION_COMPLETE_MULTIPLE_TASKS = 'complete_multiple_tasks';
+
     // 🆕 Новые действия для супер сложных команд
     public const ACTION_CREATE_MULTIPLE_TASKS = 'create_multiple_tasks';
 
