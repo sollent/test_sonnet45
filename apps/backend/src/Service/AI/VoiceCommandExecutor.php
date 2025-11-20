@@ -81,6 +81,7 @@ class VoiceCommandExecutor
                 ParsedCommand::ACTION_UNCOMPLETE_TASK       => $this->executeUncompleteTask($command->parameters, $user), // 🆕 Добавлено!
                 ParsedCommand::ACTION_FILTER_TASKS          => $this->executeFilterTasks($command->parameters, $user),
                 ParsedCommand::ACTION_CREATE_SUBTASK        => $this->executeCreateSubtask($command->parameters, $user),
+                ParsedCommand::ACTION_CREATE_MULTIPLE_SUBTASKS => $this->executeCreateMultipleSubtasks($command->parameters, $user),
                 ParsedCommand::ACTION_UPDATE_TASK           => $this->executeUpdateTask($command->parameters, $user),
                 ParsedCommand::ACTION_MOVE_TASK             => $this->executeMoveTask($command->parameters, $user),
                 ParsedCommand::ACTION_BULK_COMPLETE         => $this->executeBulkComplete($command->parameters, $user),
@@ -397,6 +398,107 @@ class VoiceCommandExecutor
                 'parent_id'    => $parentTask->getId(),
                 'parent_title' => $parentTask->getTitle(),
             ],
+        ];
+    }
+
+    /**
+     * Создание нескольких подзадач для существующей задачи (CRUD: Create - batch)
+     */
+    private function executeCreateMultipleSubtasks(array $parameters, User $user): array
+    {
+        $parentSearch = $parameters['parent_search'] ?? $parameters['parent'] ?? $parameters['parent_task'] ?? null;
+        $subtasks = $parameters['subtasks'] ?? [];
+
+        if (empty($parentSearch)) {
+            throw new RuntimeException('Parent task search is required for multiple subtask creation');
+        }
+
+        if (empty($subtasks) || !is_array($subtasks)) {
+            throw new RuntimeException('Subtasks array is required for multiple subtask creation');
+        }
+
+        // Поиск родительской задачи
+        $parentTask = $this->searchService->findBestMatch($parentSearch, $user);
+
+        if (!$parentTask) {
+            return [
+                'type'    => 'parent_not_found',
+                'success' => false,
+                'message' => sprintf('Родительская задача "%s" не найдена', $parentSearch),
+                'search'  => $parentSearch,
+            ];
+        }
+
+        $createdSubtasks = [];
+        $errors = [];
+
+        foreach ($subtasks as $index => $subtaskData) {
+            try {
+                // Поддержка как простых строк, так и объектов
+                $title = is_array($subtaskData) ? ($subtaskData['title'] ?? null) : $subtaskData;
+
+                if (empty($title)) {
+                    $errors[] = sprintf('Подзадача #%d: название не указано', $index + 1);
+                    continue;
+                }
+
+                // Создание подзадачи
+                $dto = new CreateTaskDto();
+                $dto->title = $title;
+                $dto->description = is_array($subtaskData) ? ($subtaskData['description'] ?? '') : '';
+                $dto->status = TaskStatus::PENDING;
+                $dto->priority = is_array($subtaskData) && isset($subtaskData['priority'])
+                    ? $this->parsePriority($subtaskData['priority'])
+                    : $parentTask->getPriority();
+                $dto->parentTaskId = $parentTask->getId();
+
+                // Обработка даты если указана
+                if (is_array($subtaskData) && isset($subtaskData['due_date'])) {
+                    $startDate = $this->dateTimeParser->parseStartDate($subtaskData['due_date']);
+                    $dueDate = $this->dateTimeParser->parseDueDate($subtaskData['due_date']);
+                    $dto->startDate = $startDate?->format('Y-m-d H:i:s');
+                    $dto->dueDate = $dueDate?->format('Y-m-d H:i:s');
+                }
+
+                $subtask = $this->taskService->createTask($dto, $user);
+                $createdSubtasks[] = [
+                    'id'    => $subtask->getId(),
+                    'title' => $subtask->getTitle(),
+                ];
+            } catch (Exception $e) {
+                $errors[] = sprintf('Подзадача #%d: %s', $index + 1, $e->getMessage());
+            }
+        }
+
+        $successCount = count($createdSubtasks);
+        $totalCount = count($subtasks);
+
+        if ($successCount === 0) {
+            return [
+                'type'    => 'no_subtasks_created',
+                'success' => false,
+                'message' => sprintf('Не удалось создать подзадачи для "%s"', $parentTask->getTitle()),
+                'errors'  => $errors,
+            ];
+        }
+
+        return [
+            'type'          => 'multiple_subtasks_created',
+            'success'       => true,
+            'message'       => sprintf(
+                'Создано подзадач: %d из %d для задачи "%s"',
+                $successCount,
+                $totalCount,
+                $parentTask->getTitle()
+            ),
+            'parent_task'   => [
+                'id'    => $parentTask->getId(),
+                'title' => $parentTask->getTitle(),
+            ],
+            'created_count' => $successCount,
+            'total_count'   => $totalCount,
+            'subtasks'      => $createdSubtasks,
+            'errors'        => $errors,
         ];
     }
 

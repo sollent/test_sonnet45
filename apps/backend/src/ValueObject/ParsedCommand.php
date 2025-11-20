@@ -28,6 +28,8 @@ final readonly class ParsedCommand implements JsonSerializable
 
     public const ACTION_CREATE_SUBTASK = 'create_subtask';
 
+    public const ACTION_CREATE_MULTIPLE_SUBTASKS = 'create_multiple_subtasks';
+
     public const ACTION_BULK_COMPLETE = 'bulk_complete';
 
     public const ACTION_COMPLETE_MULTIPLE_TASKS = 'complete_multiple_tasks';
@@ -158,6 +160,7 @@ final readonly class ParsedCommand implements JsonSerializable
             self::ACTION_UNCOMPLETE_TASK,
             self::ACTION_FILTER_TASKS,
             self::ACTION_CREATE_SUBTASK,
+            self::ACTION_CREATE_MULTIPLE_SUBTASKS,
             self::ACTION_BULK_COMPLETE,
             self::ACTION_COMPLETE_MULTIPLE_TASKS,
             self::ACTION_CREATE_MULTIPLE_TASKS,
