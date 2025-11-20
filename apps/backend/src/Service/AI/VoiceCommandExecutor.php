@@ -78,7 +78,8 @@ class VoiceCommandExecutor
                 ParsedCommand::ACTION_CREATE_TASK           => $this->executeCreateTask($command->parameters, $user),
                 ParsedCommand::ACTION_CREATE_MULTIPLE_TASKS => $this->executeCreateMultipleTasks($command->parameters, $user),
                 ParsedCommand::ACTION_COMPLETE_TASK         => $this->executeCompleteTask($command->parameters, $user),
-                ParsedCommand::ACTION_UNCOMPLETE_TASK       => $this->executeUncompleteTask($command->parameters, $user), // 🆕 Добавлено!
+                ParsedCommand::ACTION_UNCOMPLETE_TASK       => $this->executeUncompleteTask($command->parameters, $user),
+                ParsedCommand::ACTION_UNCOMPLETE_MULTIPLE_TASKS => $this->executeUncompleteMultipleTasks($command->parameters, $user),
                 ParsedCommand::ACTION_FILTER_TASKS          => $this->executeFilterTasks($command->parameters, $user),
                 ParsedCommand::ACTION_CREATE_SUBTASK        => $this->executeCreateSubtask($command->parameters, $user),
                 ParsedCommand::ACTION_CREATE_MULTIPLE_SUBTASKS => $this->executeCreateMultipleSubtasks($command->parameters, $user),
@@ -325,6 +326,68 @@ class VoiceCommandExecutor
                 'title'  => $task->getTitle(),
                 'status' => $task->getStatus()->value,
             ],
+        ];
+    }
+
+    /**
+     * Возврат нескольких задач в работу (CRUD: Update - batch)
+     */
+    private function executeUncompleteMultipleTasks(array $parameters, User $user): array
+    {
+        $taskNames = $parameters['tasks'] ?? [];
+
+        if (empty($taskNames) || !is_array($taskNames)) {
+            throw new RuntimeException('Tasks array is required for uncompleting multiple tasks');
+        }
+
+        $uncompletedTasks = [];
+        $notFoundTasks = [];
+        $errors = [];
+
+        foreach ($taskNames as $taskName) {
+            $task = $this->searchService->findBestMatch($taskName, $user);
+
+            if (!$task) {
+                $notFoundTasks[] = $taskName;
+                continue;
+            }
+
+            if ($task->getStatus() !== TaskStatus::COMPLETED) {
+                $errors[] = sprintf('Задача "%s" не завершена', $task->getTitle());
+                continue;
+            }
+
+            $task->setStatus(TaskStatus::PENDING);
+            $uncompletedTasks[] = [
+                'id'    => $task->getId(),
+                'title' => $task->getTitle(),
+            ];
+        }
+
+        $this->entityManager->flush();
+
+        $successCount = count($uncompletedTasks);
+        $totalCount = count($taskNames);
+
+        if ($successCount === 0) {
+            return [
+                'type'       => 'no_tasks_uncompleted',
+                'success'    => false,
+                'message'    => 'Не удалось вернуть ни одной задачи в работу',
+                'not_found'  => $notFoundTasks,
+                'errors'     => $errors,
+            ];
+        }
+
+        return [
+            'type'              => 'multiple_tasks_uncompleted',
+            'success'           => true,
+            'message'           => sprintf('Возвращено в работу задач: %d из %d', $successCount, $totalCount),
+            'uncompleted_count' => $successCount,
+            'total_count'       => $totalCount,
+            'tasks'             => $uncompletedTasks,
+            'not_found'         => $notFoundTasks,
+            'errors'            => $errors,
         ];
     }
 

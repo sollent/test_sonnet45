@@ -104,11 +104,15 @@ class LLMService
            Параметры:
            - search (текст для поиска задачи)
 
-        4. uncomplete_task - отменить завершение (вернуть в работу)
+        4. uncomplete_task - отменить завершение одной задачи (вернуть в работу)
            Параметры:
            - search (текст для поиска задачи)
 
-        5. update_task - изменить приоритет/статус/дату/время
+        5. uncomplete_multiple_tasks - вернуть несколько задач в работу
+           Параметры:
+           - tasks: массив строк с названиями задач для поиска
+
+        6. update_task - изменить приоритет/статус/дату/время
            Параметры:
            - search (обязательно)
            - updates: {
@@ -205,6 +209,9 @@ class LLMService
 
         "Верни задачу тренировка в работу" →
         {"action":"uncomplete_task","parameters":{"search":"тренировка"},"confidence":0.93}
+
+        "Верни две задачи позвонить клиенту и отправить документы в незавершенные" →
+        {"action":"uncomplete_multiple_tasks","parameters":{"tasks":["позвонить клиенту","отправить документы"]},"confidence":0.92}
 
         "Сделай задачу тренировка срочной" →
         {"action":"update_task","parameters":{"search":"тренировка","updates":{"priority":"urgent"}},"confidence":0.94}
