@@ -196,12 +196,17 @@ class VoiceCommandExecutor
         // Создание подзадач, если указаны
         $createdSubtasks = [];
         if (!empty($parameters['subtasks']) && is_array($parameters['subtasks'])) {
-            foreach ($parameters['subtasks'] as $subtaskTitle) {
+            foreach ($parameters['subtasks'] as $subtaskData) {
+                // Поддержка как простых строк, так и объектов
+                $subtaskTitle = is_array($subtaskData) ? ($subtaskData['title'] ?? null) : $subtaskData;
+
                 if (!empty($subtaskTitle)) {
                     $subtaskDto = new CreateTaskDto();
                     $subtaskDto->title = $subtaskTitle;
                     $subtaskDto->status = TaskStatus::PENDING;
-                    $subtaskDto->priority = $task->getPriority();
+                    $subtaskDto->priority = is_array($subtaskData) && isset($subtaskData['priority'])
+                        ? $this->parsePriority($subtaskData['priority'])
+                        : $task->getPriority();
                     $subtaskDto->parentTaskId = $task->getId();
 
                     $subtask = $this->taskService->createTask($subtaskDto, $user);
