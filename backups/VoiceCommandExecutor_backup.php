@@ -19,9 +19,8 @@ use Psr\Log\LoggerInterface;
 use RuntimeException;
 
 /**
- * ОПТИМИЗИРОВАННЫЙ Исполнитель голосовых команд
+ * Исполнитель голосовых команд
  *
- * Версия 2.0 - Полная поддержка всех CRUD операций
  * Выполняет действия на основе распарсенных команд от LLM.
  * Использует паттерн Command для инкапсуляции действий
  */
@@ -78,7 +77,6 @@ class VoiceCommandExecutor
                 ParsedCommand::ACTION_CREATE_TASK           => $this->executeCreateTask($command->parameters, $user),
                 ParsedCommand::ACTION_CREATE_MULTIPLE_TASKS => $this->executeCreateMultipleTasks($command->parameters, $user),
                 ParsedCommand::ACTION_COMPLETE_TASK         => $this->executeCompleteTask($command->parameters, $user),
-                ParsedCommand::ACTION_UNCOMPLETE_TASK       => $this->executeUncompleteTask($command->parameters, $user), // 🆕 Добавлено!
                 ParsedCommand::ACTION_FILTER_TASKS          => $this->executeFilterTasks($command->parameters, $user),
                 ParsedCommand::ACTION_CREATE_SUBTASK        => $this->executeCreateSubtask($command->parameters, $user),
                 ParsedCommand::ACTION_UPDATE_TASK           => $this->executeUpdateTask($command->parameters, $user),
@@ -112,8 +110,7 @@ class VoiceCommandExecutor
     }
 
     /**
-     * Создание новой задачи (CRUD: Create)
-     * Оптимизировано для стандартизированных форматов дат
+     * Создание новой задачи
      */
     private function executeCreateTask(array $parameters, User $user): array
     {
@@ -130,11 +127,11 @@ class VoiceCommandExecutor
         $dto->status = TaskStatus::PENDING;
         $dto->priority = $this->parsePriority($parameters['priority'] ?? null);
 
-        // ОПТИМИЗИРОВАННАЯ обработка даты и времени
+        // Обработка даты и времени
         if (isset($parameters['due_date'])) {
-            // Проверяем наличие временного диапазона
+            // Проверяем наличие временного диапазона (start_time и end_time)
             if (isset($parameters['start_time']) && isset($parameters['end_time'])) {
-                // Задача с временным диапазоном (например: "с 14:00 до 15:00")
+                // Задача с временным диапазоном (например: "с 19:30 до 21:00")
                 $startDate = $this->dateTimeParser->parseDateWithTime(
                     $parameters['due_date'],
                     $parameters['start_time']
@@ -146,21 +143,9 @@ class VoiceCommandExecutor
 
                 $dto->startDate = $startDate?->format('Y-m-d H:i:s');
                 $dto->dueDate = $endDate?->format('Y-m-d H:i:s');
-
-            } elseif (isset($parameters['start_time'])) {
-                // Задача с начальным временем
-                $startDate = $this->dateTimeParser->parseDateWithTime(
-                    $parameters['due_date'],
-                    $parameters['start_time']
-                );
-                // Конец через час после начала
-                $endDate = $startDate?->modify('+1 hour');
-
-                $dto->startDate = $startDate?->format('Y-m-d H:i:s');
-                $dto->dueDate = $endDate?->format('Y-m-d H:i:s');
-
             } else {
-                // Обычная задача на весь день
+                // Обычная задача без временного диапазона
+                // Устанавливаем start_date на начало дня, due_date на конец дня
                 $startDate = $this->dateTimeParser->parseStartDate($parameters['due_date']);
                 $dueDate = $this->dateTimeParser->parseDueDate($parameters['due_date']);
 
@@ -187,7 +172,7 @@ class VoiceCommandExecutor
             $this->taskService->saveTask($task);
         }
 
-        // Создание подзадач, если указаны
+        // 🆕 Создание подзадач, если указаны
         $createdSubtasks = [];
         if (!empty($parameters['subtasks']) && is_array($parameters['subtasks'])) {
             foreach ($parameters['subtasks'] as $subtaskTitle) {
@@ -195,7 +180,7 @@ class VoiceCommandExecutor
                     $subtaskDto = new CreateTaskDto();
                     $subtaskDto->title = $subtaskTitle;
                     $subtaskDto->status = TaskStatus::PENDING;
-                    $subtaskDto->priority = $task->getPriority();
+                    $subtaskDto->priority = $task->getPriority(); // Наследуем приоритет
                     $subtaskDto->parentTaskId = $task->getId();
 
                     $subtask = $this->taskService->createTask($subtaskDto, $user);
@@ -216,8 +201,8 @@ class VoiceCommandExecutor
             'task'     => [
                 'id'        => $task->getId(),
                 'title'     => $task->getTitle(),
-                'status'    => $task->getStatus()->value,
-                'priority'  => $task->getPriority()->value,
+                'status'    => $task->getStatus(),
+                'priority'  => $task->getPriority(),
                 'startDate' => $task->getStartDate()?->format('c'),
                 'dueDate'   => $task->getDueDate()?->format('c'),
                 'subtasks'  => $createdSubtasks,
@@ -226,7 +211,7 @@ class VoiceCommandExecutor
     }
 
     /**
-     * Отметка задачи как выполненной (CRUD: Update)
+     * Отметка задачи как выполненной
      */
     private function executeCompleteTask(array $parameters, User $user): array
     {
@@ -258,67 +243,13 @@ class VoiceCommandExecutor
             'task'    => [
                 'id'     => $task->getId(),
                 'title'  => $task->getTitle(),
-                'status' => $task->getStatus()->value,
+                'status' => $task->getStatus(),
             ],
         ];
     }
 
     /**
-     * 🆕 НОВЫЙ МЕТОД: Отмена завершения задачи (CRUD: Update)
-     * Возвращает задачу в статус "в ожидании"
-     */
-    private function executeUncompleteTask(array $parameters, User $user): array
-    {
-        $search = $parameters['search'] ?? $parameters['title'] ?? null;
-
-        if (empty($search)) {
-            throw new RuntimeException('Search query is required for task uncomplete');
-        }
-
-        // Поиск задачи
-        $task = $this->searchService->findBestMatch($search, $user);
-
-        if (!$task) {
-            return [
-                'type'    => 'task_not_found',
-                'success' => false,
-                'message' => sprintf('Задача "%s" не найдена', $search),
-                'search'  => $search,
-            ];
-        }
-
-        // Проверка что задача действительно завершена
-        if ($task->getStatus() !== TaskStatus::COMPLETED) {
-            return [
-                'type'    => 'task_already_uncompleted',
-                'success' => false,
-                'message' => sprintf('Задача "%s" уже не завершена', $task->getTitle()),
-                'task'    => [
-                    'id'     => $task->getId(),
-                    'title'  => $task->getTitle(),
-                    'status' => $task->getStatus()->value,
-                ],
-            ];
-        }
-
-        // Возвращаем в статус "в ожидании"
-        $task->setStatus(TaskStatus::PENDING);
-        $this->entityManager->flush();
-
-        return [
-            'type'    => 'task_uncompleted',
-            'success' => true,
-            'message' => sprintf('Задача "%s" возвращена в работу', $task->getTitle()),
-            'task'    => [
-                'id'     => $task->getId(),
-                'title'  => $task->getTitle(),
-                'status' => $task->getStatus()->value,
-            ],
-        ];
-    }
-
-    /**
-     * Фильтрация задач (CRUD: Read)
+     * Фильтрация задач
      */
     private function executeFilterTasks(array $parameters, User $user): array
     {
@@ -332,8 +263,8 @@ class VoiceCommandExecutor
             return [
                 'id'       => $task->getId(),
                 'title'    => $task->getTitle(),
-                'status'   => $task->getStatus()->value,
-                'priority' => $task->getPriority()->value,
+                'status'   => $task->getStatus(),
+                'priority' => $task->getPriority(),
                 'dueDate'  => $task->getDueDate()?->format('c'),
                 'tags'     => array_map(fn ($tag) => $tag->getName(), $task->getTags()->toArray()),
             ];
@@ -353,11 +284,11 @@ class VoiceCommandExecutor
     }
 
     /**
-     * Создание подзадачи (CRUD: Create)
+     * Создание подзадачи
      */
     private function executeCreateSubtask(array $parameters, User $user): array
     {
-        $parentSearch = $parameters['parent_search'] ?? $parameters['parent'] ?? $parameters['parent_task'] ?? null;
+        $parentSearch = $parameters['parent'] ?? $parameters['parent_task'] ?? null;
         $title = $parameters['title'] ?? null;
 
         if (empty($parentSearch) || empty($title)) {
@@ -400,7 +331,7 @@ class VoiceCommandExecutor
     }
 
     /**
-     * Массовое завершение задач (CRUD: Update - batch)
+     * Массовое завершение задач
      */
     private function executeBulkComplete(array $parameters, User $user): array
     {
@@ -454,8 +385,6 @@ class VoiceCommandExecutor
                 'Создай задачу купить молоко',
                 'Отметь задачу отчет как выполненную',
                 'Покажи все задачи на завтра',
-                'Переведи задачу в статус в работе',
-                'Верни задачу в работу',
             ],
         ];
     }
@@ -474,8 +403,6 @@ class VoiceCommandExecutor
                 'Доступные команды:',
                 '• Создание задачи: "Создай задачу [название]"',
                 '• Завершение задачи: "Отметь [название] как выполненную"',
-                '• Отмена завершения: "Верни [название] в работу"',
-                '• Изменение статуса: "Переведи [название] в статус в работе"',
                 '• Фильтрация: "Покажи задачи на [дату]"',
                 '• Создание подзадачи: "Добавь подзадачу [название] к [родительская задача]"',
                 '• Массовое завершение: "Заверши все задачи на сегодня"',
@@ -484,7 +411,7 @@ class VoiceCommandExecutor
     }
 
     /**
-     * Создание нескольких задач одновременно (CRUD: Create - batch)
+     * 🆕 Создание нескольких задач одновременно
      */
     private function executeCreateMultipleTasks(array $parameters, User $user): array
     {
@@ -527,8 +454,7 @@ class VoiceCommandExecutor
     }
 
     /**
-     * ОПТИМИЗИРОВАННОЕ Обновление существующей задачи (CRUD: Update)
-     * Поддерживает все типы обновлений: приоритет, статус, дата, время
+     * 🆕 Обновление существующей задачи
      */
     private function executeUpdateTask(array $parameters, User $user): array
     {
@@ -564,44 +490,28 @@ class VoiceCommandExecutor
             $updatedFields[] = 'приоритет';
         }
 
-        // ОПТИМИЗИРОВАННОЕ обновление статуса
+        // Обновление статуса
         if (isset($updates['status'])) {
             $statusMap = [
-                // Английские варианты (из LLM)
-                'pending'     => TaskStatus::PENDING,
-                'in_progress' => TaskStatus::IN_PROGRESS,
-                'completed'   => TaskStatus::COMPLETED,
-
-                // Русские варианты
-                'ожидание'    => TaskStatus::PENDING,
-                'в ожидании'  => TaskStatus::PENDING,
-                'запланировано' => TaskStatus::PENDING,
-
-                'в работе'    => TaskStatus::IN_PROGRESS,
-                'выполняется' => TaskStatus::IN_PROGRESS,
-                'в процессе'  => TaskStatus::IN_PROGRESS,
-
-                'завершено'   => TaskStatus::COMPLETED,
-                'выполнено'   => TaskStatus::COMPLETED,
-                'готово'      => TaskStatus::COMPLETED,
+                'pending'    => TaskStatus::PENDING,
+                'ожидание'   => TaskStatus::PENDING,
+                'в работе'   => TaskStatus::IN_PROGRESS,
+                'in_progress'=> TaskStatus::IN_PROGRESS,
+                'completed'  => TaskStatus::COMPLETED,
+                'выполнено'  => TaskStatus::COMPLETED,
+                'завершено'  => TaskStatus::COMPLETED,
             ];
 
-            $statusKey = mb_strtolower(trim($updates['status']));
+            $statusKey = mb_strtolower($updates['status']);
             if (isset($statusMap[$statusKey])) {
                 $task->setStatus($statusMap[$statusKey]);
                 $updatedFields[] = 'статус';
-            } else {
-                $this->logger->warning('Unknown status value', [
-                    'status' => $updates['status'],
-                    'task_id' => $task->getId(),
-                ]);
             }
         }
 
-        // ОПТИМИЗИРОВАННОЕ обновление даты и времени
+        // Обновление даты и времени
         if (isset($updates['due_date'])) {
             if (isset($updates['start_time']) && isset($updates['end_time'])) {
-                // Временной диапазон
                 $startDate = $this->dateTimeParser->parseDateWithTime(
                     $updates['due_date'],
                     $updates['start_time']
@@ -614,19 +524,7 @@ class VoiceCommandExecutor
                 $task->setStartDate($startDate);
                 $task->setDueDate($endDate);
                 $updatedFields[] = 'дата и время';
-            } elseif (isset($updates['start_time'])) {
-                // Только начальное время
-                $startDate = $this->dateTimeParser->parseDateWithTime(
-                    $updates['due_date'],
-                    $updates['start_time']
-                );
-                $endDate = $startDate?->modify('+1 hour');
-
-                $task->setStartDate($startDate);
-                $task->setDueDate($endDate);
-                $updatedFields[] = 'дата и время';
             } else {
-                // Только дата
                 $startDate = $this->dateTimeParser->parseStartDate($updates['due_date']);
                 $dueDate = $this->dateTimeParser->parseDueDate($updates['due_date']);
 
@@ -652,12 +550,6 @@ class VoiceCommandExecutor
             $updatedFields[] = 'время';
         }
 
-        // Обновление названия (если нужно)
-        if (isset($updates['title'])) {
-            $task->setTitle($updates['title']);
-            $updatedFields[] = 'название';
-        }
-
         // Сохранение изменений
         $this->entityManager->flush();
 
@@ -672,8 +564,8 @@ class VoiceCommandExecutor
             'task' => [
                 'id'        => $task->getId(),
                 'title'     => $task->getTitle(),
-                'status'    => $task->getStatus()->value,
-                'priority'  => $task->getPriority()->value,
+                'status'    => $task->getStatus(),
+                'priority'  => $task->getPriority(),
                 'startDate' => $task->getStartDate()?->format('c'),
                 'dueDate'   => $task->getDueDate()?->format('c'),
             ],
@@ -682,7 +574,7 @@ class VoiceCommandExecutor
     }
 
     /**
-     * Перемещение задачи на другое время/дату (CRUD: Update)
+     * 🆕 Перемещение задачи на другое время/дату
      */
     private function executeMoveTask(array $parameters, User $user): array
     {
@@ -712,12 +604,6 @@ class VoiceCommandExecutor
 
             $task->setStartDate($startDate);
             $task->setDueDate($endDate);
-        } elseif (isset($parameters['start_time'])) {
-            $startDate = $this->dateTimeParser->parseDateWithTime($newDate, $parameters['start_time']);
-            $endDate = $startDate?->modify('+1 hour');
-
-            $task->setStartDate($startDate);
-            $task->setDueDate($endDate);
         } else {
             $startDate = $this->dateTimeParser->parseStartDate($newDate);
             $dueDate = $this->dateTimeParser->parseDueDate($newDate);
@@ -735,8 +621,8 @@ class VoiceCommandExecutor
             'task'    => [
                 'id'        => $task->getId(),
                 'title'     => $task->getTitle(),
-                'status'    => $task->getStatus()->value,
-                'priority'  => $task->getPriority()->value,
+                'status'    => $task->getStatus(),
+                'priority'  => $task->getPriority(),
                 'startDate' => $task->getStartDate()?->format('c'),
                 'dueDate'   => $task->getDueDate()?->format('c'),
             ],
@@ -744,8 +630,7 @@ class VoiceCommandExecutor
     }
 
     /**
-     * ОПТИМИЗИРОВАННЫЙ Парсинг приоритета из параметров
-     * Поддерживает стандартизированные значения из LLM
+     * Парсинг приоритета из параметров
      */
     private function parsePriority(?string $priority): TaskPriority
     {
@@ -755,20 +640,8 @@ class VoiceCommandExecutor
 
         $priority = mb_strtolower(trim($priority));
 
-        // Проверка стандартизированных английских вариантов (из LLM)
-        $standardMap = [
-            'low'    => TaskPriority::LOW,
-            'medium' => TaskPriority::MEDIUM,
-            'high'   => TaskPriority::HIGH,
-            'urgent' => TaskPriority::URGENT,
-        ];
-
-        if (isset($standardMap[$priority])) {
-            return $standardMap[$priority];
-        }
-
-        // Карта русских вариантов (на случай если LLM вернет русские)
-        $russianMap = [
+        // Карта соответствий русских названий
+        $priorityMap = [
             'низкий'  => TaskPriority::LOW,
             'низкая'  => TaskPriority::LOW,
             'средний' => TaskPriority::MEDIUM,
@@ -783,16 +656,18 @@ class VoiceCommandExecutor
             'срочная' => TaskPriority::URGENT,
         ];
 
-        if (isset($russianMap[$priority])) {
-            return $russianMap[$priority];
+        if (isset($priorityMap[$priority])) {
+            return $priorityMap[$priority];
         }
 
-        // По умолчанию средний приоритет
-        $this->logger->warning('Unknown priority value, defaulting to MEDIUM', [
-            'priority' => $priority,
-        ]);
-
-        return TaskPriority::MEDIUM;
+        // Проверка английских вариантов
+        return match ($priority) {
+            'low' => TaskPriority::LOW,
+            'medium' => TaskPriority::MEDIUM,
+            'high' => TaskPriority::HIGH,
+            'urgent' => TaskPriority::URGENT,
+            default => TaskPriority::MEDIUM,
+        };
     }
 
 }
