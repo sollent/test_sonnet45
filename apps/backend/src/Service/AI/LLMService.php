@@ -73,7 +73,12 @@ class LLMService
         - "next_month" - через месяц, в следующем месяце
         - "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday" - дни недели
         - "this_week" - на этой неделе, эта неделя
-        - "2024-12-25" - конкретные даты в формате YYYY-MM-DD
+        - "YYYY-MM-DD" - конкретные даты (например "2025-11-29")
+
+        ВАЖНО ДЛЯ КОНКРЕТНЫХ ДАТ:
+        - Используй ТЕКУЩИЙ ГОД из "Текущая дата" в prompt!
+        - "29 ноября" при текущей дате 2025-11-20 → "2025-11-29"
+        - Если дата уже прошла в этом году, используй следующий год
 
         ВРЕМЯ (start_time, end_time) ВСЕГДА в формате:
         - "HH:MM" - например "14:00", "09:30", "21:00"
@@ -360,7 +365,11 @@ class LLMService
      */
     private function callOllama(string $commandText): array
     {
-        $prompt = self::SYSTEM_PROMPT . "\n\nКоманда: \"" . $commandText . '"';
+        // Добавляем текущую дату чтобы LLM мог корректно определять год
+        $currentDate = date('Y-m-d');
+        $currentYear = date('Y');
+
+        $prompt = self::SYSTEM_PROMPT . "\n\nТекущая дата: " . $currentDate . " (год " . $currentYear . ")\n\nКоманда: \"" . $commandText . '"';
 
         try {
             $response = $this->httpClient->request('POST', $this->ollamaUrl . '/api/generate', [
