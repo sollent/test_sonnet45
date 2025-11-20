@@ -155,9 +155,11 @@ final readonly class ParsedCommand implements JsonSerializable
         return in_array($action, [
             self::ACTION_CREATE_TASK,
             self::ACTION_COMPLETE_TASK,
+            self::ACTION_UNCOMPLETE_TASK,
             self::ACTION_FILTER_TASKS,
             self::ACTION_CREATE_SUBTASK,
             self::ACTION_BULK_COMPLETE,
+            self::ACTION_COMPLETE_MULTIPLE_TASKS,
             self::ACTION_CREATE_MULTIPLE_TASKS,
             self::ACTION_UPDATE_TASK,
             self::ACTION_MOVE_TASK,
