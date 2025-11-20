@@ -178,6 +178,11 @@ class LLMService
             Параметры:
             - filters (как в filter_tasks)
 
+        16. duplicate_task - скопировать/продублировать задачу
+            Параметры:
+            - search (поиск задачи для копирования)
+            - new_date (опционально, дата для копии)
+
         === ПРИОРИТЕТЫ (используй ТОЛЬКО эти) ===
         - low - низкий приоритет
         - medium - средний/обычный приоритет
@@ -277,6 +282,12 @@ class LLMService
 
         "Удали все задачи на вчера с низким приоритетом" →
         {"action":"bulk_delete","parameters":{"filters":{"date":"yesterday","priority":"low"}},"confidence":0.89}
+
+        "Скопируй задачу купить молоко на завтра" →
+        {"action":"duplicate_task","parameters":{"search":"купить молоко","new_date":"tomorrow"},"confidence":0.92}
+
+        "Продублируй задачу встреча с клиентом" →
+        {"action":"duplicate_task","parameters":{"search":"встреча с клиентом"},"confidence":0.91}
 
         === С ОПЕЧАТКАМИ ===
 

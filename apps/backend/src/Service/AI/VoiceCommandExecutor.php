@@ -92,6 +92,7 @@ class VoiceCommandExecutor
                 ParsedCommand::ACTION_DELETE_TASK           => $this->executeDeleteTask($command->parameters, $user),
                 ParsedCommand::ACTION_DELETE_MULTIPLE_TASKS => $this->executeDeleteMultipleTasks($command->parameters, $user),
                 ParsedCommand::ACTION_BULK_DELETE           => $this->executeBulkDelete($command->parameters, $user),
+                ParsedCommand::ACTION_DUPLICATE_TASK        => $this->executeDuplicateTask($command->parameters, $user),
                 ParsedCommand::ACTION_CLARIFICATION_NEEDED  => $this->executeClarificationNeeded($command->parameters),
                 ParsedCommand::ACTION_UNKNOWN               => $this->executeUnknown($command->parameters),
                 default                                     => throw new RuntimeException('Unsupported action: ' . $command->action)
@@ -905,6 +906,76 @@ class VoiceCommandExecutor
             'message'        => sprintf('Удалено задач: %d', $deletedCount),
             'deleted_count'  => $deletedCount,
             'deleted_titles' => $deletedTitles,
+        ];
+    }
+
+    /**
+     * Дублирование задачи (CRUD: Create - copy)
+     */
+    private function executeDuplicateTask(array $parameters, User $user): array
+    {
+        $search = $parameters['search'] ?? null;
+
+        if (empty($search)) {
+            throw new RuntimeException('Search query is required for task duplication');
+        }
+
+        // Поиск задачи для копирования
+        $originalTask = $this->searchService->findBestMatch($search, $user);
+
+        if (!$originalTask) {
+            return [
+                'type'    => 'task_not_found',
+                'success' => false,
+                'message' => sprintf('Задача "%s" не найдена', $search),
+                'search'  => $search,
+            ];
+        }
+
+        // Создание копии
+        $dto = new CreateTaskDto();
+        $dto->title = $originalTask->getTitle();
+        $dto->description = $originalTask->getDescription();
+        $dto->status = TaskStatus::PENDING; // Новая задача всегда pending
+        $dto->priority = $originalTask->getPriority();
+
+        // Обработка даты
+        if (isset($parameters['new_date'])) {
+            $startDate = $this->dateTimeParser->parseStartDate($parameters['new_date']);
+            $dueDate = $this->dateTimeParser->parseDueDate($parameters['new_date']);
+            $dto->startDate = $startDate?->format('Y-m-d H:i:s');
+            $dto->dueDate = $dueDate?->format('Y-m-d H:i:s');
+        } else {
+            // Копируем оригинальные даты
+            $dto->startDate = $originalTask->getStartDate()?->format('Y-m-d H:i:s');
+            $dto->dueDate = $originalTask->getDueDate()?->format('Y-m-d H:i:s');
+        }
+
+        // Создание новой задачи
+        $newTask = $this->taskService->createTask($dto, $user);
+
+        // Копирование тегов
+        foreach ($originalTask->getTags() as $tag) {
+            $newTask->addTag($tag);
+        }
+        $this->entityManager->flush();
+
+        return [
+            'type'          => 'task_duplicated',
+            'success'       => true,
+            'message'       => sprintf('Задача "%s" скопирована', $originalTask->getTitle()),
+            'original_task' => [
+                'id'    => $originalTask->getId(),
+                'title' => $originalTask->getTitle(),
+            ],
+            'new_task'      => [
+                'id'        => $newTask->getId(),
+                'title'     => $newTask->getTitle(),
+                'status'    => $newTask->getStatus()->value,
+                'priority'  => $newTask->getPriority()->value,
+                'startDate' => $newTask->getStartDate()?->format('c'),
+                'dueDate'   => $newTask->getDueDate()?->format('c'),
+            ],
         ];
     }
 
