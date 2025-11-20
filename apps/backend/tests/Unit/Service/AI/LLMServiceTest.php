@@ -35,12 +35,12 @@ class LLMServiceTest extends TestCase
         $this->logger = $this->createMock(LoggerInterface::class);
         $this->params = $this->createMock(ParameterBagInterface::class);
 
-        // Настраиваем параметры
+        // Настраиваем параметры (URL для нативного Ollama)
         $this->params->method('has')->willReturn(true);
         $this->params->method('get')
             ->willReturnMap([
-                ['ollama_url', 'http://ollama:11434'],
-                ['llm_model', 'qwen2.5:3b'],
+                ['ollama_url', 'http://host.docker.internal:11434'],
+                ['llm_model', 'qwen2.5:1.5b'],
             ]);
 
         $this->service = new LLMService(
@@ -75,10 +75,10 @@ class LLMServiceTest extends TestCase
             ->method('request')
             ->with(
                 'POST',
-                'http://ollama:11434/api/generate',
+                'http://host.docker.internal:11434/api/generate',
                 $this->callback(function ($options) {
                     return isset($options['json']['model'])
-                        && $options['json']['model'] === 'qwen2.5:3b'
+                        && $options['json']['model'] === 'qwen2.5:1.5b'
                         && isset($options['json']['prompt'])
                         && str_contains($options['json']['prompt'], 'Создай задачу купить молоко завтра');
                 }),
@@ -234,7 +234,7 @@ class LLMServiceTest extends TestCase
 
         $this->httpClient->expects($this->once())
             ->method('request')
-            ->with('GET', 'http://ollama:11434/api/tags')
+            ->with('GET', 'http://host.docker.internal:11434/api/tags')
             ->willReturn($mockResponse);
 
         // Act & Assert
@@ -264,7 +264,7 @@ class LLMServiceTest extends TestCase
         $mockResponse = $this->createMock(ResponseInterface::class);
         $mockResponse->method('toArray')->willReturn([
             'models' => [
-                ['name' => 'qwen2.5:3b'],
+                ['name' => 'qwen2.5:1.5b'],
                 ['name' => 'qwen2.5:7b'],
                 ['name' => 'llama3.2:1b'],
             ],
@@ -272,7 +272,7 @@ class LLMServiceTest extends TestCase
 
         $this->httpClient->expects($this->once())
             ->method('request')
-            ->with('GET', 'http://ollama:11434/api/tags')
+            ->with('GET', 'http://host.docker.internal:11434/api/tags')
             ->willReturn($mockResponse);
 
         // Act
@@ -280,7 +280,7 @@ class LLMServiceTest extends TestCase
 
         // Assert
         $this->assertCount(3, $models);
-        $this->assertContains('qwen2.5:3b', $models);
+        $this->assertContains('qwen2.5:1.5b', $models);
         $this->assertContains('qwen2.5:7b', $models);
     }
 }
