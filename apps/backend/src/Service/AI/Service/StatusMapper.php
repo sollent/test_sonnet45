@@ -22,6 +22,7 @@ class StatusMapper
         'pending'     => TaskStatus::PENDING,
         'in_progress' => TaskStatus::IN_PROGRESS,
         'completed'   => TaskStatus::COMPLETED,
+        'cancelled'   => TaskStatus::CANCELLED,
     ];
 
     /**
@@ -55,6 +56,13 @@ class StatusMapper
         'готова'    => TaskStatus::COMPLETED,
         'закрыто'   => TaskStatus::COMPLETED,
         'закрыта'   => TaskStatus::COMPLETED,
+
+        // Cancelled статусы
+        'отменено'  => TaskStatus::CANCELLED,
+        'отменена'  => TaskStatus::CANCELLED,
+        'отменён'   => TaskStatus::CANCELLED,
+        'отменен'   => TaskStatus::CANCELLED,
+        'отмена'    => TaskStatus::CANCELLED,
     ];
 
     private LoggerInterface $logger;
