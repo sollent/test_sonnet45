@@ -47,14 +47,19 @@ class CompleteMultipleTasksCommand extends AbstractVoiceCommand
 
     protected function validateParameters(array $parameters): void
     {
-        if (empty($parameters['searches']) || !is_array($parameters['searches'])) {
+        // Поддержка двух форматов: 'searches' и 'tasks'
+        $hasSearches = !empty($parameters['searches']) && is_array($parameters['searches']);
+        $hasTasks = !empty($parameters['tasks']) && is_array($parameters['tasks']);
+
+        if (!$hasSearches && !$hasTasks) {
             throw new RuntimeException('Array of task searches is required for multiple completion');
         }
     }
 
     protected function doExecute(array $parameters, User $user): CommandResponse
     {
-        $searches = $parameters['searches'];
+        // Поддержка обоих форматов параметров
+        $searches = $parameters['searches'] ?? $parameters['tasks'] ?? [];
         $completedTasks = [];
         $alreadyCompletedTasks = [];
         $notFoundSearches = [];
