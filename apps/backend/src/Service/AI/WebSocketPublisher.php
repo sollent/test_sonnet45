@@ -37,15 +37,9 @@ class WebSocketPublisher
         $this->logger = $logger;
 
         // Конфигурация Centrifugo
-        /** @var string $centrifugoUrl */
-        $centrifugoUrl = $params->has('centrifugo_url') ? $params->get('centrifugo_url') : 'http://centrifugo:8000';
-        $this->centrifugoUrl = $centrifugoUrl;
-
-        /** @var string $apiKey */
-        $apiKey = $params->has('centrifugo_api_key') ? $params->get('centrifugo_api_key') : 'default-api-key';
-        $this->centrifugoApiKey = $apiKey;
-
-        $this->enabled = $params->has('websocket_enabled') && (bool) $params->get('websocket_enabled');
+        $this->centrifugoUrl = (string) ($params->get('centrifugo_url') ?? 'http://centrifugo:8000');
+        $this->centrifugoApiKey = (string) ($params->get('centrifugo_api_key') ?? 'default-api-key');
+        $this->enabled = (bool) ($params->get('websocket_enabled') ?? true);
     }
 
     /**
@@ -221,10 +215,7 @@ class WebSocketPublisher
             ],
         ];
 
-        $eventInfo = $eventMap[$type->value] ?? [
-            'title' => 'Событие',
-            'icon'  => '📢',
-        ];
+        $eventInfo = $eventMap[$type->value];
 
         return $this->publish($userId, 'voice_event', array_merge($eventInfo, [
             'type' => $type->value,

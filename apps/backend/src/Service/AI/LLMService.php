@@ -409,14 +409,10 @@ class LLMService
 
         // Получаем URL Ollama из параметров или используем дефолтный
         // Используем host.docker.internal для доступа к нативному Ollama на macOS
-        /** @var string $ollamaUrl */
-        $ollamaUrl = $params->has('ollama_url') ? $params->get('ollama_url') : 'http://host.docker.internal:11434';
-        $this->ollamaUrl = $ollamaUrl;
+        $this->ollamaUrl = (string) ($params->get('ollama_url') ?? 'http://host.docker.internal:11434');
 
         // Модель Qwen 2.5 14B - мощная модель для отличного понимания команд
-        /** @var string $model */
-        $model = $params->has('llm_model') ? $params->get('llm_model') : self::DEFAULT_MODEL;
-        $this->model = $model;
+        $this->model = (string) ($params->get('llm_model') ?? self::DEFAULT_MODEL);
     }
 
     /**
