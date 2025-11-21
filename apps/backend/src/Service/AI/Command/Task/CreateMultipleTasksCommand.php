@@ -103,7 +103,15 @@ class CreateMultipleTasksCommand extends AbstractVoiceCommand
                 $dto->priority = $priority;
             }
 
-            if ($dateRange) {
+            // Проверяем due_date для конкретной задачи или общий
+            $taskDueDate = $taskItem['due_date'] ?? $parameters['due_date'] ?? null;
+            if ($taskDueDate) {
+                $taskDateRange = $this->dateTimeResolver->resolveDateRange(['due_date' => $taskDueDate]);
+                if ($taskDateRange) {
+                    $dto->startDate = $taskDateRange['start']?->format('Y-m-d H:i:s');
+                    $dto->dueDate = $taskDateRange['due']?->format('Y-m-d H:i:s');
+                }
+            } elseif ($dateRange) {
                 $dto->startDate = $dateRange['start']?->format('Y-m-d H:i:s');
                 $dto->dueDate = $dateRange['due']?->format('Y-m-d H:i:s');
             }
@@ -149,14 +157,14 @@ class CreateMultipleTasksCommand extends AbstractVoiceCommand
      *
      * Поддерживает два формата:
      * - 'titles': ['Задача 1', 'Задача 2'] -> [['title' => 'Задача 1'], ...]
-     * - 'tasks': [['title' => '...', 'description' => '...'], ...]
+     * - 'tasks': [['title' => '...', 'description' => '...', 'due_date' => '...'], ...]
      *
      * @param array<string, mixed> $parameters
-     * @return array<int, array{title: string, description?: string}>
+     * @return array<int, array{title: string, description?: string, due_date?: string}>
      */
     private function extractTaskItems(array $parameters): array
     {
-        // Формат 'tasks' (массив объектов с title и description)
+        // Формат 'tasks' (массив объектов с title, description, due_date)
         if (!empty($parameters['tasks']) && is_array($parameters['tasks'])) {
             $items = [];
             foreach ($parameters['tasks'] as $task) {
@@ -164,6 +172,7 @@ class CreateMultipleTasksCommand extends AbstractVoiceCommand
                     $items[] = [
                         'title' => $task['title'],
                         'description' => $task['description'] ?? null,
+                        'due_date' => $task['due_date'] ?? null,
                     ];
                 } elseif (is_string($task)) {
                     // Если элемент - строка, используем как title
