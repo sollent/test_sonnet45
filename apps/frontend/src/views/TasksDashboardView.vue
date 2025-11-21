@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { useTaskStore } from '@/stores/task.store'
 import { useAuth } from '@/composables/useAuth'
 import { useToast } from '@/composables/useToast'
+import { useWebSocket } from '@/composables/useWebSocket'
 import Button from 'primevue/button'
 import Sidebar from 'primevue/sidebar'
 import Skeleton from 'primevue/skeleton'
@@ -28,6 +29,7 @@ const { t, locale } = useI18n()
 const { user, logout } = useAuth()
 const { showSuccess, showError } = useToast()
 const taskStore = useTaskStore()
+const { connect: connectWebSocket, onTaskEvent } = useWebSocket()
 
 const searchQuery = ref('')
 const selectedView = ref('all')
@@ -252,11 +254,30 @@ const onResize = () => {
   isMobile.value = window.innerWidth < 1024
 }
 
-onMounted(() => {
+onMounted(async () => {
   window.addEventListener('resize', onResize)
   // Fetch initial data
   selectView(selectedView.value)
   taskStore.fetchTags()
+
+  // Connect to WebSocket for real-time updates
+  await connectWebSocket()
+
+  // Handle task events from WebSocket
+  onTaskEvent((event) => {
+    console.log('[TasksDashboard] Received task event:', event)
+
+    // Refresh task list when task is created, updated, or deleted
+    if (event.event === 'task.created' || event.event === 'task.updated' || event.event === 'task.deleted') {
+      selectView(selectedView.value)
+    }
+
+    // Show notification for task events
+    if (event.data && typeof event.data === 'object' && 'message' in event.data) {
+      const message = (event.data as { message: string }).message
+      showSuccess(message)
+    }
+  })
 })
 
 onUnmounted(() => {
