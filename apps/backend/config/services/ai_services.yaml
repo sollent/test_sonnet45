@@ -24,6 +24,7 @@ services:
     # WebSocket Publisher (uses phpcent)
     App\Service\AI\WebSocketPublisher:
         arguments:
+            $logger: '@logger'
             $centrifugoUrl: '%env(default:centrifugo_api_url:CENTRIFUGO_API_URL)%'
             $centrifugoApiKey: '%env(default:centrifugo_api_key:CENTRIFUGO_API_KEY)%'
             $enabled: '%env(bool:default:centrifugo_enabled:CENTRIFUGO_ENABLED)%'
