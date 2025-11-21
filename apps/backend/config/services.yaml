@@ -25,6 +25,8 @@ services:
             - '../src/Entity/'
             - '../src/Kernel.php'
             - '../src/Service/AI/Command/'  # Регистрируется в voice_commands.yaml с тегами
+            - '../src/Service/AI/WebSocketPublisher.php'  # Регистрируется явно в ai_services.yaml
+            - '../src/Service/WebSocket/'  # Регистрируется явно в ai_services.yaml
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

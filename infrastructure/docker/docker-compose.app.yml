@@ -67,7 +67,24 @@ services:
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
     networks:
       - nginx-php83-psql16
-  
+
+  centrifugo:
+    container_name: ${COMPOSE_PROJECT_NAME:-backend}-centrifugo
+    image: centrifugo/centrifugo:v5
+    ports:
+      - "${CENTRIFUGO_PORT}:8000"
+    volumes:
+      - ./centrifugo/config.json:/centrifugo/config.json
+    command: centrifugo -c config.json
+    environment:
+      # БЕЗ fallback - Fail-Fast!
+      CENTRIFUGO_TOKEN_HMAC_SECRET_KEY: ${CENTRIFUGO_HMAC_SECRET}
+      CENTRIFUGO_API_KEY: ${CENTRIFUGO_API_KEY}
+      CENTRIFUGO_ADMIN_PASSWORD: ${CENTRIFUGO_ADMIN_PASSWORD}
+      CENTRIFUGO_ADMIN_SECRET: ${CENTRIFUGO_ADMIN_SECRET}
+    networks:
+      - nginx-php83-psql16
+
   cron:
     container_name: ${COMPOSE_PROJECT_NAME:-backend}-cron
     build:

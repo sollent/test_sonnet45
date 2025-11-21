@@ -1,0 +1,24 @@
+{
+  "token_hmac_secret_key": "${CENTRIFUGO_TOKEN_HMAC_SECRET_KEY}",
+  "api_key": "${CENTRIFUGO_API_KEY}",
+  "admin_password": "${CENTRIFUGO_ADMIN_PASSWORD}",
+  "admin_secret": "${CENTRIFUGO_ADMIN_SECRET}",
+  "admin": true,
+  "allowed_origins": ["*"],
+  "allow_subscribe_for_client": true,
+  "allow_publish_for_client": false,
+  "allow_presence_for_client": true,
+  "allow_history_for_client": true,
+  "history_size": 100,
+  "history_ttl": "300s",
+  "namespaces": [
+    {
+      "name": "personal",
+      "presence": true,
+      "history_size": 50,
+      "history_ttl": "120s",
+      "join_leave": true
+    }
+  ],
+  "log_level": "info"
+}

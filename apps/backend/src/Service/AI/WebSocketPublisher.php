@@ -5,55 +5,36 @@ declare(strict_types=1);
 namespace App\Service\AI;
 
 use Exception;
+use phpcent\Client;
 use Psr\Log\LoggerInterface;
-use RuntimeException;
-use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
  * Сервис публикации сообщений через WebSocket (Centrifugo)
  *
  * Отправляет real-time уведомления пользователям о статусе обработки команд.
- * Использует паттерн Publisher из Pub/Sub архитектуры
+ * Использует паттерн Publisher из Pub/Sub архитектуры.
+ * Обновлен для использования phpcent библиотеки вместо HTTP клиента.
  */
 class WebSocketPublisher
 {
-    private HttpClientInterface $httpClient;
+    private Client $centrifugo;
 
     private LoggerInterface $logger;
-
-    private string $centrifugoUrl;
-
-    private string $centrifugoApiKey;
 
     private bool $enabled;
 
     public function __construct(
-        HttpClientInterface $httpClient,
         LoggerInterface $logger,
-        ParameterBagInterface $params,
+        string $centrifugoUrl,
+        string $centrifugoApiKey,
+        bool $enabled = true
     ) {
-        $this->httpClient = $httpClient;
         $this->logger = $logger;
+        $this->enabled = $enabled;
 
-        // Конфигурация Centrifugo
-        try {
-            $this->centrifugoUrl = (string) $params->get('centrifugo_url');
-        } catch (\Exception) {
-            $this->centrifugoUrl = 'http://centrifugo:8000';
-        }
-
-        try {
-            $this->centrifugoApiKey = (string) $params->get('centrifugo_api_key');
-        } catch (\Exception) {
-            $this->centrifugoApiKey = 'default-api-key';
-        }
-
-        try {
-            $this->enabled = (bool) $params->get('websocket_enabled');
-        } catch (\Exception) {
-            $this->enabled = false;
-        }
+        // Инициализируем phpcent клиент
+        $this->centrifugo = new Client($centrifugoUrl);
+        $this->centrifugo->setApiKey($centrifugoApiKey);
     }
 
     /**
@@ -88,8 +69,9 @@ class WebSocketPublisher
                 'timestamp' => time(),
             ];
 
-            return $this->sendToCentrifugo($channel, $message);
+            $this->centrifugo->publish($channel, $message);
 
+            return true;
         } catch (Exception $e) {
             $this->logger->error('Failed to publish to WebSocket', [
                 'channel' => $channel,
@@ -129,8 +111,9 @@ class WebSocketPublisher
                 'timestamp' => time(),
             ];
 
-            return $this->sendToCentrifugo($channel, $message);
+            $this->centrifugo->publish($channel, $message);
 
+            return true;
         } catch (Exception $e) {
             $this->logger->error('Failed to broadcast', [
                 'event' => $event,
@@ -179,11 +162,9 @@ class WebSocketPublisher
     public function isAvailable(): bool
     {
         try {
-            $response = $this->httpClient->request('GET', $this->centrifugoUrl . '/health', [
-                'timeout' => 2.0,
-            ]);
+            $this->centrifugo->info();
 
-            return $response->getStatusCode() === 200;
+            return true;
         } catch (Exception $e) {
             $this->logger->warning('Centrifugo health check failed', [
                 'error' => $e->getMessage(),
@@ -238,59 +219,55 @@ class WebSocketPublisher
     }
 
     /**
-     * Отправка данных в Centrifugo
-     */
-    private function sendToCentrifugo(string $channel, array $message): bool
-    {
-        try {
-            $response = $this->httpClient->request('POST', $this->centrifugoUrl . '/api/publish', [
-                'headers' => [
-                    'Authorization' => 'apikey ' . $this->centrifugoApiKey,
-                    'Content-Type'  => 'application/json',
-                ],
-                'json' => [
-                    'channel' => $channel,
-                    'data'    => $message,
-                ],
-                'timeout' => 5.0,
-            ]);
-
-            $statusCode = $response->getStatusCode();
-
-            if ($statusCode !== 200) {
-                throw new RuntimeException(sprintf(
-                    'Centrifugo returned status %d',
-                    $statusCode,
-                ));
-            }
-
-            $responseData = $response->toArray();
-
-            // Проверяем ответ Centrifugo
-            if (isset($responseData['error'])) {
-                throw new RuntimeException(
-                    'Centrifugo error: ' . ($responseData['error']['message'] ?? 'Unknown error'),
-                );
-            }
-
-            return true;
-
-        } catch (Exception $e) {
-            $this->logger->error('Failed to send to Centrifugo', [
-                'channel' => $channel,
-                'error'   => $e->getMessage(),
-            ]);
-
-            return false;
-        }
-    }
-
-    /**
      * Получение канала для пользователя
      */
     private function getUserChannel(int $userId): string
     {
-        return sprintf('user:%d', $userId);
+        return sprintf('personal:%d', $userId);
+    }
+
+    /**
+     * Отключить пользователя от всех каналов
+     */
+    public function disconnectUser(int $userId): void
+    {
+        if (!$this->enabled) {
+            return;
+        }
+
+        try {
+            $this->centrifugo->disconnect((string) $userId);
+
+            $this->logger->info('User disconnected from Centrifugo', [
+                'user_id' => $userId,
+            ]);
+        } catch (Exception $e) {
+            $this->logger->error('Failed to disconnect user', [
+                'user_id' => $userId,
+                'error'   => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Получить информацию о подключениях к каналу
+     */
+    public function getPresence(string $channel): array
+    {
+        if (!$this->enabled) {
+            return [];
+        }
+
+        try {
+            return $this->centrifugo->presence($channel);
+        } catch (Exception $e) {
+            $this->logger->error('Failed to get presence', [
+                'channel' => $channel,
+                'error'   => $e->getMessage(),
+            ]);
+
+            return [];
+        }
     }
 }
 
