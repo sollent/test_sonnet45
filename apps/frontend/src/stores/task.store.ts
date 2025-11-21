@@ -650,6 +650,36 @@ export const useTaskStore = defineStore('task', () => {
     }
   }
 
+  // WebSocket real-time methods
+  function addTaskFromWebSocket(task: Task): void {
+    console.log('[TaskStore] Adding task from WebSocket:', task.id)
+    // Check if task already exists
+    const existingIndex = tasks.value.findIndex(t => t.id === task.id)
+    if (existingIndex === -1) {
+      // Add to beginning of list
+      tasks.value = [task, ...tasks.value]
+    } else {
+      // Update existing task
+      tasks.value[existingIndex] = task
+    }
+  }
+
+  function updateTaskFromWebSocket(task: Task): void {
+    console.log('[TaskStore] Updating task from WebSocket:', task.id)
+    const index = tasks.value.findIndex(t => t.id === task.id)
+    if (index !== -1) {
+      tasks.value[index] = task
+    } else {
+      // Task not found, add it
+      tasks.value = [task, ...tasks.value]
+    }
+  }
+
+  function removeTaskFromWebSocket(taskId: number): void {
+    console.log('[TaskStore] Removing task from WebSocket:', taskId)
+    tasks.value = tasks.value.filter(t => t.id !== taskId)
+  }
+
   return {
     // State
     tasks,
@@ -703,7 +733,12 @@ export const useTaskStore = defineStore('task', () => {
     hasActiveFilters,
     setSearchQuery,
     clearSearch,
-    setCurrentView
+    setCurrentView,
+
+    // WebSocket real-time methods
+    addTaskFromWebSocket,
+    updateTaskFromWebSocket,
+    removeTaskFromWebSocket
   }
 })
 

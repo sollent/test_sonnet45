@@ -267,15 +267,31 @@ onMounted(async () => {
   onTaskEvent((event) => {
     console.log('[TasksDashboard] Received task event:', event)
 
-    // Refresh task list when task is created, updated, or deleted
-    if (event.event === 'task.created' || event.event === 'task.updated' || event.event === 'task.deleted') {
+    const eventData = event.data as { message?: string; task?: Task; tasks?: Task[] } | undefined
+
+    // Handle task.created - add task directly to store
+    if (event.event === 'task.created' && eventData?.task) {
+      console.log('[TasksDashboard] Adding task from WebSocket:', eventData.task)
+      taskStore.addTaskFromWebSocket(eventData.task)
+    }
+    // Handle task.updated - update task in store
+    else if (event.event === 'task.updated' && eventData?.task) {
+      console.log('[TasksDashboard] Updating task from WebSocket:', eventData.task)
+      taskStore.updateTaskFromWebSocket(eventData.task)
+    }
+    // Handle task.deleted - remove task from store
+    else if (event.event === 'task.deleted' && eventData?.task) {
+      console.log('[TasksDashboard] Removing task from WebSocket:', eventData.task.id)
+      taskStore.removeTaskFromWebSocket(eventData.task.id)
+    }
+    // Fallback: refresh from server for other events
+    else if (event.event === 'task.completed' || event.event === 'task.reopened') {
       selectView(selectedView.value)
     }
 
     // Show notification for task events
-    if (event.data && typeof event.data === 'object' && 'message' in event.data) {
-      const message = (event.data as { message: string }).message
-      showSuccess(message)
+    if (eventData?.message) {
+      showSuccess(eventData.message)
     }
   })
 })
