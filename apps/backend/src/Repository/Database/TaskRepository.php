@@ -1701,10 +1701,26 @@ class TaskRepository extends ServiceEntityRepository
                 ->setParameter('tagNames', $criteria['tags']);
         }
 
-        // Search by text
+        // Search by text (supports both string and array of search terms)
         if (isset($criteria['search'])) {
-            $qb->andWhere('(LOWER(t.title) LIKE :searchQuery OR LOWER(t.description) LIKE :searchQuery)')
-                ->setParameter('searchQuery', '%' . mb_strtolower($criteria['search']) . '%');
+            $search = $criteria['search'];
+
+            if (is_array($search)) {
+                // Multiple search terms - build OR conditions for each
+                $orConditions = [];
+                foreach ($search as $index => $term) {
+                    $paramName = 'searchQuery' . $index;
+                    $orConditions[] = "(LOWER(t.title) LIKE :$paramName OR LOWER(t.description) LIKE :$paramName)";
+                    $qb->setParameter($paramName, '%' . mb_strtolower($term) . '%');
+                }
+                if (!empty($orConditions)) {
+                    $qb->andWhere('(' . implode(' OR ', $orConditions) . ')');
+                }
+            } else {
+                // Single search term
+                $qb->andWhere('(LOWER(t.title) LIKE :searchQuery OR LOWER(t.description) LIKE :searchQuery)')
+                    ->setParameter('searchQuery', '%' . mb_strtolower($search) . '%');
+            }
         }
 
         // Order by priority and due date
