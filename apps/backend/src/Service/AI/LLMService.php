@@ -245,6 +245,12 @@ class LLMService
         "Создает две задачи. Одно на сегодня купить свиноматку. И одну на завтра купить большого жирного коня." →
         {"action":"create_multiple_tasks","parameters":{"tasks":[{"title":"Купить свиноматку","due_date":"today"},{"title":"Купить большого жирного коня","due_date":"tomorrow"}]},"confidence":0.90}
 
+        "Создай 3 задачи на сегодня" →
+        {"action":"create_multiple_tasks","parameters":{"tasks":[{"title":"Задача 1","due_date":"today"},{"title":"Задача 2","due_date":"today"},{"title":"Задача 3","due_date":"today"}]},"confidence":0.90}
+
+        "Создай 5 задач на завтра с разными названиями и описаниями" →
+        {"action":"create_multiple_tasks","parameters":{"tasks":[{"title":"Задача 1","description":"Описание 1","due_date":"tomorrow"},{"title":"Задача 2","description":"Описание 2","due_date":"tomorrow"},{"title":"Задача 3","description":"Описание 3","due_date":"tomorrow"},{"title":"Задача 4","description":"Описание 4","due_date":"tomorrow"},{"title":"Задача 5","description":"Описание 5","due_date":"tomorrow"}]},"confidence":0.90}
+
         "Завершить задачу написать отчет" →
         {"action":"complete_task","parameters":{"search":"написать отчет"},"confidence":0.95}
 
