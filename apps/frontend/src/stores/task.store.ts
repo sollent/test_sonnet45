@@ -683,27 +683,50 @@ export const useTaskStore = defineStore('task', () => {
   // Add multiple tasks from WebSocket
   function addTasksFromWebSocket(newTasks: Task[]): void {
     console.log('[TaskStore] Adding multiple tasks from WebSocket:', newTasks.length)
+
+    // Filter out tasks that already exist, update existing ones
+    const existingIds = new Set(tasks.value.map(t => t.id))
+    const tasksToAdd: Task[] = []
+    const updatedTasks = [...tasks.value]
+
     for (const task of newTasks) {
-      const existingIndex = tasks.value.findIndex(t => t.id === task.id)
-      if (existingIndex === -1) {
-        tasks.value = [task, ...tasks.value]
+      if (existingIds.has(task.id)) {
+        // Update existing task
+        const index = updatedTasks.findIndex(t => t.id === task.id)
+        if (index !== -1) {
+          updatedTasks[index] = task
+        }
       } else {
-        tasks.value[existingIndex] = task
+        // New task
+        tasksToAdd.push(task)
       }
     }
+
+    // Single atomic update for reactivity
+    tasks.value = [...tasksToAdd, ...updatedTasks]
   }
 
   // Update multiple tasks from WebSocket
   function updateTasksFromWebSocket(updatedTasks: Task[]): void {
     console.log('[TaskStore] Updating multiple tasks from WebSocket:', updatedTasks.length)
+
+    const existingIds = new Set(tasks.value.map(t => t.id))
+    const tasksToAdd: Task[] = []
+    const newTasksList = [...tasks.value]
+
     for (const task of updatedTasks) {
-      const index = tasks.value.findIndex(t => t.id === task.id)
-      if (index !== -1) {
-        tasks.value[index] = task
+      if (existingIds.has(task.id)) {
+        const index = newTasksList.findIndex(t => t.id === task.id)
+        if (index !== -1) {
+          newTasksList[index] = task
+        }
       } else {
-        tasks.value = [task, ...tasks.value]
+        tasksToAdd.push(task)
       }
     }
+
+    // Single atomic update for reactivity
+    tasks.value = [...tasksToAdd, ...newTasksList]
   }
 
   // Remove multiple tasks from WebSocket
