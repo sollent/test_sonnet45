@@ -80,13 +80,27 @@ class CreateMultipleSubtasksCommand extends AbstractVoiceCommand
 
         // Поиск родительской задачи
         $parentTask = $this->taskFinder->find($parentSearch, $user);
+        $parentWasCreated = false;
 
+        // Если родительская задача не найдена - создаём её
         if (!$parentTask) {
-            return CommandResponse::failure(
-                'parent_task_not_found',
-                sprintf('Родительская задача "%s" не найдена', $parentSearch),
-                ['search' => $parentSearch],
-            );
+            $parentDto = new CreateTaskDto();
+            $parentDto->title = ucfirst($parentSearch);
+            $parentDto->status = TaskStatus::PENDING;
+
+            // Устанавливаем даты и приоритет из параметров если указаны
+            if (isset($parameters['due_date'])) {
+                $dateRange = $this->dateTimeResolver->resolveDateRange($parameters);
+                $parentDto->startDate = $dateRange['start']?->format('Y-m-d H:i:s');
+                $parentDto->dueDate = $dateRange['due']?->format('Y-m-d H:i:s');
+            }
+
+            if (isset($parameters['priority'])) {
+                $parentDto->priority = $this->priorityMapper->map($parameters['priority']);
+            }
+
+            $parentTask = $this->taskService->createTask($parentDto, $user);
+            $parentWasCreated = true;
         }
 
         // Подготовка общих параметров для всех подзадач
@@ -143,17 +157,26 @@ class CreateMultipleSubtasksCommand extends AbstractVoiceCommand
 
         $this->flush();
 
-        return CommandResponse::success(
-            'multiple_subtasks_created',
-            sprintf(
+        $message = $parentWasCreated
+            ? sprintf(
+                'Создана задача "%s" с %d подзадачами',
+                $parentTask->getTitle(),
+                count($createdSubtasks),
+            )
+            : sprintf(
                 'Создано %d подзадач для "%s"',
                 count($createdSubtasks),
                 $parentTask->getTitle(),
-            ),
+            );
+
+        return CommandResponse::success(
+            'multiple_subtasks_created',
+            $message,
             [
                 'parent_task' => [
-                    'id'    => $parentTask->getId(),
-                    'title' => $parentTask->getTitle(),
+                    'id'           => $parentTask->getId(),
+                    'title'        => $parentTask->getTitle(),
+                    'was_created'  => $parentWasCreated,
                 ],
                 'subtasks_count' => count($createdSubtasks),
                 'subtasks'       => $createdSubtasks,
