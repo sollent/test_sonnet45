@@ -92,7 +92,7 @@ class ConvertSubtaskToTaskCommand extends AbstractVoiceCommand
         $parentTitle = $parentTask->getTitle();
 
         // Отсоединяем от родителя
-        $subtask->setParent(null);
+        $subtask->setParentTask(null);
 
         // Обновляем дату если указана
         if (isset($parameters['new_date'])) {

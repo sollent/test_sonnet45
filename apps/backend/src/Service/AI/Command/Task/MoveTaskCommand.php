@@ -71,7 +71,7 @@ class MoveTaskCommand extends AbstractVoiceCommand
             );
         }
 
-        $oldParentTitle = $task->getParent()?->getTitle() ?? '(корень)';
+        $oldParentTitle = $task->getParentTask()?->getTitle() ?? '(корень)';
 
         // Если указан новый родитель
         if ($newParentSearch) {
@@ -141,7 +141,7 @@ class MoveTaskCommand extends AbstractVoiceCommand
             if ($current->getId() === $task->getId()) {
                 return true; // Нашли цикл
             }
-            $current = $current->getParent();
+            $current = $current->getParentTask();
         }
 
         return false;
