@@ -75,8 +75,12 @@ class CreateTaskCommand extends AbstractVoiceCommand
         $dto->status = TaskStatus::PENDING;
         $dto->priority = $this->priorityMapper->map($parameters['priority'] ?? null);
 
-        // Обработка даты и времени
-        $dateRange = $this->dateTimeResolver->resolveDateRange($parameters);
+        // Обработка даты и времени (по умолчанию - сегодня)
+        $dateParams = $parameters;
+        if (!isset($dateParams['due_date'])) {
+            $dateParams['due_date'] = 'today';
+        }
+        $dateRange = $this->dateTimeResolver->resolveDateRange($dateParams);
         $dto->startDate = $dateRange['start']?->format('Y-m-d H:i:s');
         $dto->dueDate = $dateRange['due']?->format('Y-m-d H:i:s');
 
