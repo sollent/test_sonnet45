@@ -23,6 +23,7 @@
     "@vueuse/core": "^10.9.0",
     "aos": "^2.3.4",
     "axios": "^1.6.7",
+    "centrifuge": "^5.5.2",
     "date-fns": "^4.1.0",
     "echarts": "^6.0.0",
     "pinia": "^2.1.7",

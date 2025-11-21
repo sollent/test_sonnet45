@@ -7,6 +7,7 @@ namespace App\Service\AI;
 use App\Entity\User;
 use App\Service\AI\Registry\CommandRegistry;
 use App\Service\AI\Response\CommandResponse;
+use App\Service\WebSocket\CommandEventMapper;
 use App\ValueObject\ParsedCommand;
 use Exception;
 use Psr\Log\LoggerInterface;
@@ -30,12 +31,20 @@ class VoiceCommandExecutor
 
     private LoggerInterface $logger;
 
+    private WebSocketPublisher $webSocketPublisher;
+
+    private CommandEventMapper $eventMapper;
+
     public function __construct(
         CommandRegistry $commandRegistry,
         LoggerInterface $logger,
+        WebSocketPublisher $webSocketPublisher,
+        CommandEventMapper $eventMapper,
     ) {
         $this->commandRegistry = $commandRegistry;
         $this->logger = $logger;
+        $this->webSocketPublisher = $webSocketPublisher;
+        $this->eventMapper = $eventMapper;
     }
 
     /**
@@ -72,6 +81,11 @@ class VoiceCommandExecutor
                 'response_type' => $response->getType(),
                 'success'       => $response->isSuccess(),
             ]);
+
+            // Публикация события в WebSocket если команда успешна
+            if ($response->isSuccess()) {
+                $this->publishWebSocketEvent($command, $response, $user);
+            }
 
             return $response;
 
@@ -184,5 +198,62 @@ class VoiceCommandExecutor
                 ],
             ],
         );
+    }
+
+    /**
+     * Публикация события в WebSocket
+     */
+    private function publishWebSocketEvent(ParsedCommand $command, CommandResponse $response, User $user): void
+    {
+        // Проверяем нужно ли публиковать событие для этого действия
+        if (!$this->eventMapper->shouldPublish($command->action)) {
+            return;
+        }
+
+        $userId = $user->getId();
+        if ($userId === null) {
+            return;
+        }
+
+        // Получаем имя события
+        $eventName = $this->eventMapper->getEventName($command->action);
+        if ($eventName === null) {
+            return;
+        }
+
+        // Формируем данные события
+        $eventData = [
+            'action'    => $command->action,
+            'message'   => $response->getMessage(),
+            'timestamp' => (new \DateTimeImmutable())->format('c'),
+        ];
+
+        // Добавляем данные сущности если требуется
+        if ($this->eventMapper->shouldIncludeEntity($command->action) && $response->getData()) {
+            $responseData = $response->getData();
+            if (isset($responseData['task'])) {
+                $eventData['task'] = $responseData['task'];
+            }
+            if (isset($responseData['tasks'])) {
+                $eventData['tasks'] = $responseData['tasks'];
+            }
+        }
+
+        try {
+            $this->webSocketPublisher->publish($userId, $eventName, $eventData);
+
+            $this->logger->debug('WebSocket event published', [
+                'user_id' => $userId,
+                'event'   => $eventName,
+                'action'  => $command->action,
+            ]);
+        } catch (Exception $e) {
+            // Логируем ошибку, но не прерываем выполнение
+            $this->logger->warning('Failed to publish WebSocket event', [
+                'user_id' => $userId,
+                'event'   => $eventName,
+                'error'   => $e->getMessage(),
+            ]);
+        }
     }
 }
