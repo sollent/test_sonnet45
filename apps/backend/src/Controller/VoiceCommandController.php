@@ -24,8 +24,6 @@ use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
-use Symfony\Component\Serializer\SerializerInterface;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
 use ValueError;
 
 /**
@@ -42,8 +40,6 @@ class VoiceCommandController extends AbstractController
     public function __construct(
         private VoiceProcessingService $voiceProcessingService,
         private VoiceCommandRepository $commandRepository,
-        private SerializerInterface $serializer,
-        private ValidatorInterface $validator,
     ) {
     }
 
@@ -171,8 +167,8 @@ class VoiceCommandController extends AbstractController
         #[CurrentUser]
         User $user,
     ): JsonResponse {
-        $limit = min((int) $request->query->get('limit', 20), 100);
-        $offset = max((int) $request->query->get('offset', 0), 0);
+        $limit = min((int) $request->query->get('limit', '20'), 100);
+        $offset = max((int) $request->query->get('offset', '0'), 0);
         $statusFilter = $request->query->get('status');
 
         // Валидация статуса если указан

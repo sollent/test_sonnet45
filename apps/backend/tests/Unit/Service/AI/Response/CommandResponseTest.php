@@ -82,7 +82,6 @@ class CommandResponseTest extends TestCase
 
         $array = $response->toArray();
 
-        $this->assertIsArray($array);
         $this->assertTrue($array['success']);
         $this->assertSame('task_completed', $array['type']);
         $this->assertSame('Задача завершена', $array['message']);

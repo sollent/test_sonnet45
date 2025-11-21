@@ -409,14 +409,14 @@ class LLMService
 
         // Получаем URL Ollama из параметров или используем дефолтный
         // Используем host.docker.internal для доступа к нативному Ollama на macOS
-        $this->ollamaUrl = $params->has('ollama_url')
-            ? $params->get('ollama_url')
-            : 'http://host.docker.internal:11434';
+        /** @var string $ollamaUrl */
+        $ollamaUrl = $params->has('ollama_url') ? $params->get('ollama_url') : 'http://host.docker.internal:11434';
+        $this->ollamaUrl = $ollamaUrl;
 
         // Модель Qwen 2.5 14B - мощная модель для отличного понимания команд
-        $this->model = $params->has('llm_model')
-            ? $params->get('llm_model')
-            : self::DEFAULT_MODEL;
+        /** @var string $model */
+        $model = $params->has('llm_model') ? $params->get('llm_model') : self::DEFAULT_MODEL;
+        $this->model = $model;
     }
 
     /**
@@ -477,7 +477,7 @@ class LLMService
         // Если все попытки провалились, возвращаем команду с низкой уверенностью
         $this->logger->error('All LLM parse attempts failed', [
             'command' => $commandText,
-            'error'   => $lastError?->getMessage(),
+            'error'   => $lastError->getMessage(),
         ]);
 
         // Возвращаем ParsedCommand с действием clarification_needed
@@ -486,7 +486,7 @@ class LLMService
             parameters: [
                 'original_text' => $commandText,
                 'question'      => 'Извините, не удалось понять команду. Можете перефразировать?',
-                'error'         => $lastError?->getMessage(),
+                'error'         => $lastError->getMessage(),
             ],
             confidence: 0.1,
             originalText: $commandText,

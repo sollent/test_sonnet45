@@ -92,10 +92,6 @@ class TestVoiceCommandsCommand extends Command
 
                 if ($command->getParsedCommand()) {
                     $parsed = $command->getParsedCommand();
-
-                    if (is_string($parsed)) {
-                        $parsed = json_decode($parsed, true);
-                    }
                     $io->text("🎯 Распознанное действие: {$parsed['action']}");
                     $io->text('🔧 Параметры:');
                     $io->block(json_encode($parsed['parameters'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
@@ -103,10 +99,6 @@ class TestVoiceCommandsCommand extends Command
 
                 if ($command->getExecutionResult()) {
                     $result = $command->getExecutionResult();
-
-                    if (is_string($result)) {
-                        $result = json_decode($result, true);
-                    }
                     $io->text('📦 Результат выполнения:');
                     $io->block(json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
                 }

@@ -37,17 +37,15 @@ class WebSocketPublisher
         $this->logger = $logger;
 
         // Конфигурация Centrifugo
-        $this->centrifugoUrl = $params->has('centrifugo_url')
-            ? $params->get('centrifugo_url')
-            : 'http://centrifugo:8000';
+        /** @var string $centrifugoUrl */
+        $centrifugoUrl = $params->has('centrifugo_url') ? $params->get('centrifugo_url') : 'http://centrifugo:8000';
+        $this->centrifugoUrl = $centrifugoUrl;
 
-        $this->centrifugoApiKey = $params->has('centrifugo_api_key')
-            ? $params->get('centrifugo_api_key')
-            : 'default-api-key';
+        /** @var string $apiKey */
+        $apiKey = $params->has('centrifugo_api_key') ? $params->get('centrifugo_api_key') : 'default-api-key';
+        $this->centrifugoApiKey = $apiKey;
 
-        $this->enabled = $params->has('websocket_enabled')
-            ? (bool) $params->get('websocket_enabled')
-            : true;
+        $this->enabled = $params->has('websocket_enabled') && (bool) $params->get('websocket_enabled');
     }
 
     /**
@@ -193,31 +191,31 @@ class WebSocketPublisher
     public function sendVoiceEvent(int $userId, VoiceEventType $type, array $data): bool
     {
         $eventMap = [
-            VoiceEventType::PROCESSING_STARTED => [
+            VoiceEventType::PROCESSING_STARTED->value => [
                 'title' => 'Обработка началась',
                 'icon'  => '🎤',
             ],
-            VoiceEventType::TRANSCRIPTION_COMPLETED => [
+            VoiceEventType::TRANSCRIPTION_COMPLETED->value => [
                 'title' => 'Транскрипция завершена',
                 'icon'  => '📝',
             ],
-            VoiceEventType::COMMAND_PARSED => [
+            VoiceEventType::COMMAND_PARSED->value => [
                 'title' => 'Команда распознана',
                 'icon'  => '🧠',
             ],
-            VoiceEventType::COMMAND_EXECUTING => [
+            VoiceEventType::COMMAND_EXECUTING->value => [
                 'title' => 'Выполнение команды',
                 'icon'  => '⚡',
             ],
-            VoiceEventType::COMMAND_COMPLETED => [
+            VoiceEventType::COMMAND_COMPLETED->value => [
                 'title' => 'Команда выполнена',
                 'icon'  => '✅',
             ],
-            VoiceEventType::COMMAND_FAILED => [
+            VoiceEventType::COMMAND_FAILED->value => [
                 'title' => 'Ошибка выполнения',
                 'icon'  => '❌',
             ],
-            VoiceEventType::CLARIFICATION_NEEDED => [
+            VoiceEventType::CLARIFICATION_NEEDED->value => [
                 'title' => 'Требуется уточнение',
                 'icon'  => '❓',
             ],
@@ -266,7 +264,7 @@ class WebSocketPublisher
             // Проверяем ответ Centrifugo
             if (isset($responseData['error'])) {
                 throw new RuntimeException(
-                    'Centrifugo error: ' . $responseData['error']['message'] ?? 'Unknown error',
+                    'Centrifugo error: ' . ($responseData['error']['message'] ?? 'Unknown error'),
                 );
             }
 

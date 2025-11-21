@@ -121,7 +121,7 @@ class BulkUpdateCommand extends AbstractBatchCommand
 
         if (isset($this->updates['due_date'])) {
             $task->setDueDate($this->updates['due_date']);
-            $changes[] = sprintf('срок → %s', $this->updates['due_date']?->format('d.m.Y'));
+            $changes[] = sprintf('срок → %s', $this->updates['due_date']->format('d.m.Y'));
         }
 
         $this->logger->info('Bulk update task', [
@@ -159,7 +159,7 @@ class BulkUpdateCommand extends AbstractBatchCommand
         }
 
         if (isset($this->updates['due_date'])) {
-            $changes[] = sprintf('срок → %s', $this->updates['due_date']?->format('d.m.Y'));
+            $changes[] = sprintf('срок → %s', $this->updates['due_date']->format('d.m.Y'));
         }
 
         $changesText = implode(', ', $changes);

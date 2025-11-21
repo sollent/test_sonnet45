@@ -30,9 +30,9 @@ final class CommandResponse implements JsonSerializable
     ) {
     }
 
-    public static function success(string $type, string $message, array $data = []): self
+    public static function success(string $type, string $message, array $data = [], array $errors = []): self
     {
-        return new self($type, true, $message, $data);
+        return new self($type, true, $message, $data, $errors);
     }
 
     public static function failure(string $type, string $message, array $data = [], array $errors = []): self

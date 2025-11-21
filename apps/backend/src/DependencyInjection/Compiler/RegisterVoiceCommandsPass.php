@@ -22,7 +22,7 @@ class RegisterVoiceCommandsPass implements CompilerPassInterface
     public function process(ContainerBuilder $container): void
     {
         // Проверяем, что реестр существует
-        if (!$container->has(CommandRegistry::class)) {
+        if (!$container->hasDefinition(CommandRegistry::class)) {
             return;
         }
 

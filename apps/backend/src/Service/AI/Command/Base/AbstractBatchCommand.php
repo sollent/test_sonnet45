@@ -75,7 +75,7 @@ abstract class AbstractBatchCommand extends AbstractVoiceCommand
      */
     protected function processBatchByNames(array $taskNames, User $user): CommandResponse
     {
-        if (empty($taskNames) || !is_array($taskNames)) {
+        if (empty($taskNames)) {
             throw new RuntimeException($this->getEmptyTaskNamesMessage());
         }
 

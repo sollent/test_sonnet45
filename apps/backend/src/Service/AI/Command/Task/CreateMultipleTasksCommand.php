@@ -109,11 +109,8 @@ class CreateMultipleTasksCommand extends AbstractVoiceCommand
             // Проверяем due_date для конкретной задачи или общий, по умолчанию - сегодня
             $taskDueDate = $taskItem['due_date'] ?? $parameters['due_date'] ?? 'today';
             $taskDateRange = $this->dateTimeResolver->resolveDateRange(['due_date' => $taskDueDate]);
-
-            if ($taskDateRange) {
-                $dto->startDate = $taskDateRange['start']?->format('Y-m-d H:i:s');
-                $dto->dueDate = $taskDateRange['due']?->format('Y-m-d H:i:s');
-            }
+            $dto->startDate = $taskDateRange['start']?->format('Y-m-d H:i:s');
+            $dto->dueDate = $taskDateRange['due']?->format('Y-m-d H:i:s');
 
             // Создаем задачу
             $task = $this->taskService->createTask($dto, $user);
