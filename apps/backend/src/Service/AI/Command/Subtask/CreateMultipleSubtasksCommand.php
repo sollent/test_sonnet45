@@ -64,7 +64,11 @@ class CreateMultipleSubtasksCommand extends AbstractVoiceCommand
             throw new RuntimeException('Parent task search query is required for subtasks creation');
         }
 
-        if (empty($parameters['titles']) || !is_array($parameters['titles'])) {
+        // Поддержка двух форматов: 'titles' (массив строк) и 'subtasks' (массив объектов)
+        $hasTitles = !empty($parameters['titles']) && is_array($parameters['titles']);
+        $hasSubtasks = !empty($parameters['subtasks']) && is_array($parameters['subtasks']);
+
+        if (!$hasTitles && !$hasSubtasks) {
             throw new RuntimeException('Array of subtask titles is required');
         }
     }
@@ -72,7 +76,7 @@ class CreateMultipleSubtasksCommand extends AbstractVoiceCommand
     protected function doExecute(array $parameters, User $user): CommandResponse
     {
         $parentSearch = $this->taskFinder->extractParentSearch($parameters);
-        $subtaskTitles = $parameters['titles'];
+        $subtaskTitles = $this->extractSubtaskTitles($parameters);
 
         // Поиск родительской задачи
         $parentTask = $this->taskFinder->find($parentSearch, $user);
@@ -155,5 +159,34 @@ class CreateMultipleSubtasksCommand extends AbstractVoiceCommand
                 'subtasks'       => $createdSubtasks,
             ],
         );
+    }
+
+    /**
+     * Извлечь названия подзадач из параметров
+     *
+     * @param array<string, mixed> $parameters
+     * @return array<string>
+     */
+    private function extractSubtaskTitles(array $parameters): array
+    {
+        // Формат 'subtasks' (массив объектов с title)
+        if (!empty($parameters['subtasks']) && is_array($parameters['subtasks'])) {
+            $titles = [];
+            foreach ($parameters['subtasks'] as $subtask) {
+                if (is_array($subtask) && isset($subtask['title'])) {
+                    $titles[] = $subtask['title'];
+                } elseif (is_string($subtask)) {
+                    $titles[] = $subtask;
+                }
+            }
+            return $titles;
+        }
+
+        // Формат 'titles' (массив строк)
+        if (!empty($parameters['titles']) && is_array($parameters['titles'])) {
+            return $parameters['titles'];
+        }
+
+        return [];
     }
 }
