@@ -442,6 +442,21 @@ Pinia stores и паттерны состояния
 - Тестирование производительности обработки голоса
 - Граничные случаи и тесты обработки ошибок
 
+#### [`guides/CENTRIFUGO_REALTIME_IMPLEMENTATION.md`](guides/CENTRIFUGO_REALTIME_IMPLEMENTATION.md)
+**🆕 НОВОЕ 2025-11-21** - Пошаговый план реализации Real-time обновлений через Centrifugo
+
+**Ключевые Темы:**
+- Архитектура WebSocket соединений с Centrifugo v5
+- Миграция с pusher на phpcent библиотеку
+- CommandEventMapper с использованием ParsedCommand констант
+- JWT аутентификация для WebSocket каналов
+- Frontend интеграция с centrifuge-js
+- Glassmorphism Toast компонент для уведомлений
+- Статистика и мониторинг real-time событий
+- Production конфигурация и безопасность
+- 6 фаз реализации (10-14 часов)
+- Полные примеры кода для всех компонентов
+
 #### [`guides/performance/PERFORMANCE_OPTIMIZATION_PLAN.md`](guides/performance/PERFORMANCE_OPTIMIZATION_PLAN.md)
 План оптимизации производительности Backend для 2M+ задач (Улучшено Opus 4.1)
 
