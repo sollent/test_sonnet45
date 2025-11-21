@@ -19,14 +19,7 @@ class ResponseBuilder
      */
     public function taskCreated(Task $task, array $additionalData = []): CommandResponse
     {
-        $taskData = array_merge([
-            'id'        => $task->getId(),
-            'title'     => $task->getTitle(),
-            'status'    => $task->getStatus()->value,
-            'priority'  => $task->getPriority()->value,
-            'startDate' => $task->getStartDate()?->format('c'),
-            'dueDate'   => $task->getDueDate()?->format('c'),
-        ], $additionalData);
+        $taskData = array_merge($this->serializeTask($task), $additionalData);
 
         return CommandResponse::success(
             'task_created',
@@ -266,13 +259,19 @@ class ResponseBuilder
     public function serializeTask(Task $task): array
     {
         return [
-            'id'        => $task->getId(),
-            'title'     => $task->getTitle(),
-            'status'    => $task->getStatus()->value,
-            'priority'  => $task->getPriority()->value,
-            'startDate' => $task->getStartDate()?->format('c'),
-            'dueDate'   => $task->getDueDate()?->format('c'),
-            'tags'      => array_map(fn ($tag) => $tag->getName(), $task->getTags()->toArray()),
+            'id'          => $task->getId(),
+            'title'       => $task->getTitle(),
+            'description' => $task->getDescription(),
+            'status'      => $task->getStatus()->value,
+            'priority'    => $task->getPriority()->value,
+            'isCompleted' => $task->isCompleted(),
+            'isArchived'  => $task->isArchived(),
+            'startDate'   => $task->getStartDate()?->format('c'),
+            'dueDate'     => $task->getDueDate()?->format('c'),
+            'tags'        => array_map(fn ($tag) => ['id' => $tag->getId(), 'name' => $tag->getName(), 'color' => $tag->getColor()], $task->getTags()->toArray()),
+            'subtasks'    => [],
+            'createdAt'   => $task->getCreatedAt()?->format('c'),
+            'updatedAt'   => $task->getUpdatedAt()?->format('c'),
         ];
     }
 }

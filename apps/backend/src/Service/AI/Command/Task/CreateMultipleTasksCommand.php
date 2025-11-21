@@ -121,13 +121,19 @@ class CreateMultipleTasksCommand extends AbstractVoiceCommand
             }
 
             $createdTasks[] = [
-                'id'        => $task->getId(),
-                'title'     => $task->getTitle(),
-                'status'    => $task->getStatus()->value,
-                'priority'  => $task->getPriority()->value,
-                'startDate' => $task->getStartDate()?->format('c'),
-                'dueDate'   => $task->getDueDate()?->format('c'),
-                'tags'      => array_map(fn ($tag) => $tag->getName(), $task->getTags()->toArray()),
+                'id'          => $task->getId(),
+                'title'       => $task->getTitle(),
+                'description' => $task->getDescription(),
+                'status'      => $task->getStatus()->value,
+                'priority'    => $task->getPriority()->value,
+                'isCompleted' => $task->isCompleted(),
+                'isArchived'  => $task->isArchived(),
+                'startDate'   => $task->getStartDate()?->format('c'),
+                'dueDate'     => $task->getDueDate()?->format('c'),
+                'tags'        => array_map(fn ($tag) => ['id' => $tag->getId(), 'name' => $tag->getName(), 'color' => $tag->getColor()], $task->getTags()->toArray()),
+                'subtasks'    => [],
+                'createdAt'   => $task->getCreatedAt()?->format('c'),
+                'updatedAt'   => $task->getUpdatedAt()?->format('c'),
             ];
 
             $this->logger->info('Create multiple tasks - created task', [
