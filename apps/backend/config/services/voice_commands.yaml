@@ -43,8 +43,8 @@ services:
 
     # Все классы команд в директории Command/
     App\Service\AI\Command\:
-        resource: '../../src/Service/AI/Command/*'
-        exclude: '../../src/Service/AI/Command/{Contract,Base}'
+        resource: '%kernel.project_dir%/src/Service/AI/Command/*/*Command.php'
+        exclude: '%kernel.project_dir%/src/Service/AI/Command/{Contract,Base}'
         tags: ['voice.command']
 
     # Специальная конфигурация для конкретных команд
