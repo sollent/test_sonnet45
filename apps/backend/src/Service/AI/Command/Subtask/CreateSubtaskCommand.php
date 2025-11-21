@@ -64,15 +64,48 @@ class CreateSubtaskCommand extends AbstractVoiceCommand
             throw new RuntimeException('Parent task search query is required for subtask creation');
         }
 
-        if (empty($parameters['title'])) {
+        // Поддержка обоих форматов: 'title' (строка) и 'subtasks' (массив)
+        $hasTitle = !empty($parameters['title']);
+        $hasSubtasks = !empty($parameters['subtasks']) && is_array($parameters['subtasks']);
+
+        if (!$hasTitle && !$hasSubtasks) {
             throw new RuntimeException('Subtask title is required');
         }
+    }
+
+    /**
+     * Извлечь названия подзадач из параметров
+     *
+     * @param array<string, mixed> $parameters
+     * @return array<string>
+     */
+    private function extractSubtaskTitles(array $parameters): array
+    {
+        // Формат 'title' (одна подзадача)
+        if (!empty($parameters['title'])) {
+            return [$parameters['title']];
+        }
+
+        // Формат 'subtasks' (массив объектов с title)
+        if (!empty($parameters['subtasks']) && is_array($parameters['subtasks'])) {
+            $titles = [];
+            foreach ($parameters['subtasks'] as $subtask) {
+                if (is_array($subtask) && isset($subtask['title'])) {
+                    $titles[] = $subtask['title'];
+                } elseif (is_string($subtask)) {
+                    $titles[] = $subtask;
+                }
+            }
+            return $titles;
+        }
+
+        return [];
     }
 
     protected function doExecute(array $parameters, User $user): CommandResponse
     {
         $parentSearch = $this->taskFinder->extractParentSearch($parameters);
-        $subtaskTitle = $parameters['title'];
+        $subtaskTitles = $this->extractSubtaskTitles($parameters);
 
         // Поиск родительской задачи
         $parentTask = $this->taskFinder->find($parentSearch, $user);
@@ -97,50 +130,72 @@ class CreateSubtaskCommand extends AbstractVoiceCommand
             $parentCreated = true;
         }
 
-        // Создание подзадачи
-        $dto = new CreateTaskDto();
-        $dto->title = $subtaskTitle;
-        $dto->description = $parameters['description'] ?? null;
-        $dto->status = TaskStatus::PENDING;
+        // Подготовка общих параметров
+        $priority = isset($parameters['priority'])
+            ? $this->priorityMapper->map($parameters['priority'])
+            : $parentTask->getPriority();
 
-        // Приоритет
-        if (isset($parameters['priority'])) {
-            $dto->priority = $this->priorityMapper->map($parameters['priority']);
-        } else {
-            // Наследуем приоритет родителя
-            $dto->priority = $parentTask->getPriority();
-        }
-
-        // Даты
+        $dateRange = null;
         if (isset($parameters['due_date'])) {
             $dateRange = $this->dateTimeResolver->resolveDateRange($parameters);
-            $dto->startDate = $dateRange['start']?->format('Y-m-d H:i:s');
-            $dto->dueDate = $dateRange['due']?->format('Y-m-d H:i:s');
-        } else {
-            // Наследуем даты родителя
-            $dto->startDate = $parentTask->getStartDate()?->format('Y-m-d H:i:s');
-            $dto->dueDate = $parentTask->getDueDate()?->format('Y-m-d H:i:s');
         }
 
-        // Создаем подзадачу
-        $subtask = $this->taskService->createTask($dto, $user);
+        $createdSubtasks = [];
 
-        // Связываем с родителем
-        $subtask->setParentTask($parentTask);
+        // Создание подзадач
+        foreach ($subtaskTitles as $title) {
+            $dto = new CreateTaskDto();
+            $dto->title = $title;
+            $dto->description = $parameters['description'] ?? null;
+            $dto->status = TaskStatus::PENDING;
+            $dto->priority = $priority;
 
-        // Наследуем теги родителя если не указаны свои
-        if (empty($parameters['tags'])) {
-            foreach ($parentTask->getTags() as $tag) {
-                $subtask->addTag($tag);
+            // Даты
+            if ($dateRange) {
+                $dto->startDate = $dateRange['start']?->format('Y-m-d H:i:s');
+                $dto->dueDate = $dateRange['due']?->format('Y-m-d H:i:s');
+            } else {
+                // Наследуем даты родителя
+                $dto->startDate = $parentTask->getStartDate()?->format('Y-m-d H:i:s');
+                $dto->dueDate = $parentTask->getDueDate()?->format('Y-m-d H:i:s');
             }
+
+            // Создаем подзадачу
+            $subtask = $this->taskService->createTask($dto, $user);
+
+            // Связываем с родителем
+            $subtask->setParentTask($parentTask);
+
+            // Наследуем теги родителя если не указаны свои
+            if (empty($parameters['tags'])) {
+                foreach ($parentTask->getTags() as $tag) {
+                    $subtask->addTag($tag);
+                }
+            }
+
+            $createdSubtasks[] = [
+                'id'        => $subtask->getId(),
+                'title'     => $subtask->getTitle(),
+                'status'    => $subtask->getStatus()->value,
+                'priority'  => $subtask->getPriority()->value,
+                'startDate' => $subtask->getStartDate()?->format('c'),
+                'dueDate'   => $subtask->getDueDate()?->format('c'),
+            ];
         }
 
         $this->flush();
 
-        // Формируем сообщение в зависимости от того, была ли создана родительская задача
-        $message = $parentCreated
-            ? sprintf('Создана задача "%s" с подзадачей "%s"', $parentTask->getTitle(), $subtask->getTitle())
-            : sprintf('Подзадача "%s" создана для "%s"', $subtask->getTitle(), $parentTask->getTitle());
+        // Формируем сообщение
+        $subtasksCount = count($createdSubtasks);
+        if ($parentCreated) {
+            $message = $subtasksCount === 1
+                ? sprintf('Создана задача "%s" с подзадачей "%s"', $parentTask->getTitle(), $createdSubtasks[0]['title'])
+                : sprintf('Создана задача "%s" с %d подзадачами', $parentTask->getTitle(), $subtasksCount);
+        } else {
+            $message = $subtasksCount === 1
+                ? sprintf('Подзадача "%s" создана для "%s"', $createdSubtasks[0]['title'], $parentTask->getTitle())
+                : sprintf('Создано %d подзадач для "%s"', $subtasksCount, $parentTask->getTitle());
+        }
 
         return CommandResponse::success(
             'subtask_created',
@@ -151,14 +206,7 @@ class CreateSubtaskCommand extends AbstractVoiceCommand
                     'title'   => $parentTask->getTitle(),
                     'created' => $parentCreated,
                 ],
-                'subtask' => [
-                    'id'        => $subtask->getId(),
-                    'title'     => $subtask->getTitle(),
-                    'status'    => $subtask->getStatus()->value,
-                    'priority'  => $subtask->getPriority()->value,
-                    'startDate' => $subtask->getStartDate()?->format('c'),
-                    'dueDate'   => $subtask->getDueDate()?->format('c'),
-                ],
+                'subtasks' => $createdSubtasks,
             ],
         );
     }
