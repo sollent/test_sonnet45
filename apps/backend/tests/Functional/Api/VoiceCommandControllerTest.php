@@ -190,10 +190,12 @@ class VoiceCommandControllerTest extends WebTestCase
 
     /**
      * DataProvider для критически важных команд
+     * Покрывает ВСЕ 26 action констант из ParsedCommand
      */
     public static function criticalCommandsProvider(): array
     {
         return [
+            // 1. ACTION_CREATE_TASK
             'create_simple_task' => [
                 'text' => 'Создай задачу купить хлеб',
                 'expectedType' => 'task_created',
@@ -203,6 +205,7 @@ class VoiceCommandControllerTest extends WebTestCase
                 ],
             ],
 
+            // 2. ACTION_COMPLETE_TASK
             'complete_existing_task' => [
                 'text' => 'Заверши задачу тестовая задача номер один',
                 'expectedType' => 'task_completed',
@@ -210,6 +213,81 @@ class VoiceCommandControllerTest extends WebTestCase
                 'additionalAssertions' => [],
             ],
 
+            // 3. ACTION_UNCOMPLETE_TASK
+            'uncomplete_task' => [
+                'text' => 'Отмени завершение задачи завершенная задача',
+                'expectedType' => 'task_uncompleted',
+                'expectedSuccess' => true,
+                'additionalAssertions' => [],
+            ],
+
+            // 4. ACTION_UNCOMPLETE_MULTIPLE_TASKS
+            'uncomplete_multiple_tasks' => [
+                'text' => 'Отмени завершение задач завершенная задача и купить молоко',
+                'expectedType' => 'tasks_uncompleted',
+                'expectedSuccess' => true,
+                'additionalAssertions' => [],
+            ],
+
+            // 5. ACTION_FILTER_TASKS
+            'filter_pending_tasks' => [
+                'text' => 'Покажи все задачи со статусом в ожидании',
+                'expectedType' => 'filter_results',
+                'expectedSuccess' => true,
+                'additionalAssertions' => [],
+            ],
+
+            // 6. ACTION_CREATE_SUBTASK
+            'create_subtask' => [
+                'text' => 'Создай подзадачу проверить срок годности для задачи купить молоко',
+                'expectedType' => 'subtask_created',
+                'expectedSuccess' => true,
+                'additionalAssertions' => [],
+            ],
+
+            // 7. ACTION_CREATE_MULTIPLE_SUBTASKS
+            'create_multiple_subtasks' => [
+                'text' => 'Создай подзадачи купить хлеб и купить масло для задачи купить молоко',
+                'expectedType' => 'subtasks_created',
+                'expectedSuccess' => true,
+                'additionalAssertions' => [],
+            ],
+
+            // 8. ACTION_BULK_COMPLETE
+            'bulk_complete' => [
+                'text' => 'Заверши все задачи с приоритетом низкий',
+                'expectedType' => 'bulk_completed',
+                'expectedSuccess' => true,
+                'additionalAssertions' => [],
+            ],
+
+            // 9. ACTION_COMPLETE_MULTIPLE_TASKS
+            'complete_multiple_tasks' => [
+                'text' => 'Заверши задачи купить молоко и срочная задача',
+                'expectedType' => 'tasks_completed',
+                'expectedSuccess' => true,
+                'additionalAssertions' => [],
+            ],
+
+            // 10. ACTION_COMPLETE_SUBTASKS
+            'complete_subtasks' => [
+                'text' => 'Заверши все подзадачи задачи купить молоко',
+                'expectedType' => 'subtasks_completed',
+                'expectedSuccess' => true,
+                'additionalAssertions' => [],
+            ],
+
+            // 11. ACTION_CREATE_MULTIPLE_TASKS
+            'create_multiple_tasks' => [
+                'text' => 'Создай задачи позвонить маме и забрать посылку',
+                'expectedType' => 'tasks_created',
+                'expectedSuccess' => true,
+                'additionalAssertions' => [
+                    'data.created_count' => 2,
+                ],
+            ],
+
+            // 12. ACTION_UPDATE_TASK
             'update_task_priority' => [
                 'text' => 'Обнови приоритет задачи купить молоко на высокий',
                 'expectedType' => 'task_updated',
@@ -217,13 +295,7 @@ class VoiceCommandControllerTest extends WebTestCase
                 'additionalAssertions' => [],
             ],
 
-            'delete_task' => [
-                'text' => 'Удали задачу завершенная задача',
-                'expectedType' => 'task_deleted',
-                'expectedSuccess' => true,
-                'additionalAssertions' => [],
-            ],
-
+            // 13. ACTION_BULK_UPDATE
             'bulk_update_with_tag' => [
                 'text' => 'Обнови все задачи с тегом срочно в статус выполнено',
                 'expectedType' => 'bulk_update_completed',
@@ -233,13 +305,55 @@ class VoiceCommandControllerTest extends WebTestCase
                 ],
             ],
 
-            'create_subtask' => [
-                'text' => 'Создай подзадачу проверить срок годности для задачи купить молоко',
-                'expectedType' => 'subtask_created',
+            // 14. ACTION_MOVE_TASK
+            'move_task' => [
+                'text' => 'Перемести задачу купить молоко в статус в работе',
+                'expectedType' => 'task_moved',
                 'expectedSuccess' => true,
                 'additionalAssertions' => [],
             ],
 
+            // 15. ACTION_DELETE_TASK
+            'delete_task' => [
+                'text' => 'Удали задачу завершенная задача',
+                'expectedType' => 'task_deleted',
+                'expectedSuccess' => true,
+                'additionalAssertions' => [],
+            ],
+
+            // 16. ACTION_DELETE_MULTIPLE_TASKS
+            'delete_multiple_tasks' => [
+                'text' => 'Удали задачи срочная задача и тестовая задача номер один',
+                'expectedType' => 'tasks_deleted',
+                'expectedSuccess' => true,
+                'additionalAssertions' => [],
+            ],
+
+            // 17. ACTION_BULK_DELETE
+            'bulk_delete' => [
+                'text' => 'Удали все завершенные задачи',
+                'expectedType' => 'bulk_deleted',
+                'expectedSuccess' => true,
+                'additionalAssertions' => [],
+            ],
+
+            // 18. ACTION_DUPLICATE_TASK
+            'duplicate_task' => [
+                'text' => 'Дублируй задачу купить молоко',
+                'expectedType' => 'task_duplicated',
+                'expectedSuccess' => true,
+                'additionalAssertions' => [],
+            ],
+
+            // 19. ACTION_BULK_MOVE
+            'bulk_move' => [
+                'text' => 'Перемести все задачи с тегом срочно в статус в работе',
+                'expectedType' => 'bulk_moved',
+                'expectedSuccess' => true,
+                'additionalAssertions' => [],
+            ],
+
+            // 20. ACTION_ADD_TAG
             'add_tag_to_task' => [
                 'text' => 'Добавь тег важное к задаче купить молоко',
                 'expectedType' => 'tag_added',
@@ -247,27 +361,52 @@ class VoiceCommandControllerTest extends WebTestCase
                 'additionalAssertions' => [],
             ],
 
-            'filter_pending_tasks' => [
-                'text' => 'Покажи все задачи со статусом в ожидании',
-                'expectedType' => 'filter_results',
+            // 21. ACTION_REMOVE_TAG
+            'remove_tag' => [
+                'text' => 'Удали тег срочно из задачи срочная задача',
+                'expectedType' => 'tag_removed',
                 'expectedSuccess' => true,
                 'additionalAssertions' => [],
             ],
 
-            'complete_multiple_tasks' => [
-                'text' => 'Заверши задачи купить молоко и срочная задача',
-                'expectedType' => 'tasks_completed',
+            // 22. ACTION_CLEANUP_COMPLETED
+            'cleanup_completed' => [
+                'text' => 'Очисти завершенные задачи старше 7 дней',
+                'expectedType' => 'cleanup_completed',
                 'expectedSuccess' => true,
                 'additionalAssertions' => [],
             ],
 
-            'create_multiple_tasks' => [
-                'text' => 'Создай задачи позвонить маме и забрать посылку',
-                'expectedType' => 'tasks_created',
+            // 23. ACTION_SET_DESCRIPTION
+            'set_description' => [
+                'text' => 'Установи описание для задачи купить молоко текст взять обезжиренное',
+                'expectedType' => 'description_set',
                 'expectedSuccess' => true,
-                'additionalAssertions' => [
-                    'data.created_count' => 2,
-                ],
+                'additionalAssertions' => [],
+            ],
+
+            // 24. ACTION_CONVERT_SUBTASK_TO_TASK
+            'convert_subtask_to_task' => [
+                'text' => 'Преобразуй подзадачу проверить срок годности в отдельную задачу',
+                'expectedType' => 'subtask_converted',
+                'expectedSuccess' => true,
+                'additionalAssertions' => [],
+            ],
+
+            // 25. ACTION_CLARIFICATION_NEEDED (special)
+            'clarification_needed' => [
+                'text' => 'Сделай что-нибудь с этим',
+                'expectedType' => 'clarification_needed',
+                'expectedSuccess' => true,
+                'additionalAssertions' => [],
+            ],
+
+            // 26. ACTION_UNKNOWN (special)
+            'unknown_action' => [
+                'text' => 'абракадабра непонятная команда',
+                'expectedType' => 'unknown_command',
+                'expectedSuccess' => false,
+                'additionalAssertions' => [],
             ],
         ];
     }
