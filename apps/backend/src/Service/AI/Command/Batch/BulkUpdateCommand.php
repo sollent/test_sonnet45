@@ -61,10 +61,15 @@ class BulkUpdateCommand extends AbstractBatchCommand
 
     protected function validateParameters(array $parameters): void
     {
-        // Должно быть хотя бы одно изменение
+        // Поддержка двух форматов: new_status/new_priority/new_due_date и updates.status/priority/due_date
+        $updates = $parameters['updates'] ?? [];
+
         $hasUpdate = isset($parameters['new_status'])
             || isset($parameters['new_priority'])
-            || isset($parameters['new_due_date']);
+            || isset($parameters['new_due_date'])
+            || isset($updates['status'])
+            || isset($updates['priority'])
+            || isset($updates['due_date']);
 
         if (!$hasUpdate) {
             throw new RuntimeException('At least one update parameter is required (status, priority or due_date)');
@@ -73,26 +78,36 @@ class BulkUpdateCommand extends AbstractBatchCommand
 
     protected function doExecute(array $parameters, User $user): CommandResponse
     {
-        // Подготавливаем обновления
+        // Подготавливаем обновления (поддержка двух форматов)
         $this->updates = [];
+        $paramUpdates = $parameters['updates'] ?? [];
 
-        if (isset($parameters['new_status'])) {
-            $this->updates['status'] = $this->statusMapper->map($parameters['new_status']);
+        // Status: new_status или updates.status
+        $newStatus = $parameters['new_status'] ?? $paramUpdates['status'] ?? null;
+        if ($newStatus !== null) {
+            $this->updates['status'] = $this->statusMapper->map($newStatus);
         }
 
-        if (isset($parameters['new_priority'])) {
-            $this->updates['priority'] = $this->priorityMapper->map($parameters['new_priority']);
+        // Priority: new_priority или updates.priority
+        $newPriority = $parameters['new_priority'] ?? $paramUpdates['priority'] ?? null;
+        if ($newPriority !== null) {
+            $this->updates['priority'] = $this->priorityMapper->map($newPriority);
         }
 
-        if (isset($parameters['new_due_date'])) {
+        // Due date: new_due_date или updates.due_date
+        $newDueDate = $parameters['new_due_date'] ?? $paramUpdates['due_date'] ?? null;
+        if ($newDueDate !== null) {
             $dateRange = $this->dateTimeResolver->resolveDateRange([
-                'due_date' => $parameters['new_due_date'],
+                'due_date' => $newDueDate,
             ]);
             $this->updates['start_date'] = $dateRange['start'];
             $this->updates['due_date'] = $dateRange['due'];
         }
 
-        return $this->processBatchByFilters($parameters, $user);
+        // Извлекаем filters из параметров (LLM может отправить вложенную структуру)
+        $filters = $parameters['filters'] ?? $parameters;
+
+        return $this->processBatchByFilters($filters, $user);
     }
 
     protected function shouldProcessTask($task): bool
