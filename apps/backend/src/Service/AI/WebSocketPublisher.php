@@ -223,7 +223,7 @@ class WebSocketPublisher
      */
     private function getUserChannel(int $userId): string
     {
-        return sprintf('personal:%d', $userId);
+        return sprintf('user:%d', $userId);
     }
 
     /**

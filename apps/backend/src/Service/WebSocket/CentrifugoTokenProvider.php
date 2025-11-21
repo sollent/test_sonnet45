@@ -65,9 +65,7 @@ class CentrifugoTokenProvider
         $userId = $user->getId();
 
         $channels = [
-            sprintf('personal:%d', $userId),
-            sprintf('personal:%d:voice', $userId),
-            sprintf('personal:%d:tasks', $userId),
+            sprintf('user:%d', $userId),
         ];
 
         $tokens = [];
