@@ -111,23 +111,82 @@ class SmartSearchService
         // Сначала пытаемся точный поиск по названию
         $tasks = $this->taskRepository->searchByTitle($query, $user, $limit);
 
-        // Если не нашли, пробуем частичный поиск
-        if (empty($tasks)) {
-            // Разбиваем запрос на слова для поиска по ключевым словам
-            $keywords = $this->extractKeywords($query);
+        // Если нашли точное совпадение - возвращаем
+        if (!empty($tasks)) {
+            $this->logger->info('Smart search results (exact match)', [
+                'query' => $query,
+                'found' => count($tasks),
+            ]);
 
-            foreach ($keywords as $keyword) {
-                $tasks = $this->taskRepository->searchByTitle($keyword, $user, $limit);
+            return $tasks;
+        }
 
-                if (!empty($tasks)) {
-                    break;
+        // Ищем по ключевым словам с подсчётом релевантности
+        $keywords = $this->extractKeywords($query);
+
+        if (empty($keywords)) {
+            return [];
+        }
+
+        // Собираем все задачи, которые содержат хотя бы одно ключевое слово
+        $candidateTasks = [];
+        foreach ($keywords as $keyword) {
+            $foundTasks = $this->taskRepository->searchByTitle($keyword, $user, 50);
+            foreach ($foundTasks as $task) {
+                $taskId = $task->getId();
+                if (!isset($candidateTasks[$taskId])) {
+                    $candidateTasks[$taskId] = $task;
                 }
             }
         }
 
-        $this->logger->info('Smart search results', [
-            'query' => $query,
-            'found' => count($tasks),
+        if (empty($candidateTasks)) {
+            return [];
+        }
+
+        // Подсчитываем релевантность для каждой задачи
+        $scoredTasks = [];
+        $queryLower = mb_strtolower($query);
+
+        foreach ($candidateTasks as $task) {
+            $titleLower = mb_strtolower($task->getTitle());
+
+            // Считаем сколько ключевых слов содержится в названии
+            $keywordMatches = 0;
+            foreach ($keywords as $keyword) {
+                if (mb_strpos($titleLower, $keyword) !== false) {
+                    $keywordMatches++;
+                }
+            }
+
+            // Бонус за процент совпадения ключевых слов
+            $keywordScore = count($keywords) > 0
+                ? ($keywordMatches / count($keywords)) * 50
+                : 0;
+
+            // Используем similar_text для оценки общего сходства
+            similar_text($queryLower, $titleLower, $similarityPercent);
+
+            // Итоговый счёт: 50% от keyword match + 50% от similarity
+            $totalScore = $keywordScore + ($similarityPercent / 2);
+
+            $scoredTasks[] = [
+                'task'  => $task,
+                'score' => $totalScore,
+            ];
+        }
+
+        // Сортируем по релевантности (убывание)
+        usort($scoredTasks, fn($a, $b) => $b['score'] <=> $a['score']);
+
+        // Берём top результаты
+        $tasks = array_map(fn($item) => $item['task'], array_slice($scoredTasks, 0, $limit));
+
+        $this->logger->info('Smart search results (keyword match)', [
+            'query'     => $query,
+            'keywords'  => $keywords,
+            'found'     => count($tasks),
+            'top_score' => !empty($scoredTasks) ? round($scoredTasks[0]['score'], 2) : 0,
         ]);
 
         return $tasks;
