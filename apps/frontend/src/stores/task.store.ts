@@ -680,6 +680,47 @@ export const useTaskStore = defineStore('task', () => {
     tasks.value = tasks.value.filter(t => t.id !== taskId)
   }
 
+  // Add multiple tasks from WebSocket
+  function addTasksFromWebSocket(newTasks: Task[]): void {
+    console.log('[TaskStore] Adding multiple tasks from WebSocket:', newTasks.length)
+    for (const task of newTasks) {
+      const existingIndex = tasks.value.findIndex(t => t.id === task.id)
+      if (existingIndex === -1) {
+        tasks.value = [task, ...tasks.value]
+      } else {
+        tasks.value[existingIndex] = task
+      }
+    }
+  }
+
+  // Update multiple tasks from WebSocket
+  function updateTasksFromWebSocket(updatedTasks: Task[]): void {
+    console.log('[TaskStore] Updating multiple tasks from WebSocket:', updatedTasks.length)
+    for (const task of updatedTasks) {
+      const index = tasks.value.findIndex(t => t.id === task.id)
+      if (index !== -1) {
+        tasks.value[index] = task
+      } else {
+        tasks.value = [task, ...tasks.value]
+      }
+    }
+  }
+
+  // Remove multiple tasks from WebSocket
+  function removeTasksFromWebSocket(taskIds: number[]): void {
+    console.log('[TaskStore] Removing multiple tasks from WebSocket:', taskIds.length)
+    tasks.value = tasks.value.filter(t => !taskIds.includes(t.id))
+  }
+
+  // Update subtasks of a parent task from WebSocket
+  function updateParentTaskFromWebSocket(parentTask: Task): void {
+    console.log('[TaskStore] Updating parent task from WebSocket:', parentTask.id)
+    const index = tasks.value.findIndex(t => t.id === parentTask.id)
+    if (index !== -1) {
+      tasks.value[index] = parentTask
+    }
+  }
+
   return {
     // State
     tasks,
@@ -738,7 +779,11 @@ export const useTaskStore = defineStore('task', () => {
     // WebSocket real-time methods
     addTaskFromWebSocket,
     updateTaskFromWebSocket,
-    removeTaskFromWebSocket
+    removeTaskFromWebSocket,
+    addTasksFromWebSocket,
+    updateTasksFromWebSocket,
+    removeTasksFromWebSocket,
+    updateParentTaskFromWebSocket
   }
 })
 

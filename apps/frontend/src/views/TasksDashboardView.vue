@@ -267,25 +267,97 @@ onMounted(async () => {
   onTaskEvent((event) => {
     console.log('[TasksDashboard] Received task event:', event)
 
-    const eventData = event.data as { message?: string; task?: Task; tasks?: Task[] } | undefined
+    const eventData = event.data as {
+      message?: string
+      task?: Task
+      tasks?: Task[]
+      taskIds?: number[]
+      parentTask?: Task
+      count?: number
+    } | undefined
 
-    // Handle task.created - add task directly to store
-    if (event.event === 'task.created' && eventData?.task) {
-      console.log('[TasksDashboard] Adding task from WebSocket:', eventData.task)
+    const eventType = event.event
+
+    // ===== SINGLE TASK EVENTS =====
+
+    // Create events
+    if (eventType === 'task.created' && eventData?.task) {
       taskStore.addTaskFromWebSocket(eventData.task)
     }
-    // Handle task.updated - update task in store
-    else if (event.event === 'task.updated' && eventData?.task) {
-      console.log('[TasksDashboard] Updating task from WebSocket:', eventData.task)
+    else if (eventType === 'task.duplicated' && eventData?.task) {
+      taskStore.addTaskFromWebSocket(eventData.task)
+    }
+    else if (eventType === 'subtask.converted' && eventData?.task) {
+      taskStore.addTaskFromWebSocket(eventData.task)
+    }
+
+    // Update events
+    else if (eventType === 'task.updated' && eventData?.task) {
       taskStore.updateTaskFromWebSocket(eventData.task)
     }
-    // Handle task.deleted - remove task from store
-    else if (event.event === 'task.deleted' && eventData?.task) {
-      console.log('[TasksDashboard] Removing task from WebSocket:', eventData.task.id)
+    else if (eventType === 'task.completed' && eventData?.task) {
+      taskStore.updateTaskFromWebSocket(eventData.task)
+    }
+    else if (eventType === 'task.uncompleted' && eventData?.task) {
+      taskStore.updateTaskFromWebSocket(eventData.task)
+    }
+    else if (eventType === 'task.moved' && eventData?.task) {
+      taskStore.updateTaskFromWebSocket(eventData.task)
+    }
+    else if (eventType === 'task.tag_added' && eventData?.task) {
+      taskStore.updateTaskFromWebSocket(eventData.task)
+    }
+    else if (eventType === 'task.tag_removed' && eventData?.task) {
+      taskStore.updateTaskFromWebSocket(eventData.task)
+    }
+    else if (eventType === 'task.description_updated' && eventData?.task) {
+      taskStore.updateTaskFromWebSocket(eventData.task)
+    }
+
+    // Delete events
+    else if (eventType === 'task.deleted' && eventData?.task) {
       taskStore.removeTaskFromWebSocket(eventData.task.id)
     }
-    // Fallback: refresh from server for other events
-    else if (event.event === 'task.completed' || event.event === 'task.reopened') {
+
+    // Subtask events - update parent task
+    else if (eventType === 'subtask.created' && eventData?.parentTask) {
+      taskStore.updateParentTaskFromWebSocket(eventData.parentTask)
+    }
+
+    // ===== MULTIPLE TASKS EVENTS =====
+
+    // Create multiple
+    else if (eventType === 'tasks.created' && eventData?.tasks) {
+      taskStore.addTasksFromWebSocket(eventData.tasks)
+    }
+    else if (eventType === 'subtasks.created' && eventData?.parentTask) {
+      taskStore.updateParentTaskFromWebSocket(eventData.parentTask)
+    }
+
+    // Update multiple
+    else if (eventType === 'tasks.completed' && eventData?.tasks) {
+      taskStore.updateTasksFromWebSocket(eventData.tasks)
+    }
+    else if (eventType === 'tasks.uncompleted' && eventData?.tasks) {
+      taskStore.updateTasksFromWebSocket(eventData.tasks)
+    }
+    else if (eventType === 'subtasks.completed' && eventData?.parentTask) {
+      taskStore.updateParentTaskFromWebSocket(eventData.parentTask)
+    }
+
+    // Delete multiple
+    else if (eventType === 'tasks.deleted' && eventData?.taskIds) {
+      taskStore.removeTasksFromWebSocket(eventData.taskIds)
+    }
+
+    // ===== BULK OPERATIONS =====
+    else if (
+      eventType === 'tasks.bulk_completed' ||
+      eventType === 'tasks.bulk_updated' ||
+      eventType === 'tasks.bulk_moved' ||
+      eventType === 'tasks.bulk_deleted' ||
+      eventType === 'tasks.cleanup_completed'
+    ) {
       selectView(selectedView.value)
     }
 
