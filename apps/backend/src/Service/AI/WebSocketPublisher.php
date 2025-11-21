@@ -37,9 +37,23 @@ class WebSocketPublisher
         $this->logger = $logger;
 
         // Конфигурация Centrifugo
-        $this->centrifugoUrl = (string) ($params->get('centrifugo_url') ?? 'http://centrifugo:8000');
-        $this->centrifugoApiKey = (string) ($params->get('centrifugo_api_key') ?? 'default-api-key');
-        $this->enabled = (bool) ($params->get('websocket_enabled') ?? true);
+        try {
+            $this->centrifugoUrl = (string) $params->get('centrifugo_url');
+        } catch (\Exception) {
+            $this->centrifugoUrl = 'http://centrifugo:8000';
+        }
+
+        try {
+            $this->centrifugoApiKey = (string) $params->get('centrifugo_api_key');
+        } catch (\Exception) {
+            $this->centrifugoApiKey = 'default-api-key';
+        }
+
+        try {
+            $this->enabled = (bool) $params->get('websocket_enabled');
+        } catch (\Exception) {
+            $this->enabled = false;
+        }
     }
 
     /**
