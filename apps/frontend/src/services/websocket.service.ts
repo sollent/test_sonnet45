@@ -112,7 +112,7 @@ class WebSocketService {
    * Get token from backend API
    */
   private async getToken(): Promise<WebSocketTokenResponse> {
-    const response = await apiClient.get<WebSocketTokenResponse>('/websocket/token');
+    const response = await apiClient.get<WebSocketTokenResponse>('/api/websocket/token');
     return response.data;
   }
 
