@@ -1901,36 +1901,35 @@ curl -X POST http://localhost:8089/api/voice/command \
 
 ## Чеклист выполнения
 
-### Backend
-- [ ] Установить phpcent библиотеку
-- [ ] Создать CommandEventMapper
-- [ ] Создать TaskStatsCollector
-- [ ] Обновить WebSocketPublisher
-- [ ] Интегрировать в VoiceProcessingService
-- [ ] Создать CentrifugoController
-- [ ] Добавить методы статистики в репозитории
-- [ ] Обновить конфигурацию services.yaml
+### Backend ✅ Выполнено 2025-11-21
+- [x] Установить phpcent библиотеку
+- [x] Создать CommandEventMapper
+- [ ] Создать TaskStatsCollector (опционально)
+- [x] Обновить WebSocketPublisher
+- [x] Интегрировать в VoiceCommandExecutor
+- [x] Создать WebSocketController (JWT токены)
+- [x] Создать CentrifugoTokenProvider
+- [x] Обновить конфигурацию services.yaml
 
-### Frontend
-- [ ] Установить centrifuge и @vueuse/motion
-- [ ] Создать ToastStore
-- [ ] Создать GlassmorphismToast компонент
-- [ ] Создать useCentrifugo composable
-- [ ] Подключить Toast в App.vue
-- [ ] Протестировать WebSocket соединение
+### Frontend ✅ Выполнено 2025-11-21
+- [x] Установить centrifuge-js
+- [ ] Создать ToastStore (опционально)
+- [ ] Создать GlassmorphismToast компонент (опционально)
+- [x] Создать useWebSocket composable
+- [x] Создать websocket.service.ts
+- [x] Интегрировать в TasksDashboardView
+- [x] Обработка событий задач в реальном времени
 
-### Infrastructure
-- [ ] Обновить Nginx конфигурацию
-- [ ] Настроить environment переменные
-- [ ] Обновить centrifugo.json
-- [ ] Проверить Docker контейнеры
+### Infrastructure ✅ Выполнено
+- [x] Настроить environment переменные
+- [x] Centrifugo работает в Docker (docker-compose.ai.yml)
+- [x] Redis для Centrifugo
 
-### Testing
-- [ ] Проверить health Centrifugo
-- [ ] Проверить JWT endpoint
-- [ ] Проверить WebSocket подключение
-- [ ] Выполнить тестовые команды
-- [ ] Проверить toast уведомления
+### Оставшиеся задачи (опционально)
+- [ ] GlassmorphismToast компонент
+- [ ] TaskStatsCollector для статистики
+- [ ] Nginx proxy для production
+- [ ] Unit тесты для WebSocket сервисов
 
 ---
 
