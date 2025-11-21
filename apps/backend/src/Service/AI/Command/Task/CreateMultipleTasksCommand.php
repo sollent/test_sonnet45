@@ -24,7 +24,9 @@ use RuntimeException;
  *
  * Обрабатывает действие create_multiple_tasks из ParsedCommand.
  * Создает несколько независимых задач с общими параметрами.
- * Следует принципу Single Responsibility.
+ * Поддерживает два формата параметров:
+ * - 'titles': массив строк ['Задача 1', 'Задача 2']
+ * - 'tasks': массив объектов [['title' => '...', 'description' => '...'], ...]
  */
 class CreateMultipleTasksCommand extends AbstractVoiceCommand
 {
@@ -52,14 +54,19 @@ class CreateMultipleTasksCommand extends AbstractVoiceCommand
 
     protected function validateParameters(array $parameters): void
     {
-        if (empty($parameters['titles']) || !is_array($parameters['titles'])) {
+        // Поддержка двух форматов: 'titles' (массив строк) и 'tasks' (массив объектов)
+        $hasTitles = !empty($parameters['titles']) && is_array($parameters['titles']);
+        $hasTasks = !empty($parameters['tasks']) && is_array($parameters['tasks']);
+
+        if (!$hasTitles && !$hasTasks) {
             throw new RuntimeException('Array of task titles is required for multiple task creation');
         }
     }
 
     protected function doExecute(array $parameters, User $user): CommandResponse
     {
-        $titles = $parameters['titles'];
+        // Извлечение задач из разных форматов параметров
+        $taskItems = $this->extractTaskItems($parameters);
 
         // Подготовка общих параметров
         $priority = isset($parameters['priority'])
@@ -85,10 +92,11 @@ class CreateMultipleTasksCommand extends AbstractVoiceCommand
         $createdTasks = [];
 
         // Создание задач
-        foreach ($titles as $title) {
+        foreach ($taskItems as $taskItem) {
             $dto = new CreateTaskDto();
-            $dto->title = $title;
-            $dto->description = $parameters['description'] ?? null;
+            $dto->title = $taskItem['title'];
+            // Используем описание задачи или общее описание
+            $dto->description = $taskItem['description'] ?? $parameters['description'] ?? null;
             $dto->status = TaskStatus::PENDING;
 
             if ($priority !== null) {
@@ -134,5 +142,45 @@ class CreateMultipleTasksCommand extends AbstractVoiceCommand
                 'tasks' => $createdTasks,
             ]
         );
+    }
+
+    /**
+     * Извлекает элементы задач из параметров
+     *
+     * Поддерживает два формата:
+     * - 'titles': ['Задача 1', 'Задача 2'] -> [['title' => 'Задача 1'], ...]
+     * - 'tasks': [['title' => '...', 'description' => '...'], ...]
+     *
+     * @param array<string, mixed> $parameters
+     * @return array<int, array{title: string, description?: string}>
+     */
+    private function extractTaskItems(array $parameters): array
+    {
+        // Формат 'tasks' (массив объектов с title и description)
+        if (!empty($parameters['tasks']) && is_array($parameters['tasks'])) {
+            $items = [];
+            foreach ($parameters['tasks'] as $task) {
+                if (is_array($task) && isset($task['title'])) {
+                    $items[] = [
+                        'title' => $task['title'],
+                        'description' => $task['description'] ?? null,
+                    ];
+                } elseif (is_string($task)) {
+                    // Если элемент - строка, используем как title
+                    $items[] = ['title' => $task];
+                }
+            }
+            return $items;
+        }
+
+        // Формат 'titles' (массив строк)
+        if (!empty($parameters['titles']) && is_array($parameters['titles'])) {
+            return array_map(
+                fn($title) => ['title' => $title],
+                $parameters['titles']
+            );
+        }
+
+        return [];
     }
 }
