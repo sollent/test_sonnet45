@@ -33,6 +33,8 @@ services:
       # RabbitMQ credentials from .env.docker (БЕЗ fallback - Fail-Fast!)
       RABBITMQ_USER: ${RABBITMQ_USER}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      # Centrifugo HMAC secret for JWT token generation
+      CENTRIFUGO_HMAC_SECRET: ${CENTRIFUGO_HMAC_SECRET:-secret-key}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     dns:

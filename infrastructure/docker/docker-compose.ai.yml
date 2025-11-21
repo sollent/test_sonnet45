@@ -87,7 +87,6 @@ services:
       - CENTRIFUGO_ADMIN_SECRET=${CENTRIFUGO_ADMIN_SECRET:-secret}
       - CENTRIFUGO_API_KEY=${CENTRIFUGO_API_KEY:-api-key}
       - CENTRIFUGO_TOKEN_HMAC_SECRET_KEY=${CENTRIFUGO_SECRET:-secret-key}
-      - CENTRIFUGO_ALLOWED_ORIGINS=${CENTRIFUGO_ORIGINS:-http://localhost:3000}
     command: centrifugo -c /centrifugo/config.json
     networks:
       - nginx-php83-psql16
