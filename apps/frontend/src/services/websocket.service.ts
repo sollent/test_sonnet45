@@ -1,5 +1,5 @@
 import { Centrifuge, Subscription, PublicationContext } from 'centrifuge';
-import { apiService } from './api.service';
+import { apiClient } from './api.service';
 
 export interface WebSocketTokenResponse {
   token: string;
@@ -112,8 +112,8 @@ class WebSocketService {
    * Get token from backend API
    */
   private async getToken(): Promise<WebSocketTokenResponse> {
-    const response = await apiService.get<WebSocketTokenResponse>('/websocket/token');
-    return response;
+    const response = await apiClient.get<WebSocketTokenResponse>('/websocket/token');
+    return response.data;
   }
 
   /**
