@@ -72,7 +72,7 @@ class ConvertSubtaskToTaskCommand extends AbstractVoiceCommand
         }
 
         // Проверяем что это действительно подзадача
-        $parentTask = $subtask->getParent();
+        $parentTask = $subtask->getParentTask();
         if (!$parentTask) {
             return CommandResponse::failure(
                 'not_a_subtask',

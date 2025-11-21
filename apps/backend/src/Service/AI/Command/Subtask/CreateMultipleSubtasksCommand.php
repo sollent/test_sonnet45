@@ -116,7 +116,7 @@ class CreateMultipleSubtasksCommand extends AbstractVoiceCommand
             $subtask = $this->taskService->createTask($dto, $user);
 
             // Связываем с родителем
-            $subtask->setParent($parentTask);
+            $subtask->setParentTask($parentTask);
 
             // Наследуем теги родителя если не указаны свои
             if (empty($parameters['tags'])) {

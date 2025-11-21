@@ -10,6 +10,7 @@ use App\Enum\TaskStatus;
 use App\Service\AI\Command\Base\AbstractVoiceCommand;
 use App\Service\AI\DateTimeParser;
 use App\Service\AI\Response\CommandResponse;
+use App\Repository\Database\TagRepository;
 use App\Service\AI\Service\DateTimeResolver;
 use App\Service\AI\Service\PriorityMapper;
 use App\Service\AI\SmartSearchService;
@@ -32,6 +33,7 @@ class CreateMultipleTasksCommand extends AbstractVoiceCommand
 {
     private DateTimeResolver $dateTimeResolver;
     private PriorityMapper $priorityMapper;
+    private TagRepository $tagRepository;
 
     public function __construct(
         EntityManagerInterface $entityManager,
@@ -40,11 +42,13 @@ class CreateMultipleTasksCommand extends AbstractVoiceCommand
         DateTimeParser $dateTimeParser,
         LoggerInterface $logger,
         DateTimeResolver $dateTimeResolver,
-        PriorityMapper $priorityMapper
+        PriorityMapper $priorityMapper,
+        TagRepository $tagRepository
     ) {
         parent::__construct($entityManager, $taskService, $searchService, $dateTimeParser, $logger);
         $this->dateTimeResolver = $dateTimeResolver;
         $this->priorityMapper = $priorityMapper;
+        $this->tagRepository = $tagRepository;
     }
 
     public function getAction(): string
@@ -81,12 +85,7 @@ class CreateMultipleTasksCommand extends AbstractVoiceCommand
         $tags = [];
         if (!empty($parameters['tags'])) {
             $tagNames = is_array($parameters['tags']) ? $parameters['tags'] : [$parameters['tags']];
-            foreach ($tagNames as $tagName) {
-                $tag = $this->searchService->findOrCreateTag($tagName, $user);
-                if ($tag) {
-                    $tags[] = $tag;
-                }
-            }
+            $tags = $this->tagRepository->findOrCreateByNames($tagNames, $user);
         }
 
         $createdTasks = [];

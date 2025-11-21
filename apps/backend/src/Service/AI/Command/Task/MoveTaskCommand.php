@@ -96,11 +96,11 @@ class MoveTaskCommand extends AbstractVoiceCommand
                 );
             }
 
-            $task->setParent($newParent);
+            $task->setParentTask($newParent);
             $newParentTitle = $newParent->getTitle();
         } else {
             // Перемещаем в корень
-            $task->setParent(null);
+            $task->setParentTask(null);
             $newParentTitle = '(корень)';
         }
 
