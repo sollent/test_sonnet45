@@ -6,7 +6,7 @@
   "admin_password": "${CENTRIFUGO_ADMIN_PASSWORD}",
   "admin_secret": "${CENTRIFUGO_ADMIN_SECRET}",
   "admin_insecure": false,
-  "allowed_origins": ["http://localhost:3000", "http://localhost:8089"],
+  "allowed_origins": ["http://localhost:3000", "http://localhost:3001", "http://localhost:8089", "http://localhost:8090"],
   "allow_subscribe_for_client": false,
   "allow_publish_for_client": false,
   "allow_presence_for_client": false,
