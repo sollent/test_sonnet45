@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Service\AI\Command\Task;
 
 use App\Entity\User;
+use App\Repository\Database\TagRepository;
 use App\Service\AI\Command\Base\AbstractVoiceCommand;
 use App\Service\AI\DateTimeParser;
 use App\Service\AI\Response\CommandResponse;
@@ -40,6 +41,8 @@ class UpdateTaskCommand extends AbstractVoiceCommand
 
     private ResponseBuilder $responseBuilder;
 
+    private TagRepository $tagRepository;
+
     public function __construct(
         EntityManagerInterface $entityManager,
         TaskService $taskService,
@@ -51,6 +54,7 @@ class UpdateTaskCommand extends AbstractVoiceCommand
         StatusMapper $statusMapper,
         DateTimeResolver $dateTimeResolver,
         ResponseBuilder $responseBuilder,
+        TagRepository $tagRepository,
     ) {
         parent::__construct($entityManager, $taskService, $searchService, $dateTimeParser, $logger);
         $this->taskFinder = $taskFinder;
@@ -58,6 +62,7 @@ class UpdateTaskCommand extends AbstractVoiceCommand
         $this->statusMapper = $statusMapper;
         $this->dateTimeResolver = $dateTimeResolver;
         $this->responseBuilder = $responseBuilder;
+        $this->tagRepository = $tagRepository;
     }
 
     public function getAction(): string
@@ -130,6 +135,21 @@ class UpdateTaskCommand extends AbstractVoiceCommand
         if (isset($updates['description'])) {
             $task->setDescription($updates['description']);
             $updatedFields[] = 'описание';
+        }
+
+        // Обновление тегов
+        if (isset($updates['tags']) && is_array($updates['tags'])) {
+            $tagNames = $updates['tags'];
+            $tags = $this->tagRepository->findOrCreateByNames($tagNames, $user);
+
+            // Добавляем новые теги (не заменяем существующие)
+            foreach ($tags as $tag) {
+                if (!$task->getTags()->contains($tag)) {
+                    $task->addTag($tag);
+                }
+            }
+
+            $updatedFields[] = 'теги';
         }
 
         // Сохранение изменений
