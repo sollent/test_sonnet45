@@ -1,6 +1,6 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { websocketService, WebSocketEvent, EventHandler } from '@/services/websocket.service';
-import { useAuthStore } from '@/stores/auth';
+import { useAuthStore } from '@/stores/auth.store';
 
 export function useWebSocket() {
   const isConnected = ref(false);
