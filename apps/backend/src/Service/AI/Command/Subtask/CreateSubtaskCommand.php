@@ -73,13 +73,25 @@ class CreateSubtaskCommand extends AbstractVoiceCommand
 
         // Поиск родительской задачи
         $parentTask = $this->taskFinder->find($parentSearch, $user);
+        $parentCreated = false;
 
+        // Если родительская задача не найдена - создаём её автоматически
         if (!$parentTask) {
-            return CommandResponse::failure(
-                'parent_task_not_found',
-                sprintf('Родительская задача "%s" не найдена', $parentSearch),
-                ['search' => $parentSearch]
-            );
+            $this->logger->info('Parent task not found, creating automatically', [
+                'parent_search' => $parentSearch,
+            ]);
+
+            $parentDto = new CreateTaskDto();
+            $parentDto->title = ucfirst($parentSearch);
+            $parentDto->status = TaskStatus::PENDING;
+
+            // Устанавливаем дату на сегодня по умолчанию
+            $todayRange = $this->dateTimeResolver->resolveDateRange(['due_date' => 'today']);
+            $parentDto->startDate = $todayRange['start']?->format('Y-m-d H:i:s');
+            $parentDto->dueDate = $todayRange['due']?->format('Y-m-d H:i:s');
+
+            $parentTask = $this->taskService->createTask($parentDto, $user);
+            $parentCreated = true;
         }
 
         // Создание подзадачи
@@ -122,13 +134,19 @@ class CreateSubtaskCommand extends AbstractVoiceCommand
 
         $this->flush();
 
+        // Формируем сообщение в зависимости от того, была ли создана родительская задача
+        $message = $parentCreated
+            ? sprintf('Создана задача "%s" с подзадачей "%s"', $parentTask->getTitle(), $subtask->getTitle())
+            : sprintf('Подзадача "%s" создана для "%s"', $subtask->getTitle(), $parentTask->getTitle());
+
         return CommandResponse::success(
             'subtask_created',
-            sprintf('Подзадача "%s" создана для "%s"', $subtask->getTitle(), $parentTask->getTitle()),
+            $message,
             [
                 'parent_task' => [
                     'id' => $parentTask->getId(),
                     'title' => $parentTask->getTitle(),
+                    'created' => $parentCreated,
                 ],
                 'subtask' => [
                     'id' => $subtask->getId(),
