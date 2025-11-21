@@ -14,7 +14,6 @@ use App\Service\TaskService;
 use App\ValueObject\ParsedCommand;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
-use RuntimeException;
 
 /**
  * Команда массового удаления задач
@@ -31,7 +30,7 @@ class BulkDeleteCommand extends AbstractBatchCommand
         SmartSearchService $searchService,
         DateTimeParser $dateTimeParser,
         LoggerInterface $logger,
-        TaskFinder $taskFinder
+        TaskFinder $taskFinder,
     ) {
         parent::__construct($entityManager, $taskService, $searchService, $dateTimeParser, $logger);
         $this->taskFinder = $taskFinder;
@@ -67,7 +66,7 @@ class BulkDeleteCommand extends AbstractBatchCommand
         $this->entityManager->remove($task);
 
         $this->logger->info('Bulk delete task', [
-            'task_id' => $taskId,
+            'task_id'    => $taskId,
             'task_title' => $taskTitle,
         ]);
     }
@@ -77,7 +76,7 @@ class BulkDeleteCommand extends AbstractBatchCommand
         return CommandResponse::failure(
             'no_tasks_found',
             'Не найдено задач для удаления по указанным критериям',
-            ['filters' => $filters]
+            ['filters' => $filters],
         );
     }
 
@@ -86,7 +85,7 @@ class BulkDeleteCommand extends AbstractBatchCommand
         int $totalCount,
         array $processed,
         array $errors = [],
-        array $notFound = []
+        array $notFound = [],
     ): CommandResponse {
         $message = sprintf('Удалено %d задач', $successCount);
 
@@ -100,9 +99,9 @@ class BulkDeleteCommand extends AbstractBatchCommand
             [
                 'deleted_count' => $successCount,
                 'deleted_tasks' => $processed,
-                'errors' => $errors,
-                'filters' => [],
-            ]
+                'errors'        => $errors,
+                'filters'       => [],
+            ],
         );
     }
 
@@ -113,8 +112,8 @@ class BulkDeleteCommand extends AbstractBatchCommand
             'Не удалось удалить ни одной задачи',
             [
                 'not_found' => $notFound,
-                'errors' => $errors,
-            ]
+                'errors'    => $errors,
+            ],
         );
     }
 }

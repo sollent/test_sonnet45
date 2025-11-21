@@ -32,7 +32,7 @@ class FilterTasksCommand extends AbstractVoiceCommand
         SmartSearchService $searchService,
         DateTimeParser $dateTimeParser,
         LoggerInterface $logger,
-        TaskFinder $taskFinder
+        TaskFinder $taskFinder,
     ) {
         parent::__construct($entityManager, $taskService, $searchService, $dateTimeParser, $logger);
         $this->taskFinder = $taskFinder;
@@ -58,21 +58,22 @@ class FilterTasksCommand extends AbstractVoiceCommand
             return CommandResponse::failure(
                 'no_tasks_found',
                 'Не найдено задач по указанным критериям',
-                ['filters' => $parameters]
+                ['filters' => $parameters],
             );
         }
 
         // Форматируем задачи для ответа
         $formattedTasks = [];
+
         foreach ($tasks as $task) {
             $formattedTasks[] = [
-                'id' => $task->getId(),
-                'title' => $task->getTitle(),
-                'status' => $task->getStatus()->value,
-                'priority' => $task->getPriority()->value,
+                'id'        => $task->getId(),
+                'title'     => $task->getTitle(),
+                'status'    => $task->getStatus()->value,
+                'priority'  => $task->getPriority()->value,
                 'startDate' => $task->getStartDate()?->format('c'),
-                'dueDate' => $task->getDueDate()?->format('c'),
-                'tags' => array_map(fn($tag) => $tag->getName(), $task->getTags()->toArray()),
+                'dueDate'   => $task->getDueDate()?->format('c'),
+                'tags'      => array_map(fn ($tag) => $tag->getName(), $task->getTags()->toArray()),
             ];
         }
 
@@ -83,10 +84,10 @@ class FilterTasksCommand extends AbstractVoiceCommand
             'tasks_filtered',
             sprintf('Найдено %d задач%s', count($tasks), $filterDescription),
             [
-                'count' => count($tasks),
+                'count'   => count($tasks),
                 'filters' => $parameters,
-                'tasks' => $formattedTasks,
-            ]
+                'tasks'   => $formattedTasks,
+            ],
         );
     }
 

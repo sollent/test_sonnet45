@@ -33,8 +33,6 @@ class DateTimeParser
      * Поддерживает стандартизированные форматы из LLM
      *
      * @param string $dateExpression Стандартизированное выражение даты из LLM
-     *
-     * @return DateTimeImmutable|null
      */
     public function parseDate(string $dateExpression): ?DateTimeImmutable
     {
@@ -44,36 +42,36 @@ class DateTimeParser
             // Стандартизированные относительные даты (из LLM)
             return match ($expression) {
                 // Относительные даты
-                'today', 'сегодня'                             => new DateTimeImmutable(),
-                'tomorrow', 'завтра'                            => new DateTimeImmutable('+1 day'),
-                'day_after_tomorrow', 'послезавтра'            => new DateTimeImmutable('+2 days'),
-                'yesterday', 'вчера'                           => new DateTimeImmutable('-1 day'),
+                'today', 'сегодня' => new DateTimeImmutable(),
+                'tomorrow', 'завтра' => new DateTimeImmutable('+1 day'),
+                'day_after_tomorrow', 'послезавтра' => new DateTimeImmutable('+2 days'),
+                'yesterday', 'вчера' => new DateTimeImmutable('-1 day'),
 
                 // Периоды
-                'next_week', 'через неделю'                    => new DateTimeImmutable('+1 week'),
-                'next_month', 'через месяц'                    => new DateTimeImmutable('+1 month'),
-                'this_week', 'эта неделя'                      => $this->getStartOfWeek(),
+                'next_week', 'через неделю' => new DateTimeImmutable('+1 week'),
+                'next_month', 'через месяц' => new DateTimeImmutable('+1 month'),
+                'this_week', 'эта неделя' => $this->getStartOfWeek(),
 
                 // Дни недели (английские - стандарт из LLM)
-                'monday'                                        => $this->getNextWeekday('monday'),
-                'tuesday'                                       => $this->getNextWeekday('tuesday'),
-                'wednesday'                                     => $this->getNextWeekday('wednesday'),
-                'thursday'                                      => $this->getNextWeekday('thursday'),
-                'friday'                                        => $this->getNextWeekday('friday'),
-                'saturday'                                      => $this->getNextWeekday('saturday'),
-                'sunday'                                        => $this->getNextWeekday('sunday'),
+                'monday'    => $this->getNextWeekday('monday'),
+                'tuesday'   => $this->getNextWeekday('tuesday'),
+                'wednesday' => $this->getNextWeekday('wednesday'),
+                'thursday'  => $this->getNextWeekday('thursday'),
+                'friday'    => $this->getNextWeekday('friday'),
+                'saturday'  => $this->getNextWeekday('saturday'),
+                'sunday'    => $this->getNextWeekday('sunday'),
 
                 // Русские дни недели (на случай если придут от пользователя)
-                'понедельник'                                   => $this->getNextWeekday('monday'),
-                'вторник'                                       => $this->getNextWeekday('tuesday'),
-                'среда'                                         => $this->getNextWeekday('wednesday'),
-                'четверг'                                       => $this->getNextWeekday('thursday'),
-                'пятница'                                       => $this->getNextWeekday('friday'),
-                'суббота'                                       => $this->getNextWeekday('saturday'),
-                'воскресенье'                                   => $this->getNextWeekday('sunday'),
+                'понедельник' => $this->getNextWeekday('monday'),
+                'вторник'     => $this->getNextWeekday('tuesday'),
+                'среда'       => $this->getNextWeekday('wednesday'),
+                'четверг'     => $this->getNextWeekday('thursday'),
+                'пятница'     => $this->getNextWeekday('friday'),
+                'суббота'     => $this->getNextWeekday('saturday'),
+                'воскресенье' => $this->getNextWeekday('sunday'),
 
                 // Пытаемся парсить другие форматы
-                default                                         => $this->parseSpecialDateFormat($expression)
+                default => $this->parseSpecialDateFormat($expression)
             };
         } catch (Exception $e) {
             $this->logger->warning('Failed to parse date', [
@@ -83,29 +81,6 @@ class DateTimeParser
 
             return null;
         }
-    }
-
-    /**
-     * Парсинг специальных форматов дат
-     * Поддерживает YYYY-MM-DD и русские даты "25 ноября"
-     */
-    private function parseSpecialDateFormat(string $expression): ?DateTimeImmutable
-    {
-        // Проверка формата YYYY-MM-DD (стандарт из LLM для конкретных дат)
-        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $expression)) {
-            try {
-                return new DateTimeImmutable($expression);
-            } catch (Exception $e) {
-                $this->logger->warning('Invalid date format YYYY-MM-DD', [
-                    'expression' => $expression,
-                    'error'      => $e->getMessage(),
-                ]);
-                return null;
-            }
-        }
-
-        // Парсинг конкретных дат на русском ("25 ноября")
-        return $this->parseConcreteRussianDate($expression);
     }
 
     /**
@@ -150,8 +125,6 @@ class DateTimeParser
      *
      * @param string $dateExpression Выражение даты (today, tomorrow, monday, etc.)
      * @param string $timeExpression Время в формате HH:MM
-     *
-     * @return DateTimeImmutable|null
      */
     public function parseDateWithTime(string $dateExpression, string $timeExpression): ?DateTimeImmutable
     {
@@ -173,7 +146,7 @@ class DateTimeParser
         }
 
         $this->logger->warning('Invalid time format', [
-            'time' => $timeExpression,
+            'time'            => $timeExpression,
             'expected_format' => 'HH:MM',
         ]);
 
@@ -181,9 +154,31 @@ class DateTimeParser
     }
 
     /**
+     * Парсинг специальных форматов дат
+     * Поддерживает YYYY-MM-DD и русские даты "25 ноября"
+     */
+    private function parseSpecialDateFormat(string $expression): ?DateTimeImmutable
+    {
+        // Проверка формата YYYY-MM-DD (стандарт из LLM для конкретных дат)
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $expression)) {
+            try {
+                return new DateTimeImmutable($expression);
+            } catch (Exception $e) {
+                $this->logger->warning('Invalid date format YYYY-MM-DD', [
+                    'expression' => $expression,
+                    'error'      => $e->getMessage(),
+                ]);
+
+                return null;
+            }
+        }
+
+        // Парсинг конкретных дат на русском ("25 ноября")
+        return $this->parseConcreteRussianDate($expression);
+    }
+
+    /**
      * Получить начало текущей недели (понедельник)
-     *
-     * @return DateTimeImmutable
      */
     private function getStartOfWeek(): DateTimeImmutable
     {
@@ -201,8 +196,6 @@ class DateTimeParser
      * Получить следующий день недели
      *
      * @param string $weekday Название дня на английском (monday, tuesday, etc.)
-     *
-     * @return DateTimeImmutable
      */
     private function getNextWeekday(string $weekday): DateTimeImmutable
     {
@@ -222,8 +215,6 @@ class DateTimeParser
      * Парсинг конкретной даты на русском ("25 ноября", "1 декабря")
      *
      * @param string $expression Выражение даты
-     *
-     * @return DateTimeImmutable|null
      */
     private function parseConcreteRussianDate(string $expression): ?DateTimeImmutable
     {
@@ -265,6 +256,7 @@ class DateTimeParser
                             'expression' => $expression,
                             'error'      => $e->getMessage(),
                         ]);
+
                         return null;
                     }
                 }

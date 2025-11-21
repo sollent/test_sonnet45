@@ -6,6 +6,7 @@ namespace App\Service\AI\Command\Contract;
 
 use App\Entity\User;
 use App\Service\AI\Response\CommandResponse;
+use RuntimeException;
 
 /**
  * Интерфейс для всех голосовых команд
@@ -19,10 +20,11 @@ interface VoiceCommandInterface
      * Выполнить команду с заданными параметрами
      *
      * @param array $parameters Параметры команды от LLM
-     * @param User $user Пользователь, выполняющий команду
+     * @param User  $user       Пользователь, выполняющий команду
+     *
+     * @throws RuntimeException При ошибке выполнения команды
      *
      * @return CommandResponse Результат выполнения команды
-     * @throws \RuntimeException При ошибке выполнения команды
      */
     public function execute(array $parameters, User $user): CommandResponse;
 

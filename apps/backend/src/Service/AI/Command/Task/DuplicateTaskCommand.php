@@ -29,6 +29,7 @@ use RuntimeException;
 class DuplicateTaskCommand extends AbstractVoiceCommand
 {
     private TaskFinder $taskFinder;
+
     private DateTimeResolver $dateTimeResolver;
 
     public function __construct(
@@ -38,7 +39,7 @@ class DuplicateTaskCommand extends AbstractVoiceCommand
         DateTimeParser $dateTimeParser,
         LoggerInterface $logger,
         TaskFinder $taskFinder,
-        DateTimeResolver $dateTimeResolver
+        DateTimeResolver $dateTimeResolver,
     ) {
         parent::__construct($entityManager, $taskService, $searchService, $dateTimeParser, $logger);
         $this->taskFinder = $taskFinder;
@@ -53,6 +54,7 @@ class DuplicateTaskCommand extends AbstractVoiceCommand
     protected function validateParameters(array $parameters): void
     {
         $search = $this->taskFinder->extractSearch($parameters);
+
         if (empty($search)) {
             throw new RuntimeException('Search query is required for task duplication');
         }
@@ -69,7 +71,7 @@ class DuplicateTaskCommand extends AbstractVoiceCommand
             return CommandResponse::failure(
                 'task_not_found',
                 sprintf('Задача "%s" не найдена', $search),
-                ['search' => $search]
+                ['search' => $search],
             );
         }
 
@@ -83,7 +85,7 @@ class DuplicateTaskCommand extends AbstractVoiceCommand
         // Обработка даты
         if (isset($parameters['new_date'])) {
             $dateRange = $this->dateTimeResolver->resolveDateRange([
-                'due_date' => $parameters['new_date']
+                'due_date' => $parameters['new_date'],
             ]);
             $dto->startDate = $dateRange['start']?->format('Y-m-d H:i:s');
             $dto->dueDate = $dateRange['due']?->format('Y-m-d H:i:s');
@@ -107,18 +109,18 @@ class DuplicateTaskCommand extends AbstractVoiceCommand
             sprintf('Задача "%s" скопирована', $originalTask->getTitle()),
             [
                 'original_task' => [
-                    'id' => $originalTask->getId(),
+                    'id'    => $originalTask->getId(),
                     'title' => $originalTask->getTitle(),
                 ],
                 'new_task' => [
-                    'id' => $newTask->getId(),
-                    'title' => $newTask->getTitle(),
-                    'status' => $newTask->getStatus()->value,
-                    'priority' => $newTask->getPriority()->value,
+                    'id'        => $newTask->getId(),
+                    'title'     => $newTask->getTitle(),
+                    'status'    => $newTask->getStatus()->value,
+                    'priority'  => $newTask->getPriority()->value,
                     'startDate' => $newTask->getStartDate()?->format('c'),
-                    'dueDate' => $newTask->getDueDate()?->format('c'),
+                    'dueDate'   => $newTask->getDueDate()?->format('c'),
                 ],
-            ]
+            ],
         );
     }
 }

@@ -39,7 +39,7 @@ class RegisterVoiceCommandsPass implements CompilerPassInterface
         // Логирование для отладки
         $container->log($this, sprintf(
             'Registered %d voice commands in CommandRegistry',
-            count($taggedServices)
+            count($taggedServices),
         ));
     }
 }

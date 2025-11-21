@@ -23,6 +23,7 @@ use Psr\Log\LoggerInterface;
 class CreateSubtaskCommandTest extends TestCase
 {
     private CreateSubtaskCommand $command;
+
     private TaskFinder $taskFinder;
 
     protected function setUp(): void
@@ -38,7 +39,7 @@ class CreateSubtaskCommandTest extends TestCase
             $logger,
             $this->taskFinder,
             $this->createMock(DateTimeResolver::class),
-            new PriorityMapper($logger)
+            new PriorityMapper($logger),
         );
     }
 
@@ -67,7 +68,7 @@ class CreateSubtaskCommandTest extends TestCase
 
         $result = $this->command->execute([
             'parent_task' => 'Nonexistent Parent',
-            'title' => 'Subtask'
+            'title'       => 'Subtask',
         ], $user);
 
         $this->assertFalse($result->isSuccess());

@@ -33,7 +33,7 @@ class MoveTaskCommand extends AbstractVoiceCommand
         SmartSearchService $searchService,
         DateTimeParser $dateTimeParser,
         LoggerInterface $logger,
-        TaskFinder $taskFinder
+        TaskFinder $taskFinder,
     ) {
         parent::__construct($entityManager, $taskService, $searchService, $dateTimeParser, $logger);
         $this->taskFinder = $taskFinder;
@@ -47,6 +47,7 @@ class MoveTaskCommand extends AbstractVoiceCommand
     protected function validateParameters(array $parameters): void
     {
         $search = $this->taskFinder->extractSearch($parameters);
+
         if (empty($search)) {
             throw new RuntimeException('Task search query is required for moving');
         }
@@ -66,7 +67,7 @@ class MoveTaskCommand extends AbstractVoiceCommand
             return CommandResponse::failure(
                 'task_not_found',
                 sprintf('Задача "%s" не найдена', $taskSearch),
-                ['search' => $taskSearch]
+                ['search' => $taskSearch],
             );
         }
 
@@ -80,7 +81,7 @@ class MoveTaskCommand extends AbstractVoiceCommand
                 return CommandResponse::failure(
                     'new_parent_not_found',
                     sprintf('Новая родительская задача "%s" не найдена', $newParentSearch),
-                    ['search' => $newParentSearch]
+                    ['search' => $newParentSearch],
                 );
             }
 
@@ -90,9 +91,9 @@ class MoveTaskCommand extends AbstractVoiceCommand
                     'circular_dependency',
                     'Невозможно переместить задачу: создастся циклическая зависимость',
                     [
-                        'task' => $task->getTitle(),
+                        'task'       => $task->getTitle(),
                         'new_parent' => $newParent->getTitle(),
-                    ]
+                    ],
                 );
             }
 
@@ -112,32 +113,37 @@ class MoveTaskCommand extends AbstractVoiceCommand
                 'Задача "%s" перемещена из "%s" в "%s"',
                 $task->getTitle(),
                 $oldParentTitle,
-                $newParentTitle
+                $newParentTitle,
             ),
             [
                 'task' => [
-                    'id' => $task->getId(),
+                    'id'    => $task->getId(),
                     'title' => $task->getTitle(),
                 ],
                 'old_parent' => $oldParentTitle,
                 'new_parent' => $newParentTitle,
-            ]
+            ],
         );
     }
 
     /**
      * Проверяет, создастся ли циклическая зависимость при перемещении
+     *
+     * @param mixed $task
+     * @param mixed $potentialParent
      */
     private function wouldCreateCycle($task, $potentialParent): bool
     {
         // Проверяем, не является ли потенциальный родитель потомком задачи
         $current = $potentialParent;
+
         while ($current !== null) {
             if ($current->getId() === $task->getId()) {
                 return true; // Нашли цикл
             }
             $current = $current->getParent();
         }
+
         return false;
     }
 }

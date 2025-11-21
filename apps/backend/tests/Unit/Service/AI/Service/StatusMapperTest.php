@@ -17,6 +17,7 @@ use Psr\Log\LoggerInterface;
 class StatusMapperTest extends TestCase
 {
     private StatusMapper $mapper;
+
     private LoggerInterface $logger;
 
     protected function setUp(): void

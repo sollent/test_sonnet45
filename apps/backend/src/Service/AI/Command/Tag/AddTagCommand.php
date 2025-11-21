@@ -28,7 +28,9 @@ use RuntimeException;
 class AddTagCommand extends AbstractVoiceCommand
 {
     private TaskFinder $taskFinder;
+
     private TagRepository $tagRepository;
+
     private ResponseBuilder $responseBuilder;
 
     public function __construct(
@@ -39,7 +41,7 @@ class AddTagCommand extends AbstractVoiceCommand
         LoggerInterface $logger,
         TaskFinder $taskFinder,
         TagRepository $tagRepository,
-        ResponseBuilder $responseBuilder
+        ResponseBuilder $responseBuilder,
     ) {
         parent::__construct($entityManager, $taskService, $searchService, $dateTimeParser, $logger);
         $this->taskFinder = $taskFinder;
@@ -55,6 +57,7 @@ class AddTagCommand extends AbstractVoiceCommand
     protected function validateParameters(array $parameters): void
     {
         $search = $this->taskFinder->extractSearch($parameters);
+
         if (empty($search)) {
             throw new RuntimeException('Search query is required for adding tag');
         }
@@ -83,7 +86,7 @@ class AddTagCommand extends AbstractVoiceCommand
         if (!$tag) {
             return CommandResponse::failure(
                 'tag_creation_failed',
-                sprintf('Не удалось создать тег "%s"', $tagName)
+                sprintf('Не удалось создать тег "%s"', $tagName),
             );
         }
 
@@ -91,7 +94,7 @@ class AddTagCommand extends AbstractVoiceCommand
         if ($task->getTags()->contains($tag)) {
             return CommandResponse::failure(
                 'tag_already_exists',
-                sprintf('Тег "%s" уже добавлен к задаче "%s"', $tagName, $task->getTitle())
+                sprintf('Тег "%s" уже добавлен к задаче "%s"', $tagName, $task->getTitle()),
             );
         }
 

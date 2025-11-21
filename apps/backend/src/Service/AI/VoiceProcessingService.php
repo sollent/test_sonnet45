@@ -45,7 +45,7 @@ class VoiceProcessingService
         WebSocketPublisher $wsPublisher,
         HttpClientInterface $httpClient,
         LoggerInterface $logger,
-        string $whisperUrl = 'http://host.docker.internal:9001'
+        string $whisperUrl = 'http://host.docker.internal:9001',
     ) {
         $this->commandRepository = $commandRepository;
         $this->llmService = $llmService;
@@ -75,7 +75,7 @@ class VoiceProcessingService
         $command = new VoiceCommand(
             user: $user,
             commandType: CommandType::VOICE_AUDIO,
-            rawAudioUrl: $audioUrl
+            rawAudioUrl: $audioUrl,
         );
 
         $this->commandRepository->save($command);
@@ -128,7 +128,7 @@ class VoiceProcessingService
         $command = new VoiceCommand(
             user: $user,
             commandType: CommandType::VOICE_TEXT,
-            transcribedText: $text
+            transcribedText: $text,
         );
 
         $this->commandRepository->save($command);
@@ -251,9 +251,9 @@ class VoiceProcessingService
             // Преобразуем CommandResponse в массив для совместимости
             $resultArray = [
                 'success' => true,
-                'type' => $result->getType(),
+                'type'    => $result->getType(),
                 'message' => $result->getMessage(),
-                'data' => $result->getData(),
+                'data'    => $result->getData(),
             ];
 
             $command->markAsCompleted($resultArray);
@@ -270,7 +270,7 @@ class VoiceProcessingService
             }
 
             $this->notifyStatus($command, 'execution_failed', [
-                'error' => $errorMessage,
+                'error'  => $errorMessage,
                 'errors' => $result->getErrors(),
             ]);
         }
@@ -345,8 +345,8 @@ class VoiceProcessingService
     {
         try {
             // Проверяем, является ли это локальным файлом (путь начинается с /uploads/)
-            if (str_starts_with($audioUrl, '/uploads/') ||
-                str_contains($audioUrl, '/uploads/media/')) {
+            if (str_starts_with($audioUrl, '/uploads/')
+                || str_contains($audioUrl, '/uploads/media/')) {
                 // Извлекаем путь к файлу (убираем возможный домен)
                 $filePath = parse_url($audioUrl, PHP_URL_PATH) ?? $audioUrl;
 

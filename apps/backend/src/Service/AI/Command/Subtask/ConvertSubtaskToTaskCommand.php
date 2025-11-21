@@ -27,6 +27,7 @@ use RuntimeException;
 class ConvertSubtaskToTaskCommand extends AbstractVoiceCommand
 {
     private TaskFinder $taskFinder;
+
     private DateTimeResolver $dateTimeResolver;
 
     public function __construct(
@@ -36,7 +37,7 @@ class ConvertSubtaskToTaskCommand extends AbstractVoiceCommand
         DateTimeParser $dateTimeParser,
         LoggerInterface $logger,
         TaskFinder $taskFinder,
-        DateTimeResolver $dateTimeResolver
+        DateTimeResolver $dateTimeResolver,
     ) {
         parent::__construct($entityManager, $taskService, $searchService, $dateTimeParser, $logger);
         $this->taskFinder = $taskFinder;
@@ -51,6 +52,7 @@ class ConvertSubtaskToTaskCommand extends AbstractVoiceCommand
     protected function validateParameters(array $parameters): void
     {
         $search = $this->taskFinder->extractSearch($parameters);
+
         if (empty($search)) {
             throw new RuntimeException('Search query is required for converting subtask');
         }
@@ -67,22 +69,23 @@ class ConvertSubtaskToTaskCommand extends AbstractVoiceCommand
             return CommandResponse::failure(
                 'task_not_found',
                 sprintf('Подзадача "%s" не найдена', $search),
-                ['search' => $search]
+                ['search' => $search],
             );
         }
 
         // Проверяем что это действительно подзадача
         $parentTask = $subtask->getParentTask();
+
         if (!$parentTask) {
             return CommandResponse::failure(
                 'not_a_subtask',
                 sprintf('"%s" не является подзадачей', $subtask->getTitle()),
                 [
                     'task' => [
-                        'id' => $subtask->getId(),
+                        'id'    => $subtask->getId(),
                         'title' => $subtask->getTitle(),
                     ],
-                ]
+                ],
             );
         }
 
@@ -94,12 +97,13 @@ class ConvertSubtaskToTaskCommand extends AbstractVoiceCommand
         // Обновляем дату если указана
         if (isset($parameters['new_date'])) {
             $dateRange = $this->dateTimeResolver->resolveDateRange([
-                'due_date' => $parameters['new_date']
+                'due_date' => $parameters['new_date'],
             ]);
 
             if ($dateRange['start'] !== null) {
                 $subtask->setStartDate($dateRange['start']);
             }
+
             if ($dateRange['due'] !== null) {
                 $subtask->setDueDate($dateRange['due']);
             }
@@ -112,19 +116,19 @@ class ConvertSubtaskToTaskCommand extends AbstractVoiceCommand
             sprintf(
                 'Подзадача "%s" преобразована в самостоятельную задачу (была у "%s")',
                 $subtask->getTitle(),
-                $parentTitle
+                $parentTitle,
             ),
             [
                 'task' => [
-                    'id' => $subtask->getId(),
-                    'title' => $subtask->getTitle(),
-                    'status' => $subtask->getStatus()->value,
-                    'priority' => $subtask->getPriority()->value,
+                    'id'        => $subtask->getId(),
+                    'title'     => $subtask->getTitle(),
+                    'status'    => $subtask->getStatus()->value,
+                    'priority'  => $subtask->getPriority()->value,
                     'startDate' => $subtask->getStartDate()?->format('c'),
-                    'dueDate' => $subtask->getDueDate()?->format('c'),
+                    'dueDate'   => $subtask->getDueDate()?->format('c'),
                 ],
                 'former_parent' => $parentTitle,
-            ]
+            ],
         );
     }
 }

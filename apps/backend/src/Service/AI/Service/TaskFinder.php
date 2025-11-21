@@ -28,9 +28,11 @@ class TaskFinder
      * Найти задачу или выбросить исключение
      *
      * @param string $search Поисковый запрос
-     * @param User $user Пользователь
-     * @return Task Найденная задача
+     * @param User   $user   Пользователь
+     *
      * @throws RuntimeException Если задача не найдена
+     *
+     * @return Task Найденная задача
      */
     public function findOrFail(string $search, User $user): Task
     {
@@ -47,7 +49,8 @@ class TaskFinder
      * Найти задачу или вернуть null
      *
      * @param string $search Поисковый запрос
-     * @param User $user Пользователь
+     * @param User   $user   Пользователь
+     *
      * @return Task|null Найденная задача или null
      */
     public function find(string $search, User $user): ?Task
@@ -59,7 +62,8 @@ class TaskFinder
      * Найти несколько задач по списку названий
      *
      * @param array<string> $searches Список поисковых запросов
-     * @param User $user Пользователь
+     * @param User          $user     Пользователь
+     *
      * @return array{found: array<Task>, not_found: array<string>}
      */
     public function findMultiple(array $searches, User $user): array
@@ -69,6 +73,7 @@ class TaskFinder
 
         foreach ($searches as $search) {
             $task = $this->find($search, $user);
+
             if ($task) {
                 $found[] = $task;
             } else {
@@ -77,7 +82,7 @@ class TaskFinder
         }
 
         return [
-            'found' => $found,
+            'found'     => $found,
             'not_found' => $notFound,
         ];
     }
@@ -86,7 +91,8 @@ class TaskFinder
      * Найти родительскую задачу из параметров
      *
      * @param array $parameters Параметры с parent_search/parent/parent_task
-     * @param User $user Пользователь
+     * @param User  $user       Пользователь
+     *
      * @return Task|null Найденная родительская задача
      */
     public function findParent(array $parameters, User $user): ?Task
@@ -104,9 +110,11 @@ class TaskFinder
      * Найти родительскую задачу или выбросить исключение
      *
      * @param array $parameters Параметры с parent_search/parent/parent_task
-     * @param User $user Пользователь
-     * @return Task Найденная родительская задача
+     * @param User  $user       Пользователь
+     *
      * @throws RuntimeException Если задача не найдена или не указана
+     *
+     * @return Task Найденная родительская задача
      */
     public function findParentOrFail(array $parameters, User $user): Task
     {
@@ -129,7 +137,8 @@ class TaskFinder
      * Фильтровать задачи по критериям
      *
      * @param array $filters Фильтры (date, priority, status, search)
-     * @param User $user Пользователь
+     * @param User  $user    Пользователь
+     *
      * @return array<Task> Отфильтрованные задачи
      */
     public function filter(array $filters, User $user): array
@@ -141,6 +150,7 @@ class TaskFinder
      * Извлечь поисковый параметр из различных вариантов
      *
      * @param array $parameters Параметры
+     *
      * @return string|null Поисковый запрос
      */
     public function extractSearch(array $parameters): ?string
@@ -155,6 +165,7 @@ class TaskFinder
      * Извлечь поисковый параметр для родительской задачи
      *
      * @param array $parameters Параметры
+     *
      * @return string|null Поисковый запрос для родителя
      */
     public function extractParentSearch(array $parameters): ?string

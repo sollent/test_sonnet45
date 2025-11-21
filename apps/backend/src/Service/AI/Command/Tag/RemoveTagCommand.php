@@ -26,6 +26,7 @@ use RuntimeException;
 class RemoveTagCommand extends AbstractVoiceCommand
 {
     private TaskFinder $taskFinder;
+
     private ResponseBuilder $responseBuilder;
 
     public function __construct(
@@ -35,7 +36,7 @@ class RemoveTagCommand extends AbstractVoiceCommand
         DateTimeParser $dateTimeParser,
         LoggerInterface $logger,
         TaskFinder $taskFinder,
-        ResponseBuilder $responseBuilder
+        ResponseBuilder $responseBuilder,
     ) {
         parent::__construct($entityManager, $taskService, $searchService, $dateTimeParser, $logger);
         $this->taskFinder = $taskFinder;
@@ -50,6 +51,7 @@ class RemoveTagCommand extends AbstractVoiceCommand
     protected function validateParameters(array $parameters): void
     {
         $search = $this->taskFinder->extractSearch($parameters);
+
         if (empty($search)) {
             throw new RuntimeException('Search query is required for removing tag');
         }
@@ -73,6 +75,7 @@ class RemoveTagCommand extends AbstractVoiceCommand
 
         // Ищем тег у задачи
         $tagToRemove = null;
+
         foreach ($task->getTags() as $tag) {
             if (mb_strtolower($tag->getName()) === mb_strtolower($tagName)) {
                 $tagToRemove = $tag;
@@ -83,7 +86,7 @@ class RemoveTagCommand extends AbstractVoiceCommand
         if (!$tagToRemove) {
             return CommandResponse::failure(
                 'tag_not_found',
-                sprintf('Тег "%s" не найден у задачи "%s"', $tagName, $task->getTitle())
+                sprintf('Тег "%s" не найден у задачи "%s"', $tagName, $task->getTitle()),
             );
         }
 

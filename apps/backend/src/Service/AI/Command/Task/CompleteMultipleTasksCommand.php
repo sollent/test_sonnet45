@@ -34,7 +34,7 @@ class CompleteMultipleTasksCommand extends AbstractVoiceCommand
         SmartSearchService $searchService,
         DateTimeParser $dateTimeParser,
         LoggerInterface $logger,
-        TaskFinder $taskFinder
+        TaskFinder $taskFinder,
     ) {
         parent::__construct($entityManager, $taskService, $searchService, $dateTimeParser, $logger);
         $this->taskFinder = $taskFinder;
@@ -77,11 +77,11 @@ class CompleteMultipleTasksCommand extends AbstractVoiceCommand
 
             if ($task->getStatus() === TaskStatus::COMPLETED) {
                 $alreadyCompletedTasks[] = [
-                    'id' => $task->getId(),
+                    'id'    => $task->getId(),
                     'title' => $task->getTitle(),
                 ];
                 $this->logger->info('Complete multiple tasks - already completed', [
-                    'task_id' => $task->getId(),
+                    'task_id'    => $task->getId(),
                     'task_title' => $task->getTitle(),
                 ]);
                 continue;
@@ -89,14 +89,14 @@ class CompleteMultipleTasksCommand extends AbstractVoiceCommand
 
             $task->setStatus(TaskStatus::COMPLETED);
             $completedTasks[] = [
-                'id' => $task->getId(),
+                'id'    => $task->getId(),
                 'title' => $task->getTitle(),
             ];
 
             $this->logger->info('Complete multiple tasks - completed task', [
-                'task_id' => $task->getId(),
+                'task_id'    => $task->getId(),
                 'task_title' => $task->getTitle(),
-                'search' => $search,
+                'search'     => $search,
             ]);
         }
 
@@ -105,10 +105,10 @@ class CompleteMultipleTasksCommand extends AbstractVoiceCommand
                 'no_tasks_completed',
                 'Не найдено задач для завершения',
                 [
-                    'searches' => $searches,
-                    'not_found' => $notFoundSearches,
+                    'searches'          => $searches,
+                    'not_found'         => $notFoundSearches,
                     'already_completed' => $alreadyCompletedTasks,
-                ]
+                ],
             );
         }
 
@@ -120,6 +120,7 @@ class CompleteMultipleTasksCommand extends AbstractVoiceCommand
         if (!empty($alreadyCompletedTasks)) {
             $additionalInfo[] = sprintf('уже завершено: %d', count($alreadyCompletedTasks));
         }
+
         if (!empty($notFoundSearches)) {
             $additionalInfo[] = sprintf('не найдено: %d', count($notFoundSearches));
         }
@@ -132,13 +133,13 @@ class CompleteMultipleTasksCommand extends AbstractVoiceCommand
             'multiple_tasks_completed',
             $message,
             [
-                'completed_count' => count($completedTasks),
-                'completed_tasks' => $completedTasks,
+                'completed_count'         => count($completedTasks),
+                'completed_tasks'         => $completedTasks,
                 'already_completed_count' => count($alreadyCompletedTasks),
                 'already_completed_tasks' => $alreadyCompletedTasks,
-                'not_found_count' => count($notFoundSearches),
-                'not_found_searches' => $notFoundSearches,
-            ]
+                'not_found_count'         => count($notFoundSearches),
+                'not_found_searches'      => $notFoundSearches,
+            ],
         );
     }
 }

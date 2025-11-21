@@ -15,8 +15,6 @@ use Psr\Log\LoggerInterface;
  */
 class PriorityMapper
 {
-    private LoggerInterface $logger;
-
     /**
      * Маппинг английских вариантов (стандарт LLM)
      */
@@ -31,21 +29,23 @@ class PriorityMapper
      * Маппинг русских вариантов (на случай если LLM вернет русские)
      */
     private const RUSSIAN_MAP = [
-        'низкий'  => TaskPriority::LOW,
-        'низкая'  => TaskPriority::LOW,
-        'средний' => TaskPriority::MEDIUM,
-        'средняя' => TaskPriority::MEDIUM,
-        'обычный' => TaskPriority::MEDIUM,
-        'обычная' => TaskPriority::MEDIUM,
-        'высокий' => TaskPriority::HIGH,
-        'высокая' => TaskPriority::HIGH,
-        'важный'  => TaskPriority::HIGH,
-        'важная'  => TaskPriority::HIGH,
-        'срочный' => TaskPriority::URGENT,
-        'срочная' => TaskPriority::URGENT,
+        'низкий'    => TaskPriority::LOW,
+        'низкая'    => TaskPriority::LOW,
+        'средний'   => TaskPriority::MEDIUM,
+        'средняя'   => TaskPriority::MEDIUM,
+        'обычный'   => TaskPriority::MEDIUM,
+        'обычная'   => TaskPriority::MEDIUM,
+        'высокий'   => TaskPriority::HIGH,
+        'высокая'   => TaskPriority::HIGH,
+        'важный'    => TaskPriority::HIGH,
+        'важная'    => TaskPriority::HIGH,
+        'срочный'   => TaskPriority::URGENT,
+        'срочная'   => TaskPriority::URGENT,
         'критичный' => TaskPriority::URGENT,
         'критичная' => TaskPriority::URGENT,
     ];
+
+    private LoggerInterface $logger;
 
     public function __construct(LoggerInterface $logger)
     {
@@ -56,6 +56,7 @@ class PriorityMapper
      * Преобразовать текстовое значение в TaskPriority
      *
      * @param string|null $priority Текстовое значение приоритета
+     *
      * @return TaskPriority Enum приоритета
      */
     public function map(?string $priority): TaskPriority
@@ -78,7 +79,7 @@ class PriorityMapper
 
         // Логируем неизвестное значение
         $this->logger->warning('Unknown priority value, defaulting to MEDIUM', [
-            'priority' => $priority,
+            'priority'   => $priority,
             'normalized' => $normalized,
         ]);
 
@@ -94,7 +95,7 @@ class PriorityMapper
     {
         return array_merge(
             array_keys(self::ENGLISH_MAP),
-            array_keys(self::RUSSIAN_MAP)
+            array_keys(self::RUSSIAN_MAP),
         );
     }
 
@@ -102,11 +103,13 @@ class PriorityMapper
      * Проверить, поддерживается ли значение
      *
      * @param string $priority Текстовое значение
+     *
      * @return bool True если значение поддерживается
      */
     public function isSupported(string $priority): bool
     {
         $normalized = mb_strtolower(trim($priority));
+
         return isset(self::ENGLISH_MAP[$normalized]) || isset(self::RUSSIAN_MAP[$normalized]);
     }
 }

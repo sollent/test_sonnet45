@@ -34,7 +34,7 @@ class UncompleteMultipleTasksCommand extends AbstractVoiceCommand
         SmartSearchService $searchService,
         DateTimeParser $dateTimeParser,
         LoggerInterface $logger,
-        TaskFinder $taskFinder
+        TaskFinder $taskFinder,
     ) {
         parent::__construct($entityManager, $taskService, $searchService, $dateTimeParser, $logger);
         $this->taskFinder = $taskFinder;
@@ -77,28 +77,28 @@ class UncompleteMultipleTasksCommand extends AbstractVoiceCommand
 
             if ($task->getStatus() !== TaskStatus::COMPLETED) {
                 $alreadyUncompletedTasks[] = [
-                    'id' => $task->getId(),
-                    'title' => $task->getTitle(),
+                    'id'     => $task->getId(),
+                    'title'  => $task->getTitle(),
                     'status' => $task->getStatus()->value,
                 ];
                 $this->logger->info('Uncomplete multiple tasks - not completed', [
-                    'task_id' => $task->getId(),
+                    'task_id'    => $task->getId(),
                     'task_title' => $task->getTitle(),
-                    'status' => $task->getStatus()->value,
+                    'status'     => $task->getStatus()->value,
                 ]);
                 continue;
             }
 
             $task->setStatus(TaskStatus::PENDING);
             $uncompletedTasks[] = [
-                'id' => $task->getId(),
+                'id'    => $task->getId(),
                 'title' => $task->getTitle(),
             ];
 
             $this->logger->info('Uncomplete multiple tasks - uncompleted task', [
-                'task_id' => $task->getId(),
+                'task_id'    => $task->getId(),
                 'task_title' => $task->getTitle(),
-                'search' => $search,
+                'search'     => $search,
             ]);
         }
 
@@ -107,10 +107,10 @@ class UncompleteMultipleTasksCommand extends AbstractVoiceCommand
                 'no_tasks_uncompleted',
                 'Не найдено завершенных задач для возврата в работу',
                 [
-                    'searches' => $searches,
-                    'not_found' => $notFoundSearches,
+                    'searches'            => $searches,
+                    'not_found'           => $notFoundSearches,
                     'already_uncompleted' => $alreadyUncompletedTasks,
-                ]
+                ],
             );
         }
 
@@ -122,6 +122,7 @@ class UncompleteMultipleTasksCommand extends AbstractVoiceCommand
         if (!empty($alreadyUncompletedTasks)) {
             $additionalInfo[] = sprintf('уже в работе: %d', count($alreadyUncompletedTasks));
         }
+
         if (!empty($notFoundSearches)) {
             $additionalInfo[] = sprintf('не найдено: %d', count($notFoundSearches));
         }
@@ -134,13 +135,13 @@ class UncompleteMultipleTasksCommand extends AbstractVoiceCommand
             'multiple_tasks_uncompleted',
             $message,
             [
-                'uncompleted_count' => count($uncompletedTasks),
-                'uncompleted_tasks' => $uncompletedTasks,
+                'uncompleted_count'         => count($uncompletedTasks),
+                'uncompleted_tasks'         => $uncompletedTasks,
                 'already_uncompleted_count' => count($alreadyUncompletedTasks),
                 'already_uncompleted_tasks' => $alreadyUncompletedTasks,
-                'not_found_count' => count($notFoundSearches),
-                'not_found_searches' => $notFoundSearches,
-            ]
+                'not_found_count'           => count($notFoundSearches),
+                'not_found_searches'        => $notFoundSearches,
+            ],
         );
     }
 }

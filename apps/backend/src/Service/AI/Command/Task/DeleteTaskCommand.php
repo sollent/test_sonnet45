@@ -26,6 +26,7 @@ use RuntimeException;
 class DeleteTaskCommand extends AbstractVoiceCommand
 {
     private TaskFinder $taskFinder;
+
     private ResponseBuilder $responseBuilder;
 
     public function __construct(
@@ -35,7 +36,7 @@ class DeleteTaskCommand extends AbstractVoiceCommand
         DateTimeParser $dateTimeParser,
         LoggerInterface $logger,
         TaskFinder $taskFinder,
-        ResponseBuilder $responseBuilder
+        ResponseBuilder $responseBuilder,
     ) {
         parent::__construct($entityManager, $taskService, $searchService, $dateTimeParser, $logger);
         $this->taskFinder = $taskFinder;
@@ -50,6 +51,7 @@ class DeleteTaskCommand extends AbstractVoiceCommand
     protected function validateParameters(array $parameters): void
     {
         $search = $this->taskFinder->extractSearch($parameters);
+
         if (empty($search)) {
             throw new RuntimeException('Search query is required for task deletion');
         }

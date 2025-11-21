@@ -13,6 +13,7 @@ use App\Service\AI\SmartSearchService;
 use App\Service\TaskService;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
+use Exception;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -28,9 +29,13 @@ use RuntimeException;
 abstract class AbstractVoiceCommand implements VoiceCommandInterface
 {
     protected EntityManagerInterface $entityManager;
+
     protected TaskService $taskService;
+
     protected SmartSearchService $searchService;
+
     protected DateTimeParser $dateTimeParser;
+
     protected LoggerInterface $logger;
 
     public function __construct(
@@ -38,7 +43,7 @@ abstract class AbstractVoiceCommand implements VoiceCommandInterface
         TaskService $taskService,
         SmartSearchService $searchService,
         DateTimeParser $dateTimeParser,
-        LoggerInterface $logger
+        LoggerInterface $logger,
     ) {
         $this->entityManager = $entityManager;
         $this->taskService = $taskService;
@@ -53,9 +58,9 @@ abstract class AbstractVoiceCommand implements VoiceCommandInterface
     public function execute(array $parameters, User $user): CommandResponse
     {
         $this->logger->info('Executing voice command', [
-            'action' => $this->getAction(),
+            'action'     => $this->getAction(),
             'parameters' => $parameters,
-            'user_id' => $user->getId(),
+            'user_id'    => $user->getId(),
         ]);
 
         try {
@@ -63,24 +68,29 @@ abstract class AbstractVoiceCommand implements VoiceCommandInterface
             $response = $this->doExecute($parameters, $user);
 
             $this->logger->info('Voice command executed successfully', [
-                'action' => $this->getAction(),
+                'action'        => $this->getAction(),
                 'response_type' => $response->getType(),
             ]);
 
             return $response;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logger->error('Failed to execute voice command', [
                 'action' => $this->getAction(),
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'error'  => $e->getMessage(),
+                'trace'  => $e->getTraceAsString(),
             ]);
 
             return CommandResponse::failure(
                 'error',
                 'Произошла ошибка при выполнении команды: ' . $e->getMessage(),
-                ['error' => $e->getMessage()]
+                ['error' => $e->getMessage()],
             );
         }
+    }
+
+    public function supports(string $action): bool
+    {
+        return $action === $this->getAction();
     }
 
     /**
@@ -95,18 +105,15 @@ abstract class AbstractVoiceCommand implements VoiceCommandInterface
      */
     abstract protected function doExecute(array $parameters, User $user): CommandResponse;
 
-    public function supports(string $action): bool
-    {
-        return $action === $this->getAction();
-    }
-
     /**
      * Найти задачу или выбросить исключение
      *
      * @param string $search Поисковый запрос
-     * @param User $user Пользователь
-     * @return Task Найденная задача
+     * @param User   $user   Пользователь
+     *
      * @throws RuntimeException Если задача не найдена
+     *
+     * @return Task Найденная задача
      */
     protected function findTaskOrFail(string $search, User $user): Task
     {
@@ -131,9 +138,11 @@ abstract class AbstractVoiceCommand implements VoiceCommandInterface
      * Найти родительскую задачу из параметров
      *
      * @param array $parameters Параметры с parent_search/parent/parent_task
-     * @param User $user Пользователь
-     * @return Task Найденная родительская задача
+     * @param User  $user       Пользователь
+     *
      * @throws RuntimeException Если задача не найдена или не указана
+     *
+     * @return Task Найденная родительская задача
      */
     protected function findParentTaskOrFail(array $parameters, User $user): Task
     {
@@ -167,14 +176,14 @@ abstract class AbstractVoiceCommand implements VoiceCommandInterface
         }
 
         // Временной диапазон (с 14:00 до 15:00)
-        if (isset($parameters['start_time']) && isset($parameters['end_time'])) {
+        if (isset($parameters['start_time'], $parameters['end_time'])) {
             $startDate = $this->dateTimeParser->parseDateWithTime(
                 $parameters['due_date'],
-                $parameters['start_time']
+                $parameters['start_time'],
             );
             $endDate = $this->dateTimeParser->parseDateWithTime(
                 $parameters['due_date'],
-                $parameters['end_time']
+                $parameters['end_time'],
             );
 
             return ['start' => $startDate, 'due' => $endDate];
@@ -184,7 +193,7 @@ abstract class AbstractVoiceCommand implements VoiceCommandInterface
         if (isset($parameters['start_time'])) {
             $startDate = $this->dateTimeParser->parseDateWithTime(
                 $parameters['due_date'],
-                $parameters['start_time']
+                $parameters['start_time'],
             );
             $endDate = $startDate?->modify('+1 hour');
 

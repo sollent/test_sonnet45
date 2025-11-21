@@ -7,10 +7,10 @@ namespace App\Service\AI\Command\Task;
 use App\Dto\Request\Task\CreateTaskDto;
 use App\Entity\User;
 use App\Enum\TaskStatus;
+use App\Repository\Database\TagRepository;
 use App\Service\AI\Command\Base\AbstractVoiceCommand;
 use App\Service\AI\DateTimeParser;
 use App\Service\AI\Response\CommandResponse;
-use App\Repository\Database\TagRepository;
 use App\Service\AI\Service\DateTimeResolver;
 use App\Service\AI\Service\PriorityMapper;
 use App\Service\AI\SmartSearchService;
@@ -32,7 +32,9 @@ use RuntimeException;
 class CreateMultipleTasksCommand extends AbstractVoiceCommand
 {
     private DateTimeResolver $dateTimeResolver;
+
     private PriorityMapper $priorityMapper;
+
     private TagRepository $tagRepository;
 
     public function __construct(
@@ -43,7 +45,7 @@ class CreateMultipleTasksCommand extends AbstractVoiceCommand
         LoggerInterface $logger,
         DateTimeResolver $dateTimeResolver,
         PriorityMapper $priorityMapper,
-        TagRepository $tagRepository
+        TagRepository $tagRepository,
     ) {
         parent::__construct($entityManager, $taskService, $searchService, $dateTimeParser, $logger);
         $this->dateTimeResolver = $dateTimeResolver;
@@ -78,11 +80,13 @@ class CreateMultipleTasksCommand extends AbstractVoiceCommand
             : null;
 
         $dateRange = null;
+
         if (isset($parameters['due_date'])) {
             $dateRange = $this->dateTimeResolver->resolveDateRange($parameters);
         }
 
         $tags = [];
+
         if (!empty($parameters['tags'])) {
             $tagNames = is_array($parameters['tags']) ? $parameters['tags'] : [$parameters['tags']];
             $tags = $this->tagRepository->findOrCreateByNames($tagNames, $user);
@@ -105,6 +109,7 @@ class CreateMultipleTasksCommand extends AbstractVoiceCommand
             // Проверяем due_date для конкретной задачи или общий, по умолчанию - сегодня
             $taskDueDate = $taskItem['due_date'] ?? $parameters['due_date'] ?? 'today';
             $taskDateRange = $this->dateTimeResolver->resolveDateRange(['due_date' => $taskDueDate]);
+
             if ($taskDateRange) {
                 $dto->startDate = $taskDateRange['start']?->format('Y-m-d H:i:s');
                 $dto->dueDate = $taskDateRange['due']?->format('Y-m-d H:i:s');
@@ -119,17 +124,17 @@ class CreateMultipleTasksCommand extends AbstractVoiceCommand
             }
 
             $createdTasks[] = [
-                'id' => $task->getId(),
-                'title' => $task->getTitle(),
-                'status' => $task->getStatus()->value,
-                'priority' => $task->getPriority()->value,
+                'id'        => $task->getId(),
+                'title'     => $task->getTitle(),
+                'status'    => $task->getStatus()->value,
+                'priority'  => $task->getPriority()->value,
                 'startDate' => $task->getStartDate()?->format('c'),
-                'dueDate' => $task->getDueDate()?->format('c'),
-                'tags' => array_map(fn($tag) => $tag->getName(), $task->getTags()->toArray()),
+                'dueDate'   => $task->getDueDate()?->format('c'),
+                'tags'      => array_map(fn ($tag) => $tag->getName(), $task->getTags()->toArray()),
             ];
 
             $this->logger->info('Create multiple tasks - created task', [
-                'task_id' => $task->getId(),
+                'task_id'    => $task->getId(),
                 'task_title' => $task->getTitle(),
             ]);
         }
@@ -141,8 +146,8 @@ class CreateMultipleTasksCommand extends AbstractVoiceCommand
             sprintf('Создано %d задач', count($createdTasks)),
             [
                 'created_count' => count($createdTasks),
-                'tasks' => $createdTasks,
-            ]
+                'tasks'         => $createdTasks,
+            ],
         );
     }
 
@@ -154,6 +159,7 @@ class CreateMultipleTasksCommand extends AbstractVoiceCommand
      * - 'tasks': [['title' => '...', 'description' => '...', 'due_date' => '...'], ...]
      *
      * @param array<string, mixed> $parameters
+     *
      * @return array<int, array{title: string, description?: string, due_date?: string}>
      */
     private function extractTaskItems(array $parameters): array
@@ -161,26 +167,28 @@ class CreateMultipleTasksCommand extends AbstractVoiceCommand
         // Формат 'tasks' (массив объектов с title, description, due_date)
         if (!empty($parameters['tasks']) && is_array($parameters['tasks'])) {
             $items = [];
+
             foreach ($parameters['tasks'] as $task) {
                 if (is_array($task) && isset($task['title'])) {
                     $items[] = [
-                        'title' => $task['title'],
+                        'title'       => $task['title'],
                         'description' => $task['description'] ?? null,
-                        'due_date' => $task['due_date'] ?? null,
+                        'due_date'    => $task['due_date'] ?? null,
                     ];
                 } elseif (is_string($task)) {
                     // Если элемент - строка, используем как title
                     $items[] = ['title' => $task];
                 }
             }
+
             return $items;
         }
 
         // Формат 'titles' (массив строк)
         if (!empty($parameters['titles']) && is_array($parameters['titles'])) {
             return array_map(
-                fn($title) => ['title' => $title],
-                $parameters['titles']
+                fn ($title) => ['title' => $title],
+                $parameters['titles'],
             );
         }
 

@@ -544,7 +544,7 @@ class LLMService
         $currentDate = date('Y-m-d');
         $currentYear = date('Y');
 
-        $prompt = self::SYSTEM_PROMPT . "\n\nТекущая дата: " . $currentDate . " (год " . $currentYear . ")\n\nКоманда: \"" . $commandText . '"';
+        $prompt = self::SYSTEM_PROMPT . "\n\nТекущая дата: " . $currentDate . ' (год ' . $currentYear . ")\n\nКоманда: \"" . $commandText . '"';
 
         try {
             $response = $this->httpClient->request('POST', $this->ollamaUrl . '/api/generate', [

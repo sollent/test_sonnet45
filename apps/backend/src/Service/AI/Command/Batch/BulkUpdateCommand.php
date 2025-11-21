@@ -29,8 +29,11 @@ use RuntimeException;
 class BulkUpdateCommand extends AbstractBatchCommand
 {
     private DateTimeResolver $dateTimeResolver;
+
     private PriorityMapper $priorityMapper;
+
     private StatusMapper $statusMapper;
+
     private array $updates = [];
 
     public function __construct(
@@ -42,7 +45,7 @@ class BulkUpdateCommand extends AbstractBatchCommand
         TaskFinder $taskFinder,
         DateTimeResolver $dateTimeResolver,
         PriorityMapper $priorityMapper,
-        StatusMapper $statusMapper
+        StatusMapper $statusMapper,
     ) {
         parent::__construct($entityManager, $taskService, $searchService, $dateTimeParser, $logger);
         $this->taskFinder = $taskFinder;
@@ -83,7 +86,7 @@ class BulkUpdateCommand extends AbstractBatchCommand
 
         if (isset($parameters['new_due_date'])) {
             $dateRange = $this->dateTimeResolver->resolveDateRange([
-                'due_date' => $parameters['new_due_date']
+                'due_date' => $parameters['new_due_date'],
             ]);
             $this->updates['start_date'] = $dateRange['start'];
             $this->updates['due_date'] = $dateRange['due'];
@@ -122,9 +125,9 @@ class BulkUpdateCommand extends AbstractBatchCommand
         }
 
         $this->logger->info('Bulk update task', [
-            'task_id' => $task->getId(),
+            'task_id'    => $task->getId(),
             'task_title' => $task->getTitle(),
-            'changes' => $changes,
+            'changes'    => $changes,
         ]);
     }
 
@@ -133,7 +136,7 @@ class BulkUpdateCommand extends AbstractBatchCommand
         return CommandResponse::failure(
             'no_tasks_found',
             'Не найдено задач для обновления по указанным критериям',
-            ['filters' => $filters]
+            ['filters' => $filters],
         );
     }
 
@@ -142,16 +145,19 @@ class BulkUpdateCommand extends AbstractBatchCommand
         int $totalCount,
         array $processed,
         array $errors = [],
-        array $notFound = []
+        array $notFound = [],
     ): CommandResponse {
         // Формируем описание изменений
         $changes = [];
+
         if (isset($this->updates['status'])) {
             $changes[] = sprintf('статус → %s', $this->updates['status']->value);
         }
+
         if (isset($this->updates['priority'])) {
             $changes[] = sprintf('приоритет → %s', $this->updates['priority']->value);
         }
+
         if (isset($this->updates['due_date'])) {
             $changes[] = sprintf('срок → %s', $this->updates['due_date']?->format('d.m.Y'));
         }
@@ -163,10 +169,10 @@ class BulkUpdateCommand extends AbstractBatchCommand
             sprintf('Обновлено %d задач (%s)', $successCount, $changesText),
             [
                 'updated_count' => $successCount,
-                'changes' => $changes,
-                'tasks' => $processed,
-                'errors' => $errors,
-            ]
+                'changes'       => $changes,
+                'tasks'         => $processed,
+                'errors'        => $errors,
+            ],
         );
     }
 
@@ -177,8 +183,8 @@ class BulkUpdateCommand extends AbstractBatchCommand
             'Не удалось обновить ни одной задачи',
             [
                 'not_found' => $notFound,
-                'errors' => $errors,
-            ]
+                'errors'    => $errors,
+            ],
         );
     }
 }

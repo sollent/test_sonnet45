@@ -23,6 +23,7 @@ use Psr\Log\LoggerInterface;
 class AddTagCommandTest extends TestCase
 {
     private AddTagCommand $command;
+
     private TaskFinder $taskFinder;
 
     protected function setUp(): void
@@ -37,7 +38,7 @@ class AddTagCommandTest extends TestCase
             $this->createMock(LoggerInterface::class),
             $this->taskFinder,
             $this->createMock(TagRepository::class),
-            $this->createMock(ResponseBuilder::class)
+            $this->createMock(ResponseBuilder::class),
         );
     }
 
@@ -58,8 +59,8 @@ class AddTagCommandTest extends TestCase
         $this->taskFinder->method('find')->willReturn(null);
 
         $result = $this->command->execute([
-            'search' => 'Nonexistent',
-            'tag_name' => 'work'
+            'search'   => 'Nonexistent',
+            'tag_name' => 'work',
         ], $user);
 
         $this->assertFalse($result->isSuccess());

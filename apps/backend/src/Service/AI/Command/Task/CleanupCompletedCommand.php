@@ -14,6 +14,7 @@ use App\Service\AI\SmartSearchService;
 use App\Service\TaskService;
 use App\ValueObject\ParsedCommand;
 use Doctrine\ORM\EntityManagerInterface;
+use InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -27,6 +28,7 @@ use RuntimeException;
 class CleanupCompletedCommand extends AbstractVoiceCommand
 {
     private TaskFinder $taskFinder;
+
     private DateTimeResolver $dateTimeResolver;
 
     public function __construct(
@@ -36,7 +38,7 @@ class CleanupCompletedCommand extends AbstractVoiceCommand
         DateTimeParser $dateTimeParser,
         LoggerInterface $logger,
         TaskFinder $taskFinder,
-        DateTimeResolver $dateTimeResolver
+        DateTimeResolver $dateTimeResolver,
     ) {
         parent::__construct($entityManager, $taskService, $searchService, $dateTimeParser, $logger);
         $this->taskFinder = $taskFinder;
@@ -53,7 +55,7 @@ class CleanupCompletedCommand extends AbstractVoiceCommand
         if (empty($parameters['period'])) {
             throw new RuntimeException(
                 'Для очистки завершённых задач необходимо указать период ' .
-                '(yesterday, last_week, last_month, before_date)'
+                '(yesterday, last_week, last_month, before_date)',
             );
         }
 
@@ -70,10 +72,10 @@ class CleanupCompletedCommand extends AbstractVoiceCommand
         try {
             // Определяем диапазон дат для периода
             $dateRange = $this->dateTimeResolver->resolvePeriod($period, $beforeDate);
-        } catch (\InvalidArgumentException $e) {
+        } catch (InvalidArgumentException $e) {
             return CommandResponse::failure(
                 'invalid_period',
-                $e->getMessage()
+                $e->getMessage(),
             );
         }
 
@@ -82,8 +84,10 @@ class CleanupCompletedCommand extends AbstractVoiceCommand
 
         // Фильтруем по периоду
         $tasksToDelete = [];
+
         foreach ($tasks as $task) {
             $taskDate = $task->getDueDate() ?? $task->getCreatedAt();
+
             if (!$taskDate) {
                 continue;
             }
@@ -92,6 +96,7 @@ class CleanupCompletedCommand extends AbstractVoiceCommand
             if ($dateRange['start'] !== null && $taskDate < $dateRange['start']) {
                 continue;
             }
+
             if ($taskDate > $dateRange['end']) {
                 continue;
             }
@@ -103,12 +108,13 @@ class CleanupCompletedCommand extends AbstractVoiceCommand
             return CommandResponse::failure(
                 'no_tasks_to_cleanup',
                 sprintf('Не найдено завершённых задач за период: %s', $period),
-                ['period' => $period]
+                ['period' => $period],
             );
         }
 
         // Удаляем задачи
         $deletedTitles = [];
+
         foreach ($tasksToDelete as $task) {
             $deletedTitles[] = $task->getTitle();
             $this->entityManager->remove($task);
@@ -120,10 +126,10 @@ class CleanupCompletedCommand extends AbstractVoiceCommand
             'cleanup_completed',
             sprintf('Очищено завершённых задач: %d за период %s', count($deletedTitles), $period),
             [
-                'deleted_count' => count($deletedTitles),
-                'period' => $period,
+                'deleted_count'  => count($deletedTitles),
+                'period'         => $period,
                 'deleted_titles' => $deletedTitles,
-            ]
+            ],
         );
     }
 }

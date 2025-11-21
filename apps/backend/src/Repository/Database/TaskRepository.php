@@ -1597,6 +1597,125 @@ class TaskRepository extends ServiceEntityRepository
     }
 
     /**
+     * Search tasks by title (for SmartSearchService)
+     *
+     * @param string $query Search query (will be wrapped in %query% LIKE)
+     * @param User   $user  User
+     * @param int    $limit Maximum results
+     *
+     * @return Task[] Found tasks
+     */
+    public function searchByTitle(string $query, User $user, int $limit = 10): array
+    {
+        return $this->createQueryBuilder('t')
+            ->leftJoin('t.tags', 'tag')
+            ->leftJoin('t.user', 'u')
+            ->leftJoin('t.recurrenceRule', 'recurrenceRule')
+            ->addSelect('tag')
+            ->addSelect('u')
+            ->addSelect('recurrenceRule')
+            ->where('t.user = :user')
+            ->andWhere('t.parentTask IS NULL')
+            ->andWhere('t.isArchived = false')
+            ->andWhere('LOWER(t.title) LIKE :query')
+            ->setParameter('user', $user)
+            ->setParameter('query', '%' . mb_strtolower($query) . '%')
+            ->orderBy('t.priority', 'DESC')
+            ->addOrderBy('t.dueDate', 'ASC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Find tasks by filters (for SmartSearchService)
+     *
+     * Accepts criteria built by SmartSearchService and converts to Doctrine query
+     *
+     * @param array $criteria Criteria array with keys: user, priority, status, dueDate, tags, search
+     *
+     * @return Task[] Found tasks
+     */
+    public function findByFilters(array $criteria): array
+    {
+        $qb = $this->createQueryBuilder('t')
+            ->leftJoin('t.tags', 'tag')
+            ->leftJoin('t.user', 'u')
+            ->leftJoin('t.recurrenceRule', 'recurrenceRule')
+            ->addSelect('tag')
+            ->addSelect('u')
+            ->addSelect('recurrenceRule')
+            ->where('t.parentTask IS NULL')
+            ->andWhere('t.isArchived = false');
+
+        // Filter by user (required)
+        if (isset($criteria['user'])) {
+            $qb->andWhere('t.user = :user')
+                ->setParameter('user', $criteria['user']);
+        }
+
+        // Filter by priority
+        if (isset($criteria['priority'])) {
+            // priority can be string ('high', 'medium', 'low') or TaskPriority enum
+            $priority = is_string($criteria['priority'])
+                ? TaskPriority::from($criteria['priority'])
+                : $criteria['priority'];
+
+            $qb->andWhere('t.priority = :priority')
+                ->setParameter('priority', $priority);
+        }
+
+        // Filter by status
+        if (isset($criteria['status'])) {
+            // status can be string ('pending', 'in_progress', 'done') or TaskStatus enum
+            $status = is_string($criteria['status'])
+                ? TaskStatus::from($criteria['status'])
+                : $criteria['status'];
+
+            $qb->andWhere('t.status = :status')
+                ->setParameter('status', $status);
+        }
+
+        // Filter by due date range
+        if (isset($criteria['dueDate']) && is_array($criteria['dueDate'])) {
+            $from = $criteria['dueDate']['from'] ?? null;
+            $to = $criteria['dueDate']['to'] ?? null;
+
+            if ($from && $to) {
+                $qb->andWhere('t.dueDate BETWEEN :dueDateFrom AND :dueDateTo')
+                    ->setParameter('dueDateFrom', $from)
+                    ->setParameter('dueDateTo', $to);
+            } elseif ($from) {
+                $qb->andWhere('t.dueDate >= :dueDateFrom')
+                    ->setParameter('dueDateFrom', $from);
+            } elseif ($to) {
+                $qb->andWhere('t.dueDate <= :dueDateTo')
+                    ->setParameter('dueDateTo', $to);
+            }
+        }
+
+        // Filter by tags
+        if (isset($criteria['tags']) && !empty($criteria['tags'])) {
+            $qb->join('t.tags', 'filter_tag')
+                ->andWhere('filter_tag.name IN (:tagNames)')
+                ->setParameter('tagNames', $criteria['tags']);
+        }
+
+        // Search by text
+        if (isset($criteria['search'])) {
+            $qb->andWhere('(LOWER(t.title) LIKE :searchQuery OR LOWER(t.description) LIKE :searchQuery)')
+                ->setParameter('searchQuery', '%' . mb_strtolower($criteria['search']) . '%');
+        }
+
+        // Order by priority and due date
+        $qb->orderBy('t.priority', 'DESC')
+            ->addOrderBy('t.dueDate', 'ASC')
+            ->addOrderBy('t.id', 'ASC');
+
+        return $qb->getQuery()->getResult();
+    }
+
+    /**
      * @deprecated No longer needed - use findWithSubtasks() with CTE
      * Recursively load subtasks
      */
@@ -1788,125 +1907,6 @@ class TaskRepository extends ServiceEntityRepository
         }
 
         return $result;
-    }
-
-    /**
-     * Search tasks by title (for SmartSearchService)
-     *
-     * @param string $query Search query (will be wrapped in %query% LIKE)
-     * @param User   $user  User
-     * @param int    $limit Maximum results
-     *
-     * @return Task[] Found tasks
-     */
-    public function searchByTitle(string $query, User $user, int $limit = 10): array
-    {
-        return $this->createQueryBuilder('t')
-            ->leftJoin('t.tags', 'tag')
-            ->leftJoin('t.user', 'u')
-            ->leftJoin('t.recurrenceRule', 'recurrenceRule')
-            ->addSelect('tag')
-            ->addSelect('u')
-            ->addSelect('recurrenceRule')
-            ->where('t.user = :user')
-            ->andWhere('t.parentTask IS NULL')
-            ->andWhere('t.isArchived = false')
-            ->andWhere('LOWER(t.title) LIKE :query')
-            ->setParameter('user', $user)
-            ->setParameter('query', '%' . mb_strtolower($query) . '%')
-            ->orderBy('t.priority', 'DESC')
-            ->addOrderBy('t.dueDate', 'ASC')
-            ->setMaxResults($limit)
-            ->getQuery()
-            ->getResult();
-    }
-
-    /**
-     * Find tasks by filters (for SmartSearchService)
-     *
-     * Accepts criteria built by SmartSearchService and converts to Doctrine query
-     *
-     * @param array $criteria Criteria array with keys: user, priority, status, dueDate, tags, search
-     *
-     * @return Task[] Found tasks
-     */
-    public function findByFilters(array $criteria): array
-    {
-        $qb = $this->createQueryBuilder('t')
-            ->leftJoin('t.tags', 'tag')
-            ->leftJoin('t.user', 'u')
-            ->leftJoin('t.recurrenceRule', 'recurrenceRule')
-            ->addSelect('tag')
-            ->addSelect('u')
-            ->addSelect('recurrenceRule')
-            ->where('t.parentTask IS NULL')
-            ->andWhere('t.isArchived = false');
-
-        // Filter by user (required)
-        if (isset($criteria['user'])) {
-            $qb->andWhere('t.user = :user')
-                ->setParameter('user', $criteria['user']);
-        }
-
-        // Filter by priority
-        if (isset($criteria['priority'])) {
-            // priority can be string ('high', 'medium', 'low') or TaskPriority enum
-            $priority = is_string($criteria['priority'])
-                ? TaskPriority::from($criteria['priority'])
-                : $criteria['priority'];
-
-            $qb->andWhere('t.priority = :priority')
-                ->setParameter('priority', $priority);
-        }
-
-        // Filter by status
-        if (isset($criteria['status'])) {
-            // status can be string ('pending', 'in_progress', 'done') or TaskStatus enum
-            $status = is_string($criteria['status'])
-                ? TaskStatus::from($criteria['status'])
-                : $criteria['status'];
-
-            $qb->andWhere('t.status = :status')
-                ->setParameter('status', $status);
-        }
-
-        // Filter by due date range
-        if (isset($criteria['dueDate']) && is_array($criteria['dueDate'])) {
-            $from = $criteria['dueDate']['from'] ?? null;
-            $to = $criteria['dueDate']['to'] ?? null;
-
-            if ($from && $to) {
-                $qb->andWhere('t.dueDate BETWEEN :dueDateFrom AND :dueDateTo')
-                    ->setParameter('dueDateFrom', $from)
-                    ->setParameter('dueDateTo', $to);
-            } elseif ($from) {
-                $qb->andWhere('t.dueDate >= :dueDateFrom')
-                    ->setParameter('dueDateFrom', $from);
-            } elseif ($to) {
-                $qb->andWhere('t.dueDate <= :dueDateTo')
-                    ->setParameter('dueDateTo', $to);
-            }
-        }
-
-        // Filter by tags
-        if (isset($criteria['tags']) && !empty($criteria['tags'])) {
-            $qb->join('t.tags', 'filter_tag')
-                ->andWhere('filter_tag.name IN (:tagNames)')
-                ->setParameter('tagNames', $criteria['tags']);
-        }
-
-        // Search by text
-        if (isset($criteria['search'])) {
-            $qb->andWhere('(LOWER(t.title) LIKE :searchQuery OR LOWER(t.description) LIKE :searchQuery)')
-                ->setParameter('searchQuery', '%' . mb_strtolower($criteria['search']) . '%');
-        }
-
-        // Order by priority and due date
-        $qb->orderBy('t.priority', 'DESC')
-            ->addOrderBy('t.dueDate', 'ASC')
-            ->addOrderBy('t.id', 'ASC');
-
-        return $qb->getQuery()->getResult();
     }
 
     /**

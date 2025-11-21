@@ -15,8 +15,6 @@ use Psr\Log\LoggerInterface;
  */
 class StatusMapper
 {
-    private LoggerInterface $logger;
-
     /**
      * Маппинг английских вариантов (стандарт LLM)
      */
@@ -41,23 +39,25 @@ class StatusMapper
         'новый'         => TaskStatus::PENDING,
 
         // In Progress статусы
-        'в работе'      => TaskStatus::IN_PROGRESS,
-        'в процессе'    => TaskStatus::IN_PROGRESS,
-        'выполняется'   => TaskStatus::IN_PROGRESS,
-        'в разработке'  => TaskStatus::IN_PROGRESS,
-        'активна'       => TaskStatus::IN_PROGRESS,
-        'активная'      => TaskStatus::IN_PROGRESS,
+        'в работе'     => TaskStatus::IN_PROGRESS,
+        'в процессе'   => TaskStatus::IN_PROGRESS,
+        'выполняется'  => TaskStatus::IN_PROGRESS,
+        'в разработке' => TaskStatus::IN_PROGRESS,
+        'активна'      => TaskStatus::IN_PROGRESS,
+        'активная'     => TaskStatus::IN_PROGRESS,
 
         // Completed статусы
-        'завершено'     => TaskStatus::COMPLETED,
-        'завершена'     => TaskStatus::COMPLETED,
-        'выполнено'     => TaskStatus::COMPLETED,
-        'выполнена'     => TaskStatus::COMPLETED,
-        'готово'        => TaskStatus::COMPLETED,
-        'готова'        => TaskStatus::COMPLETED,
-        'закрыто'       => TaskStatus::COMPLETED,
-        'закрыта'       => TaskStatus::COMPLETED,
+        'завершено' => TaskStatus::COMPLETED,
+        'завершена' => TaskStatus::COMPLETED,
+        'выполнено' => TaskStatus::COMPLETED,
+        'выполнена' => TaskStatus::COMPLETED,
+        'готово'    => TaskStatus::COMPLETED,
+        'готова'    => TaskStatus::COMPLETED,
+        'закрыто'   => TaskStatus::COMPLETED,
+        'закрыта'   => TaskStatus::COMPLETED,
     ];
+
+    private LoggerInterface $logger;
 
     public function __construct(LoggerInterface $logger)
     {
@@ -68,6 +68,7 @@ class StatusMapper
      * Преобразовать текстовое значение в TaskStatus
      *
      * @param string|null $status Текстовое значение статуса
+     *
      * @return TaskStatus|null Enum статуса или null если не удалось определить
      */
     public function map(?string $status): ?TaskStatus
@@ -90,7 +91,7 @@ class StatusMapper
 
         // Логируем неизвестное значение
         $this->logger->warning('Unknown status value', [
-            'status' => $status,
+            'status'     => $status,
             'normalized' => $normalized,
         ]);
 
@@ -100,8 +101,9 @@ class StatusMapper
     /**
      * Преобразовать текстовое значение в TaskStatus или использовать значение по умолчанию
      *
-     * @param string|null $status Текстовое значение статуса
-     * @param TaskStatus $default Значение по умолчанию
+     * @param string|null $status  Текстовое значение статуса
+     * @param TaskStatus  $default Значение по умолчанию
+     *
      * @return TaskStatus Enum статуса
      */
     public function mapOrDefault(?string $status, TaskStatus $default = TaskStatus::PENDING): TaskStatus
@@ -118,7 +120,7 @@ class StatusMapper
     {
         return array_merge(
             array_keys(self::ENGLISH_MAP),
-            array_keys(self::RUSSIAN_MAP)
+            array_keys(self::RUSSIAN_MAP),
         );
     }
 
@@ -126,11 +128,13 @@ class StatusMapper
      * Проверить, поддерживается ли значение
      *
      * @param string $status Текстовое значение
+     *
      * @return bool True если значение поддерживается
      */
     public function isSupported(string $status): bool
     {
         $normalized = mb_strtolower(trim($status));
+
         return isset(self::ENGLISH_MAP[$normalized]) || isset(self::RUSSIAN_MAP[$normalized]);
     }
 
@@ -138,13 +142,14 @@ class StatusMapper
      * Получить маппинг для конкретного языка
      *
      * @param string $language 'en' или 'ru'
+     *
      * @return array<string, TaskStatus>
      */
     public function getMappingForLanguage(string $language): array
     {
         return match ($language) {
-            'en' => self::ENGLISH_MAP,
-            'ru' => self::RUSSIAN_MAP,
+            'en'    => self::ENGLISH_MAP,
+            'ru'    => self::RUSSIAN_MAP,
             default => array_merge(self::ENGLISH_MAP, self::RUSSIAN_MAP),
         };
     }

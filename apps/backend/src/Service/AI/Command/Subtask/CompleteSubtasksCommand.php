@@ -34,7 +34,7 @@ class CompleteSubtasksCommand extends AbstractVoiceCommand
         SmartSearchService $searchService,
         DateTimeParser $dateTimeParser,
         LoggerInterface $logger,
-        TaskFinder $taskFinder
+        TaskFinder $taskFinder,
     ) {
         parent::__construct($entityManager, $taskService, $searchService, $dateTimeParser, $logger);
         $this->taskFinder = $taskFinder;
@@ -48,6 +48,7 @@ class CompleteSubtasksCommand extends AbstractVoiceCommand
     protected function validateParameters(array $parameters): void
     {
         $parentSearch = $this->taskFinder->extractParentSearch($parameters);
+
         if (empty($parentSearch)) {
             throw new RuntimeException('Parent task search query is required for completing subtasks');
         }
@@ -64,7 +65,7 @@ class CompleteSubtasksCommand extends AbstractVoiceCommand
             return CommandResponse::failure(
                 'parent_task_not_found',
                 sprintf('Родительская задача "%s" не найдена', $parentSearch),
-                ['search' => $parentSearch]
+                ['search' => $parentSearch],
             );
         }
 
@@ -77,10 +78,10 @@ class CompleteSubtasksCommand extends AbstractVoiceCommand
                 sprintf('У задачи "%s" нет подзадач', $parentTask->getTitle()),
                 [
                     'parent_task' => [
-                        'id' => $parentTask->getId(),
+                        'id'    => $parentTask->getId(),
                         'title' => $parentTask->getTitle(),
                     ],
-                ]
+                ],
             );
         }
 
@@ -90,7 +91,7 @@ class CompleteSubtasksCommand extends AbstractVoiceCommand
         foreach ($subtasks as $subtask) {
             if ($subtask->getStatus() === TaskStatus::COMPLETED) {
                 $alreadyCompletedSubtasks[] = [
-                    'id' => $subtask->getId(),
+                    'id'    => $subtask->getId(),
                     'title' => $subtask->getTitle(),
                 ];
                 continue;
@@ -98,14 +99,14 @@ class CompleteSubtasksCommand extends AbstractVoiceCommand
 
             $subtask->setStatus(TaskStatus::COMPLETED);
             $completedSubtasks[] = [
-                'id' => $subtask->getId(),
+                'id'    => $subtask->getId(),
                 'title' => $subtask->getTitle(),
             ];
 
             $this->logger->info('Complete subtasks - completed subtask', [
-                'subtask_id' => $subtask->getId(),
+                'subtask_id'    => $subtask->getId(),
                 'subtask_title' => $subtask->getTitle(),
-                'parent_id' => $parentTask->getId(),
+                'parent_id'     => $parentTask->getId(),
             ]);
         }
 
@@ -115,12 +116,12 @@ class CompleteSubtasksCommand extends AbstractVoiceCommand
                 sprintf('Все подзадачи "%s" уже завершены', $parentTask->getTitle()),
                 [
                     'parent_task' => [
-                        'id' => $parentTask->getId(),
+                        'id'    => $parentTask->getId(),
                         'title' => $parentTask->getTitle(),
                     ],
-                    'already_completed_count' => count($alreadyCompletedSubtasks),
+                    'already_completed_count'    => count($alreadyCompletedSubtasks),
                     'already_completed_subtasks' => $alreadyCompletedSubtasks,
-                ]
+                ],
             );
         }
 
@@ -129,7 +130,7 @@ class CompleteSubtasksCommand extends AbstractVoiceCommand
         $message = sprintf(
             'Завершено %d подзадач для "%s"',
             count($completedSubtasks),
-            $parentTask->getTitle()
+            $parentTask->getTitle(),
         );
 
         if (!empty($alreadyCompletedSubtasks)) {
@@ -141,14 +142,14 @@ class CompleteSubtasksCommand extends AbstractVoiceCommand
             $message,
             [
                 'parent_task' => [
-                    'id' => $parentTask->getId(),
+                    'id'    => $parentTask->getId(),
                     'title' => $parentTask->getTitle(),
                 ],
-                'completed_count' => count($completedSubtasks),
-                'completed_subtasks' => $completedSubtasks,
-                'already_completed_count' => count($alreadyCompletedSubtasks),
+                'completed_count'            => count($completedSubtasks),
+                'completed_subtasks'         => $completedSubtasks,
+                'already_completed_count'    => count($alreadyCompletedSubtasks),
                 'already_completed_subtasks' => $alreadyCompletedSubtasks,
-            ]
+            ],
         );
     }
 }

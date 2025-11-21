@@ -34,7 +34,7 @@ class UncompleteTaskCommand extends AbstractVoiceCommand
         SmartSearchService $searchService,
         DateTimeParser $dateTimeParser,
         LoggerInterface $logger,
-        TaskFinder $taskFinder
+        TaskFinder $taskFinder,
     ) {
         parent::__construct($entityManager, $taskService, $searchService, $dateTimeParser, $logger);
         $this->taskFinder = $taskFinder;
@@ -48,6 +48,7 @@ class UncompleteTaskCommand extends AbstractVoiceCommand
     protected function validateParameters(array $parameters): void
     {
         $search = $this->taskFinder->extractSearch($parameters);
+
         if (empty($search)) {
             throw new RuntimeException('Search query is required for task uncomplete');
         }
@@ -64,7 +65,7 @@ class UncompleteTaskCommand extends AbstractVoiceCommand
             return CommandResponse::failure(
                 'task_not_found',
                 sprintf('Задача "%s" не найдена', $search),
-                ['search' => $search]
+                ['search' => $search],
             );
         }
 
@@ -75,11 +76,11 @@ class UncompleteTaskCommand extends AbstractVoiceCommand
                 sprintf('Задача "%s" уже не завершена', $task->getTitle()),
                 [
                     'task' => [
-                        'id' => $task->getId(),
-                        'title' => $task->getTitle(),
+                        'id'     => $task->getId(),
+                        'title'  => $task->getTitle(),
                         'status' => $task->getStatus()->value,
                     ],
-                ]
+                ],
             );
         }
 
@@ -92,11 +93,11 @@ class UncompleteTaskCommand extends AbstractVoiceCommand
             sprintf('Задача "%s" возвращена в работу', $task->getTitle()),
             [
                 'task' => [
-                    'id' => $task->getId(),
-                    'title' => $task->getTitle(),
+                    'id'     => $task->getId(),
+                    'title'  => $task->getTitle(),
                     'status' => $task->getStatus()->value,
                 ],
-            ]
+            ],
         );
     }
 }

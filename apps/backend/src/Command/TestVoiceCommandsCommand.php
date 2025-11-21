@@ -6,6 +6,7 @@ namespace App\Command;
 
 use App\Repository\Database\UserRepository;
 use App\Service\AI\VoiceProcessingService;
+use Exception;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -34,6 +35,7 @@ class TestVoiceCommandsCommand extends Command
 
         if (!$user) {
             $io->error('Пользователь не найден!');
+
             return Command::FAILURE;
         }
 
@@ -90,20 +92,22 @@ class TestVoiceCommandsCommand extends Command
 
                 if ($command->getParsedCommand()) {
                     $parsed = $command->getParsedCommand();
+
                     if (is_string($parsed)) {
                         $parsed = json_decode($parsed, true);
                     }
                     $io->text("🎯 Распознанное действие: {$parsed['action']}");
-                    $io->text("🔧 Параметры:");
+                    $io->text('🔧 Параметры:');
                     $io->block(json_encode($parsed['parameters'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
                 }
 
                 if ($command->getExecutionResult()) {
                     $result = $command->getExecutionResult();
+
                     if (is_string($result)) {
                         $result = json_decode($result, true);
                     }
-                    $io->text("📦 Результат выполнения:");
+                    $io->text('📦 Результат выполнения:');
                     $io->block(json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
                 }
 
@@ -111,7 +115,7 @@ class TestVoiceCommandsCommand extends Command
                     $io->warning("⚠️  Ошибка: {$command->getErrorMessage()}");
                 }
 
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $io->error("ОШИБКА: {$e->getMessage()}");
                 $io->block($e->getTraceAsString());
             }

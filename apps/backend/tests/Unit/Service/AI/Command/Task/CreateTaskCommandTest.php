@@ -35,7 +35,7 @@ class CreateTaskCommandTest extends TestCase
             $this->createMock(TagRepository::class),
             $this->createMock(PriorityMapper::class),
             $this->createMock(DateTimeResolver::class),
-            $this->createMock(ResponseBuilder::class)
+            $this->createMock(ResponseBuilder::class),
         );
     }
 

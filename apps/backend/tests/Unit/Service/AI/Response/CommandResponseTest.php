@@ -19,7 +19,7 @@ class CommandResponseTest extends TestCase
         $response = CommandResponse::success(
             'task_created',
             'Задача успешно создана',
-            ['task_id' => 123]
+            ['task_id' => 123],
         );
 
         $this->assertTrue($response->isSuccess());
@@ -35,7 +35,7 @@ class CommandResponseTest extends TestCase
             'task_not_found',
             'Задача не найдена',
             ['search' => 'test'],
-            ['Not found in database']
+            ['Not found in database'],
         );
 
         $this->assertFalse($response->isSuccess());
@@ -77,7 +77,7 @@ class CommandResponseTest extends TestCase
         $response = CommandResponse::success(
             'task_completed',
             'Задача завершена',
-            ['task_id' => 42]
+            ['task_id' => 42],
         );
 
         $array = $response->toArray();
@@ -94,8 +94,8 @@ class CommandResponseTest extends TestCase
     {
         $complexData = [
             'task' => [
-                'id' => 1,
-                'title' => 'Test Task',
+                'id'       => 1,
+                'title'    => 'Test Task',
                 'subtasks' => [
                     ['id' => 2, 'title' => 'Subtask 1'],
                     ['id' => 3, 'title' => 'Subtask 2'],
@@ -103,7 +103,7 @@ class CommandResponseTest extends TestCase
             ],
             'metadata' => [
                 'created_at' => '2025-01-01',
-                'tags' => ['work', 'important'],
+                'tags'       => ['work', 'important'],
             ],
         ];
 

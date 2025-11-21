@@ -17,6 +17,7 @@ use Psr\Log\LoggerInterface;
 class PriorityMapperTest extends TestCase
 {
     private PriorityMapper $mapper;
+
     private LoggerInterface $logger;
 
     protected function setUp(): void

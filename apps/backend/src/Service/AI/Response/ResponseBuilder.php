@@ -20,18 +20,18 @@ class ResponseBuilder
     public function taskCreated(Task $task, array $additionalData = []): CommandResponse
     {
         $taskData = array_merge([
-            'id' => $task->getId(),
-            'title' => $task->getTitle(),
-            'status' => $task->getStatus()->value,
-            'priority' => $task->getPriority()->value,
+            'id'        => $task->getId(),
+            'title'     => $task->getTitle(),
+            'status'    => $task->getStatus()->value,
+            'priority'  => $task->getPriority()->value,
             'startDate' => $task->getStartDate()?->format('c'),
-            'dueDate' => $task->getDueDate()?->format('c'),
+            'dueDate'   => $task->getDueDate()?->format('c'),
         ], $additionalData);
 
         return CommandResponse::success(
             'task_created',
             sprintf('Задача "%s" успешно создана', $task->getTitle()),
-            ['task' => $taskData]
+            ['task' => $taskData],
         );
     }
 
@@ -43,7 +43,7 @@ class ResponseBuilder
         return CommandResponse::success(
             'task_completed',
             sprintf('Задача "%s" отмечена как выполненная', $task->getTitle()),
-            ['task' => $this->serializeTask($task)]
+            ['task' => $this->serializeTask($task)],
         );
     }
 
@@ -60,9 +60,9 @@ class ResponseBuilder
             'task_updated',
             sprintf('Задача "%s" обновлена%s', $task->getTitle(), $fieldsString),
             [
-                'task' => $this->serializeTask($task),
+                'task'           => $this->serializeTask($task),
                 'updated_fields' => $updatedFields,
-            ]
+            ],
         );
     }
 
@@ -74,7 +74,7 @@ class ResponseBuilder
         return CommandResponse::success(
             'task_deleted',
             sprintf('Задача "%s" удалена', $taskTitle),
-            ['task' => ['id' => $taskId, 'title' => $taskTitle]]
+            ['task' => ['id' => $taskId, 'title' => $taskTitle]],
         );
     }
 
@@ -86,7 +86,7 @@ class ResponseBuilder
         return CommandResponse::failure(
             'task_not_found',
             sprintf('Задача "%s" не найдена', $search),
-            ['search' => $search]
+            ['search' => $search],
         );
     }
 
@@ -98,7 +98,7 @@ class ResponseBuilder
         return CommandResponse::failure(
             'parent_not_found',
             sprintf('Родительская задача "%s" не найдена', $search),
-            ['search' => $search]
+            ['search' => $search],
         );
     }
 
@@ -112,11 +112,11 @@ class ResponseBuilder
         int $totalCount,
         array $items = [],
         array $notFound = [],
-        array $errors = []
+        array $errors = [],
     ): CommandResponse {
         $data = [
             'success_count' => $successCount,
-            'total_count' => $totalCount,
+            'total_count'   => $totalCount,
         ];
 
         if (!empty($items)) {
@@ -131,7 +131,7 @@ class ResponseBuilder
             $type,
             sprintf('%s: %d из %d', $operation, $successCount, $totalCount),
             $data,
-            $errors
+            $errors,
         );
     }
 
@@ -142,13 +142,13 @@ class ResponseBuilder
         string $type,
         string $message,
         array $notFound = [],
-        array $errors = []
+        array $errors = [],
     ): CommandResponse {
         return CommandResponse::failure(
             $type,
             $message,
             ['not_found' => $notFound],
-            $errors
+            $errors,
         );
     }
 
@@ -166,10 +166,10 @@ class ResponseBuilder
                 ? sprintf('Найдено задач: %d', $count)
                 : 'Задачи не найдены',
             [
-                'count' => $count,
-                'tasks' => $taskList,
+                'count'   => $count,
+                'tasks'   => $taskList,
                 'filters' => $filters,
-            ]
+            ],
         );
     }
 
@@ -183,11 +183,11 @@ class ResponseBuilder
             sprintf('Подзадача "%s" создана для "%s"', $subtask->getTitle(), $parentTask->getTitle()),
             [
                 'subtask' => $this->serializeTask($subtask),
-                'parent' => [
-                    'id' => $parentTask->getId(),
+                'parent'  => [
+                    'id'    => $parentTask->getId(),
                     'title' => $parentTask->getTitle(),
                 ],
-            ]
+            ],
         );
     }
 
@@ -203,7 +203,7 @@ class ResponseBuilder
             $totalCount,
             $tasks,
             [],
-            $errors
+            $errors,
         );
     }
 
@@ -217,8 +217,8 @@ class ResponseBuilder
             sprintf('Тег "%s" добавлен к задаче "%s"', $tagName, $task->getTitle()),
             [
                 'task' => $this->serializeTask($task),
-                'tag' => $tagName,
-            ]
+                'tag'  => $tagName,
+            ],
         );
     }
 
@@ -232,8 +232,8 @@ class ResponseBuilder
             sprintf('Тег "%s" удалён с задачи "%s"', $tagName, $task->getTitle()),
             [
                 'task' => $this->serializeTask($task),
-                'tag' => $tagName,
-            ]
+                'tag'  => $tagName,
+            ],
         );
     }
 
@@ -244,7 +244,7 @@ class ResponseBuilder
     {
         return CommandResponse::failure(
             'validation_error',
-            $message
+            $message,
         );
     }
 
@@ -256,7 +256,7 @@ class ResponseBuilder
         return CommandResponse::failure(
             'error',
             $message,
-            ['error' => $error]
+            ['error' => $error],
         );
     }
 
@@ -266,13 +266,13 @@ class ResponseBuilder
     public function serializeTask(Task $task): array
     {
         return [
-            'id' => $task->getId(),
-            'title' => $task->getTitle(),
-            'status' => $task->getStatus()->value,
-            'priority' => $task->getPriority()->value,
+            'id'        => $task->getId(),
+            'title'     => $task->getTitle(),
+            'status'    => $task->getStatus()->value,
+            'priority'  => $task->getPriority()->value,
             'startDate' => $task->getStartDate()?->format('c'),
-            'dueDate' => $task->getDueDate()?->format('c'),
-            'tags' => array_map(fn ($tag) => $tag->getName(), $task->getTags()->toArray()),
+            'dueDate'   => $task->getDueDate()?->format('c'),
+            'tags'      => array_map(fn ($tag) => $tag->getName(), $task->getTags()->toArray()),
         ];
     }
 }

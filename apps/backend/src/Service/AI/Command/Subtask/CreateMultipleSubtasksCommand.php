@@ -30,7 +30,9 @@ use RuntimeException;
 class CreateMultipleSubtasksCommand extends AbstractVoiceCommand
 {
     private TaskFinder $taskFinder;
+
     private DateTimeResolver $dateTimeResolver;
+
     private PriorityMapper $priorityMapper;
 
     public function __construct(
@@ -41,7 +43,7 @@ class CreateMultipleSubtasksCommand extends AbstractVoiceCommand
         LoggerInterface $logger,
         TaskFinder $taskFinder,
         DateTimeResolver $dateTimeResolver,
-        PriorityMapper $priorityMapper
+        PriorityMapper $priorityMapper,
     ) {
         parent::__construct($entityManager, $taskService, $searchService, $dateTimeParser, $logger);
         $this->taskFinder = $taskFinder;
@@ -57,6 +59,7 @@ class CreateMultipleSubtasksCommand extends AbstractVoiceCommand
     protected function validateParameters(array $parameters): void
     {
         $parentSearch = $this->taskFinder->extractParentSearch($parameters);
+
         if (empty($parentSearch)) {
             throw new RuntimeException('Parent task search query is required for subtasks creation');
         }
@@ -78,7 +81,7 @@ class CreateMultipleSubtasksCommand extends AbstractVoiceCommand
             return CommandResponse::failure(
                 'parent_task_not_found',
                 sprintf('Родительская задача "%s" не найдена', $parentSearch),
-                ['search' => $parentSearch]
+                ['search' => $parentSearch],
             );
         }
 
@@ -88,6 +91,7 @@ class CreateMultipleSubtasksCommand extends AbstractVoiceCommand
             : $parentTask->getPriority();
 
         $dateRange = null;
+
         if (isset($parameters['due_date'])) {
             $dateRange = $this->dateTimeResolver->resolveDateRange($parameters);
         }
@@ -126,9 +130,9 @@ class CreateMultipleSubtasksCommand extends AbstractVoiceCommand
             }
 
             $createdSubtasks[] = [
-                'id' => $subtask->getId(),
-                'title' => $subtask->getTitle(),
-                'status' => $subtask->getStatus()->value,
+                'id'       => $subtask->getId(),
+                'title'    => $subtask->getTitle(),
+                'status'   => $subtask->getStatus()->value,
                 'priority' => $subtask->getPriority()->value,
             ];
         }
@@ -140,16 +144,16 @@ class CreateMultipleSubtasksCommand extends AbstractVoiceCommand
             sprintf(
                 'Создано %d подзадач для "%s"',
                 count($createdSubtasks),
-                $parentTask->getTitle()
+                $parentTask->getTitle(),
             ),
             [
                 'parent_task' => [
-                    'id' => $parentTask->getId(),
+                    'id'    => $parentTask->getId(),
                     'title' => $parentTask->getTitle(),
                 ],
                 'subtasks_count' => count($createdSubtasks),
-                'subtasks' => $createdSubtasks,
-            ]
+                'subtasks'       => $createdSubtasks,
+            ],
         );
     }
 }

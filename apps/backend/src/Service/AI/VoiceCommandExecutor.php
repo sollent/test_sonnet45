@@ -8,6 +8,7 @@ use App\Entity\User;
 use App\Service\AI\Registry\CommandRegistry;
 use App\Service\AI\Response\CommandResponse;
 use App\ValueObject\ParsedCommand;
+use Exception;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -26,11 +27,12 @@ use RuntimeException;
 class VoiceCommandExecutor
 {
     private CommandRegistry $commandRegistry;
+
     private LoggerInterface $logger;
 
     public function __construct(
         CommandRegistry $commandRegistry,
-        LoggerInterface $logger
+        LoggerInterface $logger,
     ) {
         $this->commandRegistry = $commandRegistry;
         $this->logger = $logger;
@@ -40,17 +42,17 @@ class VoiceCommandExecutor
      * Выполнение распарсенной команды
      *
      * @param ParsedCommand $command Распарсенная команда от LLM
-     * @param User $user Пользователь
+     * @param User          $user    Пользователь
      *
      * @return CommandResponse Результат выполнения
      */
     public function execute(ParsedCommand $command, User $user): CommandResponse
     {
         $this->logger->info('Executing voice command', [
-            'action' => $command->action,
+            'action'     => $command->action,
             'parameters' => $command->parameters,
             'confidence' => $command->confidence,
-            'user_id' => $user->getId(),
+            'user_id'    => $user->getId(),
         ]);
 
         // Обработка специальных действий
@@ -66,46 +68,61 @@ class VoiceCommandExecutor
             $response = $handler->execute($command->parameters, $user);
 
             $this->logger->info('Voice command executed successfully', [
-                'action' => $command->action,
+                'action'        => $command->action,
                 'response_type' => $response->getType(),
-                'success' => $response->isSuccess(),
+                'success'       => $response->isSuccess(),
             ]);
 
             return $response;
 
         } catch (RuntimeException $e) {
             $this->logger->error('Command handler not found', [
-                'action' => $command->action,
-                'error' => $e->getMessage(),
+                'action'            => $command->action,
+                'error'             => $e->getMessage(),
                 'available_actions' => $this->commandRegistry->getRegisteredActions(),
             ]);
 
             return CommandResponse::failure(
                 'unsupported_action',
                 sprintf('Действие "%s" не поддерживается', $command->action),
-                ['action' => $command->action]
+                ['action' => $command->action],
             );
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logger->error('Failed to execute voice command', [
                 'action' => $command->action,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'error'  => $e->getMessage(),
+                'trace'  => $e->getTraceAsString(),
             ]);
 
             return CommandResponse::failure(
                 'error',
                 'Произошла ошибка при выполнении команды: ' . $e->getMessage(),
-                ['error' => $e->getMessage()]
+                ['error' => $e->getMessage()],
             );
         }
+    }
+
+    /**
+     * Получить статистику реестра команд
+     *
+     * @return array Статистика
+     */
+    public function getStats(): array
+    {
+        return [
+            'executor' => [
+                'class'         => self::class,
+                'lines_of_code' => 'Рефакторинг: 1820 → 170 строк',
+            ],
+            'registry' => $this->commandRegistry->getStats(),
+        ];
     }
 
     /**
      * Обработка специальных действий (clarification_needed, unknown)
      *
      * @param ParsedCommand $command Команда
-     * @return CommandResponse
      */
     private function handleSpecialAction(ParsedCommand $command): CommandResponse
     {
@@ -119,7 +136,7 @@ class VoiceCommandExecutor
             default:
                 return CommandResponse::failure(
                     'unsupported_special_action',
-                    sprintf('Специальное действие "%s" не поддерживается', $command->action)
+                    sprintf('Специальное действие "%s" не поддерживается', $command->action),
                 );
         }
     }
@@ -134,14 +151,14 @@ class VoiceCommandExecutor
             $parameters['question'] ?? 'Не удалось понять команду. Можете уточнить?',
             [
                 'original_text' => $parameters['original_text'] ?? null,
-                'suggestions' => [
+                'suggestions'   => [
                     'Создай задачу купить молоко',
                     'Отметь задачу отчет как выполненную',
                     'Покажи все задачи на завтра',
                     'Переведи задачу в статус в работе',
                     'Верни задачу в работу',
                 ],
-            ]
+            ],
         );
     }
 
@@ -155,7 +172,7 @@ class VoiceCommandExecutor
             'Команда не распознана. Попробуйте переформулировать.',
             [
                 'original_text' => $parameters['original_text'] ?? null,
-                'help' => [
+                'help'          => [
                     'Доступные команды:',
                     '• Создание задачи: "Создай задачу [название]"',
                     '• Завершение задачи: "Отметь [название] как выполненную"',
@@ -165,23 +182,7 @@ class VoiceCommandExecutor
                     '• Создание подзадачи: "Добавь подзадачу [название] к [родительская задача]"',
                     '• Массовое завершение: "Заверши все задачи на сегодня"',
                 ],
-            ]
-        );
-    }
-
-    /**
-     * Получить статистику реестра команд
-     *
-     * @return array Статистика
-     */
-    public function getStats(): array
-    {
-        return [
-            'executor' => [
-                'class' => self::class,
-                'lines_of_code' => 'Рефакторинг: 1820 → 170 строк',
             ],
-            'registry' => $this->commandRegistry->getStats(),
-        ];
+        );
     }
 }

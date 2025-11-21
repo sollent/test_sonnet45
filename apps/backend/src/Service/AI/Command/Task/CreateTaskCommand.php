@@ -30,8 +30,11 @@ use RuntimeException;
 class CreateTaskCommand extends AbstractVoiceCommand
 {
     private TagRepository $tagRepository;
+
     private PriorityMapper $priorityMapper;
+
     private DateTimeResolver $dateTimeResolver;
+
     private ResponseBuilder $responseBuilder;
 
     public function __construct(
@@ -43,7 +46,7 @@ class CreateTaskCommand extends AbstractVoiceCommand
         TagRepository $tagRepository,
         PriorityMapper $priorityMapper,
         DateTimeResolver $dateTimeResolver,
-        ResponseBuilder $responseBuilder
+        ResponseBuilder $responseBuilder,
     ) {
         parent::__construct($entityManager, $taskService, $searchService, $dateTimeParser, $logger);
         $this->tagRepository = $tagRepository;
@@ -77,6 +80,7 @@ class CreateTaskCommand extends AbstractVoiceCommand
 
         // Обработка даты и времени (по умолчанию - сегодня)
         $dateParams = $parameters;
+
         if (!isset($dateParams['due_date'])) {
             $dateParams['due_date'] = 'today';
         }
@@ -94,12 +98,14 @@ class CreateTaskCommand extends AbstractVoiceCommand
 
         // Создание подзадач
         $createdSubtasks = [];
+
         if (!empty($parameters['subtasks']) && is_array($parameters['subtasks'])) {
             $createdSubtasks = $this->createSubtasks($parameters['subtasks'], $task, $user);
         }
 
         // Формирование ответа
         $additionalData = [];
+
         if (!empty($createdSubtasks)) {
             $additionalData['subtasks'] = $createdSubtasks;
         }
@@ -111,7 +117,7 @@ class CreateTaskCommand extends AbstractVoiceCommand
             return CommandResponse::success(
                 $response->getType(),
                 sprintf('Задача "%s" создана с %d подзадачами', $title, count($createdSubtasks)),
-                $response->getData()
+                $response->getData(),
             );
         }
 
@@ -120,6 +126,9 @@ class CreateTaskCommand extends AbstractVoiceCommand
 
     /**
      * Добавить теги к задаче
+     *
+     * @param mixed $task
+     * @param mixed $tags
      */
     private function addTagsToTask($task, $tags, User $user): void
     {
@@ -135,6 +144,8 @@ class CreateTaskCommand extends AbstractVoiceCommand
 
     /**
      * Создать подзадачи
+     *
+     * @param mixed $parentTask
      */
     private function createSubtasks(array $subtasksData, $parentTask, User $user): array
     {
@@ -157,7 +168,7 @@ class CreateTaskCommand extends AbstractVoiceCommand
 
                 $subtask = $this->taskService->createTask($subtaskDto, $user);
                 $createdSubtasks[] = [
-                    'id' => $subtask->getId(),
+                    'id'    => $subtask->getId(),
                     'title' => $subtask->getTitle(),
                 ];
             }

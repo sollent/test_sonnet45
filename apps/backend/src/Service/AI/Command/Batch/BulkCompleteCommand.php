@@ -16,7 +16,6 @@ use App\Service\TaskService;
 use App\ValueObject\ParsedCommand;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
-use RuntimeException;
 
 /**
  * Команда массового завершения задач
@@ -34,7 +33,7 @@ class BulkCompleteCommand extends AbstractBatchCommand
         DateTimeParser $dateTimeParser,
         LoggerInterface $logger,
         TaskFinder $taskFinder,
-        ResponseBuilder $responseBuilder
+        ResponseBuilder $responseBuilder,
     ) {
         parent::__construct($entityManager, $taskService, $searchService, $dateTimeParser, $logger);
         $this->taskFinder = $taskFinder;
@@ -54,6 +53,7 @@ class BulkCompleteCommand extends AbstractBatchCommand
     protected function doExecute(array $parameters, User $user): CommandResponse
     {
         $filters = $parameters['filters'] ?? $parameters;
+
         return $this->processBatchByFilters($filters, $user);
     }
 
@@ -73,7 +73,7 @@ class BulkCompleteCommand extends AbstractBatchCommand
         return CommandResponse::failure(
             'no_tasks_to_complete',
             'Не найдено задач для завершения',
-            ['filters' => $filters]
+            ['filters' => $filters],
         );
     }
 
@@ -82,7 +82,7 @@ class BulkCompleteCommand extends AbstractBatchCommand
         int $totalCount,
         array $processed,
         array $errors = [],
-        array $notFound = []
+        array $notFound = [],
     ): CommandResponse {
         return $this->responseBuilder->batchSuccess(
             'bulk_completed',
@@ -91,7 +91,7 @@ class BulkCompleteCommand extends AbstractBatchCommand
             $totalCount,
             $processed,
             $notFound,
-            $errors
+            $errors,
         );
     }
 
@@ -101,7 +101,7 @@ class BulkCompleteCommand extends AbstractBatchCommand
             'no_tasks_completed',
             'Не удалось завершить ни одной задачи',
             $notFound,
-            $errors
+            $errors,
         );
     }
 }

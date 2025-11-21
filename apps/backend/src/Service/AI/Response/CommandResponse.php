@@ -15,19 +15,20 @@ use JsonSerializable;
 final class CommandResponse implements JsonSerializable
 {
     /**
-     * @param string $type Тип ответа (например, 'task_created', 'task_completed')
-     * @param bool $success Успешность выполнения команды
+     * @param string $type    Тип ответа (например, 'task_created', 'task_completed')
+     * @param bool   $success Успешность выполнения команды
      * @param string $message Сообщение для пользователя
-     * @param array $data Дополнительные данные (task, tasks, count и т.д.)
-     * @param array $errors Список ошибок при batch операциях
+     * @param array  $data    Дополнительные данные (task, tasks, count и т.д.)
+     * @param array  $errors  Список ошибок при batch операциях
      */
     public function __construct(
         private readonly string $type,
         private readonly bool $success,
         private readonly string $message,
         private readonly array $data = [],
-        private readonly array $errors = []
-    ) {}
+        private readonly array $errors = [],
+    ) {
+    }
 
     public static function success(string $type, string $message, array $data = []): self
     {
@@ -44,7 +45,7 @@ final class CommandResponse implements JsonSerializable
         return self::success(
             'task_created',
             sprintf('Задача "%s" успешно создана', $taskTitle),
-            array_merge(['task' => ['id' => $taskId, 'title' => $taskTitle]], $additionalData)
+            array_merge(['task' => ['id' => $taskId, 'title' => $taskTitle]], $additionalData),
         );
     }
 
@@ -53,7 +54,7 @@ final class CommandResponse implements JsonSerializable
         return self::success(
             'task_completed',
             sprintf('Задача "%s" отмечена как выполненная', $taskTitle),
-            ['task' => ['id' => $taskId, 'title' => $taskTitle]]
+            ['task' => ['id' => $taskId, 'title' => $taskTitle]],
         );
     }
 
@@ -62,7 +63,7 @@ final class CommandResponse implements JsonSerializable
         return self::failure(
             'task_not_found',
             sprintf('Задача "%s" не найдена', $search),
-            ['search' => $search]
+            ['search' => $search],
         );
     }
 
@@ -73,9 +74,9 @@ final class CommandResponse implements JsonSerializable
             sprintf('%s: %d из %d', $operation, $successCount, $totalCount),
             [
                 'success_count' => $successCount,
-                'total_count' => $totalCount,
-                'items' => $items
-            ]
+                'total_count'   => $totalCount,
+                'items'         => $items,
+            ],
         );
     }
 
@@ -112,7 +113,7 @@ final class CommandResponse implements JsonSerializable
     public function jsonSerialize(): array
     {
         $result = [
-            'type' => $this->type,
+            'type'    => $this->type,
             'success' => $this->success,
             'message' => $this->message,
         ];

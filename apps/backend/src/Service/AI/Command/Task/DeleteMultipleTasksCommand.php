@@ -33,7 +33,7 @@ class DeleteMultipleTasksCommand extends AbstractVoiceCommand
         SmartSearchService $searchService,
         DateTimeParser $dateTimeParser,
         LoggerInterface $logger,
-        TaskFinder $taskFinder
+        TaskFinder $taskFinder,
     ) {
         parent::__construct($entityManager, $taskService, $searchService, $dateTimeParser, $logger);
         $this->taskFinder = $taskFinder;
@@ -67,16 +67,16 @@ class DeleteMultipleTasksCommand extends AbstractVoiceCommand
 
             if ($task) {
                 $deletedTasks[] = [
-                    'id' => $task->getId(),
+                    'id'    => $task->getId(),
                     'title' => $task->getTitle(),
                 ];
 
                 $this->entityManager->remove($task);
 
                 $this->logger->info('Delete multiple tasks - deleted task', [
-                    'task_id' => $task->getId(),
+                    'task_id'    => $task->getId(),
                     'task_title' => $task->getTitle(),
-                    'search' => $search,
+                    'search'     => $search,
                 ]);
             } else {
                 $notFoundSearches[] = $search;
@@ -92,15 +92,16 @@ class DeleteMultipleTasksCommand extends AbstractVoiceCommand
                 'no_tasks_deleted',
                 'Не найдено задач для удаления',
                 [
-                    'searches' => $searches,
+                    'searches'  => $searches,
                     'not_found' => $notFoundSearches,
-                ]
+                ],
             );
         }
 
         $this->flush();
 
         $message = sprintf('Удалено %d задач', count($deletedTasks));
+
         if (!empty($notFoundSearches)) {
             $message .= sprintf(' (не найдено: %d)', count($notFoundSearches));
         }
@@ -109,11 +110,11 @@ class DeleteMultipleTasksCommand extends AbstractVoiceCommand
             'multiple_tasks_deleted',
             $message,
             [
-                'deleted_count' => count($deletedTasks),
-                'deleted_tasks' => $deletedTasks,
-                'not_found_count' => count($notFoundSearches),
+                'deleted_count'      => count($deletedTasks),
+                'deleted_tasks'      => $deletedTasks,
+                'not_found_count'    => count($notFoundSearches),
                 'not_found_searches' => $notFoundSearches,
-            ]
+            ],
         );
     }
 }

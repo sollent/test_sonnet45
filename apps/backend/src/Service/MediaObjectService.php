@@ -27,7 +27,7 @@ class MediaObjectService
         // Archives
         'zip',
         // Audio (для голосовых команд)
-        'webm', 'mp3', 'wav', 'ogg', 'opus', 'm4a', 'flac'
+        'webm', 'mp3', 'wav', 'ogg', 'opus', 'm4a', 'flac',
     ];
 
     public function __construct(

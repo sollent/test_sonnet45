@@ -10,6 +10,7 @@ use App\Service\AI\Registry\CommandRegistry;
 use App\Service\AI\Response\CommandResponse;
 use App\Service\AI\VoiceCommandExecutor;
 use App\ValueObject\ParsedCommand;
+use Exception;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -22,7 +23,9 @@ use RuntimeException;
 class VoiceCommandExecutorTest extends TestCase
 {
     private VoiceCommandExecutor $executor;
+
     private CommandRegistry $registry;
+
     private LoggerInterface $logger;
 
     protected function setUp(): void
@@ -32,7 +35,7 @@ class VoiceCommandExecutorTest extends TestCase
 
         $this->executor = new VoiceCommandExecutor(
             $this->registry,
-            $this->logger
+            $this->logger,
         );
     }
 
@@ -40,13 +43,13 @@ class VoiceCommandExecutorTest extends TestCase
     {
         $user = $this->createMock(User::class);
         $command = $this->createMock(VoiceCommandInterface::class);
-        
+
         $expectedResponse = CommandResponse::success('test', 'Success');
 
         $parsedCommand = new ParsedCommand(
             action: ParsedCommand::ACTION_CREATE_TASK,
             confidence: 0.9,
-            parameters: ['key' => 'value']
+            parameters: ['key' => 'value'],
         );
 
         $this->registry
@@ -72,7 +75,7 @@ class VoiceCommandExecutorTest extends TestCase
         $parsedCommand = new ParsedCommand(
             action: ParsedCommand::ACTION_DELETE_TASK,
             confidence: 0.9,
-            parameters: []
+            parameters: [],
         );
 
         $this->registry
@@ -92,7 +95,7 @@ class VoiceCommandExecutorTest extends TestCase
         $parsedCommand = new ParsedCommand(
             action: ParsedCommand::ACTION_COMPLETE_TASK,
             confidence: 0.95,
-            parameters: []
+            parameters: [],
         );
 
         $this->registry->method('getOrFail')->willReturn($command);
@@ -113,11 +116,11 @@ class VoiceCommandExecutorTest extends TestCase
         $parsedCommand = new ParsedCommand(
             action: ParsedCommand::ACTION_UPDATE_TASK,
             confidence: 0.9,
-            parameters: []
+            parameters: [],
         );
 
         $this->registry->method('getOrFail')->willReturn($command);
-        $command->method('execute')->willThrowException(new \Exception('Command failed'));
+        $command->method('execute')->willThrowException(new Exception('Command failed'));
 
         $this->logger
             ->expects($this->once())

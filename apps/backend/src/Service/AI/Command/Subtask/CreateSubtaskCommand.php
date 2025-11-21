@@ -30,7 +30,9 @@ use RuntimeException;
 class CreateSubtaskCommand extends AbstractVoiceCommand
 {
     private TaskFinder $taskFinder;
+
     private DateTimeResolver $dateTimeResolver;
+
     private PriorityMapper $priorityMapper;
 
     public function __construct(
@@ -41,7 +43,7 @@ class CreateSubtaskCommand extends AbstractVoiceCommand
         LoggerInterface $logger,
         TaskFinder $taskFinder,
         DateTimeResolver $dateTimeResolver,
-        PriorityMapper $priorityMapper
+        PriorityMapper $priorityMapper,
     ) {
         parent::__construct($entityManager, $taskService, $searchService, $dateTimeParser, $logger);
         $this->taskFinder = $taskFinder;
@@ -57,6 +59,7 @@ class CreateSubtaskCommand extends AbstractVoiceCommand
     protected function validateParameters(array $parameters): void
     {
         $parentSearch = $this->taskFinder->extractParentSearch($parameters);
+
         if (empty($parentSearch)) {
             throw new RuntimeException('Parent task search query is required for subtask creation');
         }
@@ -144,19 +147,19 @@ class CreateSubtaskCommand extends AbstractVoiceCommand
             $message,
             [
                 'parent_task' => [
-                    'id' => $parentTask->getId(),
-                    'title' => $parentTask->getTitle(),
+                    'id'      => $parentTask->getId(),
+                    'title'   => $parentTask->getTitle(),
                     'created' => $parentCreated,
                 ],
                 'subtask' => [
-                    'id' => $subtask->getId(),
-                    'title' => $subtask->getTitle(),
-                    'status' => $subtask->getStatus()->value,
-                    'priority' => $subtask->getPriority()->value,
+                    'id'        => $subtask->getId(),
+                    'title'     => $subtask->getTitle(),
+                    'status'    => $subtask->getStatus()->value,
+                    'priority'  => $subtask->getPriority()->value,
                     'startDate' => $subtask->getStartDate()?->format('c'),
-                    'dueDate' => $subtask->getDueDate()?->format('c'),
+                    'dueDate'   => $subtask->getDueDate()?->format('c'),
                 ],
-            ]
+            ],
         );
     }
 }

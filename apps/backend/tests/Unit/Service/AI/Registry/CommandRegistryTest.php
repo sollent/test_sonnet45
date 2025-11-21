@@ -144,7 +144,7 @@ class CommandRegistryTest extends TestCase
     {
         $mock = $this->createMock(VoiceCommandInterface::class);
         $mock->method('getAction')->willReturn($action);
-        $mock->method('supports')->willReturnCallback(fn($a) => $a === $action);
+        $mock->method('supports')->willReturnCallback(fn ($a) => $a === $action);
 
         return $mock;
     }

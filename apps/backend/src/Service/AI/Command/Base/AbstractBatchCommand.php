@@ -8,6 +8,8 @@ use App\Entity\User;
 use App\Service\AI\Response\CommandResponse;
 use App\Service\AI\Response\ResponseBuilder;
 use App\Service\AI\Service\TaskFinder;
+use Exception;
+use RuntimeException;
 
 /**
  * Базовый класс для пакетных команд
@@ -18,14 +20,14 @@ use App\Service\AI\Service\TaskFinder;
 abstract class AbstractBatchCommand extends AbstractVoiceCommand
 {
     protected TaskFinder $taskFinder;
+
     protected ResponseBuilder $responseBuilder;
 
     /**
      * Обработать пакетную операцию по фильтрам
      *
      * @param array $filters Фильтры для поиска задач
-     * @param User $user Пользователь
-     * @return CommandResponse
+     * @param User  $user    Пользователь
      */
     protected function processBatchByFilters(array $filters, User $user): CommandResponse
     {
@@ -45,11 +47,11 @@ abstract class AbstractBatchCommand extends AbstractVoiceCommand
                 if ($this->shouldProcessTask($task)) {
                     $this->processTask($task, $user);
                     $processed[] = [
-                        'id' => $task->getId(),
+                        'id'    => $task->getId(),
                         'title' => $task->getTitle(),
                     ];
                 }
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $errors[] = sprintf('Задача "%s": %s', $task->getTitle(), $e->getMessage());
             }
         }
@@ -61,7 +63,7 @@ abstract class AbstractBatchCommand extends AbstractVoiceCommand
             count($processed),
             count($tasks),
             $processed,
-            $errors
+            $errors,
         );
     }
 
@@ -69,13 +71,12 @@ abstract class AbstractBatchCommand extends AbstractVoiceCommand
      * Обработать пакетную операцию по списку названий
      *
      * @param array<string> $taskNames Названия задач
-     * @param User $user Пользователь
-     * @return CommandResponse
+     * @param User          $user      Пользователь
      */
     protected function processBatchByNames(array $taskNames, User $user): CommandResponse
     {
         if (empty($taskNames) || !is_array($taskNames)) {
-            throw new \RuntimeException($this->getEmptyTaskNamesMessage());
+            throw new RuntimeException($this->getEmptyTaskNamesMessage());
         }
 
         $result = $this->taskFinder->findMultiple($taskNames, $user);
@@ -90,11 +91,11 @@ abstract class AbstractBatchCommand extends AbstractVoiceCommand
                 if ($this->shouldProcessTask($task)) {
                     $this->processTask($task, $user);
                     $processed[] = [
-                        'id' => $task->getId(),
+                        'id'    => $task->getId(),
                         'title' => $task->getTitle(),
                     ];
                 }
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $errors[] = sprintf('Задача "%s": %s', $task->getTitle(), $e->getMessage());
             }
         }
@@ -114,7 +115,7 @@ abstract class AbstractBatchCommand extends AbstractVoiceCommand
             $totalCount,
             $processed,
             $errors,
-            $notFoundTasks
+            $notFoundTasks,
         );
     }
 
@@ -122,6 +123,7 @@ abstract class AbstractBatchCommand extends AbstractVoiceCommand
      * Проверить, нужно ли обрабатывать задачу
      *
      * @param $task Задача
+     *
      * @return bool True если задача должна быть обработана
      */
     abstract protected function shouldProcessTask($task): bool;
@@ -129,7 +131,7 @@ abstract class AbstractBatchCommand extends AbstractVoiceCommand
     /**
      * Обработать одну задачу
      *
-     * @param $task Задача
+     * @param      $task Задача
      * @param User $user Пользователь
      */
     abstract protected function processTask($task, User $user): void;
@@ -138,41 +140,36 @@ abstract class AbstractBatchCommand extends AbstractVoiceCommand
      * Получить ответ когда нет задач для обработки
      *
      * @param array $filters Фильтры
-     * @return CommandResponse
      */
     abstract protected function getNoTasksResponse(array $filters): CommandResponse;
 
     /**
      * Получить ответ при успешной пакетной операции
      *
-     * @param int $successCount Количество успешных операций
-     * @param int $totalCount Общее количество
-     * @param array $processed Обработанные задачи
-     * @param array $errors Ошибки
-     * @param array $notFound Не найденные задачи
-     * @return CommandResponse
+     * @param int   $successCount Количество успешных операций
+     * @param int   $totalCount   Общее количество
+     * @param array $processed    Обработанные задачи
+     * @param array $errors       Ошибки
+     * @param array $notFound     Не найденные задачи
      */
     abstract protected function getBatchSuccessResponse(
         int $successCount,
         int $totalCount,
         array $processed,
         array $errors = [],
-        array $notFound = []
+        array $notFound = [],
     ): CommandResponse;
 
     /**
      * Получить ответ когда ни одна задача не обработана успешно
      *
      * @param array $notFound Не найденные задачи
-     * @param array $errors Ошибки
-     * @return CommandResponse
+     * @param array $errors   Ошибки
      */
     abstract protected function getNoSuccessResponse(array $notFound, array $errors): CommandResponse;
 
     /**
      * Получить сообщение об ошибке для пустого списка задач
-     *
-     * @return string
      */
     protected function getEmptyTaskNamesMessage(): string
     {

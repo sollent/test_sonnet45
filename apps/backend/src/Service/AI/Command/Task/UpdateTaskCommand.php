@@ -31,9 +31,13 @@ use RuntimeException;
 class UpdateTaskCommand extends AbstractVoiceCommand
 {
     private TaskFinder $taskFinder;
+
     private PriorityMapper $priorityMapper;
+
     private StatusMapper $statusMapper;
+
     private DateTimeResolver $dateTimeResolver;
+
     private ResponseBuilder $responseBuilder;
 
     public function __construct(
@@ -46,7 +50,7 @@ class UpdateTaskCommand extends AbstractVoiceCommand
         PriorityMapper $priorityMapper,
         StatusMapper $statusMapper,
         DateTimeResolver $dateTimeResolver,
-        ResponseBuilder $responseBuilder
+        ResponseBuilder $responseBuilder,
     ) {
         parent::__construct($entityManager, $taskService, $searchService, $dateTimeParser, $logger);
         $this->taskFinder = $taskFinder;
@@ -64,6 +68,7 @@ class UpdateTaskCommand extends AbstractVoiceCommand
     protected function validateParameters(array $parameters): void
     {
         $search = $this->taskFinder->extractSearch($parameters);
+
         if (empty($search)) {
             throw new RuntimeException('Search query is required for task update');
         }
@@ -97,6 +102,7 @@ class UpdateTaskCommand extends AbstractVoiceCommand
         // Обновление статуса
         if (isset($updates['status'])) {
             $newStatus = $this->statusMapper->map($updates['status']);
+
             if ($newStatus !== null) {
                 $task->setStatus($newStatus);
                 $updatedFields[] = 'статус';
@@ -134,6 +140,8 @@ class UpdateTaskCommand extends AbstractVoiceCommand
 
     /**
      * Обновить даты задачи
+     *
+     * @param mixed $task
      */
     private function updateTaskDates($task, array $updates): void
     {
@@ -150,6 +158,8 @@ class UpdateTaskCommand extends AbstractVoiceCommand
 
     /**
      * Обновить только время задачи без изменения даты
+     *
+     * @param mixed $task
      */
     private function updateTaskTime($task, array $updates): void
     {

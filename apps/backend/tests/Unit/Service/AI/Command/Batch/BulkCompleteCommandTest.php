@@ -22,6 +22,7 @@ use Psr\Log\LoggerInterface;
 class BulkCompleteCommandTest extends TestCase
 {
     private BulkCompleteCommand $command;
+
     private TaskFinder $taskFinder;
 
     protected function setUp(): void
@@ -35,7 +36,7 @@ class BulkCompleteCommandTest extends TestCase
             $this->createMock(DateTimeParser::class),
             $this->createMock(LoggerInterface::class),
             $this->taskFinder,
-            $this->createMock(ResponseBuilder::class)
+            $this->createMock(ResponseBuilder::class),
         );
     }
 

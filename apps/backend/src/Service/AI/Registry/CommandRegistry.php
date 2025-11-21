@@ -40,7 +40,7 @@ class CommandRegistry
             throw new RuntimeException(sprintf(
                 'Command for action "%s" is already registered by %s',
                 $action,
-                $this->commandClasses[$action] ?? 'unknown'
+                $this->commandClasses[$action] ?? 'unknown',
             ));
         }
 
@@ -52,6 +52,7 @@ class CommandRegistry
      * Получить команду по действию
      *
      * @param string $action Действие из ParsedCommand
+     *
      * @return VoiceCommandInterface|null Команда или null если не найдена
      */
     public function get(string $action): ?VoiceCommandInterface
@@ -63,8 +64,10 @@ class CommandRegistry
      * Получить команду или выбросить исключение
      *
      * @param string $action Действие из ParsedCommand
-     * @return VoiceCommandInterface Команда
+     *
      * @throws RuntimeException Если команда не найдена
+     *
+     * @return VoiceCommandInterface Команда
      */
     public function getOrFail(string $action): VoiceCommandInterface
     {
@@ -74,7 +77,7 @@ class CommandRegistry
             throw new RuntimeException(sprintf(
                 'No command registered for action "%s". Available actions: %s',
                 $action,
-                implode(', ', array_keys($this->commands))
+                implode(', ', array_keys($this->commands)),
             ));
         }
 
@@ -85,6 +88,7 @@ class CommandRegistry
      * Проверить, зарегистрирована ли команда для действия
      *
      * @param string $action Действие
+     *
      * @return bool True если команда зарегистрирована
      */
     public function has(string $action): bool
@@ -110,7 +114,7 @@ class CommandRegistry
     public function getStats(): array
     {
         return [
-            'count' => count($this->commands),
+            'count'   => count($this->commands),
             'actions' => $this->getRegisteredActions(),
             'classes' => $this->commandClasses,
         ];

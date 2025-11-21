@@ -33,7 +33,7 @@ class BulkMoveCommand extends AbstractBatchCommand
         SmartSearchService $searchService,
         DateTimeParser $dateTimeParser,
         LoggerInterface $logger,
-        TaskFinder $taskFinder
+        TaskFinder $taskFinder,
     ) {
         parent::__construct($entityManager, $taskService, $searchService, $dateTimeParser, $logger);
         $this->taskFinder = $taskFinder;
@@ -62,7 +62,7 @@ class BulkMoveCommand extends AbstractBatchCommand
                 return CommandResponse::failure(
                     'new_parent_not_found',
                     sprintf('Новая родительская задача "%s" не найдена', $parameters['new_parent_search']),
-                    ['search' => $parameters['new_parent_search']]
+                    ['search' => $parameters['new_parent_search']],
                 );
             }
         }
@@ -76,12 +76,14 @@ class BulkMoveCommand extends AbstractBatchCommand
         // Проверяем, не создастся ли циклическая зависимость
         if ($this->newParent && $this->wouldCreateCycle($task, $this->newParent)) {
             $this->logger->warning('Skipping task due to circular dependency', [
-                'task_id' => $task->getId(),
-                'task_title' => $task->getTitle(),
+                'task_id'       => $task->getId(),
+                'task_title'    => $task->getTitle(),
                 'new_parent_id' => $this->newParent->getId(),
             ]);
+
             return false;
         }
+
         return true;
     }
 
@@ -90,9 +92,9 @@ class BulkMoveCommand extends AbstractBatchCommand
         $task->setParent($this->newParent);
 
         $this->logger->info('Bulk move task', [
-            'task_id' => $task->getId(),
-            'task_title' => $task->getTitle(),
-            'new_parent_id' => $this->newParent?->getId(),
+            'task_id'          => $task->getId(),
+            'task_title'       => $task->getTitle(),
+            'new_parent_id'    => $this->newParent?->getId(),
             'new_parent_title' => $this->newParent?->getTitle() ?? '(корень)',
         ]);
     }
@@ -102,7 +104,7 @@ class BulkMoveCommand extends AbstractBatchCommand
         return CommandResponse::failure(
             'no_tasks_found',
             'Не найдено задач для перемещения по указанным критериям',
-            ['filters' => $filters]
+            ['filters' => $filters],
         );
     }
 
@@ -111,13 +113,14 @@ class BulkMoveCommand extends AbstractBatchCommand
         int $totalCount,
         array $processed,
         array $errors = [],
-        array $notFound = []
+        array $notFound = [],
     ): CommandResponse {
         $newParentTitle = $this->newParent?->getTitle() ?? '(корень)';
 
         $message = sprintf('Перемещено %d задач в "%s"', $successCount, $newParentTitle);
 
         $skippedCount = $totalCount - $successCount;
+
         if ($skippedCount > 0) {
             $message .= sprintf(' (%d пропущено из-за циклической зависимости)', $skippedCount);
         }
@@ -127,10 +130,10 @@ class BulkMoveCommand extends AbstractBatchCommand
             $message,
             [
                 'moved_count' => $successCount,
-                'new_parent' => $newParentTitle,
-                'tasks' => $processed,
-                'errors' => $errors,
-            ]
+                'new_parent'  => $newParentTitle,
+                'tasks'       => $processed,
+                'errors'      => $errors,
+            ],
         );
     }
 
@@ -141,8 +144,8 @@ class BulkMoveCommand extends AbstractBatchCommand
             'Не удалось переместить ни одной задачи',
             [
                 'not_found' => $notFound,
-                'errors' => $errors,
-            ]
+                'errors'    => $errors,
+            ],
         );
     }
 
@@ -153,12 +156,14 @@ class BulkMoveCommand extends AbstractBatchCommand
     {
         // Проверяем, не является ли потенциальный родитель потомком задачи
         $current = $potentialParent;
+
         while ($current !== null) {
             if ($current->getId() === $task->getId()) {
                 return true; // Нашли цикл
             }
             $current = $current->getParent();
         }
+
         return false;
     }
 }
