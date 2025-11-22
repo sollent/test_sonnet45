@@ -2,7 +2,7 @@
   <div class="landing-layout">
     <!-- Navigation -->
     <nav class="landing-nav" :class="{ 'scrolled': isScrolled }">
-      <div class="container">
+    <div class="container">
         <div class="nav-wrapper">
           <!-- Logo -->
           <router-link to="/" class="logo">
@@ -234,17 +234,24 @@ import { ref, onMounted, onUnmounted } from 'vue'
 const isScrolled = ref(false)
 const mobileMenuOpen = ref(false)
 
-// Handle scroll
+// Handle scroll (SSR-safe)
 const handleScroll = () => {
-  isScrolled.value = window.scrollY > 50
+  if (typeof window !== 'undefined') {
+    isScrolled.value = window.scrollY > 50
+  }
 }
 
 onMounted(() => {
-  window.addEventListener('scroll', handleScroll)
+  if (typeof window !== 'undefined') {
+    window.addEventListener('scroll', handleScroll)
+    handleScroll() // Initial check
+  }
 })
 
 onUnmounted(() => {
-  window.removeEventListener('scroll', handleScroll)
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('scroll', handleScroll)
+  }
 })
 </script>
 

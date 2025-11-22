@@ -175,8 +175,8 @@ const router = createRouter({
 router.beforeEach(async (to, _from, next) => {
   const authStore = useAuthStore()
   
-  // Инициализируем auth при первой загрузке
-  if (!authStore.accessToken && localStorage.getItem('access_token')) {
+  // Инициализируем auth при первой загрузке (SSR-safe)
+  if (typeof localStorage !== 'undefined' && !authStore.accessToken && localStorage.getItem('access_token')) {
     await authStore.initializeAuth()
   }
 

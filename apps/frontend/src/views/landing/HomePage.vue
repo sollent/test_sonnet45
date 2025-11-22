@@ -307,10 +307,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import Dialog from 'primevue/dialog'
 import LandingLayout from '@/components/landing/LandingLayout.vue'
+import { useScrollAnimations } from '@/composables/useScrollAnimations'
 
 // Import step icons
 import stepVoice from '@/assets/icons/steps/voice-input.svg'
@@ -521,26 +522,8 @@ const watchDemo = () => {
   showDemoModal.value = true
 }
 
-// Scroll animations
-onMounted(() => {
-  const observerOptions = {
-    threshold: 0.1,
-    rootMargin: '0px 0px -100px 0px'
-  }
-
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('visible')
-      }
-    })
-  }, observerOptions)
-
-  // Observe all animated elements
-  document.querySelectorAll('.fade-in-up, .fade-in-left, .fade-in-right, .scale-in').forEach(el => {
-    observer.observe(el)
-  })
-})
+// SSR-safe scroll animations
+useScrollAnimations()
 </script>
 
 <style scoped lang="scss">
