@@ -222,13 +222,28 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Dialog from 'primevue/dialog'
 import LandingLayout from '@/components/landing/LandingLayout.vue'
 
 const router = useRouter()
 const showDemo = ref(false)
+
+// Setup scroll animations
+onMounted(() => {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible')
+      }
+    })
+  }, { threshold: 0.1 })
+
+  document.querySelectorAll('.fade-in-up, .fade-in-right, .scale-in').forEach(el => {
+    observer.observe(el)
+  })
+})
 
 // Voice steps
 const voiceSteps = [
@@ -464,85 +479,85 @@ const startFree = () => {
       grid-template-columns: 1fr;
       text-align: center;
     }
-  }
 
-  .feature-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(10px);
-    padding: 0.5rem 1rem;
-    border-radius: 50px;
-    color: white;
-    margin-bottom: 1rem;
-  }
-
-  h1 {
-    color: white;
-    font-size: 3.5rem;
-    margin-bottom: 1rem;
-
-    @media (max-width: 768px) {
-      font-size: 2.5rem;
-    }
-  }
-
-  .lead {
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 1.25rem;
-    line-height: 1.6;
-    margin-bottom: 2rem;
-  }
-
-  .hero-actions {
-    display: flex;
-    gap: 1rem;
-
-    @media (max-width: 768px) {
-      flex-direction: column;
-    }
-  }
-
-  .btn-large {
-    padding: 1rem 2rem;
-    font-size: 1.1rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .voice-animation {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    .sound-waves {
-      position: absolute;
-      display: flex;
+    .feature-badge {
+      display: inline-flex;
+      align-items: center;
       gap: 0.5rem;
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+      padding: 0.5rem 1rem;
+      border-radius: 50px;
+      color: white;
+      margin-bottom: 1rem;
+    }
 
-      .wave {
-        width: 4px;
-        height: 60px;
-        background: rgba(255, 255, 255, 0.3);
-        border-radius: 2px;
-        animation: sound-wave 1s ease-in-out infinite;
+    h1 {
+      color: white;
+      font-size: 3.5rem;
+      margin-bottom: 1rem;
+
+      @media (max-width: 768px) {
+        font-size: 2.5rem;
       }
     }
 
-    .mic-icon {
-      width: 120px;
-      height: 120px;
-      background: white;
-      border-radius: 50%;
+    .lead {
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 1.25rem;
+      line-height: 1.6;
+      margin-bottom: 2rem;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 1rem;
+
+      @media (max-width: 768px) {
+        flex-direction: column;
+      }
+    }
+
+    .btn-large {
+      padding: 1rem 2rem;
+      font-size: 1.1rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .voice-animation {
+      position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 3rem;
-      color: var(--primary);
-      z-index: 2;
+
+      .sound-waves {
+        position: absolute;
+        display: flex;
+        gap: 0.5rem;
+
+        .wave {
+          width: 4px;
+          height: 60px;
+          background: rgba(255, 255, 255, 0.3);
+          border-radius: 2px;
+          animation: sound-wave 1s ease-in-out infinite;
+        }
+      }
+
+      .mic-icon {
+        width: 120px;
+        height: 120px;
+        background: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        color: var(--primary);
+        z-index: 2;
+      }
     }
   }
 }
