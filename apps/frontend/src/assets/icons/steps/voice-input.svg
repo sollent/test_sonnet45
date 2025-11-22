@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" fill="none">
+  <defs>
+    <linearGradient id="voiceGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <!-- Microphone body -->
+  <rect x="30" y="15" width="20" height="30" rx="10" fill="url(#voiceGrad)"/>
+  <!-- Microphone stand -->
+  <path d="M25 35 C25 50, 40 55, 40 55 C40 55, 55 50, 55 35" stroke="url(#voiceGrad)" stroke-width="3" fill="none"/>
+  <line x1="40" y1="55" x2="40" y2="65" stroke="url(#voiceGrad)" stroke-width="3"/>
+  <line x1="32" y1="65" x2="48" y2="65" stroke="url(#voiceGrad)" stroke-width="3" stroke-linecap="round"/>
+  <!-- Sound waves -->
+  <path d="M60 25 C65 30, 65 40, 60 45" stroke="#667eea" stroke-width="2" fill="none" opacity="0.6"/>
+  <path d="M65 20 C73 28, 73 42, 65 50" stroke="#667eea" stroke-width="2" fill="none" opacity="0.4"/>
+</svg>

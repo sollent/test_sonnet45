@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" fill="none">
+  <defs>
+    <linearGradient id="execGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <!-- Target circles -->
+  <circle cx="40" cy="40" r="28" stroke="url(#execGrad)" stroke-width="3" fill="none"/>
+  <circle cx="40" cy="40" r="18" stroke="url(#execGrad)" stroke-width="3" fill="none" opacity="0.7"/>
+  <circle cx="40" cy="40" r="8" fill="url(#execGrad)"/>
+  <!-- Checkmark -->
+  <path d="M30 40 L37 47 L52 32" stroke="white" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Arrow hitting target -->
+  <path d="M58 22 L65 15" stroke="#667eea" stroke-width="2" stroke-linecap="round"/>
+  <path d="M65 15 L65 22 M65 15 L58 15" stroke="#667eea" stroke-width="2" stroke-linecap="round"/>
+</svg>

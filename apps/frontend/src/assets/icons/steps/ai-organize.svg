@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" fill="none">
+  <defs>
+    <linearGradient id="aiGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <!-- Brain outline -->
+  <path d="M40 15 C25 15, 18 25, 20 35 C15 38, 15 48, 22 52 C20 58, 25 65, 35 65 L45 65 C55 65, 60 58, 58 52 C65 48, 65 38, 60 35 C62 25, 55 15, 40 15Z"
+        fill="url(#aiGrad)" opacity="0.9"/>
+  <!-- Brain details -->
+  <path d="M30 30 C35 25, 45 25, 50 30" stroke="white" stroke-width="2" fill="none" opacity="0.5"/>
+  <path d="M25 40 C30 35, 50 35, 55 40" stroke="white" stroke-width="2" fill="none" opacity="0.5"/>
+  <path d="M28 50 C33 45, 47 45, 52 50" stroke="white" stroke-width="2" fill="none" opacity="0.5"/>
+  <!-- Sparkles -->
+  <circle cx="15" cy="20" r="2" fill="#667eea"/>
+  <circle cx="65" cy="25" r="2" fill="#764ba2"/>
+  <circle cx="12" cy="50" r="1.5" fill="#667eea" opacity="0.7"/>
+  <circle cx="68" cy="55" r="1.5" fill="#764ba2" opacity="0.7"/>
+</svg>

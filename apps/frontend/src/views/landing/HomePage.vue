@@ -312,6 +312,21 @@ import { useRouter } from 'vue-router'
 import Dialog from 'primevue/dialog'
 import LandingLayout from '@/components/landing/LandingLayout.vue'
 
+// Import step icons
+import stepVoice from '@/assets/icons/steps/voice-input.svg'
+import stepAI from '@/assets/icons/steps/ai-organize.svg'
+import stepExecute from '@/assets/icons/steps/execute.svg'
+
+// Import integration logos
+import logoTelegram from '@/assets/icons/integrations/telegram.svg'
+import logoGoogleCalendar from '@/assets/icons/integrations/google-calendar.svg'
+import logoSlack from '@/assets/icons/integrations/slack.svg'
+import logoNotion from '@/assets/icons/integrations/notion.svg'
+import logoTrello from '@/assets/icons/integrations/trello.svg'
+import logoGithub from '@/assets/icons/integrations/github.svg'
+import logoJira from '@/assets/icons/integrations/jira.svg'
+import logoDiscord from '@/assets/icons/integrations/discord.svg'
+
 const router = useRouter()
 
 // Data
@@ -370,30 +385,30 @@ const steps = [
   {
     title: 'Говорите или пишите',
     description: 'Просто скажите или напишите, что нужно сделать. AI поймет вас с полуслова.',
-    image: '/images/step-1.svg'
+    image: stepVoice
   },
   {
     title: 'AI организует',
     description: 'Умный помощник создаст задачи, установит приоритеты и напоминания.',
-    image: '/images/step-2.svg'
+    image: stepAI
   },
   {
     title: 'Выполняйте эффективно',
     description: 'Следите за прогрессом, получайте уведомления и достигайте целей.',
-    image: '/images/step-3.svg'
+    image: stepExecute
   }
 ]
 
 // Integrations
 const integrations = [
-  { name: 'Telegram', logo: '/logos/telegram.svg' },
-  { name: 'Google Calendar', logo: '/logos/google-calendar.svg' },
-  { name: 'Slack', logo: '/logos/slack.svg' },
-  { name: 'Notion', logo: '/logos/notion.svg' },
-  { name: 'Trello', logo: '/logos/trello.svg' },
-  { name: 'GitHub', logo: '/logos/github.svg' },
-  { name: 'Jira', logo: '/logos/jira.svg' },
-  { name: 'Discord', logo: '/logos/discord.svg' }
+  { name: 'Telegram', logo: logoTelegram },
+  { name: 'Google Calendar', logo: logoGoogleCalendar },
+  { name: 'Slack', logo: logoSlack },
+  { name: 'Notion', logo: logoNotion },
+  { name: 'Trello', logo: logoTrello },
+  { name: 'GitHub', logo: logoGithub },
+  { name: 'Jira', logo: logoJira },
+  { name: 'Discord', logo: logoDiscord }
 ]
 
 // Pricing plans
@@ -452,19 +467,19 @@ const testimonials = [
   {
     name: 'Александр Петров',
     position: 'Предприниматель',
-    avatar: '/avatars/alex.jpg',
+    avatar: 'https://ui-avatars.com/api/?name=Александр+Петров&background=667eea&color=fff&size=100',
     text: 'TaskFlow полностью изменил мой подход к планированию. Голосовое управление экономит уйму времени!'
   },
   {
     name: 'Мария Иванова',
     position: 'Продуктовый менеджер',
-    avatar: '/avatars/maria.jpg',
+    avatar: 'https://ui-avatars.com/api/?name=Мария+Иванова&background=764ba2&color=fff&size=100',
     text: 'Наконец-то нашла идеальный инструмент для управления проектами. AI-помощник реально умный!'
   },
   {
     name: 'Дмитрий Сидоров',
     position: 'Разработчик',
-    avatar: '/avatars/dmitry.jpg',
+    avatar: 'https://ui-avatars.com/api/?name=Дмитрий+Сидоров&background=f093fb&color=fff&size=100',
     text: 'Интеграция с Telegram - это гениально! Теперь вся команда работает синхронно.'
   }
 ]
