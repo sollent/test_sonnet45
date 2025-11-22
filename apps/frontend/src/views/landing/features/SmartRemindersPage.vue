@@ -157,13 +157,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import Dialog from 'primevue/dialog'
 import LandingLayout from '@/components/landing/LandingLayout.vue'
+import { useScrollAnimations } from '@/composables/useScrollAnimations'
 
 const router = useRouter()
 const showDemo = ref(false)
+
+useScrollAnimations()
 
 const problems = [
   { icon: 'pi pi-question-circle', title: 'Без контекста', description: 'Получаете напоминание "Встреча" и не помните, о чем речь и где документы' },
@@ -185,15 +188,6 @@ const reminderTypes = [
   { icon: 'pi pi-brain', title: 'Адаптивные', description: 'AI учится на ваших реакциях', example: 'Сдвиг времени на основе привычек' },
   { icon: 'pi pi-link', title: 'С интеграциями', description: 'Напоминания в Telegram, Slack, Email', example: 'Уведомление в удобном канале' }
 ]
-
-onMounted(() => {
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) entry.target.classList.add('visible')
-    })
-  }, { threshold: 0.1 })
-  document.querySelectorAll('.fade-in-up, .fade-in-right').forEach((el) => observer.observe(el))
-})
 
 const tryReminders = () => { router.push('/register') }
 </script>

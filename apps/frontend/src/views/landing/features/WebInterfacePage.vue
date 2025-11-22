@@ -187,13 +187,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import Dialog from 'primevue/dialog'
 import LandingLayout from '@/components/landing/LandingLayout.vue'
+import { useScrollAnimations } from '@/composables/useScrollAnimations'
 
 const router = useRouter()
 const showDemo = ref(false)
+
+useScrollAnimations()
 
 const problems = [
   { icon: 'pi pi-th-large', title: 'Много функций', description: 'Десятки кнопок и меню отвлекают от главного — выполнения задач' },
@@ -216,15 +219,6 @@ const features = [
   { icon: 'pi pi-sync', title: 'Синхронизация', description: 'Мгновенное обновление на всех устройствах' },
   { icon: 'pi pi-wifi', title: 'Оффлайн режим', description: 'Работайте без интернета, синхронизация при подключении' }
 ]
-
-onMounted(() => {
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) entry.target.classList.add('visible')
-    })
-  }, { threshold: 0.1 })
-  document.querySelectorAll('.fade-in-up, .fade-in-right').forEach((el) => observer.observe(el))
-})
 
 const tryInterface = () => { router.push('/register') }
 </script>

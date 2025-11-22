@@ -177,13 +177,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import Dialog from 'primevue/dialog'
 import LandingLayout from '@/components/landing/LandingLayout.vue'
+import { useScrollAnimations } from '@/composables/useScrollAnimations'
 
 const router = useRouter()
 const showDemo = ref(false)
+
+useScrollAnimations()
 
 const problems = [
   { icon: 'pi pi-clone', title: 'Временные затраты', description: 'Открываете 10+ вкладок, читаете статьи, сравниваете — часы работы' },
@@ -205,15 +208,6 @@ const useCases = [
   { icon: 'pi pi-calendar', title: 'События', description: 'Конференции, митапы, вебинары', example: '"IT-конференции Москва 2025"' },
   { icon: 'pi pi-wrench', title: 'Инструменты', description: 'Обзор софта и сервисов', example: '"инструменты для дизайнеров"' }
 ]
-
-onMounted(() => {
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) entry.target.classList.add('visible')
-    })
-  }, { threshold: 0.1 })
-  document.querySelectorAll('.fade-in-up, .fade-in-right').forEach((el) => observer.observe(el))
-})
 
 const trySearch = () => { router.push('/register') }
 </script>

@@ -231,13 +231,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import Dialog from 'primevue/dialog'
 import LandingLayout from '@/components/landing/LandingLayout.vue'
+import { useScrollAnimations } from '@/composables/useScrollAnimations'
 
 const router = useRouter()
 const showDemo = ref(false)
+
+useScrollAnimations()
 
 const capabilities = [
   {
@@ -323,23 +326,6 @@ const securityFeatures = [
   { icon: 'pi pi-trash', title: 'Автоудаление', description: 'Голосовые записи удаляются сразу после обработки' },
   { icon: 'pi pi-shield', title: 'GDPR', description: 'Полное соответствие требованиям защиты персональных данных' }
 ]
-
-onMounted(() => {
-  const observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible')
-        }
-      })
-    },
-    { threshold: 0.1 }
-  )
-
-  document.querySelectorAll('.fade-in-up, .fade-in-right').forEach((el) => {
-    observer.observe(el)
-  })
-})
 
 const tryAI = () => {
   router.push('/register')

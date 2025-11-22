@@ -148,18 +148,13 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import LandingLayout from '@/components/landing/LandingLayout.vue'
+import { useScrollAnimations } from '@/composables/useScrollAnimations'
 
 const router = useRouter()
 
-onMounted(() => {
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => { if (entry.isIntersecting) entry.target.classList.add('visible') })
-  }, { threshold: 0.1 })
-  document.querySelectorAll('.fade-in-up').forEach((el) => observer.observe(el))
-})
+useScrollAnimations()
 
 const leaveReasons = [
   { icon: 'pi pi-clock', title: 'Нет обновлений', description: 'Google Keep практически не развивается — последние серьезные обновления были годы назад' },

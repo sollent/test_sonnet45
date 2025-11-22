@@ -222,28 +222,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import Dialog from 'primevue/dialog'
 import LandingLayout from '@/components/landing/LandingLayout.vue'
+import { useScrollAnimations } from '@/composables/useScrollAnimations'
 
 const router = useRouter()
 const showDemo = ref(false)
 
-// Setup scroll animations
-onMounted(() => {
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('visible')
-      }
-    })
-  }, { threshold: 0.1 })
-
-  document.querySelectorAll('.fade-in-up, .fade-in-right, .scale-in').forEach(el => {
-    observer.observe(el)
-  })
-})
+useScrollAnimations()
 
 // Voice steps
 const voiceSteps = [

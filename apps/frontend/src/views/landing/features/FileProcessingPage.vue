@@ -208,13 +208,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import Dialog from 'primevue/dialog'
 import LandingLayout from '@/components/landing/LandingLayout.vue'
+import { useScrollAnimations } from '@/composables/useScrollAnimations'
 
 const router = useRouter()
 const showDemo = ref(false)
+
+useScrollAnimations()
 
 const formats = [
   { icon: 'pi pi-file-pdf', title: 'PDF документы', description: 'Договоры, ТЗ, отчеты — AI извлекает задачи и дедлайны', extensions: ['.pdf'], color: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' },
@@ -242,15 +245,6 @@ const benefits = [
   { icon: 'pi pi-link', title: 'Связь с источником', description: 'Каждая задача содержит ссылку на исходный документ' },
   { icon: 'pi pi-history', title: 'История версий', description: 'Отслеживание изменений при повторной загрузке' }
 ]
-
-onMounted(() => {
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) entry.target.classList.add('visible')
-    })
-  }, { threshold: 0.1 })
-  document.querySelectorAll('.fade-in-up, .fade-in-right').forEach((el) => observer.observe(el))
-})
 
 const uploadFile = () => { router.push('/register') }
 </script>
