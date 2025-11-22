@@ -32,7 +32,7 @@
               <h2>Any.do</h2>
             </div>
           </div>
-          <h1 class="comparison-title">TaskFlow vs Any.do: <span class="gradient-text">Детальное сравнение</span></h1>
+          <h1 class="comparison-title">TaskFlow vs Any.do: <span class="gradient-text-light">Детальное сравнение</span></h1>
           <p class="comparison-subtitle">Красота против функциональности — узнайте, что выбрать для ваших задач</p>
         </div>
       </div>

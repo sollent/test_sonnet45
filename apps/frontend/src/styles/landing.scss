@@ -87,6 +87,14 @@ h1, h2, h3, h4, h5, h6 {
   background-clip: text;
 }
 
+// Light gradient text for dark/colored backgrounds (hero sections)
+.gradient-text-light {
+  background: linear-gradient(135deg, #fff 0%, #e0e7ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
 // Glass morphism card
 .glass-card {
   background: var(--glass-bg);

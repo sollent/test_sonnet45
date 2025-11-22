@@ -32,7 +32,7 @@
               <h2>Things 3</h2>
             </div>
           </div>
-          <h1 class="comparison-title">TaskFlow vs Things 3: <span class="gradient-text">Кроссплатформенность vs Apple-экосистема</span></h1>
+          <h1 class="comparison-title">TaskFlow vs Things 3: <span class="gradient-text-light">Кроссплатформенность vs Apple-экосистема</span></h1>
           <p class="comparison-subtitle">За 5000₽ TaskFlow работает 17 месяцев с AI везде!</p>
         </div>
       </div>

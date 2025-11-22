@@ -35,7 +35,7 @@
           </div>
 
           <h1 class="comparison-title">
-            TaskFlow vs Todoist: <span class="gradient-text">Детальное сравнение</span>
+            TaskFlow vs Todoist: <span class="gradient-text-light">Детальное сравнение</span>
           </h1>
 
           <p class="comparison-subtitle">

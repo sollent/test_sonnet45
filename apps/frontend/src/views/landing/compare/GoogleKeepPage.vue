@@ -34,7 +34,7 @@
               <h2>Google Keep</h2>
             </div>
           </div>
-          <h1 class="comparison-title">TaskFlow vs Google Keep: <span class="gradient-text">Заметки или управление задачами?</span></h1>
+          <h1 class="comparison-title">TaskFlow vs Google Keep: <span class="gradient-text-light">Заметки или управление задачами?</span></h1>
           <p class="comparison-subtitle">Google Keep для заметок, TaskFlow для управления жизнью</p>
         </div>
       </div>

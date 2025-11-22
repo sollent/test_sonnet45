@@ -18,7 +18,7 @@
               Telegram интеграция
             </div>
 
-            <h1>Telegram <span class="gradient-text">без хаоса</span></h1>
+            <h1>Telegram <span class="gradient-text-light">без хаоса</span></h1>
             <p class="lead">
               Структурированные задачи из любых сообщений. Превратите бесконечный поток чатов
               в организованный список дел с дедлайнами и приоритетами.

@@ -3,7 +3,7 @@
     <section class="alternatives-hero">
       <div class="container">
         <div class="hero-content">
-          <h1 class="hero-title">Лучшие альтернативы <span class="gradient-text">Todoist</span> в 2024</h1>
+          <h1 class="hero-title">Лучшие альтернативы <span class="gradient-text-light">Todoist</span> в 2024</h1>
           <p class="hero-subtitle">Почему пользователи уходят с Todoist и какие приложения выбирают</p>
           <div class="hero-rating">
             <div class="rating-stars"><i class="pi pi-star-fill" v-for="n in 5" :key="n"></i></div>
