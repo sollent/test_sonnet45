@@ -223,36 +223,29 @@
       </div>
     </section>
 
-    <!-- Final CTA -->
-    <section class="final-cta">
+    <!-- CTA Section -->
+    <section class="cta-section">
       <div class="container">
-        <div class="cta-card animated-gradient">
-          <h2>Готовы к более умному управлению задачами?</h2>
-          <p>Попробуйте TaskFlow бесплатно и убедитесь в преимуществах</p>
-
-          <div class="cta-features">
-            <div class="cta-feature">
-              <i class="pi pi-calendar"></i>
-              <span>14 дней бесплатно</span>
-            </div>
-            <div class="cta-feature">
-              <i class="pi pi-credit-card"></i>
-              <span>Без карты</span>
-            </div>
-            <div class="cta-feature">
-              <i class="pi pi-download"></i>
-              <span>Импорт из Todoist</span>
+        <div class="cta-card">
+          <div class="cta-background"></div>
+          <div class="cta-content">
+            <h2>Готовы повысить продуктивность?</h2>
+            <p>Начните использовать TaskFlow бесплатно прямо сейчас</p>
+            <div class="cta-actions">
+              <button class="btn-white btn-large" @click="startTrial">
+                <i class="pi pi-play"></i>
+                Начать бесплатно
+              </button>
+              <button class="btn-cta-outline btn-large" @click="watchComparison">
+                <i class="pi pi-envelope"></i>
+                Связаться с нами
+              </button>
             </div>
           </div>
-
-          <div class="cta-actions">
-            <button class="btn-white btn-large" @click="startTrial">
-              Начать бесплатный период
-            </button>
-            <button class="btn-glass btn-large" @click="watchComparison">
-              <i class="pi pi-video"></i>
-              Видео-сравнение
-            </button>
+          <div class="cta-decoration">
+            <div class="deco-circle deco-1"></div>
+            <div class="deco-circle deco-2"></div>
+            <div class="deco-circle deco-3"></div>
           </div>
         </div>
       </div>

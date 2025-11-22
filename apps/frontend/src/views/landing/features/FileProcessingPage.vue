@@ -168,19 +168,28 @@
     </section>
 
     <!-- CTA Section -->
-    <section class="feature-cta">
+    <section class="cta-section">
       <div class="container">
-        <div class="cta-card animated-gradient">
-          <h2>Загрузить первый файл</h2>
-          <p>Попробуйте преобразовать документ в задачи прямо сейчас</p>
-          <div class="cta-actions">
-            <button class="btn-white btn-large" @click="uploadFile">
-              <i class="pi pi-upload"></i>
-              Загрузить файл
-            </button>
-            <router-link to="/features" class="btn-glass btn-large">
-              Все возможности
-            </router-link>
+        <div class="cta-card">
+          <div class="cta-background"></div>
+          <div class="cta-content">
+            <h2>Готовы повысить продуктивность?</h2>
+            <p>Начните использовать TaskFlow бесплатно прямо сейчас</p>
+            <div class="cta-actions">
+              <button class="btn-white btn-large">
+                <i class="pi pi-play"></i>
+                Начать бесплатно
+              </button>
+              <button class="btn-cta-outline btn-large">
+                <i class="pi pi-envelope"></i>
+                Связаться с нами
+              </button>
+            </div>
+          </div>
+          <div class="cta-decoration">
+            <div class="deco-circle deco-1"></div>
+            <div class="deco-circle deco-2"></div>
+            <div class="deco-circle deco-3"></div>
           </div>
         </div>
       </div>

@@ -117,19 +117,28 @@
     </section>
 
     <!-- CTA Section -->
-    <section class="feature-cta">
+    <section class="cta-section">
       <div class="container">
-        <div class="cta-card animated-gradient">
-          <h2>Попробовать бесплатно</h2>
-          <p>Настройте умные напоминания и забудьте о пропущенных задачах</p>
-          <div class="cta-actions">
-            <button class="btn-white btn-large" @click="tryReminders">
-              <i class="pi pi-bell"></i>
-              Начать бесплатно
-            </button>
-            <router-link to="/features" class="btn-glass btn-large">
-              Все возможности
-            </router-link>
+        <div class="cta-card">
+          <div class="cta-background"></div>
+          <div class="cta-content">
+            <h2>Готовы повысить продуктивность?</h2>
+            <p>Начните использовать TaskFlow бесплатно прямо сейчас</p>
+            <div class="cta-actions">
+              <button class="btn-white btn-large">
+                <i class="pi pi-play"></i>
+                Начать бесплатно
+              </button>
+              <button class="btn-cta-outline btn-large">
+                <i class="pi pi-envelope"></i>
+                Связаться с нами
+              </button>
+            </div>
+          </div>
+          <div class="cta-decoration">
+            <div class="deco-circle deco-1"></div>
+            <div class="deco-circle deco-2"></div>
+            <div class="deco-circle deco-3"></div>
           </div>
         </div>
       </div>
