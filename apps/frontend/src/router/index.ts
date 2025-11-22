@@ -156,7 +156,19 @@ const routes: RouteRecordRaw[] = [
 
 const router = createRouter({
   history: createWebHistory(),
-  routes
+  routes,
+  scrollBehavior(to, _from, savedPosition) {
+    // Если есть сохранённая позиция (кнопка назад/вперёд) - возвращаемся к ней
+    if (savedPosition) {
+      return savedPosition
+    }
+    // Если есть hash (якорь) - скроллим к нему
+    if (to.hash) {
+      return { el: to.hash, behavior: 'smooth' }
+    }
+    // Иначе скроллим наверх
+    return { top: 0, behavior: 'smooth' }
+  }
 })
 
 // Navigation guards
