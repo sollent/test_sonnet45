@@ -601,6 +601,7 @@ const installBot = () => {
       justify-content: center;
       color: white;
       font-size: 1.5rem;
+      i.pi { color: white !important; }
     }
 
     h3 { margin-bottom: 0.5rem; color: var(--gray-900); }

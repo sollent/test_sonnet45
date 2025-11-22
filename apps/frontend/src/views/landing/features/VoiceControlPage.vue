@@ -601,6 +601,7 @@ const startFree = () => {
       justify-content: center;
       color: white;
       font-size: 2rem;
+      i.pi { color: white !important; }
     }
 
     h3 {
