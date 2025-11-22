@@ -43,9 +43,8 @@ async function prerender() {
   const prerenderer = new Prerenderer({
     staticDir: distPath,
     renderer: new PuppeteerRenderer({
-      renderAfterDocumentEvent: 'render-event',
-      // Wait for Vue to mount
-      renderAfterTime: 3000,
+      // Wait for page content to fully load (loader disappears after ~2.5s)
+      renderAfterTime: 5000,
       // Headless Chrome options
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox']

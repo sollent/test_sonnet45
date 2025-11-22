@@ -213,11 +213,13 @@ import { useRouter } from 'vue-router'
 import Dialog from 'primevue/dialog'
 import LandingLayout from '@/components/landing/LandingLayout.vue'
 import { useScrollAnimations } from '@/composables/useScrollAnimations'
+import { useSeoMeta, seoConfigs } from '@/composables/useSeoMeta'
 
 const router = useRouter()
 const showDemo = ref(false)
 
 useScrollAnimations()
+useSeoMeta(seoConfigs.fileProcessing)
 
 const formats = [
   { icon: 'pi pi-file-pdf', title: 'PDF документы', description: 'Договоры, ТЗ, отчеты — AI извлекает задачи и дедлайны', extensions: ['.pdf'], color: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' },

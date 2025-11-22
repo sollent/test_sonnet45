@@ -203,10 +203,12 @@
 import { useRouter } from 'vue-router'
 import LandingLayout from '@/components/landing/LandingLayout.vue'
 import { useScrollAnimations } from '@/composables/useScrollAnimations'
+import { useSeoMeta, seoConfigs } from '@/composables/useSeoMeta'
 
 const router = useRouter()
 
 useScrollAnimations()
+useSeoMeta(seoConfigs.compareThings3)
 
 const comparisonFeatures = [
   { name: 'Цена', description: 'Стоимость использования', taskflow: '290₽/мес', things: '~$50 разово', taskflowWins: true },

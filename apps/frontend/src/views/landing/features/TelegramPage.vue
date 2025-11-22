@@ -207,11 +207,13 @@ import { useRouter } from 'vue-router'
 import Dialog from 'primevue/dialog'
 import LandingLayout from '@/components/landing/LandingLayout.vue'
 import { useScrollAnimations } from '@/composables/useScrollAnimations'
+import { useSeoMeta, seoConfigs } from '@/composables/useSeoMeta'
 
 const router = useRouter()
 const showDemo = ref(false)
 
 useScrollAnimations()
+useSeoMeta(seoConfigs.telegram)
 
 const problems = [
   {

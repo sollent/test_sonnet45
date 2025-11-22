@@ -9,6 +9,9 @@
 
 <script setup lang="ts">
 import LandingLayout from '@/components/landing/LandingLayout.vue'
+import { useSeoMeta, seoConfigs } from '@/composables/useSeoMeta'
+
+useSeoMeta(seoConfigs.about)
 </script>
 
 <style scoped>

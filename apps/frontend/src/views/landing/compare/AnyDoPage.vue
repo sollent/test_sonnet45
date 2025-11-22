@@ -190,10 +190,12 @@
 import { useRouter } from 'vue-router'
 import LandingLayout from '@/components/landing/LandingLayout.vue'
 import { useScrollAnimations } from '@/composables/useScrollAnimations'
+import { useSeoMeta, seoConfigs } from '@/composables/useSeoMeta'
 
 const router = useRouter()
 
 useScrollAnimations()
+useSeoMeta(seoConfigs.compareAnyDo)
 
 const comparisonFeatures = [
   { name: 'Цена', description: 'Стоимость подписки', taskflow: '290₽/мес', anydo: '$2.99-5.99/мес', taskflowWins: true },

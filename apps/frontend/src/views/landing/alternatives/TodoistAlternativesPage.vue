@@ -136,10 +136,12 @@
 import { useRouter } from 'vue-router'
 import LandingLayout from '@/components/landing/LandingLayout.vue'
 import { useScrollAnimations } from '@/composables/useScrollAnimations'
+import { useSeoMeta, seoConfigs } from '@/composables/useSeoMeta'
 
 const router = useRouter()
 
 useScrollAnimations()
+useSeoMeta(seoConfigs.alternativesTodoist)
 
 const leaveReasons = [
   { icon: 'pi pi-dollar', title: 'Высокая цена', description: 'Todoist Pro стоит $4-10/месяц — дороже многих альтернатив с большей функциональностью' },

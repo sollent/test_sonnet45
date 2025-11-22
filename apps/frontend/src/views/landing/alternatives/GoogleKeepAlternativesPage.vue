@@ -151,10 +151,12 @@
 import { useRouter } from 'vue-router'
 import LandingLayout from '@/components/landing/LandingLayout.vue'
 import { useScrollAnimations } from '@/composables/useScrollAnimations'
+import { useSeoMeta, seoConfigs } from '@/composables/useSeoMeta'
 
 const router = useRouter()
 
 useScrollAnimations()
+useSeoMeta(seoConfigs.alternativesGoogleKeep)
 
 const leaveReasons = [
   { icon: 'pi pi-clock', title: 'Нет обновлений', description: 'Google Keep практически не развивается — последние серьезные обновления были годы назад' },
