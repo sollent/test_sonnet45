@@ -51,26 +51,54 @@
           </div>
 
           <div class="hero-visual fade-in-right">
-            <div class="phone-mockup floating">
-              <img src="/images/app-mockup.png" alt="TaskFlow App" />
-              <div class="voice-indicator">
-                <div class="pulse-ring"></div>
-                <div class="pulse-ring"></div>
-                <i class="pi pi-microphone"></i>
+            <div class="app-preview">
+              <!-- Main app window -->
+              <div class="app-window glass-morphism">
+                <div class="app-header">
+                  <div class="app-dots">
+                    <span class="dot red"></span>
+                    <span class="dot yellow"></span>
+                    <span class="dot green"></span>
+                  </div>
+                  <span class="app-title">TaskFlow</span>
+                </div>
+                <div class="app-content">
+                  <div class="task-list">
+                    <div class="task-item completed">
+                      <i class="pi pi-check-circle"></i>
+                      <span>Подготовить презентацию</span>
+                    </div>
+                    <div class="task-item active">
+                      <i class="pi pi-circle"></i>
+                      <span>Созвониться с командой</span>
+                      <span class="task-time">15:00</span>
+                    </div>
+                    <div class="task-item">
+                      <i class="pi pi-circle"></i>
+                      <span>Отправить отчёт</span>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div class="floating-cards">
-              <div class="task-card card-1">
-                <i class="pi pi-check-circle"></i>
-                <span>Купить молоко</span>
+
+              <!-- Voice command bubble -->
+              <div class="voice-bubble floating-slow">
+                <div class="voice-wave">
+                  <span></span><span></span><span></span><span></span><span></span>
+                </div>
+                <span class="voice-text">"Создай задачу на завтра..."</span>
               </div>
-              <div class="task-card card-2">
-                <i class="pi pi-calendar"></i>
-                <span>Встреча в 15:00</span>
+
+              <!-- AI suggestion card -->
+              <div class="ai-card floating">
+                <i class="pi pi-sparkles"></i>
+                <span>AI предлагает: добавить напоминание</span>
               </div>
-              <div class="task-card card-3">
-                <i class="pi pi-star"></i>
-                <span>Важный проект</span>
+
+              <!-- Notification badge -->
+              <div class="notification-badge pulse">
+                <i class="pi pi-bell"></i>
+                <span class="badge-count">3</span>
               </div>
             </div>
           </div>
@@ -240,21 +268,26 @@
     <!-- CTA Section -->
     <section class="cta-section">
       <div class="container">
-        <div class="cta-card animated-gradient">
+        <div class="cta-card">
+          <div class="cta-background"></div>
           <div class="cta-content">
             <h2>Готовы повысить продуктивность?</h2>
             <p>Начните использовать TaskFlow бесплатно прямо сейчас</p>
             <div class="cta-actions">
-              <button class="btn-white btn-large">
+              <button class="btn-white btn-large" @click="startDemo">
+                <i class="pi pi-play"></i>
                 Начать бесплатно
               </button>
-              <button class="btn-glass btn-large">
+              <button class="btn-cta-outline btn-large">
+                <i class="pi pi-envelope"></i>
                 Связаться с нами
               </button>
             </div>
           </div>
-          <div class="cta-visual">
-            <div class="rocket-animation">🚀</div>
+          <div class="cta-decoration">
+            <div class="deco-circle deco-1"></div>
+            <div class="deco-circle deco-2"></div>
+            <div class="deco-circle deco-3"></div>
           </div>
         </div>
       </div>
@@ -265,7 +298,7 @@
             :style="{ width: '90vw', maxWidth: '1200px' }">
       <div class="demo-container">
         <video controls autoplay>
-          <source src="/videos/taskflow-demo.mp4" type="video/mp4">
+          <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
           Ваш браузер не поддерживает видео.
         </video>
       </div>
@@ -567,14 +600,48 @@ onMounted(() => {
     @media (max-width: 768px) {
       flex-direction: column;
     }
-  }
 
-  .btn-large {
-    padding: 1rem 2rem;
-    font-size: 1.1rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+      color: white !important;
+      padding: 1rem 2rem;
+      font-size: 1.1rem;
+      border-radius: 50px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+      transition: all 0.3s ease;
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5);
+      }
+    }
+
+    .btn-glass {
+      background: white !important;
+      color: #334155 !important;
+      padding: 1rem 2rem;
+      font-size: 1.1rem;
+      border-radius: 50px;
+      border: 1px solid #e2e8f0;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.3s ease;
+
+      &:hover {
+        background: #f8fafc !important;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+      }
+    }
   }
 
   .hero-stats {
@@ -610,81 +677,205 @@ onMounted(() => {
       display: none;
     }
 
-    .phone-mockup {
+    .app-preview {
       position: relative;
-      width: 300px;
+      width: 400px;
+      height: 450px;
       margin: 0 auto;
+    }
 
-      img {
-        width: 100%;
-        filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.15));
-      }
+    .app-window {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      overflow: hidden;
+      width: 100%;
 
-      .voice-indicator {
-        position: absolute;
-        bottom: 20%;
-        right: -20px;
-        width: 60px;
-        height: 60px;
-        background: var(--gradient-primary);
-        border-radius: 50%;
+      .app-header {
+        background: var(--gray-100);
+        padding: 0.75rem 1rem;
         display: flex;
         align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 1.5rem;
+        gap: 0.75rem;
 
-        .pulse-ring {
-          position: absolute;
-          width: 100%;
-          height: 100%;
-          border: 2px solid var(--primary);
-          border-radius: 50%;
-          animation: pulse-ring 1.5s infinite;
+        .app-dots {
+          display: flex;
+          gap: 6px;
 
-          &:nth-child(2) {
-            animation-delay: 0.5s;
+          .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+
+            &.red { background: #ff5f57; }
+            &.yellow { background: #febc2e; }
+            &.green { background: #28c840; }
+          }
+        }
+
+        .app-title {
+          font-weight: 600;
+          color: var(--gray-600);
+          font-size: 0.875rem;
+        }
+      }
+
+      .app-content {
+        padding: 1.5rem;
+
+        .task-list {
+          .task-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            transition: all 0.3s ease;
+
+            i {
+              color: var(--gray-400);
+              font-size: 1.1rem;
+            }
+
+            span {
+              color: var(--gray-700);
+              font-size: 0.9rem;
+            }
+
+            .task-time {
+              margin-left: auto;
+              font-size: 0.75rem;
+              color: var(--primary);
+              background: rgba(99, 102, 241, 0.1);
+              padding: 0.25rem 0.5rem;
+              border-radius: 4px;
+            }
+
+            &.completed {
+              i { color: var(--success); }
+              span {
+                text-decoration: line-through;
+                color: var(--gray-400);
+              }
+            }
+
+            &.active {
+              background: rgba(99, 102, 241, 0.05);
+              i { color: var(--primary); }
+            }
           }
         }
       }
     }
 
-    .floating-cards {
-      .task-card {
-        position: absolute;
-        background: white;
-        padding: 1rem 1.5rem;
-        border-radius: 12px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    .voice-bubble {
+      position: absolute;
+      top: -20px;
+      right: -40px;
+      background: white;
+      padding: 1rem 1.25rem;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+
+      .voice-wave {
         display: flex;
         align-items: center;
-        gap: 0.75rem;
-        white-space: nowrap;
+        gap: 3px;
+        height: 20px;
 
-        i {
-          color: var(--primary);
-        }
+        span {
+          display: block;
+          width: 3px;
+          height: 100%;
+          background: var(--gradient-primary);
+          border-radius: 3px;
+          animation: voice-wave 0.8s ease-in-out infinite;
 
-        &.card-1 {
-          top: 20%;
-          left: -100px;
-          animation: float 3s ease-in-out infinite;
+          &:nth-child(2) { animation-delay: 0.1s; }
+          &:nth-child(3) { animation-delay: 0.2s; }
+          &:nth-child(4) { animation-delay: 0.3s; }
+          &:nth-child(5) { animation-delay: 0.4s; }
         }
+      }
 
-        &.card-2 {
-          top: 50%;
-          right: -80px;
-          animation: float 3s ease-in-out infinite 0.5s;
-        }
+      .voice-text {
+        font-size: 0.8rem;
+        color: var(--gray-600);
+        font-style: italic;
+      }
+    }
 
-        &.card-3 {
-          bottom: 20%;
-          left: -50px;
-          animation: float 3s ease-in-out infinite 1s;
-        }
+    .ai-card {
+      position: absolute;
+      bottom: 60px;
+      left: -60px;
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      box-shadow: 0 10px 30px rgba(240, 147, 251, 0.3);
+
+      i { font-size: 1rem; }
+    }
+
+    .notification-badge {
+      position: absolute;
+      top: 80px;
+      right: 20px;
+      background: var(--gradient-primary);
+      color: white;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
+
+      .badge-count {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        background: #ef4444;
+        color: white;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        font-size: 0.7rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
       }
     }
   }
+
+  .floating-slow {
+    animation: float 4s ease-in-out infinite;
+  }
+
+  .pulse {
+    animation: pulse-scale 2s ease-in-out infinite;
+  }
+}
+
+@keyframes voice-wave {
+  0%, 100% { transform: scaleY(0.3); }
+  50% { transform: scaleY(1); }
+}
+
+@keyframes pulse-scale {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
 }
 
 @keyframes pulse-ring {
@@ -993,6 +1184,70 @@ onMounted(() => {
     }
   }
 
+  .pricing-card {
+    background: white;
+    border-radius: 20px;
+    padding: 2rem;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    &.popular {
+      border: 2px solid var(--primary);
+      position: relative;
+      transform: scale(1.05);
+
+      &::before {
+        content: 'Популярный';
+        position: absolute;
+        top: -12px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--gradient-primary);
+        color: white;
+        padding: 0.25rem 1rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+      }
+    }
+
+    h3 {
+      font-size: 1.5rem;
+      color: var(--gray-900);
+      margin-bottom: 0.5rem;
+    }
+
+    .description {
+      color: var(--gray-500);
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+      color: white !important;
+      padding: 0.875rem 2rem;
+      border-radius: 50px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      width: 100%;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+      }
+    }
+  }
+
   .price {
     display: flex;
     align-items: baseline;
@@ -1161,9 +1416,21 @@ onMounted(() => {
     color: white;
     position: relative;
     overflow: hidden;
+    background: var(--gradient-primary);
 
     @media (max-width: 768px) {
       padding: 2rem;
+    }
+
+    .cta-background {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+      background-size: 200% 200%;
+      animation: gradient-shift 15s ease infinite;
     }
 
     .cta-content {
@@ -1174,6 +1441,7 @@ onMounted(() => {
       h2 {
         font-size: 3rem;
         margin-bottom: 1rem;
+        color: white;
 
         @media (max-width: 768px) {
           font-size: 2rem;
@@ -1184,6 +1452,7 @@ onMounted(() => {
         font-size: 1.25rem;
         margin-bottom: 2rem;
         opacity: 0.9;
+        color: white;
       }
 
       .cta-actions {
@@ -1197,23 +1466,69 @@ onMounted(() => {
       }
     }
 
-    .cta-visual {
+    .cta-decoration {
       position: absolute;
-      right: 5%;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 8rem;
-      opacity: 0.3;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
 
-      @media (max-width: 768px) {
-        display: none;
-      }
+      .deco-circle {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
 
-      .rocket-animation {
-        animation: float 3s ease-in-out infinite;
+        &.deco-1 {
+          width: 300px;
+          height: 300px;
+          top: -100px;
+          right: -100px;
+        }
+
+        &.deco-2 {
+          width: 200px;
+          height: 200px;
+          bottom: -50px;
+          left: -50px;
+        }
+
+        &.deco-3 {
+          width: 150px;
+          height: 150px;
+          top: 50%;
+          left: 30%;
+        }
       }
     }
   }
+
+  .btn-cta-outline {
+    background: transparent;
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 50px;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.1rem;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: white;
+      transform: translateY(-2px);
+    }
+  }
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 .btn-white {

@@ -204,7 +204,7 @@
             :style="{ width: '90vw', maxWidth: '800px' }">
       <div class="demo-content">
         <video controls autoplay>
-          <source src="/videos/voice-demo.mp4" type="video/mp4">
+          <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
         </video>
       </div>
     </Dialog>
