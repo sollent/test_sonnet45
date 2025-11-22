@@ -9,6 +9,7 @@ use App\Enum\TaskStatus;
 use App\Service\AI\Command\Base\AbstractVoiceCommand;
 use App\Service\AI\DateTimeParser;
 use App\Service\AI\Response\CommandResponse;
+use App\Service\AI\Response\ResponseBuilder;
 use App\Service\AI\Service\TaskFinder;
 use App\Service\AI\SmartSearchService;
 use App\Service\TaskService;
@@ -28,6 +29,8 @@ class CompleteMultipleTasksCommand extends AbstractVoiceCommand
 {
     private TaskFinder $taskFinder;
 
+    private ResponseBuilder $responseBuilder;
+
     public function __construct(
         EntityManagerInterface $entityManager,
         TaskService $taskService,
@@ -35,9 +38,11 @@ class CompleteMultipleTasksCommand extends AbstractVoiceCommand
         DateTimeParser $dateTimeParser,
         LoggerInterface $logger,
         TaskFinder $taskFinder,
+        ResponseBuilder $responseBuilder,
     ) {
         parent::__construct($entityManager, $taskService, $searchService, $dateTimeParser, $logger);
         $this->taskFinder = $taskFinder;
+        $this->responseBuilder = $responseBuilder;
     }
 
     public function getAction(): string
@@ -60,7 +65,7 @@ class CompleteMultipleTasksCommand extends AbstractVoiceCommand
     {
         // Поддержка обоих форматов параметров
         $searches = $parameters['searches'] ?? $parameters['tasks'] ?? [];
-        $completedTasks = [];
+        $completedTaskEntities = [];
         $alreadyCompletedTasks = [];
         $notFoundSearches = [];
 
@@ -88,10 +93,7 @@ class CompleteMultipleTasksCommand extends AbstractVoiceCommand
             }
 
             $task->setStatus(TaskStatus::COMPLETED);
-            $completedTasks[] = [
-                'id'    => $task->getId(),
-                'title' => $task->getTitle(),
-            ];
+            $completedTaskEntities[] = $task;
 
             $this->logger->info('Complete multiple tasks - completed task', [
                 'task_id'    => $task->getId(),
@@ -100,7 +102,7 @@ class CompleteMultipleTasksCommand extends AbstractVoiceCommand
             ]);
         }
 
-        if (empty($completedTasks)) {
+        if (empty($completedTaskEntities)) {
             return CommandResponse::failure(
                 'no_tasks_completed',
                 'Не найдено задач для завершения',
@@ -113,6 +115,12 @@ class CompleteMultipleTasksCommand extends AbstractVoiceCommand
         }
 
         $this->flush();
+
+        // Сериализуем задачи для WebSocket
+        $completedTasks = array_map(
+            fn ($task) => $this->responseBuilder->serializeTask($task),
+            $completedTaskEntities
+        );
 
         $message = sprintf('Завершено %d задач', count($completedTasks));
         $additionalInfo = [];
@@ -134,7 +142,7 @@ class CompleteMultipleTasksCommand extends AbstractVoiceCommand
             $message,
             [
                 'completed_count'         => count($completedTasks),
-                'completed_tasks'         => $completedTasks,
+                'tasks'                   => $completedTasks,
                 'already_completed_count' => count($alreadyCompletedTasks),
                 'already_completed_tasks' => $alreadyCompletedTasks,
                 'not_found_count'         => count($notFoundSearches),

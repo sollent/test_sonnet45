@@ -70,7 +70,10 @@ class AddTagCommand extends AbstractVoiceCommand
     protected function doExecute(array $parameters, User $user): CommandResponse
     {
         $search = $this->taskFinder->extractSearch($parameters);
-        $tagName = $parameters['tag'];
+        $tagParam = $parameters['tag'];
+
+        // Поддержка как одиночного тега (string), так и массива тегов
+        $tagNames = is_array($tagParam) ? $tagParam : [$tagParam];
 
         // Поиск задачи
         $task = $this->taskFinder->find($search, $user);
@@ -79,29 +82,57 @@ class AddTagCommand extends AbstractVoiceCommand
             return $this->responseBuilder->taskNotFound($search);
         }
 
-        // Найти или создать тег
-        $tags = $this->tagRepository->findOrCreateByNames([$tagName], $user);
-        $tag = $tags[0] ?? null;
+        // Найти или создать теги
+        $tags = $this->tagRepository->findOrCreateByNames($tagNames, $user);
 
-        if (!$tag) {
+        if (empty($tags)) {
             return CommandResponse::failure(
                 'tag_creation_failed',
-                sprintf('Не удалось создать тег "%s"', $tagName),
+                sprintf('Не удалось создать теги: %s', implode(', ', $tagNames)),
             );
         }
 
-        // Проверяем, есть ли уже этот тег
-        if ($task->getTags()->contains($tag)) {
+        $addedTags = [];
+        $alreadyExistsTags = [];
+
+        foreach ($tags as $tag) {
+            // Проверяем, есть ли уже этот тег
+            if ($task->getTags()->contains($tag)) {
+                $alreadyExistsTags[] = $tag->getName();
+                continue;
+            }
+
+            // Добавляем тег
+            $task->addTag($tag);
+            $addedTags[] = $tag->getName();
+        }
+
+        if (empty($addedTags)) {
             return CommandResponse::failure(
-                'tag_already_exists',
-                sprintf('Тег "%s" уже добавлен к задаче "%s"', $tagName, $task->getTitle()),
+                'tags_already_exist',
+                sprintf('Все теги уже добавлены к задаче "%s": %s', $task->getTitle(), implode(', ', $alreadyExistsTags)),
             );
         }
 
-        // Добавляем тег
-        $task->addTag($tag);
         $this->flush();
 
-        return $this->responseBuilder->tagAdded($task, $tagName);
+        // Формируем сообщение
+        $message = count($addedTags) === 1
+            ? sprintf('Тег "%s" добавлен к задаче "%s"', $addedTags[0], $task->getTitle())
+            : sprintf('Теги "%s" добавлены к задаче "%s"', implode('", "', $addedTags), $task->getTitle());
+
+        if (!empty($alreadyExistsTags)) {
+            $message .= sprintf(' (уже были: %s)', implode(', ', $alreadyExistsTags));
+        }
+
+        return CommandResponse::success(
+            'tag_added',
+            $message,
+            [
+                'task' => $this->responseBuilder->serializeTask($task),
+                'added_tags' => $addedTags,
+                'already_exists_tags' => $alreadyExistsTags,
+            ],
+        );
     }
 }

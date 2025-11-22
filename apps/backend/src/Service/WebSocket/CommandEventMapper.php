@@ -112,13 +112,13 @@ class CommandEventMapper
             'publish' => true,
             'event' => 'task.deleted',
             'includeStats' => true,
-            'includeEntity' => false,
+            'includeEntity' => true,
         ],
         ParsedCommand::ACTION_DELETE_MULTIPLE_TASKS => [
             'publish' => true,
             'event' => 'tasks.deleted',
             'includeStats' => true,
-            'includeEntity' => false,
+            'includeEntity' => true,
         ],
         ParsedCommand::ACTION_BULK_DELETE => [
             'publish' => true,

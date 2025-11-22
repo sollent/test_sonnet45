@@ -51,13 +51,33 @@ export function useWebSocket() {
    */
   const onTaskEvent = (handler: (event: WebSocketEvent) => void) => {
     const events = [
+      // Single task events
       'task.created',
       'task.updated',
       'task.deleted',
       'task.completed',
+      'task.uncompleted',
       'task.reopened',
+      'task.duplicated',
+      'task.moved',
+      'task.tag_added',
+      'task.tag_removed',
+      'task.description_updated',
       'subtask.created',
       'subtask.converted',
+      // Multiple tasks events
+      'tasks.created',
+      'tasks.completed',
+      'tasks.uncompleted',
+      'tasks.deleted',
+      'subtasks.created',
+      'subtasks.completed',
+      // Bulk operations
+      'tasks.bulk_completed',
+      'tasks.bulk_updated',
+      'tasks.bulk_moved',
+      'tasks.bulk_deleted',
+      'tasks.cleanup_completed',
     ];
 
     events.forEach((eventType) => {

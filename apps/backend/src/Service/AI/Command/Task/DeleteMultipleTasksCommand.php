@@ -59,6 +59,7 @@ class DeleteMultipleTasksCommand extends AbstractVoiceCommand
     {
         // Поддержка обоих форматов параметров
         $searches = $parameters['searches'] ?? $parameters['tasks'] ?? [];
+        $deletedTaskIds = [];
         $deletedTasks = [];
         $notFoundSearches = [];
 
@@ -66,6 +67,7 @@ class DeleteMultipleTasksCommand extends AbstractVoiceCommand
             $task = $this->taskFinder->find($search, $user);
 
             if ($task) {
+                $deletedTaskIds[] = $task->getId();
                 $deletedTasks[] = [
                     'id'    => $task->getId(),
                     'title' => $task->getTitle(),
@@ -111,6 +113,7 @@ class DeleteMultipleTasksCommand extends AbstractVoiceCommand
             $message,
             [
                 'deleted_count'      => count($deletedTasks),
+                'taskIds'            => $deletedTaskIds,
                 'deleted_tasks'      => $deletedTasks,
                 'not_found_count'    => count($notFoundSearches),
                 'not_found_searches' => $notFoundSearches,

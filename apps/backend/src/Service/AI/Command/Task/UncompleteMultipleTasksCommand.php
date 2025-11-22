@@ -9,6 +9,7 @@ use App\Enum\TaskStatus;
 use App\Service\AI\Command\Base\AbstractVoiceCommand;
 use App\Service\AI\DateTimeParser;
 use App\Service\AI\Response\CommandResponse;
+use App\Service\AI\Response\ResponseBuilder;
 use App\Service\AI\Service\TaskFinder;
 use App\Service\AI\SmartSearchService;
 use App\Service\TaskService;
@@ -28,6 +29,8 @@ class UncompleteMultipleTasksCommand extends AbstractVoiceCommand
 {
     private TaskFinder $taskFinder;
 
+    private ResponseBuilder $responseBuilder;
+
     public function __construct(
         EntityManagerInterface $entityManager,
         TaskService $taskService,
@@ -35,9 +38,11 @@ class UncompleteMultipleTasksCommand extends AbstractVoiceCommand
         DateTimeParser $dateTimeParser,
         LoggerInterface $logger,
         TaskFinder $taskFinder,
+        ResponseBuilder $responseBuilder,
     ) {
         parent::__construct($entityManager, $taskService, $searchService, $dateTimeParser, $logger);
         $this->taskFinder = $taskFinder;
+        $this->responseBuilder = $responseBuilder;
     }
 
     public function getAction(): string
@@ -60,7 +65,7 @@ class UncompleteMultipleTasksCommand extends AbstractVoiceCommand
     {
         // Поддержка обоих форматов параметров
         $searches = $parameters['searches'] ?? $parameters['tasks'] ?? [];
-        $uncompletedTasks = [];
+        $uncompletedTaskEntities = [];
         $alreadyUncompletedTasks = [];
         $notFoundSearches = [];
 
@@ -90,10 +95,7 @@ class UncompleteMultipleTasksCommand extends AbstractVoiceCommand
             }
 
             $task->setStatus(TaskStatus::PENDING);
-            $uncompletedTasks[] = [
-                'id'    => $task->getId(),
-                'title' => $task->getTitle(),
-            ];
+            $uncompletedTaskEntities[] = $task;
 
             $this->logger->info('Uncomplete multiple tasks - uncompleted task', [
                 'task_id'    => $task->getId(),
@@ -102,7 +104,7 @@ class UncompleteMultipleTasksCommand extends AbstractVoiceCommand
             ]);
         }
 
-        if (empty($uncompletedTasks)) {
+        if (empty($uncompletedTaskEntities)) {
             return CommandResponse::failure(
                 'no_tasks_uncompleted',
                 'Не найдено завершенных задач для возврата в работу',
@@ -116,7 +118,13 @@ class UncompleteMultipleTasksCommand extends AbstractVoiceCommand
 
         $this->flush();
 
-        $message = sprintf('Возвращено в работу %d задач', count($uncompletedTasks));
+        // Сериализуем задачи для WebSocket
+        $tasks = array_map(
+            fn ($task) => $this->responseBuilder->serializeTask($task),
+            $uncompletedTaskEntities
+        );
+
+        $message = sprintf('Возвращено в работу %d задач', count($tasks));
         $additionalInfo = [];
 
         if (!empty($alreadyUncompletedTasks)) {
@@ -135,8 +143,8 @@ class UncompleteMultipleTasksCommand extends AbstractVoiceCommand
             'multiple_tasks_uncompleted',
             $message,
             [
-                'uncompleted_count'         => count($uncompletedTasks),
-                'uncompleted_tasks'         => $uncompletedTasks,
+                'uncompleted_count'         => count($tasks),
+                'tasks'                     => $tasks,
                 'already_uncompleted_count' => count($alreadyUncompletedTasks),
                 'already_uncompleted_tasks' => $alreadyUncompletedTasks,
                 'not_found_count'           => count($notFoundSearches),

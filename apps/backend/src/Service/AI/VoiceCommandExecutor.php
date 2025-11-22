@@ -231,11 +231,25 @@ class VoiceCommandExecutor
         // Добавляем данные сущности если требуется
         if ($this->eventMapper->shouldIncludeEntity($command->action) && $response->getData()) {
             $responseData = $response->getData();
+            // Single task
             if (isset($responseData['task'])) {
                 $eventData['task'] = $responseData['task'];
             }
+            // Multiple tasks (full objects)
             if (isset($responseData['tasks'])) {
                 $eventData['tasks'] = $responseData['tasks'];
+            }
+            // Task IDs (for delete operations)
+            if (isset($responseData['taskIds'])) {
+                $eventData['taskIds'] = $responseData['taskIds'];
+            }
+            // Parent task (for subtask operations)
+            if (isset($responseData['parentTask'])) {
+                $eventData['parentTask'] = $responseData['parentTask'];
+            }
+            // Subtask
+            if (isset($responseData['subtask'])) {
+                $eventData['subtask'] = $responseData['subtask'];
             }
         }
 
