@@ -33,6 +33,9 @@ if (typeof sessionStorage !== 'undefined') {
 
 onMounted(async () => {
   await authStore.initializeAuth()
+
+  // Dispatch event for prerenderer to know page is ready
+  document.dispatchEvent(new Event('render-event'))
 })
 
 function handleLoaderComplete() {

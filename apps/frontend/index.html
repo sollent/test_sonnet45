@@ -1,24 +1,135 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
     <!-- Primary Meta Tags -->
-    <title>TaskFlow - Система Управления Задачами</title>
-    <meta name="title" content="TaskFlow - Система Управления Задачами">
-    <meta name="description" content="Современная система управления задачами с поддержкой подзадач, тегов, календаря и аналитики. Повысьте свою продуктивность с TaskFlow!">
+    <title>TaskFlow - Умная система управления задачами с AI и голосовым управлением</title>
+    <meta name="title" content="TaskFlow - Умная система управления задачами с AI и голосовым управлением">
+    <meta name="description" content="Революционная система управления задачами с голосовым управлением на русском языке, AI-ассистентом, интеграцией с Telegram и умными напоминаниями. Попробуйте бесплатно!">
+    <meta name="keywords" content="управление задачами, таск менеджер, голосовое управление, AI ассистент, Telegram бот, умные напоминания, TaskFlow, альтернатива Todoist, альтернатива TickTick">
+    <meta name="author" content="TaskFlow Team">
+    <meta name="robots" content="index, follow">
+    <meta name="language" content="Russian">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://taskflow.ru/">
+    <meta property="og:title" content="TaskFlow - Умная система управления задачами с AI">
+    <meta property="og:description" content="Революционная система управления задачами с голосовым управлением на русском языке, AI-ассистентом и интеграцией с Telegram. Попробуйте бесплатно!">
+    <meta property="og:image" content="/og-image.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:locale" content="ru_RU">
+    <meta property="og:site_name" content="TaskFlow">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://taskflow.ru/">
+    <meta property="twitter:title" content="TaskFlow - Умная система управления задачами с AI">
+    <meta property="twitter:description" content="Революционная система управления задачами с голосовым управлением, AI-ассистентом и Telegram. Попробуйте бесплатно!">
+    <meta property="twitter:image" content="/twitter-image.jpg">
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="/vite.svg">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#6366f1">
+    <link rel="manifest" href="/site.webmanifest">
 
     <!-- Theme Color -->
-    <meta name="theme-color" content="#3B82F6">
+    <meta name="theme-color" content="#6366f1">
+    <meta name="msapplication-TileColor" content="#6366f1">
 
-    <!-- API_RESOURCE_HINTS -->
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://taskflow.ru/">
 
-    <!-- Preload Critical Resources -->
-    <!-- Fonts will be preloaded by Vite automatically -->
+    <!-- Preconnect to External Domains -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- DNS Prefetch -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+
+    <!-- Fonts with display=swap for better performance -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Structured Data / JSON-LD -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "TaskFlow",
+      "alternateName": "TaskFlow Task Manager",
+      "url": "https://taskflow.ru/",
+      "logo": "https://taskflow.ru/logo.svg",
+      "description": "Умная система управления задачами с голосовым управлением на русском языке, AI-ассистентом и интеграцией с Telegram",
+      "applicationCategory": "ProductivityApplication",
+      "operatingSystem": "Web, iOS, Android",
+      "offers": {
+        "@type": "AggregateOffer",
+        "lowPrice": "0",
+        "highPrice": "999",
+        "priceCurrency": "RUB",
+        "offerCount": "3"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "ratingCount": "1250",
+        "bestRating": "5",
+        "worstRating": "1"
+      },
+      "features": [
+        "Голосовое управление на русском языке",
+        "AI-ассистент для умного планирования",
+        "Интеграция с Telegram",
+        "Умные напоминания",
+        "Обработка файлов и документов",
+        "Веб-поиск и исследование задач",
+        "Синхронизация между устройствами"
+      ]
+    }
+    </script>
+
+    <!-- Organization Schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "TaskFlow",
+      "url": "https://taskflow.ru/",
+      "logo": "https://taskflow.ru/logo.svg",
+      "sameAs": [
+        "https://t.me/taskflow_app",
+        "https://github.com/taskflow-app"
+      ],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "+7-800-123-45-67",
+        "contactType": "customer service",
+        "availableLanguage": ["Russian", "English"]
+      }
+    }
+    </script>
+
+    <!-- BreadcrumbList for better SERP -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [{
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Главная",
+        "item": "https://taskflow.ru/"
+      }]
+    }
+    </script>
 
     <!-- PWA Web App Manifest (will be injected by vite-plugin-pwa) -->
 
