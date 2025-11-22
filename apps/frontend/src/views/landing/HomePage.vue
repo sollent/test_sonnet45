@@ -312,10 +312,10 @@ import { useRouter } from 'vue-router'
 import Dialog from 'primevue/dialog'
 import LandingLayout from '@/components/landing/LandingLayout.vue'
 import { useScrollAnimations } from '@/composables/useScrollAnimations'
-import { useSeoMeta, seoConfigs } from '@/composables/useSeoMeta'
 
-// SEO meta tags
-useSeoMeta(seoConfigs.home)
+// TODO: Enable SEO meta tags when @unhead/vue is available
+// import { useSeoMeta, seoConfigs } from '@/composables/useSeoMeta'
+// useSeoMeta(seoConfigs.home)
 
 // Import step icons
 import stepVoice from '@/assets/icons/steps/voice-input.svg'

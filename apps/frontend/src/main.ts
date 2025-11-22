@@ -1,6 +1,5 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-import { createHead } from '@unhead/vue'
 
 import App from './App.vue'
 import router from './router'
@@ -59,12 +58,14 @@ const primevueLocale = initialLocale === 'ru' ? primevueLocaleRu : primevueLocal
 
 const app = createApp(App)
 const pinia = createPinia()
-const head = createHead()
 
 app.use(pinia)
 app.use(router)
 app.use(i18n)
-app.use(head)
+
+// TODO: Add @unhead/vue for SEO meta tags when building for production
+// const head = createHead()
+// app.use(head)
 
 // Setup PrimeVue with tree-shaking (imports only used components)
 setupPrimeVue(app, primevueLocale)
