@@ -622,3 +622,135 @@ html {
   background: var(--primary);
   color: white;
 }
+
+// ==========================================
+// FIX: Icon visibility on landing pages
+// ==========================================
+
+// Fix PrimeVue icons in feature cards (white on gradient background)
+.feature-icon {
+  i.pi {
+    color: white !important;
+  }
+}
+
+// Fix icons in buttons (ensure they inherit button color)
+.btn-primary,
+.btn-gradient,
+.btn-white {
+  i.pi {
+    color: inherit !important;
+  }
+}
+
+.btn-glass,
+.btn-secondary,
+.btn-outline {
+  i.pi {
+    color: inherit !important;
+  }
+}
+
+// Fix icons in CTA section buttons
+.cta-section {
+  .btn-white i.pi {
+    color: var(--primary) !important;
+  }
+
+  .btn-cta-outline i.pi {
+    color: white !important;
+  }
+}
+
+// Fix step cards icons (numbered circles with gradient background)
+.step-card {
+  .step-number {
+    color: white !important;
+  }
+}
+
+// Fix integration cards - ensure SVG images are visible
+.integration-card {
+  img {
+    filter: none !important;
+  }
+}
+
+// Fix testimonial cards - ensure quote icon is visible
+.testimonial-card {
+  .quote-icon {
+    color: var(--primary) !important;
+    opacity: 0.3 !important;
+  }
+}
+
+// Fix pricing cards check icons
+.pricing-card {
+  .features-list li i.pi {
+    color: var(--success) !important;
+  }
+}
+
+// Fix FAQ icons
+.faq-item {
+  .faq-question i.pi {
+    color: var(--primary) !important;
+  }
+}
+
+// Fix rating stars
+.rating {
+  i.pi-star-fill {
+    color: #fbbf24 !important;
+  }
+}
+
+// Fix hero section icons
+.hero-section {
+  .task-item i.pi {
+    &.pi-check-circle {
+      color: var(--success) !important;
+    }
+    &.pi-circle {
+      color: var(--gray-400) !important;
+    }
+  }
+
+  .ai-card i.pi {
+    color: white !important;
+  }
+
+  .notification-badge i.pi {
+    color: white !important;
+  }
+}
+
+// Fix navigation dropdown icons
+.landing-nav {
+  .nav-link i.pi {
+    color: var(--gray-600) !important;
+  }
+
+  .dropdown-item i.pi {
+    color: var(--primary) !important;
+  }
+}
+
+// Fix mobile menu icons
+.mobile-menu {
+  a i.pi {
+    color: var(--primary) !important;
+  }
+}
+
+// Fix footer social icons
+.landing-footer {
+  .social-links a i.pi {
+    color: var(--gray-400) !important;
+    transition: color 0.3s ease;
+
+    &:hover {
+      color: white !important;
+    }
+  }
+}

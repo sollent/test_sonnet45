@@ -631,6 +631,10 @@ onMounted(() => {
       box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
       transition: all 0.3s ease;
 
+      i.pi {
+        color: white !important;
+      }
+
       &:hover {
         transform: translateY(-2px);
         box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5);
@@ -650,6 +654,10 @@ onMounted(() => {
       align-items: center;
       gap: 0.5rem;
       transition: all 0.3s ease;
+
+      i.pi {
+        color: #334155 !important;
+      }
 
       &:hover {
         background: #f8fafc !important;
@@ -945,9 +953,12 @@ onMounted(() => {
       display: flex;
       align-items: center;
       justify-content: center;
-      color: white;
       font-size: 1.5rem;
       margin-bottom: 1.5rem;
+
+      i.pi {
+        color: white !important;
+      }
     }
 
     h3 {
@@ -1532,6 +1543,10 @@ onMounted(() => {
     gap: 0.5rem;
     font-size: 1.1rem;
 
+    i.pi {
+      color: white !important;
+    }
+
     &:hover {
       background: rgba(255, 255, 255, 0.1);
       border-color: white;
@@ -1555,6 +1570,10 @@ onMounted(() => {
   transition: all 0.3s ease;
   border: none;
   cursor: pointer;
+
+  i.pi {
+    color: var(--primary) !important;
+  }
 
   &:hover {
     transform: translateY(-2px);
