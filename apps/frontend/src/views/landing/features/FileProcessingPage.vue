@@ -371,7 +371,9 @@ const uploadFile = () => { router.push('/register') }
     border-radius: 16px;
     background: var(--gray-50);
     transition: all 0.3s ease;
-    &:hover { transform: translateY(-5px); box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1); background: white; }
+    &:hover { transform: translateY(-5px); box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1); background: white;
+      .format-icon { color: var(--primary); }
+    }
 
     .format-icon {
       width: 60px;
@@ -383,6 +385,7 @@ const uploadFile = () => { router.push('/register') }
       justify-content: center;
       color: white;
       font-size: 1.5rem;
+      transition: color 0.3s ease;
     }
 
     h3 { margin-bottom: 0.5rem; color: var(--gray-900); }

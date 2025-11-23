@@ -341,8 +341,10 @@ const tryInterface = () => { router.push('/register') }
     border-radius: 16px;
     background: var(--gray-50);
     transition: all 0.3s ease;
-    &:hover { transform: translateY(-5px); box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1); background: white; }
-    .principle-icon { width: 60px; height: 60px; margin: 0 auto 1.5rem; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem; }
+    &:hover { transform: translateY(-5px); box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1); background: white;
+      .principle-icon { color: var(--primary); }
+    }
+    .principle-icon { width: 60px; height: 60px; margin: 0 auto 1.5rem; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem; transition: color 0.3s ease; }
     h3 { margin-bottom: 0.5rem; color: var(--gray-900); }
     p { color: var(--gray-600); line-height: 1.5; font-size: 0.9rem; }
   }
@@ -367,7 +369,7 @@ const tryInterface = () => { router.push('/register') }
     padding: 2rem;
     transition: all 0.3s ease;
     &:hover { transform: translateY(-5px); box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1); }
-    .feature-icon { width: 50px; height: 50px; background: var(--gradient-primary); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.25rem; margin-bottom: 1rem; i.pi { color: white !important; } }
+    .feature-icon { width: 50px; height: 50px; background: var(--gradient-primary); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.25rem; margin-bottom: 1rem; }
     h3 { margin-bottom: 0.5rem; color: var(--gray-900); }
     p { color: var(--gray-600); line-height: 1.5; font-size: 0.9rem; }
   }

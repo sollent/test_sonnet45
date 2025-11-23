@@ -325,8 +325,10 @@ const tryReminders = () => { router.push('/register') }
     border-radius: 16px;
     background: var(--gray-50);
     transition: all 0.3s ease;
-    &:hover { transform: translateY(-5px); box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1); background: white; }
-    .solution-icon { width: 60px; height: 60px; margin: 0 auto 1.5rem; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem; }
+    &:hover { transform: translateY(-5px); box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1); background: white;
+      .solution-icon { color: var(--primary); }
+    }
+    .solution-icon { width: 60px; height: 60px; margin: 0 auto 1.5rem; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem; transition: color 0.3s ease; }
     h3 { margin-bottom: 1rem; color: var(--gray-900); }
     p { color: var(--gray-600); line-height: 1.6; }
   }
@@ -351,7 +353,7 @@ const tryReminders = () => { router.push('/register') }
     padding: 2rem;
     transition: all 0.3s ease;
     &:hover { transform: translateY(-5px); box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1); }
-    .type-icon { width: 50px; height: 50px; background: var(--gradient-primary); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.25rem; margin-bottom: 1rem; i.pi { color: white !important; } }
+    .type-icon { width: 50px; height: 50px; background: var(--gradient-primary); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.25rem; margin-bottom: 1rem; }
     h3 { margin-bottom: 0.5rem; color: var(--gray-900); }
     p { color: var(--gray-600); line-height: 1.5; margin-bottom: 1rem; font-size: 0.9rem; }
     .type-example { padding: 0.75rem; background: var(--gray-100); border-radius: 8px; font-size: 0.8rem; color: var(--gray-700); font-style: italic; }
