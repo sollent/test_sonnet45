@@ -6,6 +6,7 @@ namespace App\Service\AI\Command\Task;
 
 use App\Entity\User;
 use App\Enum\TaskStatus;
+use App\Repository\Database\TaskRepository;
 use App\Service\AI\Command\Base\AbstractVoiceCommand;
 use App\Service\AI\DateTimeParser;
 use App\Service\AI\Response\CommandResponse;
@@ -14,6 +15,7 @@ use App\Service\AI\Service\TaskFinder;
 use App\Service\AI\SmartSearchService;
 use App\Service\TaskService;
 use App\ValueObject\ParsedCommand;
+use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -31,6 +33,8 @@ class UncompleteMultipleTasksCommand extends AbstractVoiceCommand
 
     private ResponseBuilder $responseBuilder;
 
+    private TaskRepository $taskRepository;
+
     public function __construct(
         EntityManagerInterface $entityManager,
         TaskService $taskService,
@@ -39,10 +43,12 @@ class UncompleteMultipleTasksCommand extends AbstractVoiceCommand
         LoggerInterface $logger,
         TaskFinder $taskFinder,
         ResponseBuilder $responseBuilder,
+        TaskRepository $taskRepository,
     ) {
         parent::__construct($entityManager, $taskService, $searchService, $dateTimeParser, $logger);
         $this->taskFinder = $taskFinder;
         $this->responseBuilder = $responseBuilder;
+        $this->taskRepository = $taskRepository;
     }
 
     public function getAction(): string
@@ -52,19 +58,28 @@ class UncompleteMultipleTasksCommand extends AbstractVoiceCommand
 
     protected function validateParameters(array $parameters): void
     {
-        // Поддержка двух форматов: 'searches' и 'tasks'
+        // Поддержка форматов: 'searches' (array), 'tasks' (array или string), 'filters' (object)
         $hasSearches = !empty($parameters['searches']) && is_array($parameters['searches']);
-        $hasTasks = !empty($parameters['tasks']) && is_array($parameters['tasks']);
+        $hasTasks = !empty($parameters['tasks']);
+        $hasFilters = !empty($parameters['filters']);
 
-        if (!$hasSearches && !$hasTasks) {
-            throw new RuntimeException('Array of task searches is required for multiple uncompletion');
+        if (!$hasSearches && !$hasTasks && !$hasFilters) {
+            throw new RuntimeException('Array of task searches or filters is required for multiple uncompletion');
         }
     }
 
     protected function doExecute(array $parameters, User $user): CommandResponse
     {
+        // Если есть фильтры - работаем в режиме bulk
+        if (!empty($parameters['filters'])) {
+            return $this->executeBulkByFilters($parameters['filters'], $user);
+        }
+
         // Поддержка обоих форматов параметров
-        $searches = $parameters['searches'] ?? $parameters['tasks'] ?? [];
+        $tasksParam = $parameters['searches'] ?? $parameters['tasks'] ?? [];
+
+        // Конвертируем строку в массив (LLM иногда возвращает строку вместо массива)
+        $searches = is_array($tasksParam) ? $tasksParam : [$tasksParam];
         $uncompletedTaskEntities = [];
         $alreadyUncompletedTasks = [];
         $notFoundSearches = [];
@@ -149,6 +164,81 @@ class UncompleteMultipleTasksCommand extends AbstractVoiceCommand
                 'already_uncompleted_tasks' => $alreadyUncompletedTasks,
                 'not_found_count'           => count($notFoundSearches),
                 'not_found_searches'        => $notFoundSearches,
+            ],
+        );
+    }
+
+    /**
+     * Выполнение bulk операции по фильтрам (дата, статус)
+     */
+    private function executeBulkByFilters(array $filters, User $user): CommandResponse
+    {
+        // Парсим дату из фильтра
+        $date = null;
+        if (!empty($filters['date'])) {
+            $date = $this->dateTimeParser->parse($filters['date']);
+        }
+
+        if (!$date) {
+            return CommandResponse::failure(
+                'invalid_date',
+                'Не удалось распознать дату для фильтрации задач',
+                ['filters' => $filters],
+            );
+        }
+
+        // Получаем все задачи пользователя за указанную дату
+        $startOfDay = DateTime::createFromInterface($date)->setTime(0, 0, 0);
+        $endOfDay = DateTime::createFromInterface($date)->setTime(23, 59, 59);
+        $tasks = $this->taskRepository->findTasksByDateRange($user, $startOfDay, $endOfDay, true);
+
+        // Фильтруем только завершенные
+        $completedTasks = array_filter(
+            $tasks,
+            fn ($task) => $task->getStatus() === TaskStatus::COMPLETED
+        );
+
+        if (empty($completedTasks)) {
+            return CommandResponse::failure(
+                'no_completed_tasks',
+                sprintf('Не найдено завершенных задач за %s', $date->format('d.m.Y')),
+                ['filters' => $filters, 'date' => $date->format('Y-m-d')],
+            );
+        }
+
+        // Возвращаем в работу
+        $uncompletedTaskEntities = [];
+        foreach ($completedTasks as $task) {
+            $task->setStatus(TaskStatus::PENDING);
+            $uncompletedTaskEntities[] = $task;
+
+            $this->logger->info('Bulk uncomplete - uncompleted task', [
+                'task_id'    => $task->getId(),
+                'task_title' => $task->getTitle(),
+            ]);
+        }
+
+        $this->flush();
+
+        // Сериализуем для WebSocket
+        $serializedTasks = array_map(
+            fn ($task) => $this->responseBuilder->serializeTask($task),
+            $uncompletedTaskEntities
+        );
+
+        $message = sprintf(
+            'Возвращено в работу %d задач за %s',
+            count($serializedTasks),
+            $date->format('d.m.Y')
+        );
+
+        return CommandResponse::success(
+            'multiple_tasks_uncompleted',
+            $message,
+            [
+                'uncompleted_count' => count($serializedTasks),
+                'tasks'             => $serializedTasks,
+                'date'              => $date->format('Y-m-d'),
             ],
         );
     }

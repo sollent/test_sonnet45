@@ -52,9 +52,9 @@ class CompleteMultipleTasksCommand extends AbstractVoiceCommand
 
     protected function validateParameters(array $parameters): void
     {
-        // Поддержка двух форматов: 'searches' и 'tasks'
+        // Поддержка форматов: 'searches' (array), 'tasks' (array или string)
         $hasSearches = !empty($parameters['searches']) && is_array($parameters['searches']);
-        $hasTasks = !empty($parameters['tasks']) && is_array($parameters['tasks']);
+        $hasTasks = !empty($parameters['tasks']);
 
         if (!$hasSearches && !$hasTasks) {
             throw new RuntimeException('Array of task searches is required for multiple completion');
@@ -64,7 +64,10 @@ class CompleteMultipleTasksCommand extends AbstractVoiceCommand
     protected function doExecute(array $parameters, User $user): CommandResponse
     {
         // Поддержка обоих форматов параметров
-        $searches = $parameters['searches'] ?? $parameters['tasks'] ?? [];
+        $tasksParam = $parameters['searches'] ?? $parameters['tasks'] ?? [];
+
+        // Конвертируем строку в массив (LLM иногда возвращает строку вместо массива)
+        $searches = is_array($tasksParam) ? $tasksParam : [$tasksParam];
         $completedTaskEntities = [];
         $alreadyCompletedTasks = [];
         $notFoundSearches = [];
