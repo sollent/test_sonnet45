@@ -1,6 +1,6 @@
 # 🤖 Voice AI Assistant - Корпоративное Руководство по Реализации
 
-> **Версия**: 1.1.0
+> **Версия**: 2.0.0
 > **Статус**: Production-Ready Документация
 > **Целевая Аудитория**: Команда Разработки, DevOps, QA Инженеры, AI Ассистенты (Claude, GPT)
 > **Оценочное Время Реализации**: 19-25 дней (полное корпоративное) | 3-5 дней (MVP)
@@ -8,17 +8,50 @@
 
 ---
 
-## ⚠️ ВАЖНО: Нативная Установка AI Сервисов
+## ⚠️ КРИТИЧЕСКИ ВАЖНО: Архитектура AI Сервисов
+
+### 🚀 Нативная Установка (НЕ Docker!)
 
 **С ноября 2025 года Ollama и Whisper работают НАТИВНО на хосте, а не в Docker контейнерах!**
 
-Это обеспечивает 10-20x улучшение производительности:
-- Whisper: 0.5-1s (было 10-15s)
-- LLM: 3-5s (было 60-90s)
+Это обеспечивает **10-20x улучшение производительности**:
 
-**Инструкции по установке**: [`NATIVE_INSTALLATION.md`](NATIVE_INSTALLATION.md)
+| Сервис | Docker (старый подход) | Нативный (текущий) | Улучшение |
+|--------|------------------------|-------------------|-----------|
+| **Whisper STT** | 10-15s | 0.5-1s | 15-20x |
+| **LLM (Qwen 2.5)** | 60-90s | 3-5s | 15-20x |
 
-Доступ из Docker контейнеров: `http://host.docker.internal:11434` (Ollama) и `http://host.docker.internal:9000` (Whisper)
+### 📍 URL доступа из Docker контейнеров
+
+```bash
+# Ollama (LLM)
+http://host.docker.internal:11434
+
+# Whisper (STT) - faster-whisper-server
+http://host.docker.internal:9001
+```
+
+### 🎯 Production GPU Сервер
+
+**Выбранная конфигурация**: RTX 4090 24GB (~29,000₽/мес)
+- VRAM: 24GB (достаточно для Qwen 2.5 14B q4_K_M + Whisper large-v3)
+- Memory Bandwidth: 1008 GB/s
+- Целевое время отклика: 3-5 секунд
+
+### 📚 Инструкции по установке
+
+**Полное руководство**: [`NATIVE_INSTALLATION.md`](NATIVE_INSTALLATION.md)
+
+```bash
+# Быстрый старт (macOS/Linux)
+# 1. Установить Ollama
+curl -fsSL https://ollama.com/install.sh | sh
+ollama pull qwen2.5:14b-instruct-q4_K_M
+
+# 2. Установить faster-whisper-server
+pip install faster-whisper-server
+faster-whisper-server --host 0.0.0.0 --port 9001
+```
 
 ---
 
@@ -72,12 +105,13 @@
 
 **Ключевые Технические Требования:**
 
-1. **Локальная LLM** (без внешних API): Qwen 2.5 1.5B через Ollama (нативная установка)
-2. **Работает на слабом VPS**: 2 ядра CPU, 4GB RAM, 40GB диск
-3. **Поддержка русского языка**: И STT (Whisper), и LLM
+1. **Локальная LLM** (без внешних API): Qwen 2.5 14B через Ollama (нативная установка на хосте)
+2. **GPU сервер**: RTX 4090 24GB VRAM, 1008 GB/s memory bandwidth
+3. **Поддержка русского языка**: И STT (Whisper large-v3), и LLM (Qwen 2.5)
 4. **Обновления в реальном времени**: Centrifugo WebSocket
 5. **Умный поиск**: Нечеткое сопоставление для названий задач (задачи могут иметь похожие названия)
 6. **Готовность к будущему**: Архитектура позволяет интеграцию с Telegram, WhatsApp, Apple Watch
+7. **Нативная установка AI**: Ollama и Whisper работают напрямую на хосте (не в Docker)
 
 ### Принципы Архитектуры
 
@@ -231,34 +265,43 @@ npm install && npm run dev
 
 ### Основные Технологии
 
-| Компонент | Технология | Версия | Обоснование |
-|-----------|------------|---------|---------------|
-| **LLM Runtime** | Ollama | Latest | Лучшая производительность CPU, легкое развертывание |
-| **Языковая Модель** | Qwen 2.5 3B | Q4_K_M | Оптимально для 4-6GB RAM, отличная поддержка русского |
-| **Speech-to-Text** | Whisper.cpp | v1.5.4 | Быстрый CPU inference, хороший русский |
-| **WebSocket** | Centrifugo | v5.0 | Масштабируемый, JWT auth, проверенный |
-| **Очередь** | RabbitMQ | 3.12 | Уже в стеке, надежный |
-| **Кеш** | Redis | 7.2 | Pub/sub для Centrifugo |
-| **Бэкенд** | Symfony | 7.1 | Существующий фреймворк |
-| **Фронтенд** | Vue.js | 3.4 | Существующий фреймворк |
+| Компонент | Технология | Версия | Установка | Обоснование |
+|-----------|------------|--------|-----------|---------------|
+| **LLM Runtime** | Ollama | Latest | **Нативная** | Прямой доступ к GPU, максимальная производительность |
+| **Языковая Модель** | Qwen 2.5 14B | q4_K_M | Нативная | Отличная поддержка русского, 10-12GB VRAM |
+| **Speech-to-Text** | faster-whisper | large-v3 | **Нативная** | CTranslate2 оптимизация, 3-4GB VRAM |
+| **WebSocket** | Centrifugo | v5.0 | Docker | Масштабируемый, JWT auth, проверенный |
+| **Очередь** | RabbitMQ | 3.12 | Docker | Уже в стеке, надежный |
+| **Кеш** | Redis | 7.2 | Docker | Pub/sub для Centrifugo |
+| **Бэкенд** | Symfony | 7.1 | Docker | Существующий фреймворк |
+| **Фронтенд** | Vue.js | 3.4 | Docker/Local | Существующий фреймворк |
 
 ### Спецификации AI Модели
 
 ```yaml
-Qwen 2.5 3B:
-  Параметры: 3 миллиарда
-  Квантизация: 4-бит (Q4_K_M)
-  Использование Памяти: ~4-6GB
-  Скорость Inference: 8-12 секунд на запрос (CPU)
+Qwen 2.5 14B (Production):
+  Параметры: 14 миллиардов
+  Квантизация: 4-бит (q4_K_M)
+  Использование VRAM: ~10-12GB
+  Скорость Inference: 3-5 секунд (RTX 4090)
   Контекстное Окно: 32768 токенов
   Языки: Русский, Английский, Китайский (мультиязычная)
+  Установка: ollama pull qwen2.5:14b-instruct-q4_K_M
 
-Whisper Base:
-  Параметры: 74M
-  Использование Памяти: ~500MB
-  Скорость Обработки: Real-time factor 0.3
-  Поддерживаемые Форматы: WAV, MP3, M4A, WebM
+Whisper large-v3 (Production):
+  Параметры: 1.5B
+  Использование VRAM: ~3-4GB
+  Скорость Обработки: Real-time factor 0.1-0.2 (GPU)
+  Поддерживаемые Форматы: WAV, MP3, M4A, WebM, OGG
   Макс. Длительность: 30 секунд (настраивается)
+  Установка: pip install faster-whisper-server
+
+GPU Сервер (Production):
+  Модель: NVIDIA RTX 4090
+  VRAM: 24GB GDDR6X
+  Memory Bandwidth: 1008 GB/s
+  Общее использование VRAM: ~14-16GB (LLM + Whisper)
+  Стоимость: ~29,000₽/мес
 ```
 
 ---
@@ -398,24 +441,53 @@ main (production)
 
 ### Быстрый Справочник Общих Проблем
 
-1. **Ollama не отвечает**
+1. **Ollama не отвечает** (нативная установка)
    ```bash
-   docker restart voice-ai-ollama
-   docker logs -f voice-ai-ollama --tail 100
+   # macOS
+   brew services restart ollama
+
+   # Linux (systemd)
+   sudo systemctl restart ollama
+   sudo systemctl status ollama
+   journalctl -u ollama -f --tail 100
+
+   # Проверить статус
+   curl http://localhost:11434/api/tags
    ```
 
-2. **Проблемы точности Whisper**
+2. **Whisper не отвечает** (faster-whisper-server)
    ```bash
-   # Проверить размер модели
-   docker exec voice-ai-whisper ls -la /models
-   # Обновить до большей модели если нужно
+   # Проверить запущен ли процесс
+   ps aux | grep faster-whisper
+
+   # Перезапустить (если используется systemd)
+   sudo systemctl restart faster-whisper
+
+   # Или запустить вручную
+   faster-whisper-server --host 0.0.0.0 --port 9001 --model large-v3
+
+   # Проверить статус
+   curl http://localhost:9001/health
    ```
 
 3. **Обрывы WebSocket соединения**
    ```bash
-   # Проверить статус Centrifugo
+   # Проверить статус Centrifugo (Docker)
    curl http://localhost:8000/health
+   docker logs -f centrifugo --tail 100
    # Проверить истечение JWT токена
+   ```
+
+4. **Проблемы с GPU / CUDA**
+   ```bash
+   # Проверить доступность GPU
+   nvidia-smi
+
+   # Проверить использование VRAM
+   nvidia-smi --query-gpu=memory.used,memory.total --format=csv
+
+   # Ollama использует GPU?
+   ollama run qwen2.5:14b-instruct-q4_K_M "test" --verbose
    ```
 
 ### Команды Мониторинга
@@ -423,17 +495,23 @@ main (production)
 ```bash
 # Ресурсы системы
 htop
-docker stats
+nvidia-smi -l 1  # GPU мониторинг каждую секунду
 
-# Здоровье сервисов
+# Здоровье нативных AI сервисов
 curl http://localhost:11434/api/tags     # Модели Ollama
-curl http://localhost:8090/health        # Статус Whisper
-curl http://localhost:8000/stats        # Статистика Centrifugo
+curl http://localhost:9001/health        # Статус Whisper
 
-# Логи
-docker-compose logs -f ollama
-docker-compose logs -f whisper
+# Здоровье Docker сервисов
+curl http://localhost:8000/health        # Статистика Centrifugo (Docker)
+docker stats                             # Docker контейнеры
+
+# Логи нативных сервисов
+journalctl -u ollama -f                  # Ollama (Linux systemd)
+journalctl -u faster-whisper -f          # Whisper (Linux systemd)
+
+# Логи Docker сервисов
 docker-compose logs -f centrifugo
+docker-compose logs -f backend-php83
 ```
 
 ---
@@ -488,7 +566,25 @@ docker-compose logs -f centrifugo
 
 ---
 
-**Версия Документа**: 1.0.0
-**Последнее Обновление**: 2025-11-08
+**Версия Документа**: 2.0.0
+**Последнее Обновление**: 2025-11-27
 **Автор**: Команда AI Архитектуры
 **Статус Проверки**: Готов к Реализации
+
+---
+
+## 📝 История Изменений
+
+### v2.0.0 (2025-11-27)
+- **КРИТИЧЕСКОЕ ИЗМЕНЕНИЕ**: Переход на нативную установку AI сервисов (Ollama, Whisper)
+- Обновлены спецификации: Qwen 2.5 14B (вместо 3B), Whisper large-v3
+- Добавлена информация о GPU сервере RTX 4090 24GB
+- Обновлены команды мониторинга и troubleshooting для нативных сервисов
+- Обновлены URL доступа: `host.docker.internal:11434` (Ollama), `host.docker.internal:9001` (Whisper)
+
+### v1.1.0 (2025-11-08)
+- Добавлено предупреждение о нативной установке
+- Обновлены ссылки на документацию
+
+### v1.0.0 (2025-11-01)
+- Первоначальная версия документации

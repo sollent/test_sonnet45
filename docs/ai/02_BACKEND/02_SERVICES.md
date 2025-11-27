@@ -1,6 +1,25 @@
 # 🚀 Фаза 2.2: Руководство по Реализации Слоя Сервисов
 
+> **Версия**: 2.0.0
+> **Дата**: 2025-11-27
 > **Для AI Ассистента**: Это пошаговое руководство для реализации слоя сервисов. Следуй каждому шагу по порядку. Адаптируй код к существующей структуре проекта.
+
+---
+
+## ⚠️ КРИТИЧЕСКИ ВАЖНО: Нативная Установка AI
+
+**AI сервисы (Ollama и Whisper) работают НАТИВНО на хосте, не в Docker!**
+
+| Сервис | Хост URL | Docker URL |
+|--------|----------|------------|
+| **Ollama** | `http://localhost:11434` | `http://host.docker.internal:11434` |
+| **Whisper** | `http://localhost:9001` | `http://host.docker.internal:9001` |
+
+**Модели для Production:**
+- **LLM**: `qwen2.5:14b-instruct-q4_K_M` (10-12 GB VRAM)
+- **STT**: Whisper `large-v3` (3-4 GB VRAM)
+
+---
 
 ## 📋 Быстрая Навигация
 
@@ -15,7 +34,7 @@
 Нам нужно 5 основных сервисов для Voice AI Assistant MVP:
 
 1. **VoiceProcessingService** - Обрабатывает аудио/текстовые команды
-2. **LLMService** - Взаимодействует с Ollama
+2. **LLMService** - Взаимодействует с Ollama (нативно на хосте)
 3. **CommandExecutorService** - Выполняет распознанные команды
 4. **WebSocketPublisherService** - Отправляет обновления в реальном времени
 5. **SmartSearchService** - Находит задачи по голосовому описанию
@@ -142,9 +161,9 @@ class VoiceProcessingService
 }
 ```
 
-### Шаг 3: LLMService для Интеграции с Ollama
+### Шаг 3: LLMService для Интеграции с Ollama (Нативный)
 
-**AI Ассистент**: Этот сервис взаимодействует с Ollama. Адаптируйте URL на основе вашей настройки Docker.
+**AI Ассистент**: Этот сервис взаимодействует с Ollama. **Ollama работает нативно на хосте!**
 
 ```php
 <?php
@@ -157,13 +176,21 @@ use Psr\Log\LoggerInterface;
 
 class LLMService
 {
-    private string $ollamaUrl = 'http://localhost:11434';  // Change if needed
-    private string $model = 'mistral:7b';
+    /**
+     * ⚠️ ВАЖНО: Ollama работает НАТИВНО на хосте!
+     * - Из Docker контейнера: http://host.docker.internal:11434
+     * - Локально на хосте: http://localhost:11434
+     */
+    private string $ollamaUrl;
+    private string $model = 'qwen2.5:14b-instruct-q4_K_M';  // Production модель
 
     public function __construct(
         private HttpClientInterface $httpClient,
-        private LoggerInterface $logger
-    ) {}
+        private LoggerInterface $logger,
+        string $ollamaUrl = 'http://host.docker.internal:11434'  // Default для Docker
+    ) {
+        $this->ollamaUrl = $ollamaUrl;
+    }
 
     /**
      * Parse voice command using LLM
@@ -184,7 +211,8 @@ class LLMService
                         'top_p' => 0.9,
                         'num_predict' => 500
                     ]
-                ]
+                ],
+                'timeout' => 60  // LLM может думать долго
             ]);
 
             $result = $response->toArray();
@@ -202,7 +230,8 @@ class LLMService
         } catch (\Exception $e) {
             $this->logger->error('LLM parsing failed', [
                 'error' => $e->getMessage(),
-                'text' => $text
+                'text' => $text,
+                'ollama_url' => $this->ollamaUrl
             ]);
 
             // Fallback to simple parsing
@@ -210,8 +239,30 @@ class LLMService
         }
     }
 
+    /**
+     * Check if Ollama is available
+     */
+    public function healthCheck(): bool
+    {
+        try {
+            $response = $this->httpClient->request('GET', $this->ollamaUrl . '/api/tags', [
+                'timeout' => 5
+            ]);
+            return $response->getStatusCode() === 200;
+        } catch (\Exception $e) {
+            $this->logger->warning('Ollama health check failed', [
+                'error' => $e->getMessage(),
+                'url' => $this->ollamaUrl
+            ]);
+            return false;
+        }
+    }
+
     private function buildPrompt(string $text, array $context): string
     {
+        $date = $context['date'] ?? date('Y-m-d');
+        $timezone = $context['timezone'] ?? 'UTC';
+
         $systemPrompt = <<<PROMPT
 You are a task management assistant. Convert user commands to JSON.
 
@@ -232,8 +283,8 @@ Return ONLY valid JSON:
 User command: "$text"
 
 Context:
-Current date: {$context['date']}
-User timezone: {$context['timezone']}
+Current date: $date
+User timezone: $timezone
 
 JSON:
 PROMPT;
@@ -289,7 +340,97 @@ PROMPT;
 }
 ```
 
-### Шаг 4: CommandExecutorService
+### Шаг 4: WhisperService для Интеграции с faster-whisper-server
+
+**AI Ассистент**: Этот сервис взаимодействует с Whisper. **Whisper работает нативно на хосте!**
+
+```php
+<?php
+// File: apps/backend/src/Service/VoiceAssistant/WhisperService.php
+
+namespace App\Service\VoiceAssistant;
+
+use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Psr\Log\LoggerInterface;
+
+class WhisperService
+{
+    /**
+     * ⚠️ ВАЖНО: faster-whisper-server работает НАТИВНО на хосте!
+     * - Из Docker контейнера: http://host.docker.internal:9001
+     * - Локально на хосте: http://localhost:9001
+     */
+    private string $whisperUrl;
+
+    public function __construct(
+        private HttpClientInterface $httpClient,
+        private LoggerInterface $logger,
+        string $whisperUrl = 'http://host.docker.internal:9001'  // Default для Docker
+    ) {
+        $this->whisperUrl = $whisperUrl;
+    }
+
+    /**
+     * Transcribe audio file to text
+     */
+    public function transcribe(string $audioFilePath): array
+    {
+        try {
+            // OpenAI-совместимый API (faster-whisper-server)
+            $response = $this->httpClient->request('POST', $this->whisperUrl . '/v1/audio/transcriptions', [
+                'headers' => [
+                    'Content-Type' => 'multipart/form-data',
+                ],
+                'body' => [
+                    'file' => fopen($audioFilePath, 'r'),
+                    'model' => 'large-v3',
+                    'language' => 'ru',
+                    'response_format' => 'json'
+                ],
+                'timeout' => 120  // STT может занять время
+            ]);
+
+            $result = $response->toArray();
+
+            return [
+                'text' => $result['text'] ?? '',
+                'language' => $result['language'] ?? 'ru',
+                'duration' => $result['duration'] ?? null
+            ];
+
+        } catch (\Exception $e) {
+            $this->logger->error('Whisper transcription failed', [
+                'error' => $e->getMessage(),
+                'file' => $audioFilePath,
+                'whisper_url' => $this->whisperUrl
+            ]);
+
+            throw new \RuntimeException('Speech-to-text failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Check if Whisper is available
+     */
+    public function healthCheck(): bool
+    {
+        try {
+            $response = $this->httpClient->request('GET', $this->whisperUrl . '/health', [
+                'timeout' => 5
+            ]);
+            return $response->getStatusCode() === 200;
+        } catch (\Exception $e) {
+            $this->logger->warning('Whisper health check failed', [
+                'error' => $e->getMessage(),
+                'url' => $this->whisperUrl
+            ]);
+            return false;
+        }
+    }
+}
+```
+
+### Шаг 5: CommandExecutorService
 
 **AI Ассистент**: Этот сервис выполняет распознанные команды. Использует существующий TaskService.
 
@@ -427,7 +568,7 @@ class CommandExecutorService
 }
 ```
 
-### Шаг 5: WebSocketPublisherService
+### Шаг 6: WebSocketPublisherService
 
 **AI Ассистент**: Отправляет обновления в реальном времени через Centrifugo.
 
@@ -442,7 +583,7 @@ use Psr\Log\LoggerInterface;
 
 class WebSocketPublisherService
 {
-    private string $centrifugoUrl = 'http://localhost:8000';
+    private string $centrifugoUrl = 'http://backend-centrifugo:8000';
     private string $apiKey;
 
     public function __construct(
@@ -501,7 +642,7 @@ class WebSocketPublisherService
 }
 ```
 
-### Шаг 6: SmartSearchService
+### Шаг 7: SmartSearchService
 
 **AI Ассистент**: Находит задачи используя нечеткое сопоставление. Использует существующую сущность Task.
 
@@ -592,7 +733,7 @@ class SmartSearchService
 
 ## 🔧 Конфигурация Сервисов
 
-### Шаг 7: Зарегистрировать Сервисы в Symfony
+### Шаг 8: Зарегистрировать Сервисы в Symfony
 
 **AI Ассистент**: Добавьте это в `backend/config/services.yaml`:
 
@@ -606,6 +747,14 @@ services:
     App\Service\VoiceAssistant\LLMService:
         arguments:
             $httpClient: '@http_client'
+            # ⚠️ ВАЖНО: Ollama работает НАТИВНО на хосте!
+            $ollamaUrl: '%env(OLLAMA_URL)%'
+
+    App\Service\VoiceAssistant\WhisperService:
+        arguments:
+            $httpClient: '@http_client'
+            # ⚠️ ВАЖНО: Whisper работает НАТИВНО на хосте!
+            $whisperUrl: '%env(WHISPER_URL)%'
 
     App\Service\VoiceAssistant\CommandExecutorService:
         arguments:
@@ -620,23 +769,98 @@ services:
     App\Service\VoiceAssistant\SmartSearchService: ~
 ```
 
-### Шаг 8: Добавить Переменные Окружения
+### Шаг 9: Добавить Переменные Окружения
 
 **AI Ассистент**: Добавьте в `backend/.env`:
 
 ```env
-# Voice AI Configuration
-OLLAMA_URL=http://localhost:11434
-WHISPER_URL=http://localhost:8090
-CENTRIFUGO_URL=http://localhost:8000
+###> Voice AI Configuration ###
+# ⚠️ ВАЖНО: AI сервисы работают НАТИВНО на хосте!
+# Из Docker контейнера используем host.docker.internal
+OLLAMA_URL=http://host.docker.internal:11434
+WHISPER_URL=http://host.docker.internal:9001
+
+# Centrifugo (в Docker)
+CENTRIFUGO_URL=http://backend-centrifugo:8000
 CENTRIFUGO_API_KEY=your-api-key-here
+###< Voice AI Configuration ###
+```
+
+**Для Linux хостов** (если host.docker.internal не работает):
+
+```yaml
+# В docker-compose.yml добавить для PHP контейнера:
+services:
+  php83-fpm:
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 ```
 
 ---
 
 ## ✅ Тестирование Ваших Сервисов
 
-### Скрипт Быстрого Теста
+### Скрипт Проверки AI Сервисов
+
+**AI Ассистент**: Создайте `backend/bin/check-ai-services.php`:
+
+```php
+#!/usr/bin/env php
+<?php
+/**
+ * Проверка доступности AI сервисов (нативных на хосте)
+ */
+
+echo "=== AI Services Check ===\n\n";
+
+// 1. Проверка Ollama
+$ollamaUrl = getenv('OLLAMA_URL') ?: 'http://host.docker.internal:11434';
+echo "Ollama URL: $ollamaUrl\n";
+echo "Ollama: ";
+
+$ch = curl_init($ollamaUrl . '/api/tags');
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+$response = curl_exec($ch);
+$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
+
+if ($httpCode === 200) {
+    echo "✅ OK\n";
+    $data = json_decode($response, true);
+    $models = array_column($data['models'] ?? [], 'name');
+    echo "   Models: " . implode(', ', $models) . "\n";
+} else {
+    echo "❌ FAIL (HTTP $httpCode)\n";
+}
+
+// 2. Проверка Whisper
+$whisperUrl = getenv('WHISPER_URL') ?: 'http://host.docker.internal:9001';
+echo "\nWhisper URL: $whisperUrl\n";
+echo "Whisper: ";
+
+$ch = curl_init($whisperUrl . '/health');
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+$response = curl_exec($ch);
+$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
+
+if ($httpCode === 200) {
+    echo "✅ OK\n";
+} else {
+    echo "❌ FAIL (HTTP $httpCode)\n";
+}
+
+echo "\n=== Check Complete ===\n";
+```
+
+Запустите из Docker контейнера:
+```bash
+docker exec backend-php83 php bin/check-ai-services.php
+```
+
+### Unit Тест
 
 **AI Ассистент**: Создайте `backend/tests/VoiceServiceTest.php`:
 
@@ -651,7 +875,20 @@ use App\Service\VoiceAssistant\SmartSearchService;
 
 class VoiceServiceTest extends KernelTestCase
 {
-    public function testLLMService(): void
+    public function testLLMServiceHealthCheck(): void
+    {
+        self::bootKernel();
+        $container = static::getContainer();
+
+        $llmService = $container->get(LLMService::class);
+
+        // Проверяем доступность Ollama
+        $isAvailable = $llmService->healthCheck();
+
+        $this->assertTrue($isAvailable, 'Ollama should be available on host');
+    }
+
+    public function testLLMServiceParseCommand(): void
     {
         self::bootKernel();
         $container = static::getContainer();
@@ -667,19 +904,6 @@ class VoiceServiceTest extends KernelTestCase
         $this->assertArrayHasKey('parameters', $result);
         $this->assertArrayHasKey('confidence', $result);
     }
-
-    public function testSmartSearch(): void
-    {
-        self::bootKernel();
-        $container = static::getContainer();
-
-        $searchService = $container->get(SmartSearchService::class);
-
-        // This will work after you have test data
-        // $task = $searchService->findTaskByDescription('купить молоко', $user);
-
-        $this->assertTrue(true); // Placeholder
-    }
 }
 ```
 
@@ -692,23 +916,60 @@ docker exec backend-php83 php bin/phpunit tests/VoiceServiceTest.php
 
 ## 🚨 Частые Проблемы и Решения
 
-### Проблема: Отказ соединения с Ollama
+### Проблема: Отказ соединения с Ollama из Docker
+
 ```php
-// Измените URL в LLMService если сеть Docker отличается
-private string $ollamaUrl = 'http://host.docker.internal:11434';  // Для Mac/Windows
-// ИЛИ
-private string $ollamaUrl = 'http://172.17.0.1:11434';  // Для Linux
+// ❌ Не работает из Docker контейнера
+private string $ollamaUrl = 'http://localhost:11434';
+
+// ✅ Правильно для Docker
+private string $ollamaUrl = 'http://host.docker.internal:11434';
+
+// ✅ Для Linux (добавить в docker-compose.yml)
+extra_hosts:
+  - "host.docker.internal:host-gateway"
+```
+
+### Проблема: Ollama не отвечает
+
+```bash
+# Проверить что Ollama запущен на хосте (не в Docker!)
+# macOS:
+brew services list | grep ollama
+# или
+ps aux | grep ollama
+
+# Linux:
+sudo systemctl status ollama
+
+# Проверить порт
+curl http://localhost:11434/api/tags
+```
+
+### Проблема: Whisper не отвечает
+
+```bash
+# Проверить что faster-whisper-server запущен на хосте
+ps aux | grep faster-whisper
+
+# Linux:
+sudo systemctl status whisper-server
+
+# Проверить порт
+curl http://localhost:9001/health
 ```
 
 ### Проблема: Задача не найдена по голосу
+
 ```php
 // В SmartSearchService, настройте порог схожести:
 'OR similarity(t.title, :description) > 0.2'  // Ниже = больше совпадений
 ```
 
 ### Проблема: WebSocket не обновляется
+
 ```bash
-# Проверьте что Centrifugo запущен:
+# Проверьте что Centrifugo запущен (он в Docker):
 docker ps | grep centrifugo
 # Проверьте что API key совпадает в .env
 ```
@@ -722,15 +983,17 @@ docker ps | grep centrifugo
       ↓
 VoiceProcessingService
       ↓
-   Очередь
+   Очередь (RabbitMQ в Docker)
       ↓
-LLMService (Ollama)
+WhisperService ─────────────────→ faster-whisper-server (НАТИВНО на хосте:9001)
+      ↓
+LLMService ─────────────────────→ Ollama (НАТИВНО на хосте:11434)
       ↓
 CommandExecutorService
-      ├── SmartSearchService (поиск задач)
+      ├── SmartSearchService (поиск задач в PostgreSQL)
       └── TaskService (выполнение)
            ↓
-WebSocketPublisherService → Frontend
+WebSocketPublisherService ──────→ Centrifugo (Docker) → Frontend
 ```
 
 ---
@@ -739,13 +1002,14 @@ WebSocketPublisherService → Frontend
 
 - [ ] Созданы все директории сервисов
 - [ ] Реализован VoiceProcessingService
-- [ ] Реализован LLMService с Ollama
+- [ ] Реализован LLMService с подключением к **нативному** Ollama
+- [ ] Реализован WhisperService с подключением к **нативному** faster-whisper-server
 - [ ] Реализован CommandExecutorService
 - [ ] Реализован WebSocketPublisherService
 - [ ] Реализован SmartSearchService
 - [ ] Добавлена конфигурация сервисов в services.yaml
-- [ ] Добавлены переменные окружения
-- [ ] Протестирован хотя бы один сервис
+- [ ] Добавлены переменные окружения с `host.docker.internal`
+- [ ] Протестирован health check AI сервисов
 
 ---
 
@@ -759,14 +1023,24 @@ WebSocketPublisherService → Frontend
 
 ---
 
+## 🔗 Связанные Документы
+
+- [NATIVE_INSTALLATION.md](../NATIVE_INSTALLATION.md) - Установка Ollama и Whisper нативно
+- [01_SETUP.md](../01_INFRASTRUCTURE/01_SETUP.md) - Настройка инфраструктуры
+- [03_AI_SERVICES.md](../01_INFRASTRUCTURE/03_AI_SERVICES.md) - Детали AI сервисов
+
+---
+
 **Помните для AI**:
+- **AI сервисы (Ollama, Whisper) работают НАТИВНО на хосте!**
+- Из Docker используйте `host.docker.internal` для доступа к AI
 - Адаптируйте код к существующей структуре проекта
 - Используйте существующие TaskService и сущность Task
-- Проверяйте сеть Docker для URL сервисов
 - Не усложняйте - это MVP, сначала сделайте рабочим
 
 ---
 
-**Статус Документа**: Упрощён для AI Реализации
+**Статус Документа**: Обновлен для нативной установки AI
+**Версия**: 2.0.0
 **Сложность**: Средняя
 **Время Реализации**: 2-3 часа

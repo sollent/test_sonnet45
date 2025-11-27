@@ -1,17 +1,37 @@
 # 🖥️ Нативная Установка AI Сервисов
 
-> **Версия**: 1.0
-> **Дата**: 2025-11-20
+> **Версия**: 2.0.0
+> **Дата**: 2025-11-27
 > **Статус**: Production-ready
+
+---
+
+## ⚠️ КРИТИЧЕСКИ ВАЖНО
+
+**AI сервисы (Ollama и Whisper) устанавливаются НАТИВНО на хост-машину!**
+
+```
+НЕ Docker → Нативная установка на хосте
+```
+
+| Сервис | Установка | Порт | Доступ из Docker |
+|--------|-----------|------|------------------|
+| **Ollama** | Нативно | 11434 | `host.docker.internal:11434` |
+| **Whisper** | Нативно | 9001 | `host.docker.internal:9001` |
+
+---
 
 ## 📋 Содержание
 
 1. [Обзор](#обзор)
-2. [Установка Ollama](#установка-ollama)
-3. [Установка Whisper](#установка-whisper)
-4. [Проверка Работоспособности](#проверка-работоспособности)
-5. [Автозапуск](#автозапуск)
-6. [Troubleshooting](#troubleshooting)
+2. [Требования к Оборудованию](#требования-к-оборудованию)
+3. [Установка Ollama](#установка-ollama)
+4. [Установка Whisper (faster-whisper-server)](#установка-whisper-faster-whisper-server)
+5. [Проверка Работоспособности](#проверка-работоспособности)
+6. [Автозапуск](#автозапуск)
+7. [Production Конфигурация](#production-конфигурация)
+8. [Troubleshooting](#troubleshooting)
+9. [Мониторинг](#мониторинг)
 
 ---
 
@@ -19,37 +39,69 @@
 
 ### Почему Нативная Установка?
 
-AI сервисы (Ollama и Whisper) теперь работают **нативно** на хосте вместо Docker контейнеров для значительного улучшения производительности:
+AI сервисы работают **нативно** на хосте для значительного улучшения производительности:
 
 | Метрика | Docker | Native | Улучшение |
 |---------|--------|--------|-----------|
-| **Whisper (medium)** | 15-25s | 5-8s | 3-5x |
-| **LLM (Qwen 14B)** | 60-90s | 5-15s | 4-6x |
-| **Full Pipeline** | 75-115s | 10-23s | 5-7x |
+| **Whisper large-v3** | 30-45s | 3-5s | 6-9x |
+| **LLM Qwen 2.5 14B** | 60-90s | 5-15s | 4-6x |
+| **Full Pipeline** | 90-135s | 8-20s | 5-7x |
 
-**Примечание**: Модели medium и 14B обеспечивают значительно лучшее качество при приемлемой скорости.
-- Whisper medium: 95-97% точность (vs 85-90% у tiny)
-- Qwen 14B: отличное понимание сложных команд
+### Рекомендуемые Модели
+
+| Задача | Модель | VRAM | Качество |
+|--------|--------|------|----------|
+| **LLM** | `qwen2.5:14b-instruct-q4_K_M` | 10-12 GB | Отличное понимание команд |
+| **STT** | Whisper `large-v3` | 3-4 GB | 98%+ точность для русского |
 
 ### Архитектура
 
 ```
-┌─────────────────────────────────────────────┐
-│                   Host                       │
-├─────────────────────────────────────────────┤
-│  Ollama (localhost:11434)                   │
-│  Whisper API (localhost:9001)               │
-└──────────────┬──────────────────────────────┘
-               │ host.docker.internal
-┌──────────────┴──────────────────────────────┐
-│              Docker                          │
-├─────────────────────────────────────────────┤
-│  PHP Backend (backend-php83)                │
-│  Centrifugo (backend-centrifugo)            │
-│  Redis (backend-redis)                      │
-│  PostgreSQL, Nginx, etc.                    │
-└─────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────┐
+│                     HOST                         │
+├─────────────────────────────────────────────────┤
+│  🧠 Ollama (localhost:11434)                    │
+│     └── qwen2.5:14b-instruct-q4_K_M             │
+│                                                  │
+│  🎤 faster-whisper-server (localhost:9001)      │
+│     └── large-v3                                 │
+└──────────────────┬──────────────────────────────┘
+                   │ host.docker.internal
+┌──────────────────┴──────────────────────────────┐
+│                   DOCKER                         │
+├─────────────────────────────────────────────────┤
+│  PHP Backend (backend-php83)                    │
+│  Centrifugo (backend-centrifugo)                │
+│  Redis (backend-redis)                          │
+│  PostgreSQL, Nginx, RabbitMQ                    │
+└─────────────────────────────────────────────────┘
 ```
+
+---
+
+## 💻 Требования к Оборудованию
+
+### Development (macOS/Linux)
+
+| Компонент | Минимум | Рекомендуется |
+|-----------|---------|---------------|
+| **GPU** | - | NVIDIA GPU 8GB+ |
+| **RAM** | 16 GB | 32 GB |
+| **Storage** | 50 GB SSD | 100 GB NVMe |
+| **CPU** | 4 cores | 8+ cores |
+
+### Production Server (RTX 4090)
+
+| Компонент | Спецификация |
+|-----------|--------------|
+| **GPU** | NVIDIA RTX 4090 24GB VRAM |
+| **Bandwidth** | 1008 GB/s |
+| **CUDA Cores** | 16,384 |
+| **RAM** | 32-64 GB DDR5 |
+| **Storage** | 200 GB NVMe SSD |
+| **OS** | Ubuntu 22.04 LTS |
+
+**Стоимость**: ~29,000₽/мес (выделенный сервер)
 
 ---
 
@@ -61,145 +113,133 @@ AI сервисы (Ollama и Whisper) теперь работают **натив
 # Через Homebrew (рекомендуется)
 brew install ollama
 
-# Или через curl
-curl -fsSL https://ollama.com/install.sh | sh
-```
+# Запустить как сервис (автозапуск)
+brew services start ollama
 
-### Запуск Сервиса
-
-```bash
-# Запустить Ollama сервер
+# Или запустить вручную
 ollama serve
-
-# В отдельном терминале загрузить модель
-ollama pull qwen2.5:14b
 ```
 
-### Проверка
+### Linux (Ubuntu/Debian)
 
 ```bash
-# Проверить что сервис работает
+# Официальный установщик
+curl -fsSL https://ollama.com/install.sh | sh
+
+# Ollama автоматически создаст systemd сервис
+# Проверка статуса
+sudo systemctl status ollama
+```
+
+### Загрузка Модели
+
+```bash
+# Production модель (рекомендуется)
+ollama pull qwen2.5:14b-instruct-q4_K_M
+
+# Development модель (меньше, быстрее)
+ollama pull qwen2.5:7b-instruct-q4_K_M
+
+# Проверка загруженных моделей
+ollama list
+```
+
+### Конфигурация Ollama
+
+```bash
+# Переменные окружения (добавить в ~/.bashrc или ~/.zshrc)
+export OLLAMA_NUM_PARALLEL=2        # Параллельные запросы
+export OLLAMA_KEEP_ALIVE=24h        # Держать модель в памяти
+export OLLAMA_HOST=0.0.0.0:11434    # Слушать на всех интерфейсах
+export OLLAMA_MAX_LOADED_MODELS=2   # Максимум моделей в памяти
+```
+
+### Проверка Ollama
+
+```bash
+# API проверка
 curl http://localhost:11434/api/tags
 
-# Должен вернуть JSON с моделями
-```
-
-### Конфигурация (опционально)
-
-```bash
-# Установить переменные окружения перед запуском
-export OLLAMA_NUM_PARALLEL=2      # Параллельные запросы
-export OLLAMA_KEEP_ALIVE=24h       # Держать модель в памяти
-export OLLAMA_HOST=0.0.0.0         # Слушать на всех интерфейсах
-
-ollama serve
+# Тест генерации
+curl http://localhost:11434/api/generate -d '{
+  "model": "qwen2.5:14b-instruct-q4_K_M",
+  "prompt": "Привет! Как дела?",
+  "stream": false
+}'
 ```
 
 ---
 
-## 🎤 Установка Whisper
+## 🎤 Установка Whisper (faster-whisper-server)
 
 ### Требования
 
 - Python 3.9+
-- pip
-- ffmpeg (для обработки аудио)
+- CUDA Toolkit 12.x (для GPU)
+- FFmpeg
 
-### Установка ffmpeg
+### Установка FFmpeg
 
 ```bash
 # macOS
 brew install ffmpeg
 
 # Ubuntu/Debian
-sudo apt install ffmpeg
+sudo apt update && sudo apt install -y ffmpeg
 ```
 
-### Создание Виртуального Окружения
+### Установка faster-whisper-server
+
+**faster-whisper-server** - готовый OpenAI-совместимый сервер для faster-whisper.
 
 ```bash
 # Создать виртуальное окружение
 python3 -m venv ~/whisper-env
-
-# Активировать
 source ~/whisper-env/bin/activate
 
-# Установить зависимости
-pip install openai-whisper flask
-```
+# Установить faster-whisper-server
+pip install faster-whisper-server
 
-### Создание API Сервера
-
-Создайте файл `~/whisper-server.py`:
-
-```python
-from flask import Flask, request, jsonify
-import whisper
-import tempfile
-import os
-
-app = Flask(__name__)
-
-# Загружаем модель при старте (medium для баланса скорости и качества)
-print("Loading Whisper model (medium)...")
-model = whisper.load_model("medium")
-print("Model loaded!")
-
-@app.route('/asr', methods=['POST'])
-def transcribe():
-    """Транскрипция аудио в текст"""
-    try:
-        if 'audio_file' not in request.files:
-            return jsonify({'error': 'No audio file provided'}), 400
-
-        audio_file = request.files['audio_file']
-
-        # Сохраняем во временный файл
-        with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as tmp:
-            audio_file.save(tmp.name)
-
-            # Транскрибируем
-            result = model.transcribe(tmp.name, language='ru')
-
-            # Удаляем временный файл
-            os.unlink(tmp.name)
-
-            return jsonify({
-                'text': result['text'].strip(),
-                'language': result.get('language', 'ru'),
-                'confidence': 0.9  # Whisper не возвращает confidence
-            })
-
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/docs', methods=['GET'])
-def health():
-    """Health check endpoint"""
-    return jsonify({'status': 'ok', 'model': 'medium'})
-
-if __name__ == '__main__':
-    print("Starting Whisper API server on port 9001...")
-    app.run(host='0.0.0.0', port=9001, debug=False, threaded=True)
+# Для GPU (NVIDIA)
+pip install faster-whisper-server[gpu]
 ```
 
 ### Запуск Сервера
 
 ```bash
-# Активировать виртуальное окружение
+# Активировать окружение
 source ~/whisper-env/bin/activate
 
-# Запустить сервер
-python ~/whisper-server.py
+# Запустить с моделью large-v3
+faster-whisper-server --model large-v3 --host 0.0.0.0 --port 9001
+
+# Или с другими параметрами
+faster-whisper-server \
+  --model large-v3 \
+  --device cuda \
+  --compute-type float16 \
+  --host 0.0.0.0 \
+  --port 9001
 ```
 
-### Проверка
+### Параметры Сервера
+
+| Параметр | Описание | Значение |
+|----------|----------|----------|
+| `--model` | Модель Whisper | `large-v3` (рекомендуется) |
+| `--device` | Устройство | `cuda` или `cpu` |
+| `--compute-type` | Точность | `float16` (GPU) / `int8` (CPU) |
+| `--host` | Адрес | `0.0.0.0` |
+| `--port` | Порт | `9001` |
+
+### Проверка Whisper
 
 ```bash
 # Health check
-curl http://localhost:9001/docs
+curl http://localhost:9001/health
 
-# Должен вернуть: {"status": "ok", "model": "medium"}
+# Или OpenAI-совместимый эндпоинт
+curl http://localhost:9001/v1/models
 ```
 
 ---
@@ -211,32 +251,68 @@ curl http://localhost:9001/docs
 ```bash
 # Ollama
 curl http://localhost:11434/api/tags
+# Ожидается: JSON с моделями
 
 # Whisper
-curl http://localhost:9001/docs
+curl http://localhost:9001/health
+# Ожидается: {"status": "ok"} или аналогичный ответ
 ```
 
 ### 2. Проверка из Docker Контейнера
 
 ```bash
 # Ollama из PHP контейнера
-docker exec backend-php83 curl http://host.docker.internal:11434/api/tags
+docker exec backend-php83 curl -s http://host.docker.internal:11434/api/tags
 
 # Whisper из PHP контейнера
-docker exec backend-php83 curl http://host.docker.internal:9001/docs
+docker exec backend-php83 curl -s http://host.docker.internal:9001/health
 ```
 
-### 3. Функциональный Тест
+### 3. Интеграционный Тест
 
 ```bash
-# Получить JWT токен (замените на свой)
-JWT_TOKEN="your-jwt-token"
+#!/bin/bash
+# test-ai-integration.sh
 
-# Тест обработки текстовой команды
-curl -X POST http://localhost:8090/api/voice/process-text \
-  -H "Authorization: Bearer $JWT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"text": "Создай задачу купить молоко на завтра"}'
+echo "=== AI Integration Test ==="
+
+# 1. Проверка Ollama
+echo -n "Ollama: "
+if curl -s http://localhost:11434/api/tags | grep -q "models"; then
+    echo "✅ OK"
+else
+    echo "❌ FAIL"
+    exit 1
+fi
+
+# 2. Проверка Whisper
+echo -n "Whisper: "
+if curl -s http://localhost:9001/health | grep -q -E "(ok|healthy)"; then
+    echo "✅ OK"
+else
+    echo "❌ FAIL"
+    exit 1
+fi
+
+# 3. Проверка из Docker
+echo -n "Docker → Ollama: "
+if docker exec backend-php83 curl -s http://host.docker.internal:11434/api/tags | grep -q "models"; then
+    echo "✅ OK"
+else
+    echo "❌ FAIL"
+    exit 1
+fi
+
+echo -n "Docker → Whisper: "
+if docker exec backend-php83 curl -s http://host.docker.internal:9001/health | grep -q -E "(ok|healthy)"; then
+    echo "✅ OK"
+else
+    echo "❌ FAIL"
+    exit 1
+fi
+
+echo ""
+echo "=== All tests passed! ==="
 ```
 
 ---
@@ -245,92 +321,187 @@ curl -X POST http://localhost:8090/api/voice/process-text \
 
 ### macOS (LaunchAgent)
 
-#### Ollama
-
-Файл: `~/Library/LaunchAgents/com.ollama.plist`
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>Label</key>
-    <string>com.ollama</string>
-    <key>ProgramArguments</key>
-    <array>
-        <string>/opt/homebrew/bin/ollama</string>
-        <string>serve</string>
-    </array>
-    <key>RunAtLoad</key>
-    <true/>
-    <key>KeepAlive</key>
-    <true/>
-    <key>EnvironmentVariables</key>
-    <dict>
-        <key>OLLAMA_NUM_PARALLEL</key>
-        <string>2</string>
-        <key>OLLAMA_KEEP_ALIVE</key>
-        <string>24h</string>
-    </dict>
-</dict>
-</plist>
-```
-
-#### Whisper
-
-Файл: `~/Library/LaunchAgents/com.whisper.plist`
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>Label</key>
-    <string>com.whisper</string>
-    <key>ProgramArguments</key>
-    <array>
-        <string>/Users/YOUR_USERNAME/whisper-env/bin/python</string>
-        <string>/Users/YOUR_USERNAME/whisper-server.py</string>
-    </array>
-    <key>RunAtLoad</key>
-    <true/>
-    <key>KeepAlive</key>
-    <true/>
-    <key>WorkingDirectory</key>
-    <string>/Users/YOUR_USERNAME</string>
-</dict>
-</plist>
-```
-
-#### Активация
+#### Ollama (если установлен через Homebrew)
 
 ```bash
-# Загрузить сервисы
-launchctl load ~/Library/LaunchAgents/com.ollama.plist
-launchctl load ~/Library/LaunchAgents/com.whisper.plist
+# Автозапуск через Homebrew
+brew services start ollama
 
-# Проверить статус
-launchctl list | grep ollama
+# Проверка
+brew services list | grep ollama
+```
+
+#### Whisper LaunchAgent
+
+Файл: `~/Library/LaunchAgents/com.whisper-server.plist`
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.whisper-server</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/YOUR_USERNAME/whisper-env/bin/faster-whisper-server</string>
+        <string>--model</string>
+        <string>large-v3</string>
+        <string>--host</string>
+        <string>0.0.0.0</string>
+        <string>--port</string>
+        <string>9001</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>/tmp/whisper-server.log</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/whisper-server.error.log</string>
+</dict>
+</plist>
+```
+
+**Активация:**
+
+```bash
+# Загрузить сервис
+launchctl load ~/Library/LaunchAgents/com.whisper-server.plist
+
+# Проверить
 launchctl list | grep whisper
-
-# Остановить/запустить
-launchctl stop com.ollama
-launchctl start com.ollama
 ```
 
 ### Linux (SystemD)
 
-См. секцию 1.3 в MIGRATION_PLAN.md для полных инструкций SystemD.
+#### Ollama (автоматически создается)
+
+```bash
+# Ollama создает сервис автоматически
+sudo systemctl enable ollama
+sudo systemctl start ollama
+sudo systemctl status ollama
+```
+
+#### Whisper SystemD Service
+
+Файл: `/etc/systemd/system/whisper-server.service`
+
+```ini
+[Unit]
+Description=Faster Whisper Server
+After=network.target
+
+[Service]
+Type=simple
+User=YOUR_USERNAME
+WorkingDirectory=/home/YOUR_USERNAME
+Environment="PATH=/home/YOUR_USERNAME/whisper-env/bin"
+ExecStart=/home/YOUR_USERNAME/whisper-env/bin/faster-whisper-server \
+    --model large-v3 \
+    --device cuda \
+    --compute-type float16 \
+    --host 0.0.0.0 \
+    --port 9001
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+```
+
+**Активация:**
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable whisper-server
+sudo systemctl start whisper-server
+sudo systemctl status whisper-server
+```
+
+---
+
+## 🚀 Production Конфигурация
+
+### Ollama Production Override
+
+Файл: `/etc/systemd/system/ollama.service.d/override.conf`
+
+```ini
+[Service]
+Environment="OLLAMA_NUM_PARALLEL=4"
+Environment="OLLAMA_KEEP_ALIVE=24h"
+Environment="OLLAMA_HOST=0.0.0.0:11434"
+Environment="OLLAMA_MAX_LOADED_MODELS=2"
+Environment="CUDA_VISIBLE_DEVICES=0"
+```
+
+**Применение:**
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl restart ollama
+```
+
+### Whisper Production Service
+
+Файл: `/etc/systemd/system/whisper-server.service`
+
+```ini
+[Unit]
+Description=Faster Whisper Server (Production)
+After=network.target nvidia-persistenced.service
+Wants=nvidia-persistenced.service
+
+[Service]
+Type=simple
+User=ai-services
+Group=ai-services
+WorkingDirectory=/opt/whisper
+Environment="PATH=/opt/whisper/venv/bin"
+Environment="CUDA_VISIBLE_DEVICES=0"
+ExecStart=/opt/whisper/venv/bin/faster-whisper-server \
+    --model large-v3 \
+    --device cuda \
+    --compute-type float16 \
+    --host 0.0.0.0 \
+    --port 9001
+Restart=always
+RestartSec=10
+LimitNOFILE=65535
+LimitNPROC=65535
+
+[Install]
+WantedBy=multi-user.target
+```
+
+### Проверка GPU Использования
+
+```bash
+# NVIDIA GPU мониторинг
+nvidia-smi
+
+# Постоянный мониторинг (каждые 2 секунды)
+watch -n 2 nvidia-smi
+
+# Проверка CUDA
+python3 -c "import torch; print(torch.cuda.is_available())"
+```
 
 ---
 
 ## 🔧 Troubleshooting
 
-### Ollama не запускается
+### Ollama Проблемы
+
+#### Ollama не запускается
 
 ```bash
 # Проверить логи
-cat ~/.ollama/logs/server.log
+journalctl -u ollama -f           # Linux
+cat ~/.ollama/logs/server.log     # macOS
 
 # Проверить порт
 lsof -i :11434
@@ -339,19 +510,58 @@ lsof -i :11434
 kill $(lsof -t -i :11434)
 ```
 
-### Whisper не запускается
+#### "Model not found"
 
 ```bash
-# Проверить Python
-which python
-python --version
+# Проверить модели
+ollama list
 
-# Проверить зависимости
-pip list | grep whisper
-pip list | grep flask
+# Загрузить заново
+ollama pull qwen2.5:14b-instruct-q4_K_M
+```
+
+#### Медленная генерация
+
+```bash
+# Проверить GPU использование
+nvidia-smi
+
+# Если GPU не используется, проверить CUDA
+ollama --version
+```
+
+### Whisper Проблемы
+
+#### Whisper не запускается
+
+```bash
+# Проверить логи
+journalctl -u whisper-server -f   # Linux
+tail -f /tmp/whisper-server.log   # macOS
 
 # Проверить порт
 lsof -i :9001
+```
+
+#### CUDA ошибки
+
+```bash
+# Проверить CUDA
+nvidia-smi
+python3 -c "import torch; print(torch.cuda.is_available())"
+
+# Переустановить с GPU поддержкой
+pip install --upgrade faster-whisper-server[gpu]
+```
+
+#### Недостаточно VRAM
+
+```bash
+# Использовать меньшую модель
+faster-whisper-server --model medium --device cuda ...
+
+# Или использовать CPU
+faster-whisper-server --model large-v3 --device cpu --compute-type int8 ...
 ```
 
 ### Docker не видит нативные сервисы
@@ -360,67 +570,105 @@ lsof -i :9001
 # Проверить host.docker.internal
 docker exec backend-php83 ping -c 1 host.docker.internal
 
-# Если не работает, добавить в /etc/hosts внутри контейнера
-docker exec backend-php83 sh -c 'echo "host-gateway host.docker.internal" >> /etc/hosts'
-```
+# Для Linux: добавить extra_hosts в docker-compose.yml
+# services:
+#   php83-fpm:
+#     extra_hosts:
+#       - "host.docker.internal:host-gateway"
 
-### Ошибка "Model not found"
-
-```bash
-# Проверить загруженные модели
-ollama list
-
-# Загрузить модель заново
-ollama pull qwen2.5:14b
-```
-
-### Медленная работа Whisper
-
-```bash
-# Проверить что используется Metal на macOS
-pip install --upgrade openai-whisper
-
-# Или использовать larger модель для точности
-# Изменить в whisper-server.py:
-# model = whisper.load_model("small")  # вместо "tiny"
+# Проверить после добавления
+docker-compose down && docker-compose up -d
+docker exec backend-php83 curl http://host.docker.internal:11434/api/tags
 ```
 
 ---
 
 ## 📊 Мониторинг
 
-### Ollama
+### Ollama Мониторинг
 
 ```bash
-# Статус моделей
+# Список моделей
 ollama list
 
 # Запущенные модели
 ollama ps
 
 # Остановить все модели
-ollama stop $(ollama ps | tail -n +2 | awk '{print $1}')
+ollama stop $(ollama ps -q)
+
+# Версия
+ollama --version
 ```
 
-### Whisper
+### Whisper Мониторинг
 
 ```bash
 # Проверить процесс
-ps aux | grep whisper
+ps aux | grep faster-whisper
 
-# Логи (если запущен через launchd)
-tail -f ~/Library/Logs/com.whisper.log
+# SystemD статус (Linux)
+sudo systemctl status whisper-server
+
+# Логи
+journalctl -u whisper-server --since "1 hour ago"
+```
+
+### GPU Мониторинг
+
+```bash
+# Текущее состояние
+nvidia-smi
+
+# Постоянный мониторинг
+watch -n 1 nvidia-smi
+
+# Детальная информация
+nvidia-smi -q
+```
+
+### Health Check Script
+
+```bash
+#!/bin/bash
+# health-check.sh
+
+check_service() {
+    local name=$1
+    local url=$2
+    local response=$(curl -s -o /dev/null -w "%{http_code}" "$url" 2>/dev/null)
+
+    if [ "$response" = "200" ]; then
+        echo "✅ $name: OK"
+        return 0
+    else
+        echo "❌ $name: FAIL (HTTP $response)"
+        return 1
+    fi
+}
+
+echo "=== AI Services Health Check ==="
+echo ""
+
+check_service "Ollama" "http://localhost:11434/api/tags"
+check_service "Whisper" "http://localhost:9001/health"
+
+echo ""
+echo "=== GPU Status ==="
+nvidia-smi --query-gpu=name,memory.used,memory.total,utilization.gpu --format=csv
 ```
 
 ---
 
 ## 🔗 Связанные Документы
 
-- [MIGRATION_PLAN.md](../../MIGRATION_PLAN.md) - План миграции
-- [03_AI_SERVICES.md](01_INFRASTRUCTURE/03_AI_SERVICES.md) - Общая документация AI сервисов
-- [VOICE_AI_TESTING_REPORT.md](../guides/voice-ai/VOICE_AI_TESTING_REPORT.md) - Тестирование Voice AI
+- [INDEX.md](INDEX.md) - Главный индекс AI документации
+- [01_SETUP.md](01_INFRASTRUCTURE/01_SETUP.md) - Настройка инфраструктуры
+- [03_AI_SERVICES.md](01_INFRASTRUCTURE/03_AI_SERVICES.md) - Детальная документация AI сервисов
+- [VOICE_AI_ASSISTANT_PLAN.md](../guides/voice-ai/VOICE_AI_ASSISTANT_PLAN.md) - План голосового ассистента
 
 ---
 
 **Автор**: Claude Code AI
 **Дата создания**: 2025-11-20
+**Последнее обновление**: 2025-11-27
