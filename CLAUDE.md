@@ -131,6 +131,9 @@ npm run test:run
 **"Как тестировать?"**
 → Читайте [`docs/guides/testing/TESTING.md`](docs/guides/testing/TESTING.md)
 
+**"Как реализовать real-time обновления через WebSocket?"**
+→ Читайте [`docs/guides/CENTRIFUGO_REALTIME_IMPLEMENTATION.md`](docs/guides/CENTRIFUGO_REALTIME_IMPLEMENTATION.md)
+
 **"Нужен полный контекст?"**
 → Начните с [`docs/INDEX.md`](docs/INDEX.md) (2.5 часа чтения)
 

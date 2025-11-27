@@ -67,7 +67,14 @@ class TagRepository extends ServiceEntityRepository
      */
     public function findOrCreateByNames(array $names, User $user): array
     {
-        $names = array_unique(array_filter(array_map('trim', $names)));
+        // Нормализуем: trim, filter, capitalize, unique
+        $names = array_map('trim', $names);
+        $names = array_filter($names);
+        $names = array_map(
+            fn ($name) => mb_strtoupper(mb_substr($name, 0, 1)) . mb_substr($name, 1),
+            $names,
+        );
+        $names = array_unique($names);
 
         if (empty($names)) {
             return [];
@@ -96,6 +103,7 @@ class TagRepository extends ServiceEntityRepository
 
             foreach ($tagsToCreateNames as $name) {
                 $tag = new Tag();
+                // Имя уже капитализировано в начале метода
                 $tag->setName($name)
                     ->setUser($user)
                     ->setColor($colors[$colorIndex % count($colors)]);

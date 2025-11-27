@@ -31,7 +31,7 @@ class MediaObject
     private ?int $fileSize = null;
 
     #[ORM\Column(length: 50)]
-    private ?string $fileType = null; // 'image', 'document', 'video', 'other'
+    private ?string $fileType = null; // 'image', 'document', 'video', 'audio', 'other'
 
     #[ORM\Column(length: 500)]
     private ?string $filePath = null;
@@ -172,6 +172,10 @@ class MediaObject
 
         if (str_starts_with($this->mimeType ?? '', 'video/')) {
             return 'video';
+        }
+
+        if (str_starts_with($this->mimeType ?? '', 'audio/')) {
+            return 'audio';
         }
 
         if (in_array($this->mimeType, [

@@ -1,18 +1,37 @@
 # 🎯 НАЧНИ ЗДЕСЬ - Реализация Voice AI Assistant
 
-> **Для AI (Opus 4.1, Sonnet 4.5)**: Это твоя стартовая точка. Прочитай это первым!
+> **Для AI (Opus 4.5, Sonnet 4.5)**: Это твоя стартовая точка. Прочитай это первым!
 
 ## 📍 Текущее Местоположение
 
 Ты находишься в: `test_sonnet45/` проекте
 Документация: `docs/ai/` директория
 
+---
+
+## ⚠️ КРИТИЧЕСКИ ВАЖНО: Архитектура AI Сервисов
+
+### Ollama и Whisper работают НАТИВНО (не в Docker!)
+
+| Сервис | Установка | URL из Docker контейнеров |
+|--------|-----------|---------------------------|
+| **Ollama** | Нативная на хосте | `http://host.docker.internal:11434` |
+| **Whisper** | Нативная на хосте | `http://host.docker.internal:9001` |
+
+**Почему нативно?** 10-20x улучшение производительности:
+- Whisper: 0.5-1s (вместо 10-15s в Docker)
+- LLM: 3-5s (вместо 60-90s в Docker)
+
+**Инструкции по установке**: [`NATIVE_INSTALLATION.md`](NATIVE_INSTALLATION.md)
+
+---
+
 ## 🎯 Миссия
 
 Реализовать Voice AI Assistant для Task Manager:
 - Пользователь говорит → AI понимает → Задача создана/обновлена
 - Работает в веб-приложении + Telegram
-- Использует локальную LLM (Llama 3.2) + Whisper STT
+- Использует локальную LLM (Qwen 2.5 14B) + Whisper large-v3 (нативная установка)
 
 ## 🚦 Чеклист Реализации
 
@@ -50,11 +69,12 @@
 
 #### Фаза 3: Инфраструктура (1 день)
 
-**День 5: AI Сервисы**
-- [ ] 5.1: [AI Сервисы](01_INFRASTRUCTURE/03_AI_SERVICES.md) - Установи Ollama + Whisper
-- [ ] 5.2: Загрузи модель Llama 3.2 3B
-- [ ] 5.3: Протестируй транскрипцию Whisper
-- [ ] 5.4: Интеграционный тест полного потока
+**День 5: AI Сервисы (Нативная Установка)**
+- [ ] 5.1: [NATIVE_INSTALLATION.md](NATIVE_INSTALLATION.md) - Установи Ollama + faster-whisper **нативно на хосте**
+- [ ] 5.2: Загрузи модель: `ollama pull qwen2.5:14b-instruct-q4_K_M`
+- [ ] 5.3: Запусти Whisper: `faster-whisper-server --host 0.0.0.0 --port 9001 --model large-v3`
+- [ ] 5.4: Проверь доступ из Docker: `curl http://host.docker.internal:11434/api/tags`
+- [ ] 5.5: Интеграционный тест полного потока
 
 ## 🎯 MVP Границы (Что Строить)
 
@@ -166,14 +186,23 @@ public function handle(VoiceCommand $command): array
 ### При Тестировании
 
 ```bash
-# Тест LLM
+# Тест LLM (нативный Ollama на хосте)
 curl -X POST http://localhost:11434/api/generate \
-  -d '{"model":"llama3.2:3b","prompt":"Создай задачу купить молоко"}'
+  -d '{"model":"qwen2.5:14b-instruct-q4_K_M","prompt":"Создай задачу купить молоко","format":"json"}'
 
-# Тест API
+# Тест Whisper (нативный faster-whisper на хосте)
+curl -X POST http://localhost:9001/v1/audio/transcriptions \
+  -F "file=@test_audio.wav" \
+  -F "language=ru"
+
+# Тест API (из Docker контейнера обращается к host.docker.internal)
 curl -X POST http://localhost:8089/api/voice/command \
   -H "Authorization: Bearer TOKEN" \
   -d '{"text":"Создай задачу тест"}'
+
+# Тест доступа к нативным сервисам из Docker
+docker exec backend-php83 curl http://host.docker.internal:11434/api/tags
+docker exec backend-php83 curl http://host.docker.internal:9001/health
 ```
 
 ## 🚨 Распространенные Ошибки Которых Следует Избегать
@@ -220,6 +249,21 @@ $parsed = $this->llmService->parseCommand($text);
 ### Проблема: LLM возвращает невалидный JSON
 → Проверь [PROMPTS_LIBRARY.md](REFERENCE/PROMPTS_LIBRARY.md)
 → Убедись что `format: 'json'` в запросе Ollama
+
+### Проблема: Ollama не отвечает (нативная установка)
+→ Проверь статус: `curl http://localhost:11434/api/tags`
+→ macOS: `brew services restart ollama`
+→ Linux: `sudo systemctl restart ollama`
+
+### Проблема: Whisper не отвечает (нативная установка)
+→ Проверь статус: `curl http://localhost:9001/health`
+→ Перезапусти: `faster-whisper-server --host 0.0.0.0 --port 9001 --model large-v3`
+→ Проверь GPU: `nvidia-smi`
+
+### Проблема: Docker контейнер не видит нативные сервисы
+→ Используй `host.docker.internal` вместо `localhost`
+→ Проверь: `docker exec backend-php83 curl http://host.docker.internal:11434/api/tags`
+→ На Linux может потребоваться: `--add-host=host.docker.internal:host-gateway`
 
 ### Проблема: Задача не найдена по голосу
 → Проверь SmartSearchService в [Сервисах](02_BACKEND/02_SERVICES.md)

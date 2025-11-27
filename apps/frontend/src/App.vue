@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.store'
 import { useLoaderStore } from '@/stores/loader.store'
 import { useOfflineDetection } from '@/composables/useOfflineDetection'
@@ -9,6 +10,7 @@ import GlobalLanguageSwitcher from '@/components/ui/GlobalLanguageSwitcher.vue'
 import AppLoader from '@/components/AppLoader.vue'
 import OfflineModal from '@/components/common/OfflineModal.vue'
 
+const route = useRoute()
 const authStore = useAuthStore()
 const loaderStore = useLoaderStore()
 const isAppLoaded = ref(false)
@@ -20,15 +22,20 @@ const { isOnline, isModalVisible } = useOfflineDetection({
   checkServiceWorker: true
 })
 
-// Проверяем, нужно ли пропустить лоадер (при разлогине)
-const skipInitialLoader = sessionStorage.getItem('skip_loader') === 'true'
-if (skipInitialLoader) {
-  sessionStorage.removeItem('skip_loader')
-  isAppLoaded.value = true
+// Проверяем, нужно ли пропустить лоадер (при разлогине) - SSR-safe
+if (typeof sessionStorage !== 'undefined') {
+  const skipInitialLoader = sessionStorage.getItem('skip_loader') === 'true'
+  if (skipInitialLoader) {
+    sessionStorage.removeItem('skip_loader')
+    isAppLoaded.value = true
+  }
 }
 
 onMounted(async () => {
   await authStore.initializeAuth()
+
+  // Dispatch event for prerenderer to know page is ready
+  document.dispatchEvent(new Event('render-event'))
 })
 
 function handleLoaderComplete() {
@@ -45,6 +52,12 @@ const loaderKey = computed(() => {
     return 'initial-loader'
   }
   return `dynamic-loader-${loaderStore.loaderKey}`
+})
+
+// Показывать language switcher только НЕ на главной, календаре и аналитике
+const shouldShowLanguageSwitcher = computed(() => {
+  const hiddenPaths = ['/dashboard', '/calendar', '/analytics']
+  return !hiddenPaths.includes(route.path)
 })
 </script>
 
@@ -66,8 +79,8 @@ const loaderKey = computed(() => {
         <component :is="Component" :key="route.path" />
       </transition>
     </router-view>
-    <!-- Global Language Switcher -->
-    <GlobalLanguageSwitcher />
+    <!-- Global Language Switcher (скрыт на главной, календаре и аналитике) -->
+    <GlobalLanguageSwitcher v-if="shouldShowLanguageSwitcher" />
     </template>
 
     <!-- Offline Modal - Always rendered -->

@@ -19,7 +19,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Tools\Pagination\Paginator;
 use Symfony\Component\HttpFoundation\RequestStack;
 
-final class TaskService
+class TaskService
 {
     public function __construct(
         private readonly TaskRepository $taskRepository,

@@ -650,6 +650,100 @@ export const useTaskStore = defineStore('task', () => {
     }
   }
 
+  // WebSocket real-time methods
+  function addTaskFromWebSocket(task: Task): void {
+    console.log('[TaskStore] Adding task from WebSocket:', task.id)
+    // Check if task already exists
+    const existingIndex = tasks.value.findIndex(t => t.id === task.id)
+    if (existingIndex === -1) {
+      // Add to beginning of list
+      tasks.value = [task, ...tasks.value]
+    } else {
+      // Update existing task
+      tasks.value[existingIndex] = task
+    }
+  }
+
+  function updateTaskFromWebSocket(task: Task): void {
+    console.log('[TaskStore] Updating task from WebSocket:', task.id)
+    const index = tasks.value.findIndex(t => t.id === task.id)
+    if (index !== -1) {
+      tasks.value[index] = task
+    } else {
+      // Task not found, add it
+      tasks.value = [task, ...tasks.value]
+    }
+  }
+
+  function removeTaskFromWebSocket(taskId: number): void {
+    console.log('[TaskStore] Removing task from WebSocket:', taskId)
+    tasks.value = tasks.value.filter(t => t.id !== taskId)
+  }
+
+  // Add multiple tasks from WebSocket
+  function addTasksFromWebSocket(newTasks: Task[]): void {
+    console.log('[TaskStore] Adding multiple tasks from WebSocket:', newTasks.length)
+
+    // Filter out tasks that already exist, update existing ones
+    const existingIds = new Set(tasks.value.map(t => t.id))
+    const tasksToAdd: Task[] = []
+    const updatedTasks = [...tasks.value]
+
+    for (const task of newTasks) {
+      if (existingIds.has(task.id)) {
+        // Update existing task
+        const index = updatedTasks.findIndex(t => t.id === task.id)
+        if (index !== -1) {
+          updatedTasks[index] = task
+        }
+      } else {
+        // New task
+        tasksToAdd.push(task)
+      }
+    }
+
+    // Single atomic update for reactivity
+    tasks.value = [...tasksToAdd, ...updatedTasks]
+  }
+
+  // Update multiple tasks from WebSocket
+  function updateTasksFromWebSocket(updatedTasks: Task[]): void {
+    console.log('[TaskStore] Updating multiple tasks from WebSocket:', updatedTasks.length)
+
+    const existingIds = new Set(tasks.value.map(t => t.id))
+    const tasksToAdd: Task[] = []
+    const newTasksList = [...tasks.value]
+
+    for (const task of updatedTasks) {
+      if (existingIds.has(task.id)) {
+        const index = newTasksList.findIndex(t => t.id === task.id)
+        if (index !== -1) {
+          newTasksList[index] = task
+        }
+      } else {
+        tasksToAdd.push(task)
+      }
+    }
+
+    // Single atomic update for reactivity
+    tasks.value = [...tasksToAdd, ...newTasksList]
+  }
+
+  // Remove multiple tasks from WebSocket
+  function removeTasksFromWebSocket(taskIds: number[]): void {
+    console.log('[TaskStore] Removing multiple tasks from WebSocket:', taskIds.length)
+    tasks.value = tasks.value.filter(t => !taskIds.includes(t.id))
+  }
+
+  // Update subtasks of a parent task from WebSocket
+  function updateParentTaskFromWebSocket(parentTask: Task): void {
+    console.log('[TaskStore] Updating parent task from WebSocket:', parentTask.id)
+    const index = tasks.value.findIndex(t => t.id === parentTask.id)
+    if (index !== -1) {
+      tasks.value[index] = parentTask
+    }
+  }
+
   return {
     // State
     tasks,
@@ -703,7 +797,16 @@ export const useTaskStore = defineStore('task', () => {
     hasActiveFilters,
     setSearchQuery,
     clearSearch,
-    setCurrentView
+    setCurrentView,
+
+    // WebSocket real-time methods
+    addTaskFromWebSocket,
+    updateTaskFromWebSocket,
+    removeTaskFromWebSocket,
+    addTasksFromWebSocket,
+    updateTasksFromWebSocket,
+    removeTasksFromWebSocket,
+    updateParentTaskFromWebSocket
   }
 })
 

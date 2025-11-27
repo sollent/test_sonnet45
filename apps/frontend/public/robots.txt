@@ -1,0 +1,20 @@
+# TaskFlow robots.txt
+User-agent: *
+
+# Allow all landing pages
+Allow: /
+Allow: /about
+Allow: /features/
+Allow: /compare/
+Allow: /alternatives/
+
+# Disallow app routes (require authentication)
+Disallow: /dashboard
+Disallow: /calendar
+Disallow: /analytics
+Disallow: /profile
+Disallow: /login
+Disallow: /register
+
+# Sitemap location
+Sitemap: https://taskflow.ru/sitemap.xml

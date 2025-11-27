@@ -1,0 +1,756 @@
+// Landing page styles with modern design system
+
+// Color palette
+:root {
+  // Primary colors
+  --primary: #6366f1;
+  --primary-light: #818cf8;
+  --primary-dark: #4f46e5;
+
+  // Secondary colors
+  --secondary: #8b5cf6;
+  --secondary-light: #a78bfa;
+  --secondary-dark: #7c3aed;
+
+  // Semantic colors
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --info: #3b82f6;
+
+  // Neutral colors
+  --dark: #1e293b;
+  --gray-900: #0f172a;
+  --gray-800: #1e293b;
+  --gray-700: #334155;
+  --gray-600: #475569;
+  --gray-500: #64748b;
+  --gray-400: #94a3b8;
+  --gray-300: #cbd5e1;
+  --gray-200: #e2e8f0;
+  --gray-100: #f1f5f9;
+  --gray-50: #f8fafc;
+  --white: #ffffff;
+
+  // Gradients
+  --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  --gradient-success: linear-gradient(135deg, #13ce66 0%, #00d2d3 100%);
+  --gradient-hero: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  --gradient-mesh: radial-gradient(at 27% 37%, hsla(215, 98%, 61%, 1) 0px, transparent 0%),
+                    radial-gradient(at 97% 21%, hsla(125, 98%, 72%, 1) 0px, transparent 50%),
+                    radial-gradient(at 52% 99%, hsla(354, 98%, 61%, 1) 0px, transparent 50%),
+                    radial-gradient(at 10% 29%, hsla(256, 96%, 67%, 1) 0px, transparent 50%),
+                    radial-gradient(at 97% 96%, hsla(38, 60%, 74%, 1) 0px, transparent 50%),
+                    radial-gradient(at 33% 50%, hsla(222, 67%, 73%, 1) 0px, transparent 50%),
+                    radial-gradient(at 79% 53%, hsla(343, 68%, 79%, 1) 0px, transparent 50%);
+
+  // Shadows
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+  --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
+  --shadow-glow: 0 0 50px rgba(99, 102, 241, 0.3);
+
+  // Glass morphism
+  --glass-bg: rgba(255, 255, 255, 0.1);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+}
+
+// Typography
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Montserrat:wght@700;800;900&display=swap');
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 800;
+}
+
+// Utility classes
+.gradient-text {
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text-secondary {
+  background: var(--gradient-secondary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+// Light gradient text for dark/colored backgrounds (hero sections)
+.gradient-text-light {
+  background: linear-gradient(135deg, #fff 0%, #e0e7ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+// Glass morphism card
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  box-shadow: var(--glass-shadow);
+}
+
+// Neumorphism card
+.neu-card {
+  background: linear-gradient(145deg, #ffffff, #f3f4f6);
+  box-shadow: 20px 20px 60px #d1d5db, -20px -20px 60px #ffffff;
+  border-radius: 20px;
+
+  &:hover {
+    box-shadow: inset 20px 20px 60px #d1d5db, inset -20px -20px 60px #ffffff;
+  }
+}
+
+// Floating animation
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+  100% { transform: translateY(0px); }
+}
+
+.floating {
+  animation: float 6s ease-in-out infinite;
+}
+
+// Pulse animation
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.3); }
+  50% { box-shadow: 0 0 40px rgba(99, 102, 241, 0.6); }
+}
+
+.pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+// Gradient animation
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animated-gradient {
+  background: var(--gradient-hero);
+  background-size: 200% 200%;
+  animation: gradient-shift 15s ease infinite;
+}
+
+// Buttons
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: white !important;
+  padding: 12px 32px;
+  border-radius: 50px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5);
+  }
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--primary);
+  padding: 12px 32px;
+  border-radius: 50px;
+  border: 2px solid var(--primary);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: var(--primary);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
+  }
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--gray-700);
+  padding: 12px 32px;
+  border-radius: 50px;
+  border: 2px solid var(--gray-300);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: translateY(-2px);
+  }
+}
+
+.btn-glass {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  color: var(--gray-700);
+  padding: 12px 32px;
+  border-radius: 50px;
+  border: 1px solid var(--gray-200);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: white;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.btn-white {
+  background: white !important;
+  color: #6366f1 !important;
+  padding: 12px 32px;
+  border-radius: 50px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  }
+}
+
+.btn-gradient {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: white !important;
+  padding: 12px 32px;
+  border-radius: 50px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5);
+  }
+}
+
+// Feature card hover effect
+.feature-card {
+  transition: all 0.3s ease;
+  cursor: pointer;
+
+  &:hover {
+    transform: translateY(-10px) rotateX(5deg);
+    box-shadow: 0 20px 40px rgba(99, 102, 241, 0.2);
+  }
+}
+
+// Comparison table styles
+.comparison-table {
+  .feature-row {
+    transition: all 0.3s ease;
+
+    &:hover {
+      background: var(--gray-50);
+      transform: translateX(5px);
+    }
+  }
+
+  .check-icon {
+    color: var(--success);
+    font-size: 1.5rem;
+  }
+
+  .cross-icon {
+    color: var(--gray-400);
+    font-size: 1.5rem;
+  }
+}
+
+// Testimonial card
+.testimonial-card {
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+  }
+
+  .quote-icon {
+    color: var(--primary);
+    font-size: 3rem;
+    opacity: 0.2;
+  }
+}
+
+// CTA Section (used on all landing pages)
+.cta-section {
+  padding: 5rem 0;
+
+  .cta-card {
+    border-radius: 30px;
+    padding: 4rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+    @media (max-width: 768px) {
+      padding: 2rem;
+    }
+
+    .cta-background {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+      background-size: 200% 200%;
+      animation: gradient-shift 15s ease infinite;
+    }
+
+    .cta-content {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+
+      h2 {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        color: white;
+
+        @media (max-width: 768px) {
+          font-size: 2rem;
+        }
+      }
+
+      p {
+        font-size: 1.25rem;
+        margin-bottom: 2rem;
+        opacity: 0.9;
+        color: white;
+      }
+
+      .cta-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+
+        @media (max-width: 768px) {
+          flex-direction: column;
+        }
+      }
+    }
+
+    .cta-decoration {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+
+      .deco-circle {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
+
+        &.deco-1 {
+          width: 300px;
+          height: 300px;
+          top: -100px;
+          right: -100px;
+        }
+
+        &.deco-2 {
+          width: 200px;
+          height: 200px;
+          bottom: -50px;
+          left: -50px;
+        }
+
+        &.deco-3 {
+          width: 150px;
+          height: 150px;
+          top: 50%;
+          left: 30%;
+        }
+      }
+    }
+  }
+
+  .btn-cta-outline {
+    background: transparent;
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 50px;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.1rem;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: white;
+      transform: translateY(-2px);
+    }
+  }
+
+  .btn-white {
+    background: white !important;
+    color: #6366f1 !important;
+    padding: 1rem 2rem;
+    border-radius: 50px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.1rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+  }
+}
+
+// Pricing card
+.pricing-card {
+  position: relative;
+  background: white;
+  border-radius: 20px;
+  padding: 2.5rem;
+  transition: all 0.3s ease;
+
+  &.popular {
+    transform: scale(1.05);
+    box-shadow: 0 20px 60px rgba(99, 102, 241, 0.2);
+
+    &::before {
+      content: 'ПОПУЛЯРНЫЙ';
+      position: absolute;
+      top: -15px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--gradient-primary);
+      color: white;
+      padding: 5px 20px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+  }
+
+  &:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
+  }
+}
+
+// Wave divider
+.wave-divider {
+  width: 100%;
+  overflow: hidden;
+  line-height: 0;
+
+  svg {
+    position: relative;
+    display: block;
+    width: calc(100% + 1.3px);
+    height: 120px;
+  }
+
+  .shape-fill {
+    fill: var(--gray-50);
+  }
+}
+
+// Blob shapes for background
+.blob-shape {
+  position: absolute;
+  filter: blur(100px);
+  opacity: 0.3;
+
+  &.blob-1 {
+    top: -200px;
+    left: -200px;
+    width: 600px;
+    height: 600px;
+    background: var(--gradient-primary);
+    animation: float 20s ease-in-out infinite;
+  }
+
+  &.blob-2 {
+    bottom: -200px;
+    right: -200px;
+    width: 500px;
+    height: 500px;
+    background: var(--gradient-secondary);
+    animation: float 25s ease-in-out infinite reverse;
+  }
+}
+
+// Scroll animations
+.fade-in-up {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.8s ease;
+
+  &.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in-left {
+  opacity: 0;
+  transform: translateX(-30px);
+  transition: all 0.8s ease;
+
+  &.visible {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.fade-in-right {
+  opacity: 0;
+  transform: translateX(30px);
+  transition: all 0.8s ease;
+
+  &.visible {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.scale-in {
+  opacity: 0;
+  transform: scale(0.8);
+  transition: all 0.8s ease;
+
+  &.visible {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+// Responsive utilities
+@media (max-width: 768px) {
+  .hide-mobile {
+    display: none !important;
+  }
+
+  h1 {
+    font-size: 2.5rem !important;
+  }
+
+  h2 {
+    font-size: 2rem !important;
+  }
+
+  .hero-section {
+    padding: 4rem 1rem !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .hide-desktop {
+    display: none !important;
+  }
+}
+
+// Custom scrollbar
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--gray-100);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--gradient-primary);
+  border-radius: 5px;
+
+  &:hover {
+    background: var(--primary-dark);
+  }
+}
+
+// Smooth scroll
+html {
+  scroll-behavior: smooth;
+}
+
+// Selection color
+::selection {
+  background: var(--primary);
+  color: white;
+}
+
+// ==========================================
+// FIX: Icon visibility on landing pages
+// ==========================================
+
+// Fix PrimeVue icons in feature cards (white on gradient background)
+.feature-icon {
+  i.pi {
+    color: white !important;
+  }
+}
+
+// Fix icons in buttons (ensure they inherit button color)
+.btn-primary,
+.btn-gradient,
+.btn-white {
+  i.pi {
+    color: inherit !important;
+  }
+}
+
+.btn-glass,
+.btn-secondary,
+.btn-outline {
+  i.pi {
+    color: inherit !important;
+  }
+}
+
+// Fix icons in CTA section buttons
+.cta-section {
+  .btn-white i.pi {
+    color: var(--primary) !important;
+  }
+
+  .btn-cta-outline i.pi {
+    color: white !important;
+  }
+}
+
+// Fix step cards icons (numbered circles with gradient background)
+.step-card {
+  .step-number {
+    color: white !important;
+  }
+}
+
+// Fix integration cards - ensure SVG images are visible
+.integration-card {
+  img {
+    filter: none !important;
+  }
+}
+
+// Fix testimonial cards - ensure quote icon is visible
+.testimonial-card {
+  .quote-icon {
+    color: var(--primary) !important;
+    opacity: 0.3 !important;
+  }
+}
+
+// Fix pricing cards check icons
+.pricing-card {
+  .features-list li i.pi {
+    color: var(--success) !important;
+  }
+}
+
+// Fix FAQ icons
+.faq-item {
+  .faq-question i.pi {
+    color: var(--primary) !important;
+  }
+}
+
+// Fix rating stars
+.rating {
+  i.pi-star-fill {
+    color: #fbbf24 !important;
+  }
+}
+
+// Fix hero section icons
+.hero-section {
+  .task-item i.pi {
+    &.pi-check-circle {
+      color: var(--success) !important;
+    }
+    &.pi-circle {
+      color: var(--gray-400) !important;
+    }
+  }
+
+  .ai-card i.pi {
+    color: white !important;
+  }
+
+  .notification-badge i.pi {
+    color: white !important;
+  }
+}
+
+// Fix navigation dropdown icons
+.landing-nav {
+  .nav-link i.pi {
+    color: var(--gray-600) !important;
+  }
+
+  .dropdown-item i.pi {
+    color: var(--primary) !important;
+  }
+}
+
+// Fix mobile menu icons
+.mobile-menu {
+  a i.pi {
+    color: var(--primary) !important;
+  }
+}
+
+// Fix footer social icons
+.landing-footer {
+  .social-links a i.pi {
+    color: var(--gray-400) !important;
+    transition: color 0.3s ease;
+
+    &:hover {
+      color: white !important;
+    }
+  }
+}

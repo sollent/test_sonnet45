@@ -1,5 +1,6 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
+import { createHead } from '@unhead/vue/client'
 
 import App from './App.vue'
 import router from './router'
@@ -62,6 +63,10 @@ const pinia = createPinia()
 app.use(pinia)
 app.use(router)
 app.use(i18n)
+
+// SEO meta tags management
+const head = createHead()
+app.use(head)
 
 // Setup PrimeVue with tree-shaking (imports only used components)
 setupPrimeVue(app, primevueLocale)

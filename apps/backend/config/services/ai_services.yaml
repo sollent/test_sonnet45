@@ -1,0 +1,60 @@
+services:
+    # HTTP Client для AI сервисов
+    ai.http_client:
+        class: Symfony\Component\HttpClient\HttpClient
+        factory: ['Symfony\Component\HttpClient\HttpClient', 'create']
+
+    # Alias для автовайринга
+    Symfony\Contracts\HttpClient\HttpClientInterface:
+        alias: ai.http_client
+
+    # LLM Service
+    App\Service\AI\LLMService:
+        arguments:
+            $httpClient: '@ai.http_client'
+            $logger: '@logger'
+            $params: '@parameter_bag'
+
+    # Voice Processing Service
+    App\Service\AI\VoiceProcessingService:
+        arguments:
+            $httpClient: '@ai.http_client'
+            $whisperUrl: '%env(default::WHISPER_URL)%'
+
+    # WebSocket Publisher (uses phpcent)
+    App\Service\AI\WebSocketPublisher:
+        arguments:
+            $logger: '@logger'
+            $centrifugoUrl: '%env(default:centrifugo_api_url:CENTRIFUGO_API_URL)%'
+            $centrifugoApiKey: '%env(default:centrifugo_api_key:CENTRIFUGO_API_KEY)%'
+            $enabled: '%env(bool:default:centrifugo_enabled:CENTRIFUGO_ENABLED)%'
+
+    # Centrifugo Token Provider
+    App\Service\WebSocket\CentrifugoTokenProvider:
+        arguments:
+            $hmacSecretKey: '%env(default:centrifugo_hmac_secret:CENTRIFUGO_HMAC_SECRET)%'
+            $tokenTtl: '%env(int:default:centrifugo_token_ttl:CENTRIFUGO_TOKEN_TTL)%'
+
+    # Command Event Mapper
+    App\Service\WebSocket\CommandEventMapper: ~
+
+parameters:
+    # ============================================
+    # AI Services URLs (Native Installation)
+    # ============================================
+    # Используем host.docker.internal для доступа из Docker к нативным сервисам на macOS
+    # Для Linux использовать: http://172.17.0.1:PORT
+    env(WHISPER_URL): 'http://host.docker.internal:9001'
+    env(OLLAMA_URL): 'http://host.docker.internal:11434'
+    env(LLM_MODEL): 'qwen2.5:14b'
+
+    # Centrifugo WebSocket defaults
+    centrifugo_api_url: 'http://centrifugo:8000/api'
+    centrifugo_api_key: 'dev_api_key_change_in_production'
+    centrifugo_hmac_secret: 'dev_hmac_secret_change_in_production'
+    centrifugo_enabled: 'true'
+    centrifugo_token_ttl: '3600'
+
+    # Параметры для сервисов (доступны через ParameterBagInterface)
+    ollama_url: '%env(OLLAMA_URL)%'
+    llm_model: '%env(LLM_MODEL)%'

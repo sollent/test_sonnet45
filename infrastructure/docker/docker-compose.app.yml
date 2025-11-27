@@ -33,6 +33,11 @@ services:
       # RabbitMQ credentials from .env.docker (БЕЗ fallback - Fail-Fast!)
       RABBITMQ_USER: ${RABBITMQ_USER}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      # Centrifugo configuration
+      CENTRIFUGO_HMAC_SECRET: ${CENTRIFUGO_HMAC_SECRET:-secret-key}
+      CENTRIFUGO_API_URL: ${CENTRIFUGO_API_URL:-http://centrifugo:8000/api}
+      CENTRIFUGO_API_KEY: ${CENTRIFUGO_API_KEY:-dev_api_key_change_in_production}
+      CENTRIFUGO_ENABLED: ${CENTRIFUGO_ENABLED:-true}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     dns:
@@ -67,7 +72,7 @@ services:
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
     networks:
       - nginx-php83-psql16
-  
+
   cron:
     container_name: ${COMPOSE_PROJECT_NAME:-backend}-cron
     build:
@@ -92,17 +97,11 @@ services:
       - nginx-php83-psql16
 
   # ============================================
-  # Frontend Service (Placeholder)
+  # Frontend Service
   # ============================================
-  # Переопределяется в docker-compose.frontend-dev.yml или docker-compose.frontend-prod.yml
-  frontend:
-    image: placeholder
-    container_name: ${COMPOSE_PROJECT_NAME:-backend}-frontend
-    networks:
-      - nginx-php83-psql16
-    depends_on:
-      - nginx  # Backend nginx должен запуститься первым
-    # Порты, build, volumes и environment определены в dev/prod overrides
+  # Конфигурация frontend определена в:
+  # - docker-compose.frontend-dev.yml (для development)
+  # - docker-compose.frontend-prod.yml (для production)
 
 networks:
   nginx-php83-psql16:

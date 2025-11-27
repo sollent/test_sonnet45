@@ -7,6 +7,26 @@ const API_ENDPOINTS = {
 
 class MediaService {
   /**
+   * Upload audio blob (for voice recording)
+   */
+  async uploadAudio(audioBlob: Blob, filename: string = 'voice-command.webm'): Promise<TaskAttachment> {
+    const formData = new FormData()
+    formData.append('file', audioBlob, filename)
+
+    const { data } = await apiClient.post<TaskAttachment>(
+      API_ENDPOINTS.MEDIA,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      }
+    )
+
+    return data
+  }
+
+  /**
    * Upload file and get MediaObject ID
    */
   async uploadFile(file: File): Promise<TaskAttachment> {

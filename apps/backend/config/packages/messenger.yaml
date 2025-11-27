@@ -1,5 +1,58 @@
 framework:
-  messenger:
-    transports:
-      async: '%env(MESSENGER_TRANSPORT_DSN)%' # RabbitMQ транспорт
-    routing:
+    messenger:
+        # Uncomment this (and the failed transport below) to send failed messages to this transport for later handling.
+        failure_transport: failed
+
+        transports:
+            # Voice commands async transport
+            async_voice:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    exchange:
+                        name: voice_commands
+                        type: direct
+                    queues:
+                        voice_commands:
+                            binding_keys: [voice]
+                    max_retries: 3
+                    delay: 1000 # milliseconds delay between retries
+                    multiplier: 2 # multiply delay for each retry
+                    max_delay: 10000 # max 10 seconds between retries
+                retry_strategy:
+                    max_retries: 3
+                    delay: 1000
+                    multiplier: 2
+                    max_delay: 10000
+
+            # Default async transport for other messages
+            async:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    exchange:
+                        name: messages
+                        type: direct
+                    queues:
+                        messages:
+                            binding_keys: [default]
+                retry_strategy:
+                    max_retries: 3
+                    delay: 1000
+
+            # Failed messages transport
+            failed:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    exchange:
+                        name: failed_messages
+                        type: direct
+                    queues:
+                        failed:
+                            binding_keys: [failed]
+
+            # Sync transport for immediate processing (testing)
+            sync:
+                dsn: 'sync://'
+
+        routing:
+            # Route voice command messages to async voice transport
+            App\Message\ProcessVoiceCommand: async_voice

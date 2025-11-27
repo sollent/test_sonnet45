@@ -1,14 +1,144 @@
-# AI Services Docker Compose
-# This is a PLACEHOLDER - will be implemented during Voice AI development
-
-version: '3.8'
-
 services:
-  # TODO: Add Ollama service (LLM)
-  # TODO: Add Whisper.cpp service (STT)
-  # TODO: Add Centrifugo service (WebSocket)
+  # ============================================
+  # Ollama - LLM Service (NATIVE INSTALLATION)
+  # ============================================
+  # ⚠️ ЗАКОММЕНТИРОВАНО: Используем нативную установку для производительности
+  # Native Ollama доступен по адресу: http://host.docker.internal:11434
+  # Установка: brew install ollama && ollama serve && ollama pull qwen2.5:1.5b
+  # ============================================
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   container_name: ${COMPOSE_PROJECT_NAME:-backend}-ollama
+  #   ports:
+  #     - "${OLLAMA_PORT:-11434}:11434"
+  #   volumes:
+  #     - ollama_models:/root/.ollama
+  #   environment:
+  #     - OLLAMA_MODELS=${OLLAMA_MODELS:-qwen2.5:1.5b}
+  #     - OLLAMA_HOST=0.0.0.0
+  #     - OLLAMA_ORIGINS=*
+  #     - OLLAMA_DEBUG=${OLLAMA_DEBUG:-false}
+  #     - OLLAMA_NUM_PARALLEL=${OLLAMA_NUM_PARALLEL:-2}
+  #     - OLLAMA_KEEP_ALIVE=${OLLAMA_KEEP_ALIVE:-24h}
+  #   networks:
+  #     - nginx-php83-psql16
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 5
+  #   restart: unless-stopped
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         memory: 6G
+  #       reservations:
+  #         memory: 4G
 
-  # Placeholder to prevent errors
-  ai-placeholder:
-    image: alpine:latest
-    command: echo "AI services not implemented yet"
+  # ============================================
+  # Whisper - Speech-to-Text Service (NATIVE INSTALLATION)
+  # ============================================
+  # ⚠️ ЗАКОММЕНТИРОВАНО: Используем нативную установку для производительности
+  # Native Whisper доступен по адресу: http://host.docker.internal:9000
+  # Установка: см. docs/ai/NATIVE_INSTALLATION.md
+  # ============================================
+  # whisper:
+  #   image: onerahmet/openai-whisper-asr-webservice:latest
+  #   container_name: ${COMPOSE_PROJECT_NAME:-backend}-whisper
+  #   platform: linux/amd64
+  #   ports:
+  #     - "${WHISPER_PORT:-9000}:9000"
+  #   volumes:
+  #     - whisper_models:/app/models
+  #   environment:
+  #     - ASR_MODEL=tiny
+  #     - ASR_ENGINE=openai_whisper
+  #     - ASR_MODEL_PATH=/app/models
+  #     - ASR_LANGUAGE=ru
+  #   networks:
+  #     - nginx-php83-psql16
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:9000/docs"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 5
+  #   restart: unless-stopped
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         memory: 1G
+  #       reservations:
+  #         memory: 512M
+
+  # ============================================
+  # Centrifugo - WebSocket Service
+  # ============================================
+  centrifugo:
+    image: centrifugo/centrifugo:v5
+    container_name: ${COMPOSE_PROJECT_NAME:-backend}-centrifugo
+    ports:
+      - "${CENTRIFUGO_PORT:-8000}:8000"
+      - "${CENTRIFUGO_ADMIN_PORT:-8001}:8001"
+    volumes:
+      - ./ai/centrifugo.json:/centrifugo/config.json:ro
+    environment:
+      - CENTRIFUGO_ADMIN=${CENTRIFUGO_ADMIN:-true}
+      - CENTRIFUGO_ADMIN_PASSWORD=${CENTRIFUGO_ADMIN_PASSWORD:-admin}
+      - CENTRIFUGO_ADMIN_SECRET=${CENTRIFUGO_ADMIN_SECRET:-secret}
+      - CENTRIFUGO_API_KEY=${CENTRIFUGO_API_KEY:-api-key}
+      - CENTRIFUGO_TOKEN_HMAC_SECRET_KEY=${CENTRIFUGO_SECRET:-secret-key}
+    command: centrifugo -c /centrifugo/config.json
+    networks:
+      - nginx-php83-psql16
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  # ============================================
+  # Redis - Cache for Centrifugo
+  # ============================================
+  redis:
+    image: redis:7-alpine
+    container_name: ${COMPOSE_PROJECT_NAME:-backend}-redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+    command: redis-server --appendonly yes
+    networks:
+      - nginx-php83-psql16
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+volumes:
+  # ⚠️ ЗАКОММЕНТИРОВАНО: Используем нативную установку
+  # ollama_models:
+  #   driver: local
+  # whisper_models:
+  #   driver: local
+  redis_data:
+    driver: local
+
+networks:
+  nginx-php83-psql16:

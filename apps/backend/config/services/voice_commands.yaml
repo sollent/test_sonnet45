@@ -1,0 +1,112 @@
+# Конфигурация голосовых команд Voice AI
+# Автоматическая регистрация команд через тегирование
+
+services:
+    # Автоматическая конфигурация по умолчанию
+    _defaults:
+        autowire: true      # Автоматическое внедрение зависимостей
+        autoconfigure: true # Автоматическая конфигурация сервисов
+        public: false       # Сервисы приватные по умолчанию
+
+    # ====================================
+    # Вспомогательные сервисы
+    # ====================================
+
+    App\Service\AI\Service\TaskFinder:
+        arguments:
+            - '@App\Service\AI\SmartSearchService'
+
+    App\Service\AI\Service\DateTimeResolver:
+        arguments:
+            - '@App\Service\AI\DateTimeParser'
+
+    App\Service\AI\Service\PriorityMapper:
+        arguments:
+            - '@logger'
+
+    App\Service\AI\Service\StatusMapper:
+        arguments:
+            - '@logger'
+
+    App\Service\AI\Response\ResponseBuilder: ~
+
+    # ====================================
+    # Реестр команд
+    # ====================================
+
+    App\Service\AI\Registry\CommandRegistry:
+        public: true # Делаем публичным для доступа из контроллера
+
+    # ====================================
+    # Автоматическая регистрация команд
+    # ====================================
+
+    # Все классы команд в директории Command/
+    App\Service\AI\Command\:
+        resource: '%kernel.project_dir%/src/Service/AI/Command/*/*Command.php'
+        exclude: '%kernel.project_dir%/src/Service/AI/Command/{Contract,Base}'
+        tags: ['voice.command']
+
+    # Специальная конфигурация для конкретных команд
+    App\Service\AI\Command\Task\CreateTaskCommand:
+        arguments:
+            $entityManager: '@doctrine.orm.entity_manager'
+            $taskService: '@App\Service\TaskService'
+            $searchService: '@App\Service\AI\SmartSearchService'
+            $dateTimeParser: '@App\Service\AI\DateTimeParser'
+            $logger: '@logger'
+            $tagRepository: '@App\Repository\Database\TagRepository'
+            $priorityMapper: '@App\Service\AI\Service\PriorityMapper'
+            $dateTimeResolver: '@App\Service\AI\Service\DateTimeResolver'
+            $responseBuilder: '@App\Service\AI\Response\ResponseBuilder'
+        tags:
+            - { name: 'voice.command' }
+
+    App\Service\AI\Command\Task\CompleteTaskCommand:
+        arguments:
+            $entityManager: '@doctrine.orm.entity_manager'
+            $taskService: '@App\Service\TaskService'
+            $searchService: '@App\Service\AI\SmartSearchService'
+            $dateTimeParser: '@App\Service\AI\DateTimeParser'
+            $logger: '@logger'
+            $taskFinder: '@App\Service\AI\Service\TaskFinder'
+            $responseBuilder: '@App\Service\AI\Response\ResponseBuilder'
+        tags:
+            - { name: 'voice.command' }
+
+    App\Service\AI\Command\Task\UpdateTaskCommand:
+        arguments:
+            $entityManager: '@doctrine.orm.entity_manager'
+            $taskService: '@App\Service\TaskService'
+            $searchService: '@App\Service\AI\SmartSearchService'
+            $dateTimeParser: '@App\Service\AI\DateTimeParser'
+            $logger: '@logger'
+            $taskFinder: '@App\Service\AI\Service\TaskFinder'
+            $priorityMapper: '@App\Service\AI\Service\PriorityMapper'
+            $statusMapper: '@App\Service\AI\Service\StatusMapper'
+            $dateTimeResolver: '@App\Service\AI\Service\DateTimeResolver'
+            $responseBuilder: '@App\Service\AI\Response\ResponseBuilder'
+        tags:
+            - { name: 'voice.command' }
+
+    App\Service\AI\Command\Batch\BulkCompleteCommand:
+        arguments:
+            $entityManager: '@doctrine.orm.entity_manager'
+            $taskService: '@App\Service\TaskService'
+            $searchService: '@App\Service\AI\SmartSearchService'
+            $dateTimeParser: '@App\Service\AI\DateTimeParser'
+            $logger: '@logger'
+            $taskFinder: '@App\Service\AI\Service\TaskFinder'
+            $responseBuilder: '@App\Service\AI\Response\ResponseBuilder'
+        tags:
+            - { name: 'voice.command' }
+
+    # ====================================
+    # Новый VoiceCommandExecutor
+    # ====================================
+
+    App\Service\AI\VoiceCommandExecutor:
+        arguments:
+            - '@App\Service\AI\Registry\CommandRegistry'
+            - '@logger'
+        public: true

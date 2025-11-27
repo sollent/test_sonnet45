@@ -7,13 +7,13 @@
 ## 📋 Что Мы Строим
 
 **MVP Voice AI Assistant** для Менеджера Задач:
-- Пользователь говорит команду на русском → Whisper транскрибирует → Llama парсит → Задача создана/обновлена
+- Пользователь говорит команду на русском → Whisper транскрибирует → Qwen 2.5 парсит → Задача создана/обновлена
 - Обновления в реальном времени через WebSocket (Centrifugo)
 - Веб-интерфейс с кнопкой голосовой записи
 - Асинхронная обработка с очередью RabbitMQ
 
 **Технологический Стек (Оптимизирован для VPS с 4GB RAM):**
-- LLM: Llama 3.2 3B через Ollama (помещается в 2-3GB памяти)
+- LLM: Qwen 2.5 3B через Ollama (помещается в 4-6GB памяти)
 - STT: Базовая модель Whisper (легковесная, точная для русского)
 - WebSocket: Centrifugo + Redis
 - Очередь: RabbitMQ (уже в проекте)
@@ -32,7 +32,7 @@
 3. [`docs/ai/INDEX.md`](INDEX.md) - Полная карта навигации
 
 **Почему PROMPTS_LIBRARY критично:**
-- Содержит точные системные промпты для Llama 3.2 3B
+- Содержит точные системные промпты для Qwen 2.5 3B
 - Определяет структуру JSON ответа (action, parameters, confidence)
 - Включает 7 протестированных шаблонов команд на русском
 - Без этих промптов LLM будет возвращать мусор!
@@ -105,7 +105,7 @@ backend/src/Service/VoiceAssistant/LLMService.php
 Критично:
 - Скопируй системный промпт ТОЧНО из PROMPTS_LIBRARY.md
 - Используй Ollama HTTP client (Symfony\Contracts\HttpClient\HttpClientInterface)
-- Запрос: {"model": "llama3.2:3b", "prompt": "...", "format": "json", "options": {"temperature": 0.3}}
+- Запрос: {"model": "qwen2.5:1.5b", "prompt": "...", "format": "json", "options": {"temperature": 0.1}}
 - Парси JSON ответ
 - Валидируй структуру: {action, parameters, confidence}
 - Резервный парсинг если JSON невалиден
@@ -151,7 +151,7 @@ curl http://localhost:11434/api/tags
 
 # Тест с русской командой
 curl -X POST http://localhost:11434/api/generate -d '{
-  "model": "llama3.2:3b",
+  "model": "mistral:7b",
   "prompt": "Ты - ассистент для задач. Конвертируй эту русскую команду в JSON: Создай задачу купить молоко завтра",
   "format": "json",
   "stream": false
@@ -481,19 +481,19 @@ onVoiceEvent('completed', (data) => {
 # Установить Ollama
 curl -fsSL https://ollama.com/install.sh | sh
 
-# Загрузить модель Llama 3.2 3B (~ 2GB скачивание)
-ollama pull llama3.2:3b
+# Загрузить модель Qwen 2.5 1.5B (~ 1GB скачивание)
+ollama pull qwen2.5:1.5b
 
 # Запустить Ollama сервер
 ollama serve
 
 # Тест
 curl http://localhost:11434/api/tags
-# Должен показать: {"models": [{"name": "llama3.2:3b", ...}]}
+# Должен показать: {"models": [{"name": "qwen2.5:1.5b", ...}]}
 
 # Тест русской команды
 curl -X POST http://localhost:11434/api/generate -d '{
-  "model": "llama3.2:3b",
+  "model": "qwen2.5:1.5b",
   "prompt": "Конвертируй в JSON: Создай задачу купить молоко",
   "format": "json",
   "stream": false
@@ -593,10 +593,10 @@ CENTRIFUGO_SECRET=<твой-секрет>
 2. ✅ Пользователь говорит русскую команду → останавливает запись
 3. ✅ Аудио отправлено на бэкенд → в очереди (ответ 202)
 4. ✅ Whisper транскрибирует аудио в текст
-5. ✅ Llama парсит текст в JSON (используя промпты из библиотеки!)
+5. ✅ Qwen 2.5 парсит текст в JSON (используя промпты из библиотеки!)
 6. ✅ Команда выполнена (задача создана/завершена/отфильтрована)
 7. ✅ WebSocket отправляет обновления в реальном времени
-8. ✅ Пользователь видит результат в UI (< 5 секунд всего)
+8. ✅ Пользователь видит результат в UI (< 20 секунд всего)
 9. ✅ Работает надежно для 3 основных команд:
    - "Создай задачу купить молоко завтра"
    - "Отметь задачу купить молоко как выполненную"
@@ -671,7 +671,7 @@ $task = $this->taskService->createTask(
 docker exec backend-psql16 psql -U user -d backend-app -c "\d voice_commands"
 
 # После Фазы 2 (Сервисы)
-curl -X POST http://localhost:11434/api/generate -d '{"model":"llama3.2:3b","prompt":"тест"}'
+curl -X POST http://localhost:11434/api/generate -d '{"model":"mistral:7b","prompt":"тест"}'
 
 # После Фазы 3 (API)
 curl -X POST http://localhost:8089/api/voice/command -H "Authorization: Bearer TOKEN" -d '{"text":"тест"}'

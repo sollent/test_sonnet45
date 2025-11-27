@@ -33,7 +33,7 @@ export interface TaskAttachment {
   mimeType: string
   fileSize: number
   fileSizeHuman: string
-  fileType: 'image' | 'document' | 'video' | 'other'
+  fileType: 'image' | 'document' | 'video' | 'audio' | 'other'
   filePath: string
   uploadedAt: string
 }

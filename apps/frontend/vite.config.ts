@@ -153,6 +153,7 @@ export default defineConfig(({ mode }) => {
     },
 
     server: {
+      host: '0.0.0.0', // Allow connections from outside container
       port: 3000,
       proxy: {
         '/api': {

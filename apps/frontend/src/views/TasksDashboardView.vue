@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { useTaskStore } from '@/stores/task.store'
 import { useAuth } from '@/composables/useAuth'
 import { useToast } from '@/composables/useToast'
+import { useWebSocket } from '@/composables/useWebSocket'
 import Button from 'primevue/button'
 import Sidebar from 'primevue/sidebar'
 import Skeleton from 'primevue/skeleton'
@@ -15,17 +16,20 @@ import CompletedTasksList from '@/components/tasks/CompletedTasksList.vue'
 import DayHeaderWithProgress from '@/components/tasks/DayHeaderWithProgress.vue'
 import TaskDetailsSidebar from '@/components/tasks/TaskDetailsSidebar.vue'
 import FloatingActionButton from '@/components/ui/FloatingActionButton.vue'
+import VoiceButton from '@/components/voice/VoiceButton.vue'
 import TaskFilters from '@/components/tasks/TaskFilters.vue'
 import QuickFilters from '@/components/tasks/QuickFilters.vue'
 import AdvancedFiltersModal from '@/components/tasks/AdvancedFiltersModal.vue'
 import TaskDialog from '@/components/tasks/TaskDialog.vue'
 import type { Task } from '@/types/task.types'
+import type { VoiceCommandResponse } from '@/types/voice.types'
 
 const router = useRouter()
 const { t, locale } = useI18n()
 const { user, logout } = useAuth()
 const { showSuccess, showError } = useToast()
 const taskStore = useTaskStore()
+const { connect: connectWebSocket, onTaskEvent } = useWebSocket()
 
 const searchQuery = ref('')
 const selectedView = ref('all')
@@ -250,11 +254,118 @@ const onResize = () => {
   isMobile.value = window.innerWidth < 1024
 }
 
-onMounted(() => {
+onMounted(async () => {
   window.addEventListener('resize', onResize)
   // Fetch initial data
   selectView(selectedView.value)
   taskStore.fetchTags()
+
+  // Connect to WebSocket for real-time updates
+  await connectWebSocket()
+
+  // Handle task events from WebSocket
+  onTaskEvent((event) => {
+    console.log('[TasksDashboard] Received task event:', event)
+
+    const eventData = event.data as {
+      message?: string
+      task?: Task
+      tasks?: Task[]
+      taskIds?: number[]
+      parentTask?: Task
+      count?: number
+    } | undefined
+
+    const eventType = event.event
+
+    // ===== SINGLE TASK EVENTS =====
+
+    // Create events
+    if (eventType === 'task.created' && eventData?.task) {
+      taskStore.addTaskFromWebSocket(eventData.task)
+    }
+    else if (eventType === 'task.duplicated' && eventData?.task) {
+      taskStore.addTaskFromWebSocket(eventData.task)
+    }
+    else if (eventType === 'subtask.converted' && eventData?.task) {
+      taskStore.addTaskFromWebSocket(eventData.task)
+    }
+
+    // Update events
+    else if (eventType === 'task.updated' && eventData?.task) {
+      taskStore.updateTaskFromWebSocket(eventData.task)
+    }
+    else if (eventType === 'task.completed' && eventData?.task) {
+      taskStore.updateTaskFromWebSocket(eventData.task)
+    }
+    else if (eventType === 'task.uncompleted' && eventData?.task) {
+      taskStore.updateTaskFromWebSocket(eventData.task)
+    }
+    else if (eventType === 'task.moved' && eventData?.task) {
+      taskStore.updateTaskFromWebSocket(eventData.task)
+    }
+    else if (eventType === 'task.tag_added' && eventData?.task) {
+      taskStore.updateTaskFromWebSocket(eventData.task)
+    }
+    else if (eventType === 'task.tag_removed' && eventData?.task) {
+      taskStore.updateTaskFromWebSocket(eventData.task)
+    }
+    else if (eventType === 'task.description_updated' && eventData?.task) {
+      taskStore.updateTaskFromWebSocket(eventData.task)
+    }
+
+    // Delete events
+    else if (eventType === 'task.deleted' && eventData?.task) {
+      taskStore.removeTaskFromWebSocket(eventData.task.id)
+    }
+
+    // Subtask events - update parent task
+    else if (eventType === 'subtask.created' && eventData?.parentTask) {
+      taskStore.updateParentTaskFromWebSocket(eventData.parentTask)
+    }
+
+    // ===== MULTIPLE TASKS EVENTS =====
+
+    // Create multiple
+    else if (eventType === 'tasks.created' && eventData?.tasks) {
+      taskStore.addTasksFromWebSocket(eventData.tasks)
+    }
+    else if (eventType === 'subtasks.created' && eventData?.parentTask) {
+      taskStore.updateParentTaskFromWebSocket(eventData.parentTask)
+    }
+
+    // Update multiple
+    else if (eventType === 'tasks.completed' && eventData?.tasks) {
+      taskStore.updateTasksFromWebSocket(eventData.tasks)
+    }
+    else if (eventType === 'tasks.uncompleted' && eventData?.tasks) {
+      taskStore.updateTasksFromWebSocket(eventData.tasks)
+    }
+    else if (eventType === 'subtasks.completed' && eventData?.parentTask) {
+      taskStore.updateParentTaskFromWebSocket(eventData.parentTask)
+    }
+
+    // Delete multiple
+    else if (eventType === 'tasks.deleted' && eventData?.taskIds) {
+      taskStore.removeTasksFromWebSocket(eventData.taskIds)
+    }
+
+    // ===== BULK OPERATIONS =====
+    else if (
+      eventType === 'tasks.bulk_completed' ||
+      eventType === 'tasks.bulk_updated' ||
+      eventType === 'tasks.bulk_moved' ||
+      eventType === 'tasks.bulk_deleted' ||
+      eventType === 'tasks.cleanup_completed'
+    ) {
+      selectView(selectedView.value)
+    }
+
+    // Show notification for task events
+    if (eventData?.message) {
+      showSuccess(eventData.message)
+    }
+  })
 })
 
 onUnmounted(() => {
@@ -527,6 +638,25 @@ async function handleTaskCreated() {
 async function handleTaskSaved() {
   await refreshCurrentView()
   isCreateDialogVisible.value = false
+}
+
+/**
+ * Обработчик успешной отправки голосовой команды
+ */
+function handleVoiceCommandSubmitted(response: VoiceCommandResponse) {
+  console.log('Voice command submitted:', response)
+  showSuccess(t('voice.command_submitted'))
+
+  // TODO: Можно добавить отображение статуса обработки команды
+  // Или открыть sidebar с деталями команды
+}
+
+/**
+ * Обработчик ошибки голосовой команды
+ */
+function handleVoiceError(error: string) {
+  console.error('Voice command error:', error)
+  // Ошибка уже показана через useToast в компоненте VoiceButton
 }
 
 async function handleTaskUpdated() {
@@ -879,6 +1009,16 @@ async function handleTaskDeleted() {
       position="bottom-left"
       @click="handleCreateTask"
     />
+
+    <!-- Voice Command Button -->
+    <div class="voice-button-fab">
+      <VoiceButton
+        :language="locale as 'ru' | 'en' | 'uk'"
+        size="large"
+        @command-submitted="handleVoiceCommandSubmitted"
+        @error="handleVoiceError"
+      />
+    </div>
     <TaskDialog
       v-model="isCreateDialogVisible"
       :task="editingTask"
@@ -1767,5 +1907,33 @@ async function handleTaskDeleted() {
 .task-move-leave-active {
   position: absolute;
   width: 100%;
+}
+
+/* Voice Button FAB positioning */
+.voice-button-fab {
+  position: fixed;
+  bottom: 2rem;
+  right: max(1.5rem, calc((100vw - 1600px) / 2 + 1.5rem));
+  z-index: 1000;
+  animation: fabIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes fabIn {
+  from {
+    transform: scale(0) rotate(-180deg);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .voice-button-fab {
+    bottom: 1.5rem;
+    right: 1.5rem;
+  }
 }
 </style>
